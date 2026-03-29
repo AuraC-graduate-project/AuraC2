@@ -1,178 +1,734 @@
+# AuraC² Backend — Online Programming Contest Control System
 
-#  Online Judge System – Graduation Project (Phase 1)
+AuraC² is the backend of an online programming contest platform designed for university-level competitive programming contests.  
+It provides the core infrastructure for:
 
-This repository contains the **backend core** of an Online Programming Contest System  
-(similar to Codeforces / HackerRank).  
-This phase covers **Authentication, System Design, Contest Structure, and Initial Implementation**.
+- authentication and role-based access control
+- contest lifecycle management
+- problem and test case management
+- asynchronous code submission processing
+- Judge0-based remote execution
+- persistent submission tracking
+
+The system is designed to grow beyond a simple CRUD backend into a real contest-control platform with clear separation between authentication, contest management, and submission execution pipelines.
 
 ---
 
-##  Project Overview
+## Overview
+
+This backend is organized into three main domains:
+
+### 1. Authentication Server
+Handles:
+- registration
+- login
+- JWT access token generation
+- refresh token rotation
+- logout
+- role-based authorization
+
+### 2. Contest Server
+Handles:
+- contest creation
+- contest status transitions
+- problem management
+- test case management
+- admin user management
+
+### 3. Submission Server
+Handles:
+- code submissions
+- RabbitMQ-based asynchronous dispatch
+- Judge0 execution requests
+- callback processing
+- verdict persistence
+
+---
+
+## Current Feature Status
 
 | Feature | Status |
-|--------|--------|
-| User Registration + Login | ✔ Implemented |
-| Email Verification | ✔ Implemented |
-| JWT + Refresh Token Auth | ✔ Implemented |
-| Contest → Problem → TestCase Design | ✔ Implemented |
-| RabbitMQ Message Queue | ✔ Setup Complete |
-| Judge0 Integration |  Next Phase |
-
-This system is **not just CRUD** — it was designed to become a **real scalable online judge**,  
-with asynchronous code execution and future-ready architecture.
-
----
-
-##  Technologies Used
-
-| Layer | Stack |
-|------|------|
-| Backend | Spring Boot 3 + Java 17 |
-| Auth | JWT + Refresh Token + Cookie |
-| Queue | RabbitMQ + JSON Message Converter |
-| Database | MySQL + JPA/Hibernate |
-| Docs | Postman + README.md |
-| Future Integration | Judge0 API |
+|---|---|
+| User registration | Implemented |
+| Login with JWT access token | Implemented |
+| Refresh token via cookie | Implemented |
+| Logout + token revocation | Implemented |
+| Role-based authorization | Implemented |
+| Contest creation and status transitions | Implemented |
+| Problem management | Implemented |
+| Test case management | Implemented |
+| Submission entity and persistence | Implemented |
+| RabbitMQ submission dispatch | Implemented |
+| Judge0 submission sending | Implemented |
+| Judge0 callback handling | Implemented |
+| Per-test-case final aggregated tracking | Partial |
+| Scoreboard / ranking | Not implemented yet |
+| Clarifications / announcements | Not implemented yet |
+| Real-time contest updates | Not implemented yet |
 
 ---
 
-##  Folder Structure
+## Architecture
 
+The codebase is split into domain-oriented packages:
+
+```text
+src/main/java/com/server/contestControl
+├── authServer
+│   ├── config
+│   ├── controller
+│   ├── dto
+│   ├── entity
+│   ├── enums
+│   ├── exception
+│   ├── filter
+│   ├── repository
+│   ├── service
+│   └── util
+│
+├── contestServer
+│   ├── controller
+│   ├── dto
+│   ├── entity
+│   ├── enums
+│   ├── repository
+│   └── service
+│
+├── submissionServer
+│   ├── config
+│   ├── controller
+│   ├── dto
+│   ├── entity
+│   ├── enums
+│   ├── queue
+│   │   ├── submission
+│   │   └── result
+│   ├── repository
+│   ├── service
+│   └── util
+│
+└── JwtAuthServerApplication.java
 ```
-src/main/java/com/securityProject/jwtAuthServer
-│── config/          → Security & RabbitMQ configuration
-│── controller/      → REST API (AuthController)
-│── dto/             → Request & Response DTOs
-│── entity/          → JPA Entities (User, Token, Contest, Problem…)
-│── enums/           → Role, Difficulty, TokenType…
-│── exception/       → GlobalExceptionHandler
-│── repository/      → CRUD access to DB (JPA)
-│── JwtAuthServerApplication.java
-```
+
+This separation makes the project easier to reason about as it grows:
+- **authServer** owns identity and token logic
+- **contestServer** owns contest-related business rules
+- **submissionServer** owns asynchronous judging flow
 
 ---
 
-##  API Examples (Postman Testing)
+## Core Domain Model
 
-###  Register User
+### User
+Represents a platform user authenticated through Spring Security.
 
+Important fields:
+- `id`
+- `username`
+- `password`
+- `role`
+- refresh token collection
+
+Current roles include:
+- `ADMIN`
+- `TEAM`
+
+### RefreshToken
+Stored in the database instead of trusting refresh tokens blindly on the client side.
+
+Important fields:
+- token hash
+- device IP
+- creation / expiration timestamps
+- revoked flag
+- owning user
+
+This allows:
+- revocation
+- rotation
+- stronger control over session lifecycle
+
+### Contest
+Represents a programming contest.
+
+Important fields:
+- title
+- description
+- start time
+- duration
+- status
+
+Current contest statuses:
+- `UPCOMING`
+- `RUNNING`
+- `PAUSED`
+- `ENDED`
+
+### Problem
+Represents a contest problem linked to a specific contest.
+
+Important fields:
+- title
+- description
+- time limit
+- memory limit
+- difficulty
+
+### TestCase
+Represents an input/output pair linked to a problem.
+
+Important fields:
+- input data
+- expected output
+- visibility flag (`isPublic`)
+
+### Submission
+Represents a participant submission.
+
+Important fields:
+- contest
+- problem
+- user
+- source code
+- language
+- verdict
+- execution time
+- memory usage
+- creation timestamp
+
+Current verdict flow begins with `PENDING`, then moves through asynchronous execution states such as `RUNNING`, and finally reaches a final verdict.
+
+---
+
+## Authentication Flow
+
+The authentication design is more mature than a basic “login and return token” flow.
+
+### Registration
+A user can register with:
+- username
+- password
+- role
+
+The password is encoded before persistence.
+
+### Login
+On successful login:
+- credentials are validated
+- an access token is generated
+- a refresh token is generated
+- the refresh token is hashed and stored in the database
+- the refresh token is returned in an HTTP cookie
+
+### Refresh
+When the client requests token refresh:
+- the refresh token is extracted from the cookie
+- it is validated
+- ownership and revocation are checked
+- the old refresh token is revoked
+- a new access token + refresh token pair is issued
+
+This gives you **refresh token rotation**, which is stronger than naive long-lived session handling.
+
+### Logout
+On logout:
+- the refresh token is extracted
+- validated
+- revoked
+- removed from the cookie
+- security context is cleared
+
+---
+
+## Security Model
+
+Security is implemented with Spring Security using a custom JWT filter.
+
+### Public routes
+The following categories are exposed publicly:
+- authentication routes under `/auth/**`
+- Swagger / OpenAPI documentation
+- Judge0 callback endpoint
+- selected public contest status routes
+
+### Protected routes
+Role restrictions include:
+- contest mutation endpoints → `ADMIN`
+- problem/test case creation → `ADMIN`
+- submissions → `TEAM` or `ADMIN`
+- admin user management → `ADMIN`
+
+The application is stateless:
+- CSRF disabled
+- form login disabled
+- HTTP basic disabled
+- session creation policy set to `STATELESS`
+
+---
+
+## Submission Pipeline
+
+This is the most important architectural part of the system.
+
+AuraC² does not execute code synchronously inside the request thread.  
+Instead, it uses **RabbitMQ** to decouple submission intake from execution.
+
+### Flow
+
+1. A user submits source code through `/api/submissions`
+2. The submission is saved in PostgreSQL
+3. The submission ID is published to RabbitMQ
+4. A RabbitMQ consumer loads the submission
+5. All test cases for the problem are fetched
+6. Each test case is sent to Judge0 asynchronously
+7. Judge0 calls back the backend for each test case result
+8. The backend updates the submission verdict, execution time, and memory usage
+
+This design prevents the API from blocking while external execution is happening.
+
+---
+
+## Why RabbitMQ is justified here
+
+RabbitMQ is not used as decoration.  
+It solves a real architectural problem in contest systems.
+
+### Without RabbitMQ
+The request thread would need to:
+- receive the code
+- send execution requests
+- wait on external processing
+- manage execution timing issues
+
+That becomes fragile and hard to scale.
+
+### With RabbitMQ
+The backend can:
+- persist the submission immediately
+- return quickly
+- process execution asynchronously
+- isolate execution pressure from API responsiveness
+- prepare for future scaling into separate workers
+
+Even on one server, this is still a meaningful design because asynchronous judging is a naturally queued workload.
+
+---
+
+## Judge0 Integration
+
+Judge0 integration is already present in the uploaded source.
+
+### Current behavior
+For each test case, the backend sends:
+- source code
+- mapped language ID
+- stdin
+- expected output
+- callback URL
+
+Judge0 then calls back:
+
+```text
+/api/callback/judge0/{submissionId}/{testCaseNumber}
+```
+
+The callback handler:
+- resolves the submission
+- maps Judge0 status to internal verdict
+- stores execution time and memory usage
+- marks the submission as failed immediately on the first failing test case
+- marks it as accepted when the final test case passes
+
+### Important note
+The current implementation is functional but still early-stage.  
+It does not yet appear to store a full per-test-case result history in a dedicated table.
+
+That means the system already supports real execution flow, but there is still room to evolve toward more detailed judging analytics.
+
+---
+
+## REST API Summary
+
+### Authentication
+
+#### Register
 ```http
-POST /api/auth/register
+POST /auth/register
+```
+
+Example body:
+```json
 {
-  "username": "amr",
-  "email": "test@gmail.com",
+  "username": "team1",
+  "password": "123456",
+  "role": "TEAM"
+}
+```
+
+#### Login
+```http
+POST /auth/login
+```
+
+Example body:
+```json
+{
+  "username": "team1",
   "password": "123456"
 }
 ```
 
-###  Login
-
+#### Refresh token
 ```http
-POST /api/auth/login
-{
-  "email": "test@gmail.com",
-  "password": "123456"
-}
+POST /auth/refresh
 ```
 
-###  Refresh Token (Auto via cookie)
+Uses the refresh token from cookie.
 
+#### Logout
 ```http
-POST /api/auth/refresh
+POST /auth/logout
 ```
 
 ---
 
-##  Ngrok Setup (To Test Gmail + JWT + Judge0)
+### Contest Management
 
-Expose backend to the internet:
+#### Create contest
+```http
+POST /api/contest
+```
 
+#### Start contest
+```http
+PUT /api/contest/{id}/start
+```
+
+#### Pause contest
+```http
+PUT /api/contest/{id}/pause
+```
+
+#### End contest
+```http
+PUT /api/contest/{id}/end
+```
+
+#### Get running contest
+```http
+GET /api/contest/active
+```
+
+#### Get upcoming contest
+```http
+GET /api/contest/upcoming
+```
+
+#### Get paused contest
+```http
+GET /api/contest/paused
+```
+
+#### Get ended contests
+```http
+GET /api/contest/ended
+```
+
+---
+
+### Problem Management
+
+#### Create problem
+```http
+POST /api/problems
+```
+
+#### Get one problem
+```http
+GET /api/problems/{id}
+```
+
+#### Get all contest problems
+```http
+GET /api/problems/contest/{id}
+```
+
+---
+
+### Test Case Management
+
+#### Add test case
+```http
+POST /api/testcases/{problemId}
+```
+
+#### Get test cases for a problem
+```http
+GET /api/testcases/problem/{problemId}
+```
+
+---
+
+### Submission Management
+
+#### Submit code
+```http
+POST /api/submissions
+```
+
+#### Get one submission
+```http
+GET /api/submissions/{id}
+```
+
+#### Get my submissions for a problem
+```http
+GET /api/submissions/my?problemID={id}
+```
+
+#### Get all my submissions
+```http
+GET /api/submissions/my/all
+```
+
+---
+
+### Admin Endpoints
+
+#### Get all users
+```http
+GET /api/admin/users
+```
+
+#### Update username
+```http
+PUT /api/admin/users/{userId}/name
+```
+
+#### Update password
+```http
+PUT /api/admin/users/{userId}/password
+```
+
+#### Delete user
+```http
+DELETE /api/admin/users/{userId}
+```
+
+#### Get all submissions
+```http
+GET /api/admin/users/submissions
+```
+
+---
+
+## Configuration
+
+The uploaded source includes configuration for:
+- PostgreSQL
+- RabbitMQ
+- Gmail SMTP
+- JWT secrets
+- Judge0 endpoint
+- Swagger UI
+
+### Example application.yml shape
+
+```yaml
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/authserver
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  rabbitmq:
+    host: ${RABBIT_HOST}
+    port: ${RABBIT_PORT}
+    username: ${RABBIT_USERNAME}
+    password: ${RABBIT_PASSWORD}
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${SMTP_EMAIL}
+    password: ${SMTP_PASS}
+
+jwt:
+  access-secret: ${JWT_ACCESS_SECRET}
+  refresh-secret: ${JWT_REFRESH_SECRET}
+  expiration: 900000
+  refresh-expiration: 604800000
+
+judge0:
+  url: ${JUDGE0_URL}
+  callback: ${JUDGE0_CALLBACK_URL}
+```
+
+---
+
+## Important Security Note
+
+The uploaded `application.yml` contains real-looking secrets and credentials.  
+These should **not** remain committed in a public repository.
+
+Move them to:
+- environment variables
+- `.env`
+- Docker secrets
+- deployment platform secret storage
+
+At minimum, rotate:
+- database password
+- SMTP app password
+- JWT secrets
+- any exposed public callback URLs
+
+---
+
+## Running the Project
+
+### Requirements
+- Java 17+
+- PostgreSQL
+- RabbitMQ
+- Maven
+- internet access to reach Judge0
+- a public callback URL for Judge0 responses during local development
+
+### Start RabbitMQ with Docker
+```bash
+docker run -d \
+  --hostname rabbit \
+  --name rabbitmq \
+  -p 5672:5672 \
+  -p 15672:15672 \
+  rabbitmq:3-management
+```
+
+RabbitMQ dashboard:
+```text
+http://localhost:15672
+```
+
+Default credentials:
+```text
+guest / guest
+```
+
+### Expose local callback endpoint
+Because Judge0 needs to call your backend, local development usually requires a public tunnel such as ngrok.
+
+Example:
 ```bash
 ngrok http 8080
 ```
 
-Set your online base URL:
-
-```
-BASE_URL = https://your-ngrok-id.ngrok-free.app
-```
-
-Now Gmail verification & API calls work normally — even while running **localhost**.
-
----
-
-## 🛠 Environment Variables
-
-Create `.env` or add in `application.properties`:
-
-```
-DB_USERNAME=root
-DB_PASSWORD=123456
-JWT_SECRET=mysecretkey
-SMTP_EMAIL=your.email@gmail.com
-SMTP_PASS=your_gmail_app_password
+Then configure:
+```yaml
+judge0:
+  callback: https://your-ngrok-url/api/callback/judge0
 ```
 
----
-
-##  Why RabbitMQ?
-
-Judge0 responses may take several seconds.  
-Direct HTTP calls block the request ❌
-
-✔ So we used **RabbitMQ + JSON Converter** → asynchronous, scalable, microservice-ready.
-
-```java
-@Bean
-public MessageConverter converter() {
-    return new Jackson2JsonMessageConverter();
-}
-```
-
-➡ System now supports **non-blocking code execution** — like real online judge platforms.
-
----
-
-##  Section 6 — Design Challenges & Solutions
-
-| Design Challenge                          | Design Decision                        | Impact                                  |
-| ----------------------------------------- | -------------------------------------- | --------------------------------------- |
-| Judge0 API is asynchronous                | Used RabbitMQ instead of direct HTTP   | Non-blocking & scalable execution       |
-| Mapping multiple TestCases to one Problem | Used `OneToMany` relation              | Supports real contest logic             |
-| Identifying which test failed             | Plan entity `SubmissionTestCaseResult` | Allows detailed feedback per user       |
-| API was leaking DB entity                 | Added DTO layer for data transfer      | Clean architecture + safer API          |
-| Token storage design                      | Created separate Token Entities        | Supports JWT rotation + OAuth in future |
-
-✔ **All decisions were made for scalability, not only for passing the assignment.**
-
----
-
-##  How to Run
-
+### Run the application
 ```bash
 mvn spring-boot:run
 ```
 
-RabbitMQ (Docker):
+---
 
-```bash
-docker run -d --hostname rabbit --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management
-```
+## Design Decisions Reflected in the Code
 
-Access queue interface:  
-`http://localhost:15672` → guest / guest
+### 1. Domain separation over one giant package
+Authentication, contest logic, and submission execution are split into separate domains.  
+This reduces coupling and makes future extension cleaner.
+
+### 2. JWT access token + refresh token rotation
+The project does not rely on a single forever-valid token.  
+Refresh tokens are persisted, hashed, and revocable.
+
+### 3. Database-backed truth + queue-based execution dispatch
+Submissions are stored before execution dispatch.  
+RabbitMQ is used for delivery, not as the only source of truth.
+
+### 4. Role-aware API design
+Administrative actions are separated from team actions through method-level and route-level authorization.
+
+### 5. External execution through Judge0
+Instead of embedding compilers and sandboxes directly into the backend, the system delegates code execution to Judge0, reducing infrastructure complexity in this phase.
 
 ---
 
-##  Next Steps (Assignment 4)
+## Current Limitations
 
-* Implement `Submission` entity  
-* Full Judge0 API integration  
-* Track per-test-case results  
-* Leaderboard & ranking system  
-* Deploy backend to cloud (Render / Railway / Fly.io)
+Based on the uploaded source, the following areas still look incomplete or early-stage:
+- result queue producer/consumer classes are still empty
+- no scoreboard implementation yet
+- no clarification / announcement module
+- no explicit per-test-case result entity yet
+- some exceptions are still generic `RuntimeException`
+- current config uses `ddl-auto: create-drop`, which is not suitable for production
+- current source tree does not show migration tooling
+- refresh token security is stronger than basic auth systems, but broader audit/session management can still be expanded
 
 ---
 
+## Suggested Next Milestones
 
+### Contest Experience
+- scoreboard
+- ranking logic
+- freeze/unfreeze support
+- contest announcements
+- clarifications
 
+### Judging Improvements
+- per-test-case result table
+- richer verdict history
+- retry and failure recovery logic
+- worker observability and metrics
+
+### Security & Production Readiness
+- externalized secrets
+- production profile
+- structured logging
+- database migrations
+- better exception taxonomy
+- deployment pipeline
+
+### Platform Growth
+- WebSocket live updates
+- team registration workflow
+- plagiarism detection integration
+- multi-contest history
+- organization / university-level administration
+
+---
+
+## Project Positioning
+
+AuraC² is already beyond a basic student CRUD project.
+
+What makes it stronger is not just the number of entities, but the fact that it already includes:
+- stateless JWT security
+- refresh token lifecycle handling
+- role-based API protection
+- contest state management
+- asynchronous submission dispatch
+- real external judge integration
+- callback-driven verdict updates
+
+That makes it a solid foundation for a real online judge system rather than a mock academic prototype.
+
+---
+
+## Disclaimer
+
+This README is based on the uploaded source tree provided in this review.  
+If your repository also contains additional root files such as:
+- `pom.xml`
+- Docker Compose
+- frontend code
+- deployment configs
+- migration scripts
+
+then the final README can be refined further to document those parts precisely.
