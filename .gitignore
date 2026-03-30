@@ -1,0 +1,171 @@
+# ===========================
+# Backend (Spring Boot/Maven)
+# ===========================
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Java
+*.class
+*.log
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+replay_pid*
+
+# Spring Boot
+HELP.md
+
+# ===========================
+# Frontend (React/Vite/Node)
+# ===========================
+
+# Dependencies
+node_modules/
+jspm_packages/
+
+# Build outputs
+dist/
+dist-ssr/
+build/
+*.local
+
+# Vite
+.vite/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Testing
+coverage/
+*.lcov
+.nyc_output
+
+# ===========================
+# IDEs and Editors
+# ===========================
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+bin/
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/nbdist/
+/.nb-gradle/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# ===========================
+# Operating Systems
+# ===========================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ===========================
+# Configuration & Secrets
+# ===========================
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+*.env
+
+# Application secrets (be careful with application.yml!)
+# Uncomment if you want to ignore it completely:
+# **/application.yml
+# **/application-*.yml
+
+# ===========================
+# Temporary & Cache Files
+# ===========================
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.cache/
+
+# Package lock files (optional - choose your preference)
+# package-lock.json
+# yarn.lock
+
+# ===========================
+# Documentation & Archives
+# ===========================
+
+# Zipped source files
+*.zip
+src.zip
+src\ (2).zip
+*.7z
+
+# ===========================
+# Project Specific
+# ===========================
+
+# Uploaded docs/diagrams (keep only source files in git)
+# docs/*.pdf
+
+# Admin/team zip exports
+admin.zip
+team.zip
