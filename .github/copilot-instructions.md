@@ -137,3 +137,8 @@ Application config is in `backend/.../src/main/resources/application.yml`. Key p
 | `/api/contest/**` (mutations) | ADMIN only |
 | `/api/submissions/**` | TEAM or ADMIN |
 | `/api/admin/**` | ADMIN only |
+
+## Important: Judge0 Callback
+- Callback URL must be publicly accessible (ngrok in dev)
+- Never call Judge0 synchronously — always go through RabbitMQ
+
