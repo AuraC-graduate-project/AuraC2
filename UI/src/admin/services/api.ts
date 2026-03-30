@@ -194,12 +194,17 @@ export async function startContest(id: number): Promise<void> {
   await apiFetch<void>(`/api/contest/${id}/start`, { method: "PUT" });
 }
 
+export async function resumeContest(id: number): Promise<void> {
+  await apiFetch<void>(`/api/contest/${id}/resume`, { method: "PUT" });
+}
+
 export async function pauseContest(id: number): Promise<void> {
   await apiFetch<void>(`/api/contest/${id}/pause`, { method: "PUT" });
 }
 
-export async function endContest(id: number): Promise<void> {
-  await apiFetch<void>(`/api/contest/${id}/end`, { method: "PUT" });
+export async function endContest(id: number, juryOverride = false): Promise<void> {
+  const params = juryOverride ? "?juryOverride=true" : "";
+  await apiFetch<void>(`/api/contest/${id}/end${params}`, { method: "PUT" });
 }
 
 

@@ -4,9 +4,14 @@ export interface ContestResponse {
   id: number;
   title: string;
   description: string;
-  startTime: string; // ISO 8601
+  startTime: string; // ISO 8601 (UTC)
+  endTime: string | null; // Computed: startTime + durationMinutes
   durationMinutes: number;
   status: 'RUNNING' | 'PAUSED' | 'ENDED' | 'UPCOMING';
+  scoreboardFreezeMinutes: number | null;
+  scoreboardFreezeTime: string | null; // Computed: endTime - freezeMinutes
+  penaltyMinutes: number;
+  scoreboardFrozen: boolean;
 }
 
 export interface ContestRequest {
@@ -14,6 +19,8 @@ export interface ContestRequest {
   description: string;
   startTime: string; // ISO 8601
   durationMinutes: number;
+  scoreboardFreezeMinutes?: number | null;
+  penaltyMinutes?: number;
 }
 
 export interface ProblemRequest {

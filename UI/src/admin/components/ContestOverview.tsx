@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -10,7 +10,9 @@ import {
   Plus,
   Calendar,
   Clock,
-  FileText
+  FileText,
+  RotateCcw,
+  Snowflake
 } from 'lucide-react';
 import {
   getActiveContest,
@@ -18,6 +20,7 @@ import {
   getPausedContest,
   getEndedContests,
   startContest,
+  resumeContest,
   pauseContest,
   endContest
 } from '../services/api';
@@ -33,12 +36,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from './ui/alert-dialog';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
-} from './ui/tooltip';
+import { Checkbox } from './ui/checkbox';
 import { toast } from 'sonner';
 
 type ContestTab = 'active' | 'upcoming' | 'paused' | 'ended';
@@ -50,8 +48,9 @@ export function ContestOverview() {
   const [loading, setLoading] = useState(true);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [endDialogOpen, setEndDialogOpen] = useState(false);
+  const [juryOverride, setJuryOverride] = useState(false);
 
-  const loadContest = async () => {
+  const loadContest = useCallback(async () => {
     setLoading(true);
     try {
       if (contestType === 'ended') {
@@ -69,39 +68,62 @@ export function ContestOverview() {
         setContest(data);
         setEndedContests([]);
       }
-    } catch (e) {
-      toast.error('Failed to load contest');
+    } catch {
       setContest(null);
       setEndedContests([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [contestType]);
 
   useEffect(() => {
     loadContest();
-  }, [contestType]);
+  }, [loadContest]);
 
   const handleStart = async () => {
     if (!contest) return;
-    await startContest(contest.id);
-    toast.success('Contest started');
-    loadContest();
+    try {
+      await startContest(contest.id);
+      toast.success('Contest started');
+      loadContest();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to start contest');
+    }
+  };
+
+  const handleResume = async () => {
+    if (!contest) return;
+    try {
+      await resumeContest(contest.id);
+      toast.success('Contest resumed');
+      loadContest();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to resume contest');
+    }
   };
 
   const handlePause = async () => {
     if (!contest) return;
-    await pauseContest(contest.id);
-    toast.success('Contest paused');
-    loadContest();
+    try {
+      await pauseContest(contest.id);
+      toast.success('Contest paused');
+      loadContest();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to pause contest');
+    }
   };
 
   const handleEnd = async () => {
     if (!contest) return;
-    await endContest(contest.id);
-    toast.success('Contest ended');
-    setEndDialogOpen(false);
-    loadContest();
+    try {
+      await endContest(contest.id, juryOverride);
+      toast.success('Contest ended');
+      setEndDialogOpen(false);
+      setJuryOverride(false);
+      loadContest();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to end contest');
+    }
   };
 
   const getStatusColor = (status: ContestResponse['status']) => {
@@ -125,8 +147,9 @@ export function ContestOverview() {
     return `${h} hour${h > 1 ? 's' : ''} ${r} min`;
   };
 
-  const formatStartTime = (iso: string) =>
-    new Date(iso).toLocaleString('en-US', {
+  const formatTime = (iso: string | null) => {
+    if (!iso) return 'N/A';
+    return new Date(iso).toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -134,8 +157,19 @@ export function ContestOverview() {
       minute: '2-digit',
       timeZoneName: 'short'
     });
+  };
+
+  // Compute if contest should be startable based on time
+  const canStartNow = useMemo(() => {
+    if (!contest || contest.status !== 'UPCOMING') return false;
+    const startTime = new Date(contest.startTime).getTime();
+    const now = Date.now();
+    // Allow starting 1 minute before scheduled time (matches backend grace period)
+    return now >= startTime - 60_000;
+  }, [contest]);
 
   const canStart = contest?.status === 'UPCOMING';
+  const canResume = contest?.status === 'PAUSED';
   const canPause = contest?.status === 'RUNNING';
   const canEnd = contest?.status === 'RUNNING' || contest?.status === 'PAUSED';
 
@@ -145,9 +179,7 @@ export function ContestOverview() {
         <CardHeader className="bg-[#1E293B] text-white py-4">
           <div className="flex items-center justify-between min-h-[48px]">
             <div className="flex items-center gap-4">
-              <CardTitle className="leading-none">
-                Contest Overview
-              </CardTitle>
+              <CardTitle className="leading-none">Contest Overview</CardTitle>
 
               <ToggleGroup
                 type="single"
@@ -155,20 +187,14 @@ export function ContestOverview() {
                 onValueChange={(v) => v && setContestType(v as ContestTab)}
                 className="bg-slate-700 rounded-lg h-9 px-1 flex items-center"
               >
-                {['active', 'upcoming', 'paused', 'ended'].map((t) => (
+                {(['active', 'upcoming', 'paused', 'ended'] as const).map((t) => (
                   <ToggleGroupItem
                     key={t}
                     value={t}
                     className="
-              capitalize
-              h-7
-              px-3
-              text-sm
-              text-slate-200
-              data-[state=on]:bg-white
-              data-[state=on]:text-slate-900
-              data-[state=on]:shadow
-            "
+                      capitalize h-7 px-3 text-sm text-slate-200
+                      data-[state=on]:bg-white data-[state=on]:text-slate-900 data-[state=on]:shadow
+                    "
                   >
                     {t}
                   </ToggleGroupItem>
@@ -176,25 +202,28 @@ export function ContestOverview() {
               </ToggleGroup>
             </div>
 
-            {contest && (
-              <Badge className={`${getStatusColor(contest.status)} border`}>
-                {contest.status}
-              </Badge>
-            )}
+            <div className="flex items-center gap-2">
+              {contest?.scoreboardFrozen && (
+                <Badge className="bg-cyan-100 text-cyan-700 border-cyan-200 border gap-1">
+                  <Snowflake className="w-3 h-3" />
+                  Frozen
+                </Badge>
+              )}
+              {contest && (
+                <Badge className={`${getStatusColor(contest.status)} border`}>
+                  {contest.status}
+                </Badge>
+              )}
+            </div>
           </div>
         </CardHeader>
 
-
         <CardContent className="p-6">
           {loading ? (
-            <div className="text-center text-slate-600 py-8">
-              Loading contest...
-            </div>
+            <div className="text-center text-slate-600 py-8">Loading contest...</div>
           ) : contestType === 'ended' ? (
             endedContests.length === 0 ? (
-              <div className="text-center py-12 text-slate-600">
-                No ended contests
-              </div>
+              <div className="text-center py-12 text-slate-600">No ended contests</div>
             ) : (
               <div className="space-y-4">
                 {endedContests.map((c) => (
@@ -204,13 +233,9 @@ export function ContestOverview() {
                   >
                     <div>
                       <p className="font-medium text-slate-900">{c.title}</p>
-                      <p className="text-sm text-slate-600">
-                        {c.description}
-                      </p>
+                      <p className="text-sm text-slate-600">{c.description}</p>
                     </div>
-                    <Badge className="bg-red-100 text-red-700 border-red-200">
-                      ENDED
-                    </Badge>
+                    <Badge className="bg-red-100 text-red-700 border-red-200">ENDED</Badge>
                   </div>
                 ))}
               </div>
@@ -243,9 +268,14 @@ export function ContestOverview() {
                       <Calendar className="w-4 h-4" />
                       Start Time
                     </label>
-                    <p className="text-slate-900">
-                      {formatStartTime(contest.startTime)}
-                    </p>
+                    <p className="text-slate-900">{formatTime(contest.startTime)}</p>
+                  </div>
+                  <div>
+                    <label className="text-slate-600 flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      End Time
+                    </label>
+                    <p className="text-slate-900">{formatTime(contest.endTime)}</p>
                   </div>
                 </div>
 
@@ -255,9 +285,22 @@ export function ContestOverview() {
                       <Clock className="w-4 h-4" />
                       Duration
                     </label>
+                    <p className="text-slate-900">{formatDuration(contest.durationMinutes)}</p>
+                  </div>
+                  <div>
+                    <label className="text-slate-600 flex items-center gap-2">
+                      <Snowflake className="w-4 h-4" />
+                      Scoreboard Freeze
+                    </label>
                     <p className="text-slate-900">
-                      {formatDuration(contest.durationMinutes)}
+                      {contest.scoreboardFreezeMinutes
+                        ? `${contest.scoreboardFreezeMinutes} min before end`
+                        : 'Disabled'}
                     </p>
+                  </div>
+                  <div>
+                    <label className="text-slate-600">Penalty per Wrong Answer</label>
+                    <p className="text-slate-900">{contest.penaltyMinutes} minutes</p>
                   </div>
                 </div>
               </div>
@@ -268,11 +311,21 @@ export function ContestOverview() {
                 <div className="flex flex-wrap gap-3">
                   <Button
                     className="bg-green-600 hover:bg-green-700 gap-2"
-                    disabled={!canStart}
+                    disabled={!canStart || !canStartNow}
                     onClick={handleStart}
+                    title={canStart && !canStartNow ? 'Cannot start before scheduled time' : ''}
                   >
                     <Play className="w-4 h-4" />
                     Start Contest
+                  </Button>
+
+                  <Button
+                    className="bg-blue-600 hover:bg-blue-700 gap-2"
+                    disabled={!canResume}
+                    onClick={handleResume}
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Resume Contest
                   </Button>
 
                   <Button
@@ -310,15 +363,25 @@ export function ContestOverview() {
           <AlertDialogHeader>
             <AlertDialogTitle>End Contest?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone.
+              This action cannot be undone. The contest will be marked as ended.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleEnd}
-              className="bg-red-600 hover:bg-red-700"
+          <div className="flex items-center space-x-2 py-4">
+            <Checkbox
+              id="jury-override"
+              checked={juryOverride}
+              onCheckedChange={(checked) => setJuryOverride(checked === true)}
+            />
+            <label
+              htmlFor="jury-override"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
+              Jury Override (end before scheduled time)
+            </label>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setJuryOverride(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleEnd} className="bg-red-600 hover:bg-red-700">
               End Contest
             </AlertDialogAction>
           </AlertDialogFooter>
