@@ -125,6 +125,8 @@ export default function TeamApp({ onLogout }: { onLogout: () => void }) {
             problem:
               problems.find(p => p.id === api.problemId)?.title ??
               `#${api.problemId}`,
+            problemId: api.problemId,
+            contestId: api.contestId,
             verdict: mapVerdict(api.verdict),
             language: api.language,
             time: new Date(api.createdAt).toLocaleTimeString(),
@@ -165,6 +167,8 @@ export default function TeamApp({ onLogout }: { onLogout: () => void }) {
             problem:
               problems.find(p => p.id === api.problemId)?.title ??
               `#${api.problemId}`,
+            problemId: api.problemId,
+            contestId: api.contestId,
             verdict: mapVerdict(api.verdict),
             language: api.language,
             time: new Date(api.createdAt).toLocaleTimeString(),
@@ -189,7 +193,7 @@ export default function TeamApp({ onLogout }: { onLogout: () => void }) {
 
   const problemsWithStatus = useMemo(() => {
     return problems.map(p => {
-      const subs = allSubmissions.filter(s => s.problem === p.title);
+      const subs = allSubmissions.filter(s => s.problemId === p.id);
 
       let status: ProblemStatus = "unsolved";
 

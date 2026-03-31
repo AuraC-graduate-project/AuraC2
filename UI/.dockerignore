@@ -1,0 +1,28 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+*.md
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build output (will be generated inside Docker)
+dist
+
+# Test coverage
+coverage
+*.lcov
+
+# Vite
+.vite

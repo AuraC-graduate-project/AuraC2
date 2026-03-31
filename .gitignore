@@ -134,6 +134,17 @@ $RECYCLE.BIN/
 # **/application-*.yml
 
 # ===========================
+# Docker
+# ===========================
+
+# Docker override files (safe to commit examples)
+docker-compose.override.yml
+*.env
+
+# Docker build cache
+.docker/
+
+# ===========================
 # Temporary & Cache Files
 # ===========================
 

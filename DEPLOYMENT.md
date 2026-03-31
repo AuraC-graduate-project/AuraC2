@@ -56,9 +56,9 @@ npm run dev
 
 ---
 
-## Option 2: Full Docker Deployment
+## Option 2: Full Docker Deployment (Recommended for Production)
 
-Run everything in Docker containers (requires building images).
+Run everything in Docker containers (backend, frontend, PostgreSQL, RabbitMQ).
 
 ### 1. Create .env file
 
@@ -66,20 +66,29 @@ Run everything in Docker containers (requires building images).
 cp .env.example .env
 ```
 
-Edit `.env` and set your ngrok URL:
-```
+Edit `.env` and set your values:
+```bash
+# Judge0 callback (use ngrok URL for development or production URL)
 JUDGE0_CALLBACK_URL=https://your-ngrok-url.ngrok-free.app/api/callback/judge0
+
+# JWT Secrets (IMPORTANT: Change these in production!)
+JWT_ACCESS_SECRET=your-super-secret-access-key-min-32-chars
+JWT_REFRESH_SECRET=your-super-secret-refresh-key-min-32-chars
 ```
 
-### 2. Uncomment backend and frontend services
-
-Edit `docker-compose.yml` and uncomment the `backend` and `frontend` services.
-
-### 3. Build and Start All Services
+### 2. Build and Start All Services
 
 ```bash
 docker-compose up --build
 ```
+
+Wait for all services to be healthy (check with `docker-compose ps`).
+
+### 3. Access the Application
+
+- **Frontend**: http://localhost
+- **Backend API**: http://localhost:8080
+- **Swagger UI**: http://localhost:8080/swagger-ui.html
 
 ---
 
@@ -87,7 +96,7 @@ docker-compose up --build
 
 | Service | URL | Credentials |
 |---------|-----|-------------|
-| Frontend | http://localhost:5173 (dev) or http://localhost:80 (docker) | - |
+| Frontend | http://localhost | - |
 | Backend API | http://localhost:8080 | - |
 | PostgreSQL | localhost:5432 | postgres/1234 |
 | RabbitMQ AMQP | localhost:5672 | guest/guest |
@@ -105,6 +114,8 @@ docker-compose up --build
 docker-compose logs -f
 
 # Specific service
+docker-compose logs -f backend
+docker-compose logs -f frontend
 docker-compose logs -f postgres
 docker-compose logs -f rabbitmq
 ```
@@ -114,7 +125,7 @@ docker-compose logs -f rabbitmq
 # Stop all services
 docker-compose down
 
-# Stop and remove volumes (deletes database data)
+# Stop and remove volumes (deletes database data!)
 docker-compose down -v
 ```
 
@@ -124,12 +135,18 @@ docker-compose down -v
 docker-compose restart
 
 # Restart specific service
-docker-compose restart postgres
+docker-compose restart backend
 ```
 
 ### Check Service Health
 ```bash
 docker-compose ps
+```
+
+### Rebuild Services
+```bash
+# Rebuild and restart (after code changes)
+docker-compose up --build -d
 ```
 
 ---
@@ -169,47 +186,74 @@ You can monitor:
 ## 🔄 Production Considerations
 
 ### 1. Change Database Persistence
-Edit `application.yml`:
-```yaml
-spring:
-  jpa:
-    hibernate:
-      ddl-auto: update  # Change from create-drop
+Edit `application.yml` or set environment variable:
+```bash
+SPRING_JPA_DDL_AUTO=update
 ```
 
-### 2. Use Environment Variables for Secrets
-Instead of hardcoded values, use:
-```yaml
-spring:
-  datasource:
-    password: ${POSTGRES_PASSWORD}
-jwt:
-  access-secret: ${JWT_ACCESS_SECRET}
-  refresh-secret: ${JWT_REFRESH_SECRET}
+**Important**: Change from `create-drop` to `update` for production to preserve data.
+
+### 2. Use Strong Secrets
+In your `.env` file (never commit this!):
+```bash
+JWT_ACCESS_SECRET=generate-a-strong-random-string-at-least-32-chars
+JWT_REFRESH_SECRET=generate-another-strong-random-string
+POSTGRES_PASSWORD=use-a-strong-database-password
+```
+
+Generate strong secrets:
+```bash
+# Linux/Mac
+openssl rand -base64 32
+
+# Or use this online tool: https://generate-secret.vercel.app/32
 ```
 
 ### 3. Self-host Judge0
 The current setup uses Judge0 CE (public). For production:
 - Deploy your own Judge0 instance
-- Update `judge0.url` in configuration
+- Update `JUDGE0_URL` in `.env`
 
-### 4. Use a Proper Tunneling Solution
-ngrok free tier resets URLs on restart. Consider:
-- Setting up a proper reverse proxy
-- Using ngrok paid tier with fixed domains
-- Deploying to a cloud provider with public IPs
+### 4. Configure Proper Callback URL
+For production, use your actual domain:
+```bash
+JUDGE0_CALLBACK_URL=https://your-domain.com/api/callback/judge0
+```
 
 ### 5. Enable HTTPS
-Configure SSL certificates for production deployment.
+Configure SSL certificates or use a reverse proxy (nginx, traefik) with Let's Encrypt.
+
+### 6. Resource Limits
+Add resource limits to `docker-compose.yml` for production:
+```yaml
+services:
+  backend:
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+```
 
 ---
 
 ## 🆘 Troubleshooting
 
+### Backend won't start
+```bash
+# Check logs
+docker-compose logs backend
+
+# Common issues:
+# - Database not ready: wait for postgres healthcheck
+# - RabbitMQ not ready: wait for rabbitmq healthcheck
+# - Port already in use: change port in docker-compose.yml
+```
+
 ### PostgreSQL won't start
 ```bash
 # Check if port 5432 is in use
-lsof -i :5432
+netstat -ano | findstr :5432
 
 # Remove existing container and volume
 docker-compose down -v
@@ -225,15 +269,19 @@ docker-compose logs rabbitmq
 docker-compose exec rabbitmq rabbitmq-diagnostics ping
 ```
 
-### Backend can't connect to services
-- Ensure Docker services are running: `docker-compose ps`
-- Check connection strings in `application.yml` use `localhost`
-- For full Docker deployment, use service names (`postgres`, `rabbitmq`)
+### Frontend can't connect to backend
+- Ensure backend is running: `docker-compose ps backend`
+- Check nginx config in `UI/nginx.conf`
+- Verify API_BASE_URL environment variable if set
 
-### ngrok URL expired
-- Restart ngrok: `ngrok http 8080`
-- Update `application.yml` with new URL
-- Restart backend
+### Judge0 callback fails
+- Ensure ngrok is running: `ngrok http 8080`
+- Update `JUDGE0_CALLBACK_URL` in `.env` with current ngrok URL
+- Rebuild backend: `docker-compose up --build backend`
+
+### Database schema keeps resetting
+- Change `SPRING_JPA_DDL_AUTO` to `update` in `.env`
+- Restart: `docker-compose down && docker-compose up -d`
 
 ---
 
@@ -249,5 +297,44 @@ docker-compose down -v
 docker images | grep aura | awk '{print $3}' | xargs docker rmi -f
 
 # Start fresh
-docker-compose up -d
+docker-compose up --build
 ```
+
+---
+
+## 🏗️ Architecture Overview
+
+```
+┌─────────────┐     ┌─────────────┐
+│  Frontend   │────▶│   Backend   │
+│   (Nginx)   │     │ (Spring Boot)│
+│   Port 80   │     │   Port 8080  │
+└─────────────┘     └──────┬──────┘
+                           │
+              ┌────────────┼────────────┐
+              │            │            │
+              ▼            ▼            ▼
+        ┌──────────┐ ┌──────────┐ ┌──────────┐
+        │PostgreSQL│ │ RabbitMQ │ │  Judge0  │
+        │  :5432   │ │  :5672   │ │(External)│
+        └──────────┘ └──────────┘ └──────────┘
+```
+
+---
+
+## 📝 Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/authserver` | Database connection URL |
+| `SPRING_DATASOURCE_USERNAME` | `postgres` | Database username |
+| `SPRING_DATASOURCE_PASSWORD` | `1234` | Database password |
+| `SPRING_JPA_DDL_AUTO` | `create-drop` | Hibernate DDL mode |
+| `SPRING_RABBITMQ_HOST` | `localhost` | RabbitMQ host |
+| `SPRING_RABBITMQ_PORT` | `5672` | RabbitMQ port |
+| `SPRING_RABBITMQ_USERNAME` | `guest` | RabbitMQ username |
+| `SPRING_RABBITMQ_PASSWORD` | `guest` | RabbitMQ password |
+| `JUDGE0_URL` | `https://ce.judge0.com/submissions?wait=false` | Judge0 API URL |
+| `JUDGE0_CALLBACK_URL` | (ngrok URL) | Callback URL for Judge0 |
+| `JWT_ACCESS_SECRET` | (default key) | JWT access token secret |
+| `JWT_REFRESH_SECRET` | (default key) | JWT refresh token secret |

@@ -1,19 +1,17 @@
 
-judge0:
-  url: "https://ce.judge0.com/submissions?wait=false"
-  callback: "https://3134-37-202-72-129.ngrok-free.app/api/callback/judge0"
-
 spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/authserver
-    username: postgres
-    password: 1234
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/authserver}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:1234}
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: ${SPRING_JPA_DDL_AUTO:update}
     show-sql: false
     properties:
       hibernate:
@@ -21,21 +19,17 @@ spring:
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 
-
-
   rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
-
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:guest}
+    password: ${SPRING_RABBITMQ_PASSWORD:guest}
 
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username: namelessorgao@gmail.com
-    password: caku ucxf cvuq cicb
-
+    host: ${SPRING_MAIL_HOST:smtp.gmail.com}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:namelessorgao@gmail.com}
+    password: ${SPRING_MAIL_PASSWORD:caku ucxf cvuq cicb}
     properties:
       mail:
         smtp:
@@ -43,19 +37,17 @@ spring:
           starttls:
             enable: true
 
+judge0:
+  url: ${JUDGE0_URL:https://ce.judge0.com/submissions?wait=false}
+  callback: ${JUDGE0_CALLBACK_URL:http://localhost:8080/api/callback/judge0}
 
 jwt:
-  access-secret: 9m2a3m8a4m0alk218i12kf95anf82a4d1lsb4e3d2jsf3a586a7b5e82kj91h2m5
-  refresh-secret: 7b5a3d244a3e646f7a556b584e327a4d6c5b4e3d445f3a586a7b5e326e756e74
+  #dont change me. hallaq cry to make it work :) (i have 64B problem)
+  access-secret: ${JWT_ACCESS_SECRET}
+  refresh-secret: ${JWT_REFRESH_SECRET}
   expiration: 900000        # 15 minutes
   refresh-expiration: 604800000 # 7 days
-
 
 springdoc:
   swagger-ui:
     enabled: true
-
-#logging:
-#  level:
-#    org.springdoc: DEBUG
-#    org.springframework.boot.autoconfigure: DEBUG

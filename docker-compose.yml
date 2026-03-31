@@ -1,4 +1,3 @@
-
 services:
   postgres:
     image: postgres:15
@@ -37,6 +36,54 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # Backend service (Spring Boot)
+  backend:
+    build:
+      context: ./backend/aura-contest-control/jwtAuthServer
+      dockerfile: Dockerfile
+    container_name: aura-backend
+    ports:
+      - "8080:8080"
+    environment:
+      # Database
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/authserver
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 1234
+      # RabbitMQ
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+      # Judge0 callback (update with your ngrok URL or production URL)
+      JUDGE0_CALLBACK_URL: http://backend:8080/api/callback/judge0
+      # JWT Secrets - MUST be valid base64 (use openssl rand -base64 32)
+      JWT_ACCESS_SECRET: "HrsxedVrtFb4LRvJXWmNbN/UAWhz6i0yZQH4DafTEZo="
+      JWT_REFRESH_SECRET: "TAvuy/amtiO5tEpBHUVArpY8pG6syxwTAqfYYZxRHnI="
+      # Database DDL mode (use 'update' for production to preserve data)
+      SPRING_JPA_DDL_AUTO: update
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - aura-network
+    restart: unless-stopped
+
+  # Frontend service (React + Nginx)
+  frontend:
+    build:
+      context: ./UI
+      dockerfile: Dockerfile
+    container_name: aura-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - aura-network
+    restart: unless-stopped
 
 networks:
   aura-network:
