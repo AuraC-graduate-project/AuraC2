@@ -40,7 +40,7 @@ services:
   # Backend service (Spring Boot)
   backend:
     build:
-      context: ./backend/aura-contest-control/jwtAuthServer
+      context: backend/aura-contest-control/servers
       dockerfile: Dockerfile
     container_name: aura-backend
     ports:
