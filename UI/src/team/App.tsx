@@ -5,6 +5,7 @@ import { CodeEditor } from "./components/CodeEditor";
 import { SubmissionHistory, Submission } from "./components/SubmissionHistory";
 import { Clarifications } from "./components/Clarifications";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
+import { decodeJwtSubject } from "../auth/jwt";
 import {
   getActiveContest,
   getProblemsByContest,
@@ -21,12 +22,7 @@ function getTeamNameFromToken(): string {
   try {
     const token = localStorage.getItem("access_token");
     if (!token) return "Team";
-
-    const [, payload] = token.split(".");
-    if (!payload) return "Team";
-
-    const data = JSON.parse(atob(payload));
-    return typeof data.sub === "string" ? data.sub : "Team";
+    return decodeJwtSubject(token) ?? "Team";
   } catch {
     return "Team";
   }

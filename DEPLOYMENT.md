@@ -32,7 +32,7 @@ Copy the HTTPS URL (e.g., `https://xxxx.ngrok-free.app`)
 
 ### 3. Update Backend Configuration
 
-Edit `backend/aura-contest-control/jwtAuthServer/src/main/resources/application.yml`:
+Edit `backend/src/main/resources/application.yml`:
 
 ```yaml
 judge0:
@@ -42,7 +42,7 @@ judge0:
 ### 4. Start Backend
 
 ```bash
-cd backend/aura-contest-control/jwtAuthServer
+cd backend
 ./mvnw spring-boot:run
 ```
 

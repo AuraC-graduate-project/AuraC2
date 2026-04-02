@@ -9,7 +9,7 @@ The project is now **fully ready** for Docker deployment!
 | File | Purpose |
 |------|---------|
 | `docker-compose.yml` | Main orchestration file with all 4 services |
-| `backend/aura-contest-control/jwtAuthServer/Dockerfile` | Multi-stage Java/Spring Boot build |
+| `backend/Dockerfile` | Multi-stage Java/Spring Boot build |
 | `UI/Dockerfile` | Multi-stage React/Nginx build |
 | `UI/nginx.conf` | Nginx config with API proxying |
 | `.env.example` | Environment variables template |

@@ -3,9 +3,9 @@ services:
     image: postgres:15
     container_name: aura-postgres
     environment:
-      POSTGRES_DB: authserver
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
@@ -13,7 +13,7 @@ services:
     networks:
       - aura-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -22,11 +22,11 @@ services:
     image: rabbitmq:3-management
     container_name: aura-rabbitmq
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     ports:
-      - "5672:5672"   # AMQP port
-      - "15672:15672" # Management UI port
+      - "5672:5672"
+      - "15672:15672"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
@@ -37,31 +37,35 @@ services:
       timeout: 5s
       retries: 5
 
-  # Backend service (Spring Boot)
   backend:
     build:
-      context: backend/aura-contest-control/servers
+      context: backend
       dockerfile: Dockerfile
     container_name: aura-backend
     ports:
       - "8080:8080"
     environment:
       # Database
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/authserver
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+
       # RabbitMQ
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: guest
-      SPRING_RABBITMQ_PASSWORD: guest
-      # Judge0 callback (update with your ngrok URL or production URL)
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+
+      # Judge0
       JUDGE0_CALLBACK_URL: http://backend:8080/api/callback/judge0
-      # JWT Secrets - MUST be valid base64 (use openssl rand -base64 32)
-      JWT_ACCESS_SECRET: "HrsxedVrtFb4LRvJXWmNbN/UAWhz6i0yZQH4DafTEZo="
-      JWT_REFRESH_SECRET: "TAvuy/amtiO5tEpBHUVArpY8pG6syxwTAqfYYZxRHnI="
-      # Database DDL mode (use 'update' for production to preserve data)
+
+      # JWT
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+
+      # JPA
       SPRING_JPA_DDL_AUTO: update
+
     depends_on:
       postgres:
         condition: service_healthy
@@ -71,7 +75,6 @@ services:
       - aura-network
     restart: unless-stopped
 
-  # Frontend service (React + Nginx)
   frontend:
     build:
       context: ./UI

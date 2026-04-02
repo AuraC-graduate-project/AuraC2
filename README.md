@@ -732,3 +732,26 @@ If your repository also contains additional root files such as:
 - migration scripts
 
 then the final README can be refined further to document those parts precisely.
+
+
+---
+
+## IntelliJ / Project Structure
+
+Open the repository root so you can see:
+
+```text
+AuraC2/
+├── UI/
+├── backend/
+└── docs/
+```
+
+Then import the backend with Maven:
+
+1. Open the root folder in IntelliJ.
+2. Right-click `backend/pom.xml`.
+3. Choose **Add as Maven Project**.
+4. Use **JDK 21** to match the Maven configuration.
+
+If IntelliJ still shows old module names, delete `.idea` and any `*.iml` files, then reopen the project.
