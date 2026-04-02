@@ -47,6 +47,7 @@ export function CreateContestModal({ open, onOpenChange, onSuccess }: CreateCont
         throw new Error('Scoreboard freeze time must be less than contest duration');
       }
 
+      // time **************************************************************
       // Convert datetime-local to ISO 8601 UTC
       // datetime-local gives us local time; we must explicitly convert to UTC
       const localDate = new Date(formData.startTime);

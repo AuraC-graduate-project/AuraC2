@@ -174,10 +174,11 @@ async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise
 // Contest endpoints
 // -----------------------------
 
+//This is used when the UI wants to display the contest that is currently running.
 export async function getActiveContest(): Promise<ContestResponse> {
   return apiFetch<ContestResponse>("/api/contest/active");
 }
-
+//Fetches the next contest that has not started yet, Used in the UI when the user selects the Upcoming tab.
 export async function getUpcomingContest(): Promise<ContestResponse> {
   return apiFetch<ContestResponse>("/api/contest/upcoming");
 }

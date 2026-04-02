@@ -57,6 +57,7 @@ public class ContestService {
         return ContestResponse.fromEntity(contest);
     }
 
+    //
     public ContestResponse updateStatus(Long id, ContestStatus newStatus) {
         return updateStatus(id, newStatus, false);
     }

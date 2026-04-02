@@ -160,6 +160,7 @@ export function ContestOverview() {
   };
 
   // Compute if contest should be startable based on time
+  // Start button *********************
   const canStartNow = useMemo(() => {
     if (!contest || contest.status !== 'UPCOMING') return false;
     const startTime = new Date(contest.startTime).getTime();
