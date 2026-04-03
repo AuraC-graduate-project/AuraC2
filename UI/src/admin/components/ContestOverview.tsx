@@ -42,9 +42,9 @@ import { toast } from 'sonner';
 type ContestTab = 'active' | 'upcoming' | 'paused' | 'ended';
 
 export function ContestOverview() {
-  const [contestType, setContestType] = useState<ContestTab>('active');
-  const [contest, setContest] = useState<ContestResponse | null>(null);
-  const [endedContests, setEndedContests] = useState<ContestResponse[]>([]);
+  const [contestType, setContestType] = useState<ContestTab>('active'); // This stores which tab is currently selected.
+  const [contest, setContest] = useState<ContestResponse | null>(null); // This stores the current contest for: active, upcoming, paused. For ended, we use a separate list.
+  const [endedContests, setEndedContests] = useState<ContestResponse[]>([]); // whether fetch is in progress
   const [loading, setLoading] = useState(true);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [endDialogOpen, setEndDialogOpen] = useState(false);
@@ -81,10 +81,21 @@ export function ContestOverview() {
   }, [loadContest]);
 
   const handleStart = async () => {
-    if (!contest) return;
+    if (!contest) {
+      console.log('[StartContest] No contest loaded');
+      return;
+    }
+
+    const now = new Date();
+    const startTime = contest.startTime ? new Date(contest.startTime) : null;
+    const endTime = contest.endTime ? new Date(contest.endTime) : null;
+
+
     try {
       await startContest(contest.id);
       toast.success('Contest started');
+      setContest(null);
+      setContestType('active')
       loadContest();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to start contest');
@@ -96,7 +107,8 @@ export function ContestOverview() {
     try {
       await resumeContest(contest.id);
       toast.success('Contest resumed');
-      loadContest();
+      setContest(null);
+      setContestType('active');
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to resume contest');
     }
@@ -107,7 +119,8 @@ export function ContestOverview() {
     try {
       await pauseContest(contest.id);
       toast.success('Contest paused');
-      loadContest();
+      setContest(null);
+      setContestType('paused');
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to pause contest');
     }
@@ -120,7 +133,8 @@ export function ContestOverview() {
       toast.success('Contest ended');
       setEndDialogOpen(false);
       setJuryOverride(false);
-      loadContest();
+      setContest(null);
+      setContestType('ended');
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to end contest');
     }
@@ -354,9 +368,9 @@ export function ContestOverview() {
       </Card>
 
       <CreateContestModal
-        open={createModalOpen}
-        onOpenChange={setCreateModalOpen}
-        onSuccess={loadContest}
+          open={createModalOpen}
+          onOpenChange={setCreateModalOpen}
+          onSuccess={() => setContestType('upcoming')}
       />
 
       <AlertDialog open={endDialogOpen} onOpenChange={setEndDialogOpen}>
