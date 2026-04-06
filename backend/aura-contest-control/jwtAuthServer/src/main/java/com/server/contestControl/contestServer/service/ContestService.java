@@ -9,21 +9,36 @@ import com.server.contestControl.contestServer.exception.ContestValidationExcept
 import com.server.contestControl.contestServer.exception.InvalidContestStateException;
 import com.server.contestControl.contestServer.repository.ContestRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ContestService {
 
     private final ContestRepository contestRepository;
+    private final ContestLifecycleService contestLifecycleService;
+
+    private static final DateTimeFormatter ISO_FORMATTER =
+            DateTimeFormatter.ISO_INSTANT.withZone(ZoneOffset.UTC);
+    private static final Comparator<Contest> CONTEST_START_TIME_DESC =
+            Comparator.comparing(Contest::getStartTime, Comparator.nullsLast(Comparator.reverseOrder()));
 
     public ContestResponse createContest(ContestRequest request) {
+        Instant now = Instant.now();
+
         // Validate no conflicting contest exists
-        boolean existsActive = contestRepository
-                .existsByStatusIn(List.of(ContestStatus.UPCOMING, ContestStatus.RUNNING, ContestStatus.PAUSED));
+        boolean existsActive = hasAnyContestInEffectiveStates(
+                List.of(ContestStatus.UPCOMING, ContestStatus.RUNNING, ContestStatus.PAUSED),
+                now
+        );
 
         if (existsActive) {
             throw new InvalidContestStateException(
@@ -31,7 +46,7 @@ public class ContestService {
         }
 
         // Validate startTime is in the future
-        if (request.startTime().isBefore(Instant.now())) {
+        if (request.startTime().isBefore(now)) {
             throw new ContestValidationException("Start time must be in the future.");
         }
 
@@ -54,7 +69,7 @@ public class ContestService {
                 .build();
 
         contestRepository.save(contest);
-        return ContestResponse.fromEntity(contest);
+        return toResponse(contest);
     }
 
     //
@@ -116,7 +131,7 @@ public class ContestService {
         contest.setStatus(newStatus);
         contestRepository.save(contest);
 
-        return ContestResponse.fromEntity(contest);
+        return toResponse(contest);
     }
 
     private boolean isValidTransition(ContestStatus from, ContestStatus to) {
@@ -129,42 +144,42 @@ public class ContestService {
     }
 
     public ContestResponse getActiveContest() {
-        Contest contest = contestRepository.findByStatus(ContestStatus.RUNNING)
+        Contest contest = findLatestContestByEffectiveState(ContestStatus.RUNNING)
                 .orElseThrow(() -> new ContestNotFoundException("No active contest found"));
 
-        return ContestResponse.fromEntity(contest);
+        return toResponse(contest);
     }
 
     public Contest getContestEntity() {
-        return contestRepository.findByStatus(ContestStatus.RUNNING)
+        return findLatestContestByEffectiveState(ContestStatus.RUNNING)
                 .orElseThrow(() -> new ContestNotFoundException("No active contest found"));
     }
 
     public ContestResponse getUpcomingContest() {
-        Contest contest = contestRepository.findByStatus(ContestStatus.UPCOMING)
+        Contest contest = findLatestContestByEffectiveState(ContestStatus.UPCOMING)
                 .orElseThrow(() -> new ContestNotFoundException("No upcoming contest found"));
 
-        return ContestResponse.fromEntity(contest);
+        return toResponse(contest);
     }
 
     public ContestResponse getPausedContest() {
-        Contest contest = contestRepository.findByStatus(ContestStatus.PAUSED)
+        Contest contest = findLatestContestByEffectiveState(ContestStatus.PAUSED)
                 .orElseThrow(() -> new ContestNotFoundException("No paused contest found"));
 
-        return ContestResponse.fromEntity(contest);
+        return toResponse(contest);
     }
 
     public ContestResponse getEndedContest() {
-        Contest contest = contestRepository.findTopByStatusOrderByStartTimeDesc(ContestStatus.ENDED)
+        Contest contest = findLatestContestByEffectiveState(ContestStatus.ENDED)
                 .orElseThrow(() -> new ContestNotFoundException("No ended contest found"));
 
-        return ContestResponse.fromEntity(contest);
+        return toResponse(contest);
     }
 
     public List<ContestResponse> getEndedContests() {
-        return contestRepository.findAllByStatus(ContestStatus.ENDED)
+        return findAllContestsByEffectiveState(ContestStatus.ENDED)
                 .stream()
-                .map(ContestResponse::fromEntity)
+                .map(this::toResponse)
                 .toList();
     }
 
@@ -172,6 +187,68 @@ public class ContestService {
         Contest contest = contestRepository.findByStatus(status)
                 .orElseThrow(() -> new ContestNotFoundException("No contest found with status " + status));
 
-        return ContestResponse.fromEntity(contest);
+        return toResponse(contest);
+    }
+
+    private ContestResponse toResponse(Contest contest) {
+        Instant now = Instant.now();
+        Instant endTime = contest.getEndTime();
+        Instant effectiveEndTime = contestLifecycleService.resolveEffectiveEndTime(contest, now);
+        Instant freezeTime = contestLifecycleService.resolveEffectiveScoreboardFreezeTime(contest, now);
+        ContestStatus effectiveState = contestLifecycleService.resolveEffectiveState(contest, now);
+        boolean scoreboardFrozen = contestLifecycleService.isScoreboardFrozen(contest, now);
+
+
+        return ContestResponse.builder()
+                .id(contest.getId())
+                .title(contest.getTitle())
+                .description(contest.getDescription())
+                .durationMinutes(contest.getDurationMinutes())
+                .status(contest.getStatus().name())
+                .effectiveState(effectiveState.name())
+                .startTime(formatInstant(contest.getStartTime()))
+                .endTime(formatInstant(endTime))
+                .effectiveEndTime(formatInstant(effectiveEndTime))
+                .scoreboardFreezeMinutes(contest.getScoreboardFreezeMinutes())
+                .scoreboardFreezeTime(formatInstant(freezeTime))
+                .penaltyMinutes(contest.getPenaltyMinutes())
+                .scoreboardFrozen(scoreboardFrozen)
+                .build();
+    }
+
+    private String formatInstant(Instant instant) {
+        return instant != null ? ISO_FORMATTER.format(instant) : null;
+    }
+
+    private boolean hasAnyContestInEffectiveStates(List<ContestStatus> targetStates, Instant now) {
+        return contestRepository.findAll()
+                .stream()
+                .map(contest -> contestLifecycleService.resolveEffectiveState(contest, now))
+                .anyMatch(targetStates::contains);
+    }
+
+    private boolean hasAnotherEffectiveRunningContest(Long currentContestId, Instant now) {
+        return contestRepository.findAll()
+                .stream()
+                .filter(contest -> !contest.getId().equals(currentContestId))
+                .anyMatch(contest -> contestLifecycleService.resolveEffectiveState(contest, now) == ContestStatus.RUNNING);
+    }
+
+    private List<Contest> findAllContestsByEffectiveState(ContestStatus expectedState) {
+        Instant now = Instant.now();
+        return contestRepository.findAll()
+                .stream()
+                .filter(contest -> contestLifecycleService.resolveEffectiveState(contest, now) == expectedState)
+                .sorted(CONTEST_START_TIME_DESC)
+                .toList();
+    }
+
+    private java.util.Optional<Contest> findLatestContestByEffectiveState(ContestStatus expectedState) {
+        Instant now = Instant.now();
+        return contestRepository.findAll()
+                .stream()
+                .sorted(CONTEST_START_TIME_DESC)
+                .filter(contest -> contestLifecycleService.resolveEffectiveState(contest, now) == expectedState)
+                .findFirst();
     }
 }

@@ -1,13 +1,17 @@
 // DTOs matching backend exactly
 
+export type ContestLifecycleState = 'RUNNING' | 'PAUSED' | 'ENDED' | 'UPCOMING';
+
 export interface ContestResponse {
   id: number;
   title: string;
   description: string;
   startTime: string; // ISO 8601 (UTC)
   endTime: string | null; // Computed: startTime + durationMinutes
+  effectiveEndTime: string | null; // Computed lifecycle end used for countdown/behavior
   durationMinutes: number;
-  status: 'RUNNING' | 'PAUSED' | 'ENDED' | 'UPCOMING';
+  status: ContestLifecycleState; // Persisted lifecycle marker
+  effectiveState: ContestLifecycleState; // Computed lifecycle state for UI behavior
   scoreboardFreezeMinutes: number | null;
   scoreboardFreezeTime: string | null; // Computed: endTime - freezeMinutes
   penaltyMinutes: number;

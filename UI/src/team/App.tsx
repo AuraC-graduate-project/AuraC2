@@ -5,6 +5,7 @@ import { CodeEditor } from "./components/CodeEditor";
 import { SubmissionHistory, Submission } from "./components/SubmissionHistory";
 import { Clarifications } from "./components/Clarifications";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
+import { ContestResponse } from "../admin/types/api";
 import {
   getActiveContest,
   getProblemsByContest,
@@ -61,7 +62,7 @@ function mapVerdict(v: string): Submission["verdict"] {
 export default function TeamApp({ onLogout }: { onLogout: () => void }) {
   const teamName = useMemo(getTeamNameFromToken, []);
 
-  const [contest, setContest] = useState<any | null>(null);
+  const [contest, setContest] = useState<ContestResponse | null>(null);
   const [problems, setProblems] = useState<any[]>([]);
   const [selectedProblem, setSelectedProblem] = useState<any | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -213,13 +214,7 @@ export default function TeamApp({ onLogout }: { onLogout: () => void }) {
 
   /* ================= TIMER ================= */
 
-  const contestEndTime =
-    contest?.startTime && contest?.durationMinutes
-      ? new Date(
-        new Date(contest.startTime).getTime() +
-        contest.durationMinutes * 60_000
-      ).toISOString()
-      : undefined;
+  const contestEndTime = contest?.effectiveEndTime ?? contest?.endTime ?? undefined;
 
   if (!loaded) return <div className="p-6">Loading…</div>;
 

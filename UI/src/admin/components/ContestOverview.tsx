@@ -24,7 +24,7 @@ import {
   pauseContest,
   endContest
 } from '../services/api';
-import { ContestResponse } from '../types/api';
+import { ContestLifecycleState, ContestResponse } from '../types/api';
 import { CreateContestModal } from './CreateContestModal';
 import {
   AlertDialog,
@@ -51,28 +51,65 @@ export function ContestOverview() {
   const [juryOverride, setJuryOverride] = useState(false);
 
   const loadContest = useCallback(async () => {
+    console.log('==============================');
+    console.log('[loadContest] START');
+    console.log('[loadContest] Current Tab:', contestType);
+
     setLoading(true);
+
     try {
       if (contestType === 'ended') {
+        console.log('[loadContest] Fetching ENDED contests...');
+
         const data = await getEndedContests();
+
+        console.log('[loadContest] ENDED contests response:', data);
+
+        data.forEach((c, index) => {
+          console.log(`-- Contest[${index}] --`);
+          console.log('ID:', c.id);
+          console.log('Persisted Status:', c.status);
+          console.log('Effective State:', c.effectiveState);
+          console.log('Start Time:', c.startTime);
+          console.log('End Time:', c.endTime);
+        });
+
         setEndedContests(data);
         setContest(null);
       } else {
-        const data =
-          contestType === 'active'
-            ? await getActiveContest()
-            : contestType === 'upcoming'
-              ? await getUpcomingContest()
-              : await getPausedContest();
+        console.log('[loadContest] Fetching SINGLE contest...');
+
+        let data: ContestResponse;
+
+        if (contestType === 'active') {
+          console.log('[loadContest] Calling getActiveContest()');
+          data = await getActiveContest();
+        } else if (contestType === 'upcoming') {
+          console.log('[loadContest] Calling getUpcomingContest()');
+          data = await getUpcomingContest();
+        } else {
+          console.log('[loadContest] Calling getPausedContest()');
+          data = await getPausedContest();
+        }
+
+        console.log('[loadContest] Response received:');
+        console.log('ID:', data?.id);
+        console.log('Persisted Status:', data?.status);
+        console.log('Effective State:', data?.effectiveState);
+        console.log('Start Time:', data?.startTime);
+        console.log('End Time:', data?.endTime);
 
         setContest(data);
         setEndedContests([]);
       }
-    } catch {
+    } catch (error) {
+      console.error('[loadContest] ERROR:', error);
       setContest(null);
       setEndedContests([]);
     } finally {
       setLoading(false);
+      console.log('[loadContest] END');
+      console.log('==============================');
     }
   }, [contestType]);
 
@@ -80,23 +117,31 @@ export function ContestOverview() {
     loadContest();
   }, [loadContest]);
 
+  useEffect(() => {
+    if (contest) {
+      console.log('====== FRONTEND STATE ======');
+      console.log('contest.status:', contest.status);
+      console.log('contest.effectiveState:', contest.effectiveState);
+
+      const lifecycleState =
+          contest.effectiveState ?? contest.status;
+
+      console.log('lifecycleState (USED):', lifecycleState);
+      console.log('============================');
+    }
+  }, [contest]);
   const handleStart = async () => {
     if (!contest) {
       console.log('[StartContest] No contest loaded');
       return;
     }
 
-    const now = new Date();
-    const startTime = contest.startTime ? new Date(contest.startTime) : null;
-    const endTime = contest.endTime ? new Date(contest.endTime) : null;
-
-
     try {
       await startContest(contest.id);
       toast.success('Contest started');
       setContest(null);
-      setContestType('active')
-      loadContest();
+      setContestType('active');
+
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to start contest');
     }
@@ -140,7 +185,7 @@ export function ContestOverview() {
     }
   };
 
-  const getStatusColor = (status: ContestResponse['status']) => {
+  const getStatusColor = (status: ContestLifecycleState) => {
     switch (status) {
       case 'RUNNING':
         return 'bg-green-100 text-green-700 border-green-200';
@@ -173,20 +218,24 @@ export function ContestOverview() {
     });
   };
 
+  const lifecycleState: ContestLifecycleState | null = contest
+    ? (contest.effectiveState ?? contest.status)
+    : null;
+
   // Compute if contest should be startable based on time
   // Start button *********************
   const canStartNow = useMemo(() => {
-    if (!contest || contest.status !== 'UPCOMING') return false;
+    if (!contest || lifecycleState !== 'UPCOMING') return false;
     const startTime = new Date(contest.startTime).getTime();
     const now = Date.now();
     // Allow starting 1 minute before scheduled time (matches backend grace period)
     return now >= startTime - 60_000;
-  }, [contest]);
+  }, [contest, lifecycleState]);
 
-  const canStart = contest?.status === 'UPCOMING';
-  const canResume = contest?.status === 'PAUSED';
-  const canPause = contest?.status === 'RUNNING';
-  const canEnd = contest?.status === 'RUNNING' || contest?.status === 'PAUSED';
+  const canStart = lifecycleState === 'UPCOMING';
+  const canResume = lifecycleState === 'PAUSED';
+  const canPause = lifecycleState === 'RUNNING';
+  const canEnd = lifecycleState === 'RUNNING' || lifecycleState === 'PAUSED';
 
   return (
     <>
@@ -225,8 +274,8 @@ export function ContestOverview() {
                 </Badge>
               )}
               {contest && (
-                <Badge className={`${getStatusColor(contest.status)} border`}>
-                  {contest.status}
+                <Badge className={`${getStatusColor(lifecycleState ?? contest.status)} border`}>
+                  {lifecycleState ?? contest.status}
                 </Badge>
               )}
             </div>
@@ -250,7 +299,9 @@ export function ContestOverview() {
                       <p className="font-medium text-slate-900">{c.title}</p>
                       <p className="text-sm text-slate-600">{c.description}</p>
                     </div>
-                    <Badge className="bg-red-100 text-red-700 border-red-200">ENDED</Badge>
+                    <Badge className={`${getStatusColor(c.effectiveState ?? c.status)} border`}>
+                      {c.effectiveState ?? c.status}
+                    </Badge>
                   </div>
                 ))}
               </div>
@@ -290,7 +341,7 @@ export function ContestOverview() {
                       <Calendar className="w-4 h-4" />
                       End Time
                     </label>
-                    <p className="text-slate-900">{formatTime(contest.endTime)}</p>
+                    <p className="text-slate-900">{formatTime(contest.effectiveEndTime ?? contest.endTime)}</p>
                   </div>
                 </div>
 
