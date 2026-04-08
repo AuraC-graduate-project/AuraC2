@@ -1,4 +1,4 @@
-package com.server.contestControl.contestServer.dto;
+package com.server.contestControl.authServer.dto.user;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;

@@ -3,9 +3,9 @@ package com.server.contestControl.contestServer.controller;
 
 import com.server.contestControl.authServer.entity.User;
 import com.server.contestControl.authServer.service.user.UserService;
-import com.server.contestControl.contestServer.dto.UpdatePasswordRequest;
-import com.server.contestControl.contestServer.dto.UpdateUserNameRequest;
-import com.server.contestControl.contestServer.dto.UserResponse;
+import com.server.contestControl.authServer.dto.user.UpdatePasswordRequest;
+import com.server.contestControl.authServer.dto.user.UpdateUserNameRequest;
+import com.server.contestControl.authServer.dto.user.UserResponse;
 import com.server.contestControl.submissionServer.dto.SubmissionResponse;
 import com.server.contestControl.submissionServer.service.submission.SubmissionService;
 import lombok.RequiredArgsConstructor;

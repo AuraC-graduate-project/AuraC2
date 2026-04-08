@@ -90,9 +90,7 @@ Each server has its own: `controller/`, `service/`, `repository/`, `dto/`, `enti
 - Use Java records for request/response DTOs
 - Include static `fromEntity()` factory method in response DTOs:
   ```java
-  public record ContestResponse(...) {
-      public static ContestResponse fromEntity(Contest contest) { ... }
-  }
+
   ```
 
 ### Service Layer Patterns
