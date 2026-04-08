@@ -6,7 +6,7 @@ import com.server.contestControl.authServer.exception.api.UserNotFoundException;
 import com.server.contestControl.authServer.repository.UserRepository;
 import com.server.contestControl.authServer.service.jwt.core.JwtService;
 import com.server.contestControl.authServer.util.TokenExtractor;
-import com.server.contestControl.contestServer.dto.UserResponse;
+import com.server.contestControl.authServer.dto.user.UserResponse;
 import com.server.contestControl.contestServer.entity.Contest;
 import com.server.contestControl.contestServer.entity.Problem;
 import com.server.contestControl.contestServer.service.ContestService;
