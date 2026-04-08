@@ -5,6 +5,7 @@ import { CodeEditor } from "./components/CodeEditor";
 import { SubmissionHistory, Submission } from "./components/SubmissionHistory";
 import { Clarifications } from "./components/Clarifications";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
+import { decodeJwtSubject } from "../auth/jwt";
 import {
   getActiveContest,
   getProblemsByContest,
@@ -21,12 +22,7 @@ function getTeamNameFromToken(): string {
   try {
     const token = localStorage.getItem("access_token");
     if (!token) return "Team";
-
-    const [, payload] = token.split(".");
-    if (!payload) return "Team";
-
-    const data = JSON.parse(atob(payload));
-    return typeof data.sub === "string" ? data.sub : "Team";
+    return decodeJwtSubject(token) ?? "Team";
   } catch {
     return "Team";
   }
@@ -125,6 +121,8 @@ export default function TeamApp({ onLogout }: { onLogout: () => void }) {
             problem:
               problems.find(p => p.id === api.problemId)?.title ??
               `#${api.problemId}`,
+            problemId: api.problemId,
+            contestId: api.contestId,
             verdict: mapVerdict(api.verdict),
             language: api.language,
             time: new Date(api.createdAt).toLocaleTimeString(),
@@ -165,6 +163,8 @@ export default function TeamApp({ onLogout }: { onLogout: () => void }) {
             problem:
               problems.find(p => p.id === api.problemId)?.title ??
               `#${api.problemId}`,
+            problemId: api.problemId,
+            contestId: api.contestId,
             verdict: mapVerdict(api.verdict),
             language: api.language,
             time: new Date(api.createdAt).toLocaleTimeString(),
@@ -189,7 +189,7 @@ export default function TeamApp({ onLogout }: { onLogout: () => void }) {
 
   const problemsWithStatus = useMemo(() => {
     return problems.map(p => {
-      const subs = allSubmissions.filter(s => s.problem === p.title);
+      const subs = allSubmissions.filter(s => s.problemId === p.id);
 
       let status: ProblemStatus = "unsolved";
 

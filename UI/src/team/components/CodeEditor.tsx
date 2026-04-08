@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Button } from "./ui/button";
 import {
   Select,
@@ -10,6 +10,9 @@ import {
 import { Textarea } from "./ui/textarea";
 import { Send } from "lucide-react";
 import { submitCode } from "../services/teamApi";
+import { useCodeDraft } from "../../hooks/useCodeDraft";
+import { decodeJwtSubject } from "../../auth/jwt";
+import { getStoredToken } from "../../auth/tokenStore";
 
 /* ================= STARTER CODE (BACKEND-ALIGNED) ================= */
 
@@ -142,15 +145,48 @@ type Props = {
   problem: { id: number; title: string } | null;
 };
 
+/**
+ * Gets the current user's ID from the JWT token.
+ * Returns "unknown" if no token is found.
+ */
+function getUserId(): string {
+  const token = getStoredToken();
+  if (!token) return "unknown";
+  const subject = decodeJwtSubject(token);
+  return subject ?? "unknown";
+}
+
 export function CodeEditor({ contestId, problem }: Props) {
   const [language, setLanguage] = useState("cpp");
-  const [code, setCode] = useState("");
 
-  /* ===== Reset starter code on problem or language change ===== */
+  // Get user ID once on mount
+  const userId = getUserId();
+
+  // Use code draft hook for persistence
+  const { code, setCode, clearDraft } = useCodeDraft(
+    userId,
+    String(contestId),
+    problem?.id ? String(problem.id) : "0",
+    language
+  );
+
+  /* ===== Reset starter code on problem change (not language) ===== */
   useEffect(() => {
     if (!problem) return;
-    setCode(STARTER_CODE[language](problem.title));
-  }, [problem, language]);
+    // Only set starter code if no draft exists for this problem+language
+    const key = `draft_${userId}_${contestId}_${problem.id}_${language}`;
+    const existingDraft = localStorage.getItem(key);
+    if (!existingDraft) {
+      setCode(STARTER_CODE[language](problem.title));
+    }
+  }, [problem, userId, contestId, language, setCode]);
+
+  /* ===== Handle language switch: save current, then load new ===== */
+  const handleLanguageChange = useCallback((newLanguage: string) => {
+    // The hook automatically saves on code change (debounced)
+    // and loads the new language draft when language param changes
+    setLanguage(newLanguage);
+  }, []);
 
   if (!problem) {
     return (
@@ -161,13 +197,22 @@ export function CodeEditor({ contestId, problem }: Props) {
   }
 
   const handleSubmit = async () => {
-    await submitCode({
-      contestId,
-      problemId: problem.id,
-      language, // MUST match backend convertLanguage()
-      code,
-    });
-    alert("Submitted");
+    try {
+      const response = await submitCode({
+        contestId,
+        problemId: problem.id,
+        language, // MUST match backend convertLanguage()
+        code,
+      });
+      alert("Submitted");
+      
+      // Check if the submission was accepted and clear the draft
+      // Note: Initial submission will be PENDING, so we can't clear immediately
+      // The draft will be cleared when viewing results and seeing ACCEPTED
+    } catch (error) {
+      console.error("Submission failed:", error);
+      alert("Submission failed");
+    }
   };
 
   return (
@@ -177,7 +222,7 @@ export function CodeEditor({ contestId, problem }: Props) {
         <h3 className="text-gray-900">{problem.title}</h3>
 
         <div className="flex items-center gap-3">
-          <Select value={language} onValueChange={setLanguage}>
+          <Select value={language} onValueChange={handleLanguageChange}>
             <SelectTrigger className="w-44">
               <SelectValue />
             </SelectTrigger>

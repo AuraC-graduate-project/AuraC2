@@ -1,0 +1,30 @@
+# Docker Compose Override Example
+# Copy this file to docker-compose.override.yml for local development
+# This file is git-ignored so you can customize it safely
+
+services:
+  backend:
+    environment:
+      # Use create-drop for local development (resets DB on each restart)
+      SPRING_JPA_DDL_AUTO: create-drop
+      
+      # Judge0 callback - update with your ngrok URL
+      JUDGE0_CALLBACK_URL: https://your-ngrok-url.ngrok-free.app/api/callback/judge0
+      
+      # Custom JWT secrets for local development
+      JWT_ACCESS_SECRET: local-dev-access-secret-key-min-32-characters
+      JWT_REFRESH_SECRET: local-dev-refresh-secret-key-min-32-characters
+    
+    # Uncomment to enable debug port
+    # ports:
+    #   - "8080:8080"
+    #   - "5005:5005"  # Debug port
+    
+    # Uncomment to enable JVM debug mode
+    # environment:
+    #   JAVA_TOOL_OPTIONS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+
+  frontend:
+    environment:
+      # API base URL if different from default
+      # VITE_API_BASE_URL: http://localhost:8080
