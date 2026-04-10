@@ -3,6 +3,12 @@ judge0:
   url: "https://ce.judge0.com/submissions?wait=false"
   callback: "https://3363-92-241-36-102.ngrok-free.app/api/callback/judge0"
 
+contest:
+  sync:
+    enabled: true
+    delay-ms: 30000
+    initial-delay-ms: 10000
+
 spring:
 
   datasource:

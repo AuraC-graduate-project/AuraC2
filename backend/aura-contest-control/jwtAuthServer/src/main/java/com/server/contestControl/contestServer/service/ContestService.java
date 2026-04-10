@@ -206,6 +206,7 @@ public class ContestService {
                 .durationMinutes(contest.getDurationMinutes())
                 .status(contest.getStatus().name())
                 .effectiveState(effectiveState.name())
+                .statusLocked(Boolean.TRUE.equals(contest.getStatusLocked()))
                 .startTime(formatInstant(contest.getStartTime()))
                 .endTime(formatInstant(endTime))
                 .effectiveEndTime(formatInstant(effectiveEndTime))

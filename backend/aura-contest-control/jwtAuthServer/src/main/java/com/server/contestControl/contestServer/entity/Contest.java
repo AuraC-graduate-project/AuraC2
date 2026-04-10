@@ -34,6 +34,13 @@ public class Contest {
     private ContestStatus status;
 
     /**
+     * If true, the scheduler will NOT auto-update this contest's status.
+     * Use this for contests that are manually controlled by jury/admin.
+     */
+    @Builder.Default
+    private Boolean statusLocked = false;
+
+    /**
      * ICPC: Minutes before end time when scoreboard freezes.
      * e.g., 60 means freeze 1 hour before contest ends.
      * Null means no freeze.
@@ -53,6 +60,9 @@ public class Contest {
         }
         if (penaltyMinutes == null) {
             penaltyMinutes = 20;
+        }
+        if (statusLocked == null) {
+            statusLocked = false;
         }
     }
 
