@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -97,6 +97,8 @@ export function ContestOverview() {
         console.log('Persisted Status:', data?.status);
         console.log('Effective State:', data?.effectiveState);
         console.log('Start Time:', data?.startTime);
+        console.log('Actual Start Time:', data?.actualStartTime);
+        console.log('Effective End Time:', data?.effectiveEndTime);
         console.log('End Time:', data?.endTime);
 
         setContest(data);
@@ -128,6 +130,13 @@ export function ContestOverview() {
 
       console.log('lifecycleState (USED):', lifecycleState);
       console.log('============================');
+    }
+  }, [contest]);
+  useEffect(() => {
+    if (contest) {
+      console.log('contest.startTime:', contest.startTime);
+      console.log('contest.actualStartTime:', contest.actualStartTime);
+      console.log('contest.effectiveEndTime:', contest.effectiveEndTime);
     }
   }, [contest]);
   const handleStart = async () => {
@@ -222,20 +231,36 @@ export function ContestOverview() {
     ? (contest.effectiveState ?? contest.status)
     : null;
 
-  // Compute if contest should be startable based on time
-  // Start button *********************
-  const canStartNow = useMemo(() => {
-    if (!contest || lifecycleState !== 'UPCOMING') return false;
-    const startTime = new Date(contest.startTime).getTime();
-    const now = Date.now();
-    // Allow starting 1 minute before scheduled time (matches backend grace period)
-    return now >= startTime - 60_000;
-  }, [contest, lifecycleState]);
-
+  // Start is a manual event; no wall-clock guard — admin can start at any time.
   const canStart = lifecycleState === 'UPCOMING';
   const canResume = lifecycleState === 'PAUSED';
   const canPause = lifecycleState === 'RUNNING';
   const canEnd = lifecycleState === 'RUNNING' || lifecycleState === 'PAUSED';
+
+  // Live countdown driven by remainingMillis; ticks locally only while RUNNING.
+  const [remainingMs, setRemainingMs] = useState<number | null>(null);
+  useEffect(() => {
+    if (!contest) {
+      setRemainingMs(null);
+      return;
+    }
+    setRemainingMs(contest.remainingMillis ?? 0);
+    if (lifecycleState !== 'RUNNING') return;
+    const id = setInterval(() => {
+      setRemainingMs((prev) => (prev == null ? prev : Math.max(0, prev - 1000)));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [contest, lifecycleState]);
+
+  const formatCountdown = (ms: number | null) => {
+    if (ms == null) return '—';
+    const total = Math.max(0, Math.floor(ms / 1000));
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${pad(h)}:${pad(m)}:${pad(s)}`;
+  };
 
   return (
     <>
@@ -332,17 +357,44 @@ export function ContestOverview() {
                   <div>
                     <label className="text-slate-600 flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
-                      Start Time
+                      Scheduled Start
                     </label>
                     <p className="text-slate-900">{formatTime(contest.startTime)}</p>
                   </div>
+                  {contest.actualStartTime && (
+                    <div>
+                      <label className="text-slate-600 flex items-center gap-2">
+                        <Play className="w-4 h-4" />
+                        Actual Start
+                      </label>
+                      <p className="text-slate-900">{formatTime(contest.actualStartTime)}</p>
+                    </div>
+                  )}
                   <div>
                     <label className="text-slate-600 flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
                       End Time
                     </label>
-                    <p className="text-slate-900">{formatTime(contest.effectiveEndTime ?? contest.endTime)}</p>
+                    <p className="text-slate-900">
+                      {lifecycleState === 'PAUSED'
+                        ? '— (paused)'
+                        : formatTime(contest.effectiveEndTime ?? contest.endTime)}
+                    </p>
                   </div>
+                  {lifecycleState !== 'ENDED' && (
+                    <div>
+                      <label className="text-slate-600 flex items-center gap-2">
+                        <Clock className="w-4 h-4" />
+                        Time Remaining
+                      </label>
+                      <p className="text-slate-900 font-mono text-lg">
+                        {formatCountdown(remainingMs)}
+                        {lifecycleState === 'PAUSED' && (
+                          <span className="ml-2 text-orange-600 text-sm">(paused)</span>
+                        )}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-4">
@@ -377,9 +429,8 @@ export function ContestOverview() {
                 <div className="flex flex-wrap gap-3">
                   <Button
                     className="bg-green-600 hover:bg-green-700 gap-2"
-                    disabled={!canStart || !canStartNow}
+                    disabled={!canStart}
                     onClick={handleStart}
-                    title={canStart && !canStartNow ? 'Cannot start before scheduled time' : ''}
                   >
                     <Play className="w-4 h-4" />
                     Start Contest

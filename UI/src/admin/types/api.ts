@@ -6,14 +6,18 @@ export interface ContestResponse {
   id: number;
   title: string;
   description: string;
-  startTime: string; // ISO 8601 (UTC)
-  endTime: string | null; // Computed: startTime + durationMinutes
-  effectiveEndTime: string | null; // Computed lifecycle end used for countdown/behavior
+  startTime: string; // Scheduled start (ISO 8601 UTC) — planning/display only
+  actualStartTime: string | null; // Set when admin manually starts the contest
+  pausedAt: string | null; // Set while PAUSED
+  totalPauseMillis: number; // Accumulated pause duration across all pause/resume cycles
+  remainingMillis: number; // Pause-aware countdown value
+  endTime: string | null; // Scheduled end: startTime + durationMinutes
+  effectiveEndTime: string | null; // Live pause-aware end; null when UPCOMING or PAUSED
   durationMinutes: number;
-  status: ContestLifecycleState; // Persisted lifecycle marker
-  effectiveState: ContestLifecycleState; // Computed lifecycle state for UI behavior
+  status: ContestLifecycleState;
+  effectiveState: ContestLifecycleState;
   scoreboardFreezeMinutes: number | null;
-  scoreboardFreezeTime: string | null; // Computed: endTime - freezeMinutes
+  scoreboardFreezeTime: string | null;
   penaltyMinutes: number;
   scoreboardFrozen: boolean;
 }

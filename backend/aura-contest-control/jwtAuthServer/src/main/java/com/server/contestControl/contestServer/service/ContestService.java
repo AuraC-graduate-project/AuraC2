@@ -97,35 +97,49 @@ public class ContestService {
 
         Instant now = Instant.now();
 
-        // Time-based validations
+        // Time-based validations & lifecycle bookkeeping
         switch (newStatus) {
             case RUNNING -> {
-                // Can only start if startTime has passed (or is within 1 minute grace period)
-                Instant startTime = contest.getStartTime();
-                Instant gracePeriodStart = startTime.minusSeconds(60);
-                if (now.isBefore(gracePeriodStart)) {
-                    throw new InvalidContestStateException(
-                            "Cannot start contest before scheduled start time: " + startTime);
-                }
-
-                // Check no other contest is running
+                // Manual start: no wall-clock guard. The scheduled startTime is planning data only.
                 if (contestRepository.existsByStatus(ContestStatus.RUNNING)
                         && current != ContestStatus.PAUSED) {
                     throw new InvalidContestStateException("Another contest is already running.");
                 }
+
+                if (current == ContestStatus.UPCOMING) {
+                    // First manual start — stamp the real clock.
+                    contest.setActualStartTime(now);
+                    log.info(
+                            "Manual start stamped actualStartTime | contestId={} | startTime={} | actualStartTime={}",
+                            contest.getId(),
+                            contest.getStartTime(),
+                            contest.getActualStartTime()
+                    );
+                } else if (current == ContestStatus.PAUSED) {
+                    // Resume: accumulate pause duration, clear pause marker.
+                    Instant pausedAt = contest.getPausedAt();
+                    if (pausedAt != null) {
+                        long existing = contest.getTotalPauseMillis() != null
+                                ? contest.getTotalPauseMillis() : 0L;
+                        contest.setTotalPauseMillis(existing + (now.toEpochMilli() - pausedAt.toEpochMilli()));
+                    }
+                    contest.setPausedAt(null);
+                }
+            }
+            case PAUSED -> {
+                contest.setPausedAt(now);
             }
             case ENDED -> {
                 if (!juryOverride) {
-                    // Normally, can only end if endTime has passed
-                    Instant endTime = contest.getEndTime();
-                    if (endTime != null && now.isBefore(endTime)) {
+                    // Pause-aware effective end — null when paused, so jury override is required to end paused contests.
+                    Instant effectiveEnd = contestLifecycleService.resolveEffectiveEndTime(contest, now);
+                    if (effectiveEnd == null || now.isBefore(effectiveEnd)) {
                         throw new InvalidContestStateException(
-                                "Cannot end contest before scheduled end time: " + endTime +
-                                        ". Use jury override to force end.");
+                                "Cannot end contest before its effective end time. Use jury override to force end.");
                     }
                 }
             }
-            default -> { /* No additional validation for PAUSED */ }
+            default -> { }
         }
 
         contest.setStatus(newStatus);
@@ -197,8 +211,19 @@ public class ContestService {
         Instant freezeTime = contestLifecycleService.resolveEffectiveScoreboardFreezeTime(contest, now);
         ContestStatus effectiveState = contestLifecycleService.resolveEffectiveState(contest, now);
         boolean scoreboardFrozen = contestLifecycleService.isScoreboardFrozen(contest, now);
+        long remainingMillis = contestLifecycleService.resolveRemainingMillis(contest, now);
+        long totalPauseMillis = contest.getTotalPauseMillis() != null ? contest.getTotalPauseMillis() : 0L;
 
-
+        log.info(
+                "toResponse | contestId={} | persistedStatus={} | effectiveState={} | startTime={} | actualStartTime={} | endTime={} | effectiveEndTime={}",
+                contest.getId(),
+                contest.getStatus(),
+                effectiveState,
+                contest.getStartTime(),
+                contest.getActualStartTime(),
+                endTime,
+                effectiveEndTime
+        );
         return ContestResponse.builder()
                 .id(contest.getId())
                 .title(contest.getTitle())
@@ -208,6 +233,10 @@ public class ContestService {
                 .effectiveState(effectiveState.name())
                 .statusLocked(Boolean.TRUE.equals(contest.getStatusLocked()))
                 .startTime(formatInstant(contest.getStartTime()))
+                .actualStartTime(formatInstant(contest.getActualStartTime()))
+                .pausedAt(formatInstant(contest.getPausedAt()))
+                .totalPauseMillis(totalPauseMillis)
+                .remainingMillis(remainingMillis)
                 .endTime(formatInstant(endTime))
                 .effectiveEndTime(formatInstant(effectiveEndTime))
                 .scoreboardFreezeMinutes(contest.getScoreboardFreezeMinutes())

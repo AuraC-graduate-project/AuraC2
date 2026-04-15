@@ -21,8 +21,21 @@ public class Contest {
     private Long id;
 
     private String title;
+
+    /** Scheduled start time — planning/display only. Real countdown begins at actualStartTime. */
     private Instant startTime;
+
     private Integer durationMinutes;
+
+    /** Set the first time the contest transitions UPCOMING -> RUNNING. Never overwritten on resume. */
+    private Instant actualStartTime;
+
+    /** Set on RUNNING -> PAUSED; cleared on PAUSED -> RUNNING. */
+    private Instant pausedAt;
+
+    /** Accumulated milliseconds spent paused across all pause/resume cycles. */
+    @Builder.Default
+    private Long totalPauseMillis = 0L;
 
     @Column(columnDefinition = "TEXT")
     private String description;
@@ -64,40 +77,20 @@ public class Contest {
         if (statusLocked == null) {
             statusLocked = false;
         }
+        if (totalPauseMillis == null) {
+            totalPauseMillis = 0L;
+        }
     }
 
     /**
-     * Computes the scheduled end time based on startTime + durationMinutes.
+     * Computes the *scheduled* end time based on startTime + durationMinutes.
+     * This is planning data only — use ContestLifecycleService#resolveEffectiveEndTime
+     * for the live, pause-aware end time.
      */
     public Instant getEndTime() {
         if (startTime == null || durationMinutes == null) {
             return null;
         }
         return startTime.plus(durationMinutes, ChronoUnit.MINUTES);
-    }
-
-    /**
-     * Computes when scoreboard should freeze.
-     */
-    public Instant getScoreboardFreezeTime() {
-        Instant endTime = getEndTime();
-        if (endTime == null || scoreboardFreezeMinutes == null) {
-            return null;
-        }
-        return endTime.minus(scoreboardFreezeMinutes, ChronoUnit.MINUTES);
-    }
-
-    /**
-     * Checks if scoreboard is currently frozen.
-     */
-    public boolean isScoreboardFrozen() {
-        Instant freezeTime = getScoreboardFreezeTime();
-        if (freezeTime == null) {
-            return false;
-        }
-        Instant now = Instant.now();
-        return status == ContestStatus.RUNNING
-                && now.isAfter(freezeTime)
-                && now.isBefore(getEndTime());
     }
 }

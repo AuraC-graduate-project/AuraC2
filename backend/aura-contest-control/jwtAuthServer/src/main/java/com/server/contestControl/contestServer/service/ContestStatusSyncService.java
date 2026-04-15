@@ -39,6 +39,8 @@ public class ContestStatusSyncService {
     public int syncAllEligibleContests() {
         Instant now = Instant.now();
 
+        // UPCOMING contests are auto-started when their scheduledStart time passes.
+        // RUNNING contests are auto-ended when their pause-aware effectiveEndTime passes.
         Optional<Long> contestId = contestRepository.findSyncCandidates(
                         List.of(ContestStatus.UPCOMING, ContestStatus.RUNNING)
                 ).stream()

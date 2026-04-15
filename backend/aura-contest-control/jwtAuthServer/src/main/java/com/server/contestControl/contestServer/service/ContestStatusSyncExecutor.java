@@ -64,6 +64,18 @@ public class ContestStatusSyncExecutor {
             return Optional.empty();
         }
 
+        // Bookkeeping for auto-start: stamp actualStartTime exactly as a manual Start would.
+        if (persistedStatus == ContestStatus.UPCOMING && effectiveState == ContestStatus.RUNNING) {
+            Instant scheduledStart = contest.getStartTime(); // set the time as the user input not when schedule runs, otherwise it will be different from the start time shown on the UI and cause confusion
+            contest.setActualStartTime(scheduledStart != null ? scheduledStart : now);
+            log.info(
+                    "Auto-start stamped actualStartTime | contestId={} | startTime={} | actualStartTime={}",
+                    contest.getId(),
+                    contest.getStartTime(),
+                    contest.getActualStartTime()
+            );
+        }
+
         contest.setStatus(effectiveState);
         contestRepository.save(contest);
 
@@ -75,8 +87,8 @@ public class ContestStatusSyncExecutor {
 
     private boolean isAllowedAutoTransition(ContestStatus from, ContestStatus to) {
         return switch (from) {
-            case UPCOMING -> to == ContestStatus.RUNNING;
-            case RUNNING  -> to == ContestStatus.ENDED;
+            case UPCOMING -> to == ContestStatus.RUNNING;  // auto-start when scheduled time passes
+            case RUNNING -> to == ContestStatus.ENDED;     // auto-end when effective end time passes
             default -> false;
         };
     }
