@@ -23,6 +23,7 @@ public class RefreshToken {
     private String deviceIp;
     private Instant createdAt;
     private Instant expiresAt;
+    @Builder.Default
     private boolean revoked = false;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -34,8 +34,11 @@ public class User implements UserDetails {
 
 
 
+    @Builder.Default
     private boolean accountNonLocked = true;
+    @Builder.Default
     private boolean credentialsNonExpired = true;
+    @Builder.Default
     private boolean accountNonExpired = true;
 
     @Column(nullable = false)
@@ -43,6 +46,7 @@ public class User implements UserDetails {
     private Role role;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<RefreshToken> refreshTokens = new ArrayList<>();
 
     @Override

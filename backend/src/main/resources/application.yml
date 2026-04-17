@@ -43,8 +43,9 @@ judge0:
 
 jwt:
   #dont change me. hallaq cry to make it work :) (i have 64B problem)
-  access-secret: ${JWT_ACCESS_SECRET}
-  refresh-secret: ${JWT_REFRESH_SECRET}
+  # Dev-safe fallbacks let IDE runs work even when env vars are not configured.
+  access-secret: ${JWT_ACCESS_SECRET:HrsxedVrtFb4LRvJXWmNbN/UAWhz6i0yZQH4DafTEZo=}
+  refresh-secret: ${JWT_REFRESH_SECRET:TAvuy/amtiO5tEpBHUVArpY8pG6syxwTAqfYYZxRHnI=}
   expiration: 900000        # 15 minutes
   refresh-expiration: 604800000 # 7 days
 
