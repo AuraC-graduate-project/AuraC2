@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -24,7 +24,14 @@ import {
   pauseContest,
   endContest
 } from '../services/api';
-import { ContestLifecycleState, ContestResponse } from '../types/api';
+import {
+  ContestLifecycleState,
+  ContestResponse,
+  ContestStreamSnapshot,
+  ContestStreamUpdate,
+  ContestUpdateReason
+} from '../types/api';
+import { useContestStream } from '../hooks/useContestStream';
 import { CreateContestModal } from './CreateContestModal';
 import {
   AlertDialog,
@@ -41,116 +48,193 @@ import { toast } from 'sonner';
 
 type ContestTab = 'active' | 'upcoming' | 'paused' | 'ended';
 
-export function ContestOverview() {
-  const [contestType, setContestType] = useState<ContestTab>('active'); // This stores which tab is currently selected.
-  const [contest, setContest] = useState<ContestResponse | null>(null); // This stores the current contest for: active, upcoming, paused. For ended, we use a separate list.
-  const [endedContests, setEndedContests] = useState<ContestResponse[]>([]); // whether fetch is in progress
-  const [loading, setLoading] = useState(true);
+const FALLBACK_DELAY_MS = 3000;
+
+
+export function ContestOverview() {// Every render, React runs this function again.
+  const [contestType, setContestType] = useState<ContestTab>('active');// This stores which tab is currently selected. It can be 'active', 'upcoming', 'paused', or 'ended'. The default is 'active'.
+
+  // This means UI stores all contest buckets separately. Whenever a new update comes in, we can place the contest in the right bucket based on its effective state. This also allows us to show ended contests as a list, since there can be multiple.
+  const [activeContest, setActiveContest] = useState<ContestResponse | null>(null);
+  const [upcomingContest, setUpcomingContest] = useState<ContestResponse | null>(null);
+  const [pausedContest, setPausedContest] = useState<ContestResponse | null>(null);
+  const [endedContests, setEndedContests] = useState<ContestResponse[]>([]);
+
+  // Hydrated here means "we've received at least one snapshot from the stream, or we've done the fallback REST hydration". Before hydration, we show a loading spinner. After hydration, we show the actual UI, which might be empty if there are no contests. This prevents a flash of "no contest found" while we're still waiting for data.
+  // Hydrated in small sentence : Did we receive initial data yet?
+  const [hydrated, setHydrated] = useState(false);
+
+  // These control modal/dialog behavior.
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [endDialogOpen, setEndDialogOpen] = useState(false);
   const [juryOverride, setJuryOverride] = useState(false);
 
-  const loadContest = useCallback(async () => {
-    console.log('==============================');
-    console.log('[loadContest] START');
-    console.log('[loadContest] Current Tab:', contestType);
+  /**
+   * If backend gives me a full snapshot, replace all my local contest state with it.
+   * So snapshot = full refresh.
+   */
+  const applySnapshot = useCallback((snap: ContestStreamSnapshot) => {// useCallback does not execute the function, it just tells React to reuse the same function object
+    setActiveContest(snap.active);
+    setUpcomingContest(snap.upcoming);
+    setPausedContest(snap.paused);
+    setEndedContests(snap.ended);
+    setHydrated(true);
+  }, []);
 
-    setLoading(true);
+  /**
+   * Take one contest and put it in the correct bucket.
+   * This is used for incremental updates from the stream.
+   * The backend will send us the updated contest, and we need to move it to the right place in our UI based on its new state.
+   * For example, if a contest moves from UPCOMING to RUNNING, we remove it from the upcomingContest state and set it as the activeContest.
+   */
+  const placeContest = useCallback((snap: ContestResponse) => {
 
-    try {
-      if (contestType === 'ended') {
-        console.log('[loadContest] Fetching ENDED contests...');
+    // First remove this contest from all buckets, in case it's moving. We identify the contest by its ID. If the contest in a bucket has the same ID as the incoming snapshot, we remove it (set to null or filter out). This ensures that we don't have duplicates when we add it to the correct bucket later.
+    const removeSingle = (c: ContestResponse | null) =>
+      c && c.id === snap.id ? null : c;
+    setActiveContest((prev) => removeSingle(prev));
+    setUpcomingContest((prev) => removeSingle(prev));
+    setPausedContest((prev) => removeSingle(prev));
+    setEndedContests((prev) => prev.filter((c) => c.id !== snap.id));
 
-        const data = await getEndedContests();
+    // Use effectiveState if available, otherwise fallback to status. effectiveState is what the UI should show based on pause-aware logic, while status is the raw lifecycle state. For example, a PAUSED contest might still have status RUNNING, but its effectiveState would be PAUSED. This allows the backend to communicate the true state of the contest to the UI, especially during edge cases like pausing or resuming.
+    const state: ContestLifecycleState = snap.effectiveState ?? snap.status;
+    // Then it puts the contest in the correct place
+    switch (state) {
+      case 'RUNNING':
+        setActiveContest(snap);
+        break;
+      case 'UPCOMING':
+        setUpcomingContest(snap);
+        break;
+      case 'PAUSED':
+        setPausedContest(snap);
+        break;
+      case 'ENDED':
+        setEndedContests((prev) => [snap, ...prev]);
+        break;
+    }
+  }, []);
 
-        console.log('[loadContest] ENDED contests response:', data);
+  /**
+   * This decides which tab the UI should show after an event. For example, if we receive an update that a contest was just started,
+   * we want to switch to the "active" tab to show it.
+   * The reason field in the update tells us what happened, and we can use that to determine which tab is most relevant to show the user.
+   * This is a UX decision to help guide the user to the most important information after an update.
+   * CREATED → switch to upcoming
+   * MANUAL_START → switch to active
+   * MANUAL_PAUSE → switch to paused
+   * AUTO_END → switch to ended
+   */
+  const switchTabForReason = useCallback((reason: ContestUpdateReason) => {
+    switch (reason) {
+      case 'CREATED':
+        setContestType('upcoming');
+        break;
+      case 'MANUAL_START':
+      case 'MANUAL_RESUME':
+      case 'AUTO_START':
+        setContestType('active');
+        break;
+      case 'MANUAL_PAUSE':
+        setContestType('paused');
+        break;
+      case 'MANUAL_END':
+      case 'AUTO_END':
+        setContestType('ended');
+        break;
+    }
+  }, []);
 
-        data.forEach((c, index) => {
-          console.log(`-- Contest[${index}] --`);
-          console.log('ID:', c.id);
-          console.log('Persisted Status:', c.status);
-          console.log('Effective State:', c.effectiveState);
-          console.log('Start Time:', c.startTime);
-          console.log('End Time:', c.endTime);
-        });
+  /**
+   * When backend sends a live update:
+   *  put contest in correct state bucket
+   *  switch to the right tab
+   */
+  const handleStreamUpdate = useCallback(
+    (update: ContestStreamUpdate) => {
+      placeContest(update.snapshot);
+      switchTabForReason(update.reason);
+    },
+    [placeContest, switchTabForReason]
+  );
 
-        setEndedContests(data);
-        setContest(null);
-      } else {
-        console.log('[loadContest] Fetching SINGLE contest...');
+  /**
+   * This is the connection point between the two files.
+   * The useContestStream hook manages the SSE connection and calls our callbacks when it receives data.
+   * We provide it with the applySnapshot and handleStreamUpdate functions we defined above,
+   * so that it can update our UI state accordingly whenever we get new information from the backend.
+   */
+  const { connectionState } = useContestStream({
+    onSnapshot: applySnapshot,
+    onContestUpdate: handleStreamUpdate
+  });
 
-        let data: ContestResponse;
 
-        if (contestType === 'active') {
-          console.log('[loadContest] Calling getActiveContest()');
-          data = await getActiveContest();
-        } else if (contestType === 'upcoming') {
-          console.log('[loadContest] Calling getUpcomingContest()');
-          data = await getUpcomingContest();
-        } else {
-          console.log('[loadContest] Calling getPausedContest()');
-          data = await getPausedContest();
-        }
 
-        console.log('[loadContest] Response received:');
-        console.log('ID:', data?.id);
-        console.log('Persisted Status:', data?.status);
-        console.log('Effective State:', data?.effectiveState);
-        console.log('Start Time:', data?.startTime);
-        console.log('Actual Start Time:', data?.actualStartTime);
-        console.log('Effective End Time:', data?.effectiveEndTime);
-        console.log('End Time:', data?.endTime);
-
-        setContest(data);
-        setEndedContests([]);
+  const fallbackDoneRef = useRef(false);
+  useEffect(() => {
+    if (hydrated || fallbackDoneRef.current) return;
+    const timer = setTimeout(async () => {
+      if (hydrated || fallbackDoneRef.current) return;
+      fallbackDoneRef.current = true;
+      try {
+        const [active, upcoming, paused, ended] = await Promise.allSettled([
+          getActiveContest(),
+          getUpcomingContest(),
+          getPausedContest(),
+          getEndedContests()
+        ]);
+        setActiveContest(active.status === 'fulfilled' ? active.value : null);
+        setUpcomingContest(upcoming.status === 'fulfilled' ? upcoming.value : null);
+        setPausedContest(paused.status === 'fulfilled' ? paused.value : null);
+        setEndedContests(ended.status === 'fulfilled' ? ended.value : []);
+      } finally {
+        setHydrated(true);
       }
-    } catch (error) {
-      console.error('[loadContest] ERROR:', error);
-      setContest(null);
-      setEndedContests([]);
-    } finally {
-      setLoading(false);
-      console.log('[loadContest] END');
-      console.log('==============================');
-    }
-  }, [contestType]);
+    }, FALLBACK_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [hydrated]);
 
-  useEffect(() => {
-    loadContest();
-  }, [loadContest]);
+  /**
+   * if current tab is active → use activeContest
+   * if current tab is upcoming → use upcomingContest
+   * if current tab is paused → use pausedContest
+   * if ended tab → endedContests (but we show a list, so no single contest)
+   */
+  const contest: ContestResponse | null =
+    contestType === 'active'
+      ? activeContest
+      : contestType === 'upcoming'
+      ? upcomingContest
+      : contestType === 'paused'
+      ? pausedContest
+      : null;
 
-  useEffect(() => {
-    if (contest) {
-      console.log('====== FRONTEND STATE ======');
-      console.log('contest.status:', contest.status);
-      console.log('contest.effectiveState:', contest.effectiveState);
-
-      const lifecycleState =
-          contest.effectiveState ?? contest.status;
-
-      console.log('lifecycleState (USED):', lifecycleState);
-      console.log('============================');
-    }
-  }, [contest]);
-  useEffect(() => {
-    if (contest) {
-      console.log('contest.startTime:', contest.startTime);
-      console.log('contest.actualStartTime:', contest.actualStartTime);
-      console.log('contest.effectiveEndTime:', contest.effectiveEndTime);
-    }
-  }, [contest]);
+  /**
+   * These are normal async functions,
+   * These handlers do not directly change all the UI state.
+   * Instead, they call the backend API to perform an action (like starting or pausing the contest).
+   * The backend will then process that action,
+   * update the contest state, and send us a new snapshot or update through the SSE stream.
+   * When we receive that update, our onSnapshot or onContestUpdate handlers will be called,
+   * which will then update our UI state accordingly.
+   * This way, we ensure that our UI always reflects the true state of the backend,
+   * and we avoid any inconsistencies that might arise from trying to manually update the UI state in these handlers.
+   * ---------- The real source of truth is the backend + SSE ----------
+   *
+   * user clicks pause
+   * frontend calls pauseContest(contest.id)
+   * backend updates contest
+   * backend emits SSE update
+   * frontend receives update
+   * frontend updates state through handleStreamUpdate
+   */
   const handleStart = async () => {
-    if (!contest) {
-      console.log('[StartContest] No contest loaded');
-      return;
-    }
-
+    if (!contest) return;
     try {
       await startContest(contest.id);
       toast.success('Contest started');
-      setContest(null);
-      setContestType('active');
-
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to start contest');
     }
@@ -161,8 +245,6 @@ export function ContestOverview() {
     try {
       await resumeContest(contest.id);
       toast.success('Contest resumed');
-      setContest(null);
-      setContestType('active');
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to resume contest');
     }
@@ -173,8 +255,6 @@ export function ContestOverview() {
     try {
       await pauseContest(contest.id);
       toast.success('Contest paused');
-      setContest(null);
-      setContestType('paused');
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to pause contest');
     }
@@ -187,8 +267,6 @@ export function ContestOverview() {
       toast.success('Contest ended');
       setEndDialogOpen(false);
       setJuryOverride(false);
-      setContest(null);
-      setContestType('ended');
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to end contest');
     }
@@ -227,19 +305,37 @@ export function ContestOverview() {
     });
   };
 
+  // This controls which buttons are enabled.
   const lifecycleState: ContestLifecycleState | null = contest
     ? (contest.effectiveState ?? contest.status)
     : null;
 
-  // Start is a manual event; no wall-clock guard — admin can start at any time.
   const canStart = lifecycleState === 'UPCOMING';
   const canResume = lifecycleState === 'PAUSED';
   const canPause = lifecycleState === 'RUNNING';
   const canEnd = lifecycleState === 'RUNNING' || lifecycleState === 'PAUSED';
 
-  // Live countdown driven by remainingMillis; ticks locally only while RUNNING.
+  /**
+   * The backend gives the base truth, and frontend creates a smooth local ticking timer between SSE updates.
+   * Step 1
+   *    If no contest exists:
+   *    clear remaining time
+   * Step 2
+   *    If contest exists:
+   *      initialize local countdown from server value:
+   *        contest.remainingMillis
+   * Step 3
+   *    If contest is not running:
+   *      stop there
+   *      no ticking interval
+   * Step 4
+   *    If contest is running:
+   *      create timer every 1 second
+   *      decrease remainingMs by 1000
+   **/
   const [remainingMs, setRemainingMs] = useState<number | null>(null);
   useEffect(() => {
+
     if (!contest) {
       setRemainingMs(null);
       return;
@@ -261,6 +357,20 @@ export function ContestOverview() {
     const pad = (n: number) => n.toString().padStart(2, '0');
     return `${pad(h)}:${pad(m)}:${pad(s)}`;
   };
+
+
+  const connectionLabel =
+    connectionState === 'open'
+      ? 'Live'
+      : connectionState === 'connecting'
+      ? 'Reconnecting…'
+      : 'Offline';
+  const connectionColor =
+    connectionState === 'open'
+      ? 'bg-emerald-500'
+      : connectionState === 'connecting'
+      ? 'bg-amber-400'
+      : 'bg-slate-400';
 
   return (
     <>
@@ -292,6 +402,15 @@ export function ContestOverview() {
             </div>
 
             <div className="flex items-center gap-2">
+              <span
+                title={`Stream ${connectionState}`}
+                className="flex items-center gap-1.5 text-xs text-slate-200"
+              >
+                <span
+                  className={`inline-block w-2 h-2 rounded-full ${connectionColor}`}
+                />
+                {connectionLabel}
+              </span>
               {contest?.scoreboardFrozen && (
                 <Badge className="bg-cyan-100 text-cyan-700 border-cyan-200 border gap-1">
                   <Snowflake className="w-3 h-3" />
@@ -308,7 +427,7 @@ export function ContestOverview() {
         </CardHeader>
 
         <CardContent className="p-6">
-          {loading ? (
+          {!hydrated ? (
             <div className="text-center text-slate-600 py-8">Loading contest...</div>
           ) : contestType === 'ended' ? (
             endedContests.length === 0 ? (

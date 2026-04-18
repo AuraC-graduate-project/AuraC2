@@ -4,19 +4,24 @@ import com.server.contestControl.contestServer.dto.contest.ContestRequest;
 import com.server.contestControl.contestServer.dto.contest.ContestResponse;
 import com.server.contestControl.contestServer.entity.Contest;
 import com.server.contestControl.contestServer.enums.ContestStatus;
+import com.server.contestControl.contestServer.event.ContestUpdatedEvent;
 import com.server.contestControl.contestServer.exception.ContestNotFoundException;
 import com.server.contestControl.contestServer.exception.ContestValidationException;
 import com.server.contestControl.contestServer.exception.InvalidContestStateException;
 import com.server.contestControl.contestServer.repository.ContestRepository;
+import com.server.contestControl.contestServer.sse.ContestStreamSnapshot;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -25,12 +30,14 @@ public class ContestService {
 
     private final ContestRepository contestRepository;
     private final ContestLifecycleService contestLifecycleService;
+    private final ApplicationEventPublisher eventPublisher;
 
     private static final DateTimeFormatter ISO_FORMATTER =
             DateTimeFormatter.ISO_INSTANT.withZone(ZoneOffset.UTC);
     private static final Comparator<Contest> CONTEST_START_TIME_DESC =
             Comparator.comparing(Contest::getStartTime, Comparator.nullsLast(Comparator.reverseOrder()));
 
+    @Transactional
     public ContestResponse createContest(ContestRequest request) {
         Instant now = Instant.now();
 
@@ -69,7 +76,9 @@ public class ContestService {
                 .build();
 
         contestRepository.save(contest);
-        return toResponse(contest);
+        ContestResponse response = toResponse(contest);
+        eventPublisher.publishEvent(new ContestUpdatedEvent(ContestUpdatedEvent.Reason.CREATED, response));
+        return response;
     }
 
     //
@@ -84,6 +93,7 @@ public class ContestService {
      * @param newStatus       Target status
      * @param juryOverride    If true, allows ending contest before scheduled time (jury decision)
      */
+    @Transactional
     public ContestResponse updateStatus(Long id, ContestStatus newStatus, boolean juryOverride) {
         Contest contest = contestRepository.findById(id)
                 .orElseThrow(() -> new ContestNotFoundException(id));
@@ -145,7 +155,23 @@ public class ContestService {
         contest.setStatus(newStatus);
         contestRepository.save(contest);
 
-        return toResponse(contest);
+        ContestResponse response = toResponse(contest);
+        eventPublisher.publishEvent(new ContestUpdatedEvent(
+                manualReason(current, newStatus),
+                response
+        ));
+        return response;
+    }
+
+    private ContestUpdatedEvent.Reason manualReason(ContestStatus from, ContestStatus to) {
+        return switch (to) {
+            case RUNNING -> from == ContestStatus.PAUSED
+                    ? ContestUpdatedEvent.Reason.MANUAL_RESUME
+                    : ContestUpdatedEvent.Reason.MANUAL_START;
+            case PAUSED -> ContestUpdatedEvent.Reason.MANUAL_PAUSE;
+            case ENDED -> ContestUpdatedEvent.Reason.MANUAL_END;
+            default -> throw new IllegalStateException("Unexpected transition target: " + to);
+        };
     }
 
     private boolean isValidTransition(ContestStatus from, ContestStatus to) {
@@ -204,7 +230,50 @@ public class ContestService {
         return toResponse(contest);
     }
 
-    private ContestResponse toResponse(Contest contest) {
+    public ContestStreamSnapshot getStreamSnapshot() {
+        Instant now = Instant.now();
+        List<Contest> all = contestRepository.findAll();
+
+        ContestResponse active = all.stream()
+                .filter(c -> contestLifecycleService.resolveEffectiveState(c, now) == ContestStatus.RUNNING)
+                .sorted(CONTEST_START_TIME_DESC)
+                .findFirst()
+                .map(this::toResponse)
+                .orElse(null);
+
+        ContestResponse upcoming = all.stream()
+                .filter(c -> contestLifecycleService.resolveEffectiveState(c, now) == ContestStatus.UPCOMING)
+                .sorted(CONTEST_START_TIME_DESC)
+                .findFirst()
+                .map(this::toResponse)
+                .orElse(null);
+
+        ContestResponse paused = all.stream()
+                .filter(c -> contestLifecycleService.resolveEffectiveState(c, now) == ContestStatus.PAUSED)
+                .sorted(CONTEST_START_TIME_DESC)
+                .findFirst()
+                .map(this::toResponse)
+                .orElse(null);
+
+        List<ContestResponse> ended = all.stream()
+                .filter(c -> contestLifecycleService.resolveEffectiveState(c, now) == ContestStatus.ENDED)
+                .sorted(CONTEST_START_TIME_DESC)
+                .map(this::toResponse)
+                .toList();
+
+        return ContestStreamSnapshot.builder()
+                .active(active)
+                .upcoming(upcoming)
+                .paused(paused)
+                .ended(ended)
+                .build();
+    }
+
+    public Optional<ContestResponse> buildResponseForId(Long contestId) {
+        return contestRepository.findById(contestId).map(this::toResponse);
+    }
+
+    ContestResponse toResponse(Contest contest) {
         Instant now = Instant.now();
         Instant endTime = contest.getEndTime();
         Instant effectiveEndTime = contestLifecycleService.resolveEffectiveEndTime(contest, now);

@@ -2,7 +2,7 @@
 
 export type ContestLifecycleState = 'RUNNING' | 'PAUSED' | 'ENDED' | 'UPCOMING';
 
-export interface ContestResponse {
+export interface  ContestResponse {
   id: number;
   title: string;
   description: string;
@@ -20,6 +20,27 @@ export interface ContestResponse {
   scoreboardFreezeTime: string | null;
   penaltyMinutes: number;
   scoreboardFrozen: boolean;
+}
+
+export type ContestUpdateReason =
+  | 'CREATED'
+  | 'MANUAL_START'
+  | 'MANUAL_PAUSE'
+  | 'MANUAL_RESUME'
+  | 'MANUAL_END'
+  | 'AUTO_START'
+  | 'AUTO_END';
+
+export interface ContestStreamSnapshot {
+  active: ContestResponse | null;
+  upcoming: ContestResponse | null;
+  paused: ContestResponse | null;
+  ended: ContestResponse[];
+}
+
+export interface ContestStreamUpdate {
+  reason: ContestUpdateReason;
+  snapshot: ContestResponse;
 }
 
 export interface ContestRequest {

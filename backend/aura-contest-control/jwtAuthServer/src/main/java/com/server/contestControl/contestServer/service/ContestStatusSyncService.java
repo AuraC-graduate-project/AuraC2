@@ -1,10 +1,13 @@
 package com.server.contestControl.contestServer.service;
 
+import com.server.contestControl.contestServer.dto.contest.ContestResponse;
 import com.server.contestControl.contestServer.entity.Contest;
 import com.server.contestControl.contestServer.enums.ContestStatus;
+import com.server.contestControl.contestServer.event.ContestUpdatedEvent;
 import com.server.contestControl.contestServer.repository.ContestRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +22,8 @@ public class ContestStatusSyncService {
 
     private final ContestRepository contestRepository;
     private final ContestStatusSyncExecutor syncExecutor; // ✅ injected proxy — calls go through AOP
+    private final ContestService contestService;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * Sync all eligible contests. Returns count of contests that were updated.
@@ -36,12 +41,12 @@ public class ContestStatusSyncService {
      * transactions are fully isolated — this is correct and intentional.
      */
     @Transactional(readOnly = true)
-    public int syncAllEligibleContests() {
+    public int syncAllEligibleContests() { // 1️⃣ Check if contest should auto-start or auto-end
         Instant now = Instant.now();
 
         // UPCOMING contests are auto-started when their scheduledStart time passes.
         // RUNNING contests are auto-ended when their pause-aware effectiveEndTime passes.
-        Optional<Long> contestId = contestRepository.findSyncCandidates(
+        Optional<Long> contestId = contestRepository.findSyncCandidates(// 2️⃣ Finding candidate contests that might need status sync, ordered by soonest scheduled transition time
                         List.of(ContestStatus.UPCOMING, ContestStatus.RUNNING)
                 ).stream()
                 .findFirst()
@@ -54,10 +59,34 @@ public class ContestStatusSyncService {
 
         try {
             // ✅ Call goes through Spring's proxy on syncExecutor — REQUIRES_NEW is applied
-            return syncExecutor.syncContestStatus(contestId.get(), now).isPresent() ? 1 : 0;
+            Optional<ContestStatus> transitionedTo = syncExecutor.syncContestStatus(contestId.get(), now);// 3️⃣ Contest status is updated, transaction commits, AFTER_COMMIT happens right after that commit
+            if (transitionedTo.isEmpty()) {
+                return 0;
+            }
+            publishAutoTransitionEvent(contestId.get(), transitionedTo.get()); // 4️⃣ Tell frontend about it
+            return 1;
         } catch (Exception e) {
             log.error("Failed to sync contest {}: {}", contestId.get(), e.getMessage(), e);
             return 0;
         }
+    }
+
+    private void publishAutoTransitionEvent(Long contestId, ContestStatus newStatus) {
+        Optional<ContestResponse> snapshot = contestService.buildResponseForId(contestId);
+        if (snapshot.isEmpty()) {
+            log.warn("Auto-transitioned contest {} disappeared before snapshot build; skipping SSE event", contestId);
+            return;
+        }
+        ContestUpdatedEvent.Reason reason = switch (newStatus) {
+            case RUNNING -> ContestUpdatedEvent.Reason.AUTO_START;
+            case ENDED -> ContestUpdatedEvent.Reason.AUTO_END;
+            default -> null;
+        };
+        if (reason == null) {
+            log.debug("No SSE reason mapping for auto-transition to {}; skipping", newStatus);
+            return;
+        }
+
+        eventPublisher.publishEvent(new ContestUpdatedEvent(reason, snapshot.get()));
     }
 }
