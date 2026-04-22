@@ -9,10 +9,12 @@ import com.server.contestControl.contestServer.exception.ContestNotFoundExceptio
 import com.server.contestControl.contestServer.exception.ContestValidationException;
 import com.server.contestControl.contestServer.exception.InvalidContestStateException;
 import com.server.contestControl.contestServer.repository.ContestRepository;
+import com.server.contestControl.contestServer.scheduler.ContestTransitionScheduler;
 import com.server.contestControl.contestServer.sse.ContestStreamSnapshot;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +33,8 @@ public class ContestService {
     private final ContestRepository contestRepository;
     private final ContestLifecycleService contestLifecycleService;
     private final ApplicationEventPublisher eventPublisher;
+    @Lazy
+    private final ContestTransitionScheduler transitionScheduler;
 
     private static final DateTimeFormatter ISO_FORMATTER =
             DateTimeFormatter.ISO_INSTANT.withZone(ZoneOffset.UTC);
@@ -78,6 +82,9 @@ public class ContestService {
         contestRepository.save(contest);
         ContestResponse response = toResponse(contest);
         eventPublisher.publishEvent(new ContestUpdatedEvent(ContestUpdatedEvent.Reason.CREATED, response));
+
+
+        transitionScheduler.reschedule(contest);
         return response;
     }
 
@@ -160,6 +167,14 @@ public class ContestService {
                 manualReason(current, newStatus),
                 response
         ));
+
+        switch (newStatus) {
+            case RUNNING -> transitionScheduler.reschedule(contest);
+            case PAUSED  -> transitionScheduler.cancelPending(contest.getId());
+            case ENDED   -> transitionScheduler.cancelPending(contest.getId());
+            default      -> { }
+        }
+
         return response;
     }
 
