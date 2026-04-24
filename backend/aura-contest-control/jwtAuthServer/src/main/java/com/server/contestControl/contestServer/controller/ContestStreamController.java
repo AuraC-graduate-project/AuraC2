@@ -6,6 +6,7 @@ import com.server.contestControl.contestServer.sse.ContestStreamSnapshot;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,17 +30,20 @@ public class ContestStreamController {
     public SseEmitter stream() {
         // This creates one SSE connection object for one browser client.
         SseEmitter emitter = new SseEmitter(STREAM_TIMEOUT_MILLIS);
-        broadcaster.register(emitter);// store this client connection in the broadcaster so it can be notified of future updates
 
         // The moment the page connects, backend immediately sends the initial current state.
         ContestStreamSnapshot snapshot = contestService.getStreamSnapshot();
         try {
-            emitter.send(SseEmitter.event()
-                    .name("snapshot")
-                    .data(snapshot, MediaType.APPLICATION_JSON));
+            synchronized (emitter) {
+                emitter.send(SseEmitter.event()
+                        .name("snapshot")
+                        .data(snapshot, MediaType.APPLICATION_JSON));
+            }
         } catch (IOException e) {
             emitter.completeWithError(e);
+            return emitter;
         }
+        broadcaster.register(emitter);// store this client connection in the broadcaster so it can be notified of future updates
         return emitter;
     }
 }

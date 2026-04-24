@@ -10,6 +10,8 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
+import com.server.contestControl.contestServer.event.ContestUpdatedEvent;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -123,6 +125,19 @@ public class ContestTransitionScheduler {
         }
     }
 
+    @TransactionalEventListener(fallbackExecution = true)
+    public void onContestUpdated(ContestUpdatedEvent event) {
+        Long contestId = event.snapshot().getId();
+
+        switch (event.reason()) {
+            case CREATED, MANUAL_START, MANUAL_RESUME, AUTO_START ->
+                    contestRepository.findById(contestId).ifPresent(this::reschedule);
+
+            case MANUAL_PAUSE, MANUAL_END, AUTO_END ->
+                    cancelPending(contestId);
+        }
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // Startup recovery
     // ─────────────────────────────────────────────────────────────────────────
@@ -162,17 +177,8 @@ public class ContestTransitionScheduler {
      */
     private void triggerSyncAndChain(Long contestId) {
         try {
-            int synced = syncService.syncAllEligibleContests();
-            if (synced > 0) {
-                contestRepository.findById(contestId).ifPresentOrElse(
-                        updated -> {
-                            log.debug("Chaining next transition for contest {} (now {})",
-                                    contestId, updated.getStatus());
-                            reschedule(updated);
-                        },
-                        () -> log.warn("Contest {} not found after auto-transition; cannot chain", contestId)
-                );
-            }
+            syncService.syncAllEligibleContests();
+
         } catch (Exception e) {
             log.error("Exact-time transition task failed for contest {}: {}", contestId, e.getMessage(), e);
         }

@@ -196,6 +196,34 @@ export function ContestOverview() {// Every render, React runs this function aga
     return () => clearTimeout(timer);
   }, [hydrated]);
 
+  // ─── NEW: poll REST every 10 s when SSE is dead ─────────────────────────────
+// When the stream silently dies (proxy timeout, network drop), we have no way
+// to receive the next SSE snapshot. Poll REST until the stream recovers.
+// The moment SSE reconnects and sends a snapshot, applySnapshot runs and
+// overwrites whatever polling produced — so the two never conflict.
+  useEffect(() => {
+    if (connectionState !== 'closed') return;
+
+    const poll = async () => {
+      try {
+        const [active, upcoming, paused, ended] = await Promise.allSettled([
+          getActiveContest(), getUpcomingContest(), getPausedContest(), getEndedContests()
+        ]);
+        setActiveContest(active.status === 'fulfilled' ? active.value : null);
+        setUpcomingContest(upcoming.status === 'fulfilled' ? upcoming.value : null);
+        setPausedContest(paused.status === 'fulfilled' ? paused.value : null);
+        setEndedContests(ended.status === 'fulfilled' ? ended.value : []);
+      } catch {
+        // silently ignore — we'll retry on next interval
+      }
+    };
+
+    poll(); // fetch immediately when we detect the drop
+    const id = setInterval(poll, 10_000); // then every 10 s
+    return () => clearInterval(id);       // stop when connectionState changes
+  }, [connectionState]); // re-runs when SSE reconnects (state becomes 'open' → 'closed' again)
+
+
   /**
    * if current tab is active → use activeContest
    * if current tab is upcoming → use upcomingContest

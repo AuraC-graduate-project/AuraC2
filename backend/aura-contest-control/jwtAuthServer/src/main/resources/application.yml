@@ -6,7 +6,7 @@ judge0:
 contest:
   sync:
     enabled: true
-    delay-ms: 3000
+    delay-ms: 30000
     initial-delay-ms: 10000
 
 spring:

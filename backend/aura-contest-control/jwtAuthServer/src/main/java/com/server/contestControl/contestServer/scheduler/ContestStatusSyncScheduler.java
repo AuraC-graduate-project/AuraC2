@@ -38,8 +38,8 @@ public class ContestStatusSyncScheduler {
      * of 10 seconds (10000 ms).
      */
     @Scheduled(
-            fixedRateString  = "${contest.sync.delay-ms:5000}",
-            initialDelayString = "${contest.sync.initial-delay-ms:5000}"
+            fixedDelayString  = "${contest.sync.delay-ms:30000}",
+            initialDelayString = "${contest.sync.initial-delay-ms:10000}"
     )
     public void syncContestStatuses() {
         log.debug("Contest status sync scheduler triggered");

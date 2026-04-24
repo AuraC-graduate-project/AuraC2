@@ -43,17 +43,11 @@ public class ContestStreamBroadcaster {
      */
     @TransactionalEventListener(fallbackExecution = true) // Don’t run this method immediately, Wait until the transaction commits successfully. AFTER_COMMIT = after transaction is successfully finished and changes are permanently stored in DB
     public void onContestUpdated(ContestUpdatedEvent event) {
-        StreamPayload payload = new StreamPayload(event.reason().name(), event.snapshot()); // This creates the data sent to frontend.
+        StreamPayload payload = new StreamPayload(event.reason().name(), event.snapshot());
         for (SseEmitter emitter : emitters) {
-            try {
-                emitter.send(SseEmitter.event()
-                        .name("contest-update")
-                        .data(payload, MediaType.APPLICATION_JSON));
-            } catch (IOException | IllegalStateException e) {
-                log.debug("Dropping SSE emitter after send failure: {}", e.getMessage());
-                emitter.complete();
-                emitters.remove(emitter);
-            }
+            safeSend(emitter, SseEmitter.event()
+                    .name("contest-update")
+                    .data(payload, MediaType.APPLICATION_JSON));
         }
     }
 
@@ -62,10 +56,22 @@ public class ContestStreamBroadcaster {
     @Scheduled(fixedDelay = 15_000)
     public void heartbeat() {
         for (SseEmitter emitter : emitters) {
+            safeSend(emitter, SseEmitter.event().comment("keepalive"));
+        }
+    }
+
+    // lock is per-emitter, so two clients never block each other
+    public void safeSend(SseEmitter emitter, SseEmitter.SseEventBuilder event) {
+        synchronized (emitter) {
             try {
-                emitter.send(SseEmitter.event().comment("keepalive"));
+                emitter.send(event);
             } catch (IOException | IllegalStateException e) {
-                emitter.complete();
+                log.debug("Dropping SSE emitter after send failure: {}", e.getMessage());
+                try {
+                    emitter.complete();
+                } catch (Exception ignored) {
+                    // already in error state — just remove it, nothing else to do
+                }
                 emitters.remove(emitter);
             }
         }

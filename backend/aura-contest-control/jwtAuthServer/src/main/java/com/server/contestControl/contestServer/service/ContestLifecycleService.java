@@ -24,7 +24,8 @@ public class ContestLifecycleService {
 
         if (persistedStatus == ContestStatus.RUNNING) {
             Instant effectiveEndTime = resolveEffectiveEndTime(contest, now);
-            if (effectiveEndTime != null && !now.isBefore(effectiveEndTime)) {
+            if (effectiveEndTime != null && !now.isBefore(effectiveEndTime)
+                    && !Boolean.TRUE.equals(contest.getStatusLocked())) {  // ← same guard as UPCOMING
                 return ContestStatus.ENDED;
             }
             return ContestStatus.RUNNING;
