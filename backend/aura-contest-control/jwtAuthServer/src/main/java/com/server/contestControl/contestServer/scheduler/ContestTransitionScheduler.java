@@ -11,6 +11,8 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
 import com.server.contestControl.contestServer.event.ContestUpdatedEvent;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.time.Duration;
@@ -125,7 +127,16 @@ public class ContestTransitionScheduler {
         }
     }
 
+    /**
+     * REQUIRES_NEW guarantees a fresh persistence context for the findById below.
+     * The AFTER_COMMIT phase still runs while the publishing tx's PC is bound to
+     * the thread, so a default-propagation findById would return the cached
+     * pre-commit entity (e.g. status=UPCOMING after an AUTO_START commit) and
+     * resolveNextTransitionInstant would then reschedule against the start time
+     * that just passed — the "already past — scheduling immediate catch-up" loop.
+     */
     @TransactionalEventListener(fallbackExecution = true)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void onContestUpdated(ContestUpdatedEvent event) {
         Long contestId = event.snapshot().getId();
 

@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
@@ -273,6 +274,16 @@ public class ContestService {
                 .build();
     }
 
+    /**
+     * Reads the contest in its own transaction (fresh persistence context).
+     *
+     * Called from {@code ContestStatusSyncService.publishAutoTransitionEvent} after an
+     * auto-transition's REQUIRES_NEW tx commits but while the outer readOnly tx is
+     * still active. Without REQUIRES_NEW here, Hibernate's L1 cache on the outer tx
+     * returns the pre-commit entity (status=UPCOMING, actualStartTime=null), causing
+     * a stale snapshot to flow into the SSE event and the @TransactionalEventListener.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
     public Optional<ContestResponse> buildResponseForId(Long contestId) {
         return contestRepository.findById(contestId).map(this::toResponse);
     }

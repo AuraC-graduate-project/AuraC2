@@ -43,8 +43,7 @@ public class ContestStatusSyncScheduler {
     )
     public void syncContestStatuses() {
         log.debug("Contest status sync scheduler triggered");
-        System.out.println("=== SCHEDULER TRIGGERED ===");
-        
+
         try {
             int syncedCount = syncService.syncAllEligibleContests();
             
