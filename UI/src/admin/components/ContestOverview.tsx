@@ -386,6 +386,24 @@ export function ContestOverview() {// Every render, React runs this function aga
     return `${pad(h)}:${pad(m)}:${pad(s)}`;
   };
 
+  // Mirrors ContestLifecycleService.isScoreboardFrozen on the backend so the
+  // badge can flip the moment the local countdown crosses the freeze threshold,
+  // without waiting for an SSE push (the backend only pushes on lifecycle
+  // transitions, not when the freeze window opens).
+  // Falls back to the server-computed flag until the local timer initializes,
+  // so the badge is correct on first paint after a snapshot.
+  const freezeWindowMs =
+    contest?.scoreboardFreezeMinutes != null && contest.scoreboardFreezeMinutes > 0
+      ? contest.scoreboardFreezeMinutes * 60_000
+      : null;
+  const isFrozen =
+    !!contest &&
+    freezeWindowMs != null &&
+    (lifecycleState === 'RUNNING' || lifecycleState === 'PAUSED') &&
+    (remainingMs != null
+      ? remainingMs <= freezeWindowMs
+      : !!contest.scoreboardFrozen);
+
 
   const connectionLabel =
     connectionState === 'open'
@@ -439,7 +457,7 @@ export function ContestOverview() {// Every render, React runs this function aga
                 />
                 {connectionLabel}
               </span>
-              {contest?.scoreboardFrozen && (
+              {isFrozen && (
                 <Badge className="bg-cyan-100 text-cyan-700 border-cyan-200 border gap-1">
                   <Snowflake className="w-3 h-3" />
                   Frozen
