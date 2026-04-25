@@ -15,6 +15,12 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+
+/**
+ * Coordinates auto sync and publishes auto events.
+ * It does not directly change the contest status.
+ * It finds the candidate and delegates the actual update to ContestStatusSyncExecutor.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -72,7 +78,7 @@ public class ContestStatusSyncService {
     }
 
     private void publishAutoTransitionEvent(Long contestId, ContestStatus newStatus) {
-        Optional<ContestResponse> snapshot = contestService.buildResponseForId(contestId);
+        Optional<ContestResponse> snapshot = contestService.buildResponseForId(contestId); // REQUIRES_NEW fresh read method : Because after auto transition, we need response from the latest committed DB state.
         if (snapshot.isEmpty()) {
             log.warn("Auto-transitioned contest {} disappeared before snapshot build; skipping SSE event", contestId);
             return;

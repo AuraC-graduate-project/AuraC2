@@ -34,6 +34,8 @@ public class ContestStreamController {
         // The moment the page connects, backend immediately sends the initial current state.
         ContestStreamSnapshot snapshot = contestService.getStreamSnapshot();
         try {
+            // Only one thread at a time can send using this emitter.
+            // If two threads try to write to the same emitter at the same time, weird errors can happen.
             synchronized (emitter) {
                 emitter.send(SseEmitter.event()
                         .name("snapshot")

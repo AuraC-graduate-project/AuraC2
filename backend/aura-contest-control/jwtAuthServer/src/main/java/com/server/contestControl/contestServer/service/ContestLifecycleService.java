@@ -7,6 +7,14 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 
+/**
+ * Calculates effective state, end time, remaining time, and freeze state
+ * statusLockd means:
+ *   - true:  Admin has manually set the status, so automatic transitions are locked/disabled.
+ *   - false/null: No manual override, so automatic transitions are enabled based on time.
+ *      So Even if time says the contest should auto-start or auto-end,
+ *      do not automatically change it.
+ */
 @Service
 @Slf4j
 public class ContestLifecycleService {
@@ -22,6 +30,7 @@ public class ContestLifecycleService {
             return ContestStatus.PAUSED;
         }
 
+        // If contest is running, calculate end time. If end time has passed and contest is not locked, transition to ENDED.
         if (persistedStatus == ContestStatus.RUNNING) {
             Instant effectiveEndTime = resolveEffectiveEndTime(contest, now);
             if (effectiveEndTime != null && !now.isBefore(effectiveEndTime)

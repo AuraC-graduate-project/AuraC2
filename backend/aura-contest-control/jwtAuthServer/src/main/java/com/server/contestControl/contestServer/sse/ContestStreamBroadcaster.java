@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * This file is the “send updates to all connected clients” part.
+ * Sending real-time updates to all connected frontend clients.
  *
  */
 
@@ -22,26 +22,33 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ContestStreamBroadcaster {
 
     // keep a list of all connected SSE clients, each browser tab/user has its own emitter
+    // Normal ArrayList is not safe if one thread is looping while another thread removes an item.
     private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
 
     // This is lifecycle management for each connected client.
+    // Add this browser connection to the list of clients.
+    // Also define cleanup behavior.
     public void register(SseEmitter emitter) {
         emitters.add(emitter);
-        emitter.onCompletion(() -> emitters.remove(emitter));
-        emitter.onTimeout(() -> {
+        emitter.onCompletion(() -> emitters.remove(emitter)); // When this SSE connection is finished, remove it from the active clients list.
+        emitter.onTimeout(() -> {//
             emitter.complete();
             emitters.remove(emitter);
         });
-        emitter.onError(t -> emitters.remove(emitter));
+        emitter.onError(t -> emitters.remove(emitter));// When 30-minute timeout happens, complete and remove it.
     }
 
     /**
      * The main live-update method. Whenever a contest is updated,
      * this method is called with the update details. It then broadcasts the update to all connected clients.
      *
-     * @param event
+     * This listens to ContestUpdatedEvent object,
+     *
+     * Listen to events related to transactions.
+     * Usually run after transaction commit.
+     * If no transaction exists, still run because fallbackExecution = true.
      */
-    @TransactionalEventListener(fallbackExecution = true) // Don’t run this method immediately, Wait until the transaction commits successfully. AFTER_COMMIT = after transaction is successfully finished and changes are permanently stored in DB
+    @TransactionalEventListener(fallbackExecution = true)
     public void onContestUpdated(ContestUpdatedEvent event) {
         StreamPayload payload = new StreamPayload(event.reason().name(), event.snapshot());
         for (SseEmitter emitter : emitters) {
@@ -60,13 +67,14 @@ public class ContestStreamBroadcaster {
         }
     }
 
-    // lock is per-emitter, so two clients never block each other
+    // lock is per-emitter, so two clients never block each other,
+    // Safely sends one SSE event to one client.
     public void safeSend(SseEmitter emitter, SseEmitter.SseEventBuilder event) {
-        synchronized (emitter) {
+        synchronized (emitter) { // For this one client connection, only one send happens at a time.
             try {
                 emitter.send(event);
             } catch (IOException | IllegalStateException e) {
-                log.debug("Dropping SSE emitter after send failure: {}", e.getMessage());
+                log.debug("Dropping SSE emitter after send failure: {}", e.getMessage()); //
                 try {
                     emitter.complete();
                 } catch (Exception ignored) {

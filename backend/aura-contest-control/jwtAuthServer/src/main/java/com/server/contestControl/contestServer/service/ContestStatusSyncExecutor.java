@@ -31,6 +31,19 @@ public class ContestStatusSyncExecutor {
      * Synchronize a single contest's persisted status with its effective state.
      * Runs in its own brand-new transaction, isolated from the caller's transaction.
      *
+     * Why REQUIRES_NEW here?
+     *     Because scheduler/sync may be called from an outer read-only transaction.
+     *     This method must write.
+     *     Fetches a contest using SELECT ... FOR UPDATE semantics.
+     *     This prevents concurrent auto-sync jobs from applying the same transition
+     *     twice; the lock is held until the surrounding transaction commits/rolls back.
+     *
+     * So it says:
+     *      Pause whatever transaction exists.
+     *      Open a new read-write transaction.
+     *      Lock row.
+     *      Update status.
+     *      Commit.
      * @param contestId The contest ID to sync
      * @param now       The current time (passed in for testability)
      * @return The new status if a transition was made, empty otherwise
@@ -48,7 +61,8 @@ public class ContestStatusSyncExecutor {
         ContestStatus persistedStatus = contest.getStatus();
         ContestStatus effectiveState = contestLifecycleService.resolveEffectiveState(contest, now);
 
-        if (persistedStatus == effectiveState) {
+
+        if (persistedStatus == effectiveState) {// Already in sync
             log.debug("Contest {} already in sync: status={}", contest.getId(), persistedStatus);
             return Optional.empty();
         }
@@ -59,6 +73,7 @@ public class ContestStatusSyncExecutor {
             return Optional.empty();
         }
 
+        // If status is locked, auto sync skips it.
         if (Boolean.TRUE.equals(contest.getStatusLocked())) {
             log.info("Contest {} was locked during sync, skipping", contest.getId());
             return Optional.empty();

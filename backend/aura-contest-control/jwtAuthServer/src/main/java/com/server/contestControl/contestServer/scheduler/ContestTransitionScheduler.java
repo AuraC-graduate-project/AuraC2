@@ -1,5 +1,4 @@
 package com.server.contestControl.contestServer.scheduler;
-
 import com.server.contestControl.contestServer.entity.Contest;
 import com.server.contestControl.contestServer.repository.ContestRepository;
 import com.server.contestControl.contestServer.service.ContestLifecycleService;
@@ -22,44 +21,28 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
 /**
- * Parks a one-shot task at the exact Instant a contest should auto-transition.
+ * The main reason is scheduler effective transitions.
+ * This file handles exact-time automatic transitions.
+ * It schedules one-shot future tasks:
+ *      UPCOMING contest → run task at startTime
+ *      RUNNING contest  → run task at effectiveEndTime
  *
- * ── How it fits into the existing system ─────────────────────────────────────
+ * It wakes up at the right time and tells the existing syncAllEligibleContests():
+ *      Check contests now. Any contest that should transition, transition it.
  *
- *   ContestService calls reschedule() / cancelPending() after every mutation.
- *   When the task fires it calls the existing syncAllEligibleContests(), so
- *   all the existing REQUIRES_NEW transaction, locking, broadcast, and
- *   @TransactionalEventListener logic runs exactly as before — nothing in
- *   the sync pipeline is changed.
+ * The scheduler says:
+ *      Time arrived.
+ * The sync service says:
+ *      Okay, I will check DB and auto-start/auto-end if needed.
  *
- *   ContestStatusSyncScheduler (the 30s fallback) still runs untouched as
- *   a safety net for restarts, clock skew, or transient failures.
  *
- * ── Circular dependency ───────────────────────────────────────────────────────
- *
- *   ContestService → ContestTransitionScheduler
- *                         → ContestStatusSyncService
- *                               → ContestService   ← cycle
- *
- *   Broken by @Lazy on the injection site in ContestService (see that file).
- *   Spring injects a proxy there and resolves the real bean on first use,
- *   after the context is fully started. This is the pattern Spring 6's AOT
- *   docs recommend for unavoidable cycles.
- *
- * ── Thread safety ─────────────────────────────────────────────────────────────
- *
- *   reschedule() and cancelPending() are synchronized. ConcurrentHashMap alone
- *   is not enough: two threads could interleave their remove + put steps and
- *   leak a ScheduledFuture that fires at the wrong time.
- *   The one-shot tasks themselves run on the pool thread and never hold the
- *   monitor, so there is no deadlock risk.
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class ContestTransitionScheduler {
 
-    private final TaskScheduler             taskScheduler;
+    private final TaskScheduler             taskScheduler; // Schedules future tasks. SchedulerConfig.taskScheduler() provides the actual TaskScheduler bean
     private final ContestStatusSyncService  syncService;
     private final ContestRepository         contestRepository;
     private final ContestLifecycleService   lifecycleService;
@@ -68,18 +51,11 @@ public class ContestTransitionScheduler {
      * contest 5 → task to start at 10:00 */
     private final Map<Long, ScheduledFuture<?>> pendingTasks = new ConcurrentHashMap<>();// A regular HashMap is not thread-safe for concurrent access, ConcurrentHM makes individual map operations thread-safe
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Public API
-    // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * If two threads interleave badly, you can still get bugs like:
-     *      thread A removes old task
-     *      thread B also schedules
-     *      thread A schedules again
-     *      wrong task ends up stored
-     *      stale task leaks
-     * So synchronized is there to protect the higher-level invariant:
+     * Cancel the old task for this contest.
+     * Calculate the next automatic transition time.
+     * Schedule one new task.
      */
     public synchronized void reschedule(Contest contest) {
         Long id = contest.getId();
@@ -108,8 +84,13 @@ public class ContestTransitionScheduler {
         log.info("Exact-time auto-transition for contest {} at {} (T-{}s)",
                 id, targetTime, Duration.between(now, targetTime).getSeconds());
 
-        ScheduledFuture<?> f = taskScheduler.schedule(() -> triggerSyncAndChain(id), targetTime);
-        if (f != null) pendingTasks.put(id, f);
+        // This schedules the task.
+        // The scheduler stores:
+        //      At 10:00, run:
+        //      triggerSyncAndChain(7)
+        // At exactly 10:00, one scheduler thread wakes up and executes the stored lambda:
+        ScheduledFuture<?> nextTask = taskScheduler.schedule(() -> triggerSyncAndChain(id), targetTime); // The taskScheduler here is the bean from SchedulerConfig.
+        if (nextTask != null) pendingTasks.put(id, nextTask); // Save it
     }
 
     /**
@@ -128,12 +109,10 @@ public class ContestTransitionScheduler {
     }
 
     /**
-     * REQUIRES_NEW guarantees a fresh persistence context for the findById below.
-     * The AFTER_COMMIT phase still runs while the publishing tx's PC is bound to
-     * the thread, so a default-propagation findById would return the cached
-     * pre-commit entity (e.g. status=UPCOMING after an AUTO_START commit) and
-     * resolveNextTransitionInstant would then reschedule against the start time
-     * that just passed — the "already past — scheduling immediate catch-up" loop.
+     * Reacts after contest lifecycle changes by keeping the scheduled auto-transition
+     * task in sync with the latest DB state. It schedules the next start/end task
+     * for active lifecycle states, and cancels pending tasks when the clock is paused
+     * or the contest has ended.
      */
     @TransactionalEventListener(fallbackExecution = true)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -179,12 +158,11 @@ public class ContestTransitionScheduler {
     /**
      * Runs on a scheduler pool thread at the scheduled Instant.
      *
+     * This runs when the scheduled time arrives.
+     *
      * Delegates entirely to the existing syncAllEligibleContests() so the
      * REQUIRES_NEW transaction, row lock, status update, and SSE broadcast
      * all happen exactly as they do today.
-     *
-     * After a successful transition, fetches the freshly committed entity
-     * and chains the next task (UPCOMING→RUNNING triggers scheduling of RUNNING→ENDED).
      */
     private void triggerSyncAndChain(Long contestId) {
         try {

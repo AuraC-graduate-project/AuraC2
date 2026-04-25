@@ -60,8 +60,14 @@ export function ContestOverview() {// Every render, React runs this function aga
   const [pausedContest, setPausedContest] = useState<ContestResponse | null>(null);
   const [endedContests, setEndedContests] = useState<ContestResponse[]>([]);
 
-  // Hydrated here means "we've received at least one snapshot from the stream, or we've done the fallback REST hydration". Before hydration, we show a loading spinner. After hydration, we show the actual UI, which might be empty if there are no contests. This prevents a flash of "no contest found" while we're still waiting for data.
-  // Hydrated in small sentence : Did we receive initial data yet?
+  /** Hydrated here means "we've received at least one snapshot from the stream,
+   *  or we've done the fallback REST hydration".
+   *  Before hydration, we show a loading spinner.
+   *  After hydration, we show the actual UI,
+   *  which might be empty if there are no contests.
+   *  This prevents a flash of "no contest found" while we're still waiting for data.
+    * Hydrated in small sentence : Did we receive initial data yet?
+   **/
   const [hydrated, setHydrated] = useState(false);
 
   // These control modal/dialog behavior.
@@ -89,16 +95,30 @@ export function ContestOverview() {// Every render, React runs this function aga
    */
   const placeContest = useCallback((snap: ContestResponse) => {
 
-    // First remove this contest from all buckets, in case it's moving. We identify the contest by its ID. If the contest in a bucket has the same ID as the incoming snapshot, we remove it (set to null or filter out). This ensures that we don't have duplicates when we add it to the correct bucket later.
-    const removeSingle = (c: ContestResponse | null) =>
+    /** First remove this contest from all buckets,
+     *  in case it's moving.
+     *  We identify the contest by its ID.
+     *  If the contest in a bucket has the same ID as the incoming snapshot,
+     *  we remove it (set to null or filter out).
+     *  This ensures that we don't have duplicates when we add it to the correct bucket later.
+    **/
+     const removeSingle = (c: ContestResponse | null) =>
       c && c.id === snap.id ? null : c;
     setActiveContest((prev) => removeSingle(prev));
     setUpcomingContest((prev) => removeSingle(prev));
     setPausedContest((prev) => removeSingle(prev));
     setEndedContests((prev) => prev.filter((c) => c.id !== snap.id));
 
-    // Use effectiveState if available, otherwise fallback to status. effectiveState is what the UI should show based on pause-aware logic, while status is the raw lifecycle state. For example, a PAUSED contest might still have status RUNNING, but its effectiveState would be PAUSED. This allows the backend to communicate the true state of the contest to the UI, especially during edge cases like pausing or resuming.
-    const state: ContestLifecycleState = snap.effectiveState ?? snap.status;
+    /** Use effectiveState if available,
+     *  otherwise fallback to status.
+     *  effectiveState is what the UI should show based on pause-aware logic,
+     *  while status is the raw lifecycle state.
+     *  For example, a PAUSED contest might still have status RUNNING,
+     *  but its effectiveState would be PAUSED.
+     *  This allows the backend to communicate the true state of the contest to the UI,
+     *  especially during edge cases like pausing or resuming.
+    **/
+     const state: ContestLifecycleState = snap.effectiveState ?? snap.status;
     // Then it puts the contest in the correct place
     switch (state) {
       case 'RUNNING':
@@ -125,7 +145,7 @@ export function ContestOverview() {// Every render, React runs this function aga
    * MANUAL_START → switch to active
    * MANUAL_PAUSE → switch to paused
    * AUTO_END → switch to ended
-   */
+   **/
   const switchTabForReason = useCallback((reason: ContestUpdateReason) => {
     switch (reason) {
       case 'CREATED':
@@ -147,7 +167,8 @@ export function ContestOverview() {// Every render, React runs this function aga
   }, []);
 
   /**
-   * When backend sends a live update:
+   * This handles an incremental SSE update.
+   *  When backend sends a live update:
    *  put contest in correct state bucket
    *  switch to the right tab
    */
@@ -171,7 +192,17 @@ export function ContestOverview() {// Every render, React runs this function aga
   });
 
 
-
+  /**
+   * Fallback hydration after 3 seconds of no snapshot.
+   * This covers the case where the SSE connection is established,
+   * but we don't receive a snapshot event
+   * (e.g., due to a backend issue or if the backend doesn't send snapshots).
+   * After 3 seconds, we fetch the current state of all contests
+   * through REST API calls to ensure our UI is populated with data.
+   * We also set a ref to ensure this fallback only happens once,
+   * and we check if we've already been hydrated by an SSE snapshot before doing the REST fetch,
+   * to avoid unnecessary calls.
+   */
   const fallbackDoneRef = useRef(false);
   useEffect(() => {
     if (hydrated || fallbackDoneRef.current) return;
@@ -185,12 +216,13 @@ export function ContestOverview() {// Every render, React runs this function aga
           getPausedContest(),
           getEndedContests()
         ]);
+        // If API succeeded, use its value. If it failed, ignore and keep null/empty.
         setActiveContest(active.status === 'fulfilled' ? active.value : null);
         setUpcomingContest(upcoming.status === 'fulfilled' ? upcoming.value : null);
         setPausedContest(paused.status === 'fulfilled' ? paused.value : null);
         setEndedContests(ended.status === 'fulfilled' ? ended.value : []);
       } finally {
-        setHydrated(true);
+        setHydrated(true);// Even if some requests failed, the UI stops showing loading.
       }
     }, FALLBACK_DELAY_MS);
     return () => clearTimeout(timer);

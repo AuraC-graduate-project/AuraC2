@@ -35,6 +35,8 @@ public interface ContestRepository extends JpaRepository<Contest, Long> {
      * this transaction commits or rolls back.
      *
      * Must be called within an active transaction (REQUIRES_NEW satisfies this).
+     * So When this transaction reads the contest row,
+     * lock that row so no other transaction can update it at the same time.
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT c FROM Contest c WHERE c.id = :id")
