@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Contest Lifecycle — Full Flow</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8f7f4;color:#1a1a18;padding:20px}
+h1{font-size:18px;font-weight:500;margin-bottom:4px;color:#1a1a18}
+.subtitle{font-size:12px;color:#73726c;margin-bottom:16px}
+.lh{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;position:sticky;top:0;background:#f8f7f4;padding:8px 0;z-index:10;border-bottom:2px solid #e0ddd5}
+.lhc{text-align:center;padding:7px 4px;border-radius:8px;font-size:11px;font-weight:500}
+.fe-hdr{background:#deeaf8;color:#0C447C}
+.ct-hdr{background:#d5f0e7;color:#085041}
+.sv-hdr{background:#e6e3fc;color:#3C3489}
+.ss-hdr{background:#fae7c5;color:#633806}
+.ph-bar{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;padding:7px 12px;border-radius:8px;margin:14px 0 6px;display:flex;align-items:center;gap:8px}
+.ph-num{font-size:16px}
+.row{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:5px;align-items:start}
+.c{border-radius:7px;padding:7px 9px;font-size:11px;line-height:1.5;min-height:30px}
+.c b{font-weight:500;display:block;margin-bottom:3px;font-size:11px}
+.c code{display:block;font-family:'SFMono-Regular',Consolas,monospace;font-size:10px;margin-top:3px;opacity:.85;word-break:break-word}
+.c.x{background:transparent}
+.fe{background:#E6F1FB;color:#0C447C}
+.ct{background:#E1F5EE;color:#085041}
+.sv{background:#EEEDFE;color:#3C3489}
+.ss{background:#FAEEDA;color:#633806}
+.bg-load{background:#F1EFE8;color:#444441}
+.bg-create{background:#deeaf8;color:#0C447C}
+.bg-autostart{background:#FAEEDA;color:#633806}
+.bg-mstart{background:#d5f0e7;color:#085041}
+.bg-pause{background:#FAECE7;color:#712B13}
+.bg-resume{background:#EAF3DE;color:#27500A}
+.bg-autoend{background:#FCEBEB;color:#791F1F}
+.bg-mend{background:#FCEBEB;color:#791F1F}
+.note{font-size:10.5px;padding:5px 10px;border-radius:5px;background:#fff;color:#5f5e5a;margin-bottom:5px;border-left:3px solid #c8c6bc;line-height:1.6}
+.sm{background:#F1EFE8;color:#444441;display:flex;flex-wrap:wrap;gap:6px;padding:10px;border-radius:8px;align-items:center;font-size:11px;margin-top:4px}
+.sm span{background:#fff;padding:3px 10px;border-radius:14px;border:1px solid #d0cec4}
+.sm .arr{background:none;border:none;padding:0;opacity:.5}
+</style>
+</head>
+<body>
+<h1>Contest Management — Full Lifecycle Flow</h1>
+<p class="subtitle">Swimlane diagram: every function call from page load → create → auto/manual start → pause → resume → end</p>
+
+<div class="lh">
+  <div class="lhc fe-hdr">Frontend (React)</div>
+  <div class="lhc ct-hdr">Controller</div>
+  <div class="lhc sv-hdr">Service Layer</div>
+  <div class="lhc ss-hdr">Scheduler / SSE</div>
+</div>
+
+<!-- 1. PAGE LOAD -->
+<div class="ph-bar bg-load"><span class="ph-num">①</span> Page load &amp; SSE connect</div>
+<div class="row">
+  <div class="c fe"><b>Component mount</b><code>ContestOverview() renders → useContestStream() called</code></div>
+  <div class="c x"></div><div class="c x"></div><div class="c x"></div>
+</div>
+<div class="row">
+  <div class="c fe"><b>Open SSE connection</b><code>new EventSource('/api/contest/stream') connectionState = 'connecting'</code></div>
+  <div class="c ct"><b>stream()</b><code>ContestStreamController GET /api/contest/stream produces text/event-stream</code></div>
+  <div class="c sv"><b>Build full snapshot</b><code>contestService.getStreamSnapshot() → resolveEffectiveState() for all contests → groups into active/upcoming/paused/ended</code></div>
+  <div class="c ss"><b>Register client</b><code>broadcaster.register(emitter) sets onCompletion/onTimeout/onError cleanup callbacks</code></div>
+</div>
+<div class="row">
+  <div class="c fe"><b>on "snapshot" event</b><code>handleSnapshot() → JSON.parse(event.data) → handlersRef.current.onSnapshot(data) → applySnapshot(snap)</code></div>
+  <div class="c ct"><b>Emit snapshot immediately</b><code>emitter.send(event().name("snapshot").data(snapshot, APPLICATION_JSON))</code></div>
+  <div class="c x"></div><div class="c x"></div>
+</div>
+<div class="row">
+  <div class="c fe"><b>Populate all buckets</b><code>setActiveContest(snap.active) setUpcomingContest(snap.upcoming) setPausedContest(snap.paused) setEndedContests(snap.ended) setHydrated(true)</code></div>
+  <div class="c x"></div><div class="c x"></div>
+  <div class="c ss"><b>Heartbeat every 15s</b><code>@Scheduled(fixedDelay=15_000) broadcaster.heartbeat() → emitter.send(event().comment("keepalive"))</code></div>
+</div>
+<div class="note">⚠ Fallback (3 s timeout): if hydrated=false after FALLBACK_DELAY_MS → REST: getActiveContest() + getUpcomingContest() + getPausedContest() + getEndedContests() → setHydrated(true)</div>
+<div class="note">📡 SSE dead (connectionState='closed') → polls REST every 10 s; stops when connectionState changes back to 'open' or 'connecting'; applySnapshot() overwrites on recovery</div>
+<div class="note">🔄 Startup recovery: @EventListener(ApplicationReadyEvent) → ContestTransitionScheduler.onApplicationReady() → reschedule() all UPCOMING/RUNNING contests from DB; in-memory ScheduledFutures don't survive restarts</div>
+
+<!-- 2. CREATE CONTEST -->
+<div class="ph-bar bg-create"><span class="ph-num">②</span> Create contest</div>
+<div class="row">
+  <div class="c fe"><b>Open modal, submit form</b><code>CreateContestModal.handleSubmit() → validates freeze&lt;duration → converts datetime-local to ISO UTC → createContest(payload) POST /api/contest</code></div>
+  <div class="c ct"><b>createContest()</b><code>@PreAuthorize("ADMIN") ContestController → contestService.createContest(request)</code></div>
+  <div class="c sv"><b>Validate</b><code>hasAnyContestInEffectiveStates([UPCOMING,RUNNING,PAUSED]) == false; request.startTime().isAfter(now); freezeMinutes &lt; durationMinutes</code></div>
+  <div class="c x"></div>
+</div>
+<div class="row">
+  <div class="c x"></div><div class="c x"></div>
+  <div class="c sv"><b>Persist + publish</b><code>Contest.status = UPCOMING contestRepository.save(contest) → toResponse(contest) → publishEvent(new ContestUpdatedEvent(CREATED, response))</code></div>
+  <div class="c x"></div>
+</div>
+<div class="row">
+  <div class="c x"></div><div class="c x"></div><div class="c x"></div>
+  <div class="c ss"><b>@TransactionalEventListener(CREATED)</b><code>ContestTransitionScheduler.onContestUpdated() [REQUIRES_NEW] → contestRepository.findById() → reschedule(contest)</code></div>
+</div>
+<div class="row">
+  <div class="c x"></div><div class="c x"></div><div class="c x"></div>
+  <div class="c ss"><b>Schedule one-shot task at startTime</b><code>resolveNextTransitionInstant(UPCOMING) = contest.getStartTime() cancelPending(id) → taskScheduler.schedule(() → triggerSyncAndChain(id), startTime) → pendingTasks.put(id, future)</code></div>
+</div>
+<div class="row">
+  <div class="c x"></div><div class="c x"></div><div class="c x"></div>
+  <div class="c ss"><b>Broadcast SSE (AFTER_COMMIT)</b><code>ContestStreamBroadcaster.onContestUpdated(CREATED) → StreamPayload("CREATED", snapshot) → safeSend(emitter, event().name("contest-update").data(payload))</code></div>
+</div>
+<div class="row">
+  <div class="c fe"><b>on "contest-update" event</b><code>handleUpdate() → handlersRef.current.onContestUpdate(data) → handleStreamUpdate({reason:'CREATED', snapshot})</code></div>
+  <div class="c x"></div><div class="c x"></div><div class="c x"></div>
+</div>
+<div class="row">
+  <div class="c fe"><b>Route + switch tab</b><code>placeContest(snap): remove from all buckets by id → effectiveState='UPCOMING' → setUpcomingContest(snap) switchTabForReason('CREATED') → setContestType('upcoming')</code></div>
+  <div class="c x"></div><div class="c x"></div><div class="c x"></div>
+</div>
+
+<!-- 3. AUTO-START -->
+<div class="ph-bar bg-autostart"><span class="ph-num">③</span> Auto-start (scheduled task fires at startTime)</div>
+<div class="row">
+  <div class="c x"></div><div class="c x"></div><div class="c x"></div>
+  <div class="c ss"><b>One-shot task fires at startTime</b><code>triggerSyncAndChain(id) → syncService.syncAllEligibleContests()</code></div>
+</div>
+<div class="row">
+  <div class="c x"></div><div class="c x"></div>
+  <div class="c sv"><b>Find sync candidate</b><code>ContestStatusSyncService @Transactional(readOnly=true) → contestRepository.findSyncCandidates([UPCOMING, RUNNING]) → .findFirst().map(Contest::getId)</code></div>
+  <div class="c x"></div>
+</div>
+<div class="row">
+  <div class="c x"></div><div class="c x"></div>
+  <div class="c sv"><b>Isolated sync transaction</b><code>syncExecutor.syncContestStatus(id, now) [REQUIRES_NEW] → contestRepository.findByIdWithLock() SELECT FOR UPDATE → resolveEffectiveState(contest, now) == RUNNING</code></div>
+  <div class="c x"></div>
+</div>
+<div class="row">
+  <div class="c x"></div><div class="c x"></div>
+  <div class="c sv"><b>isAllowedAutoTransition check + stamp</b><code>UPCOMING→RUNNING: allowed ✓ contest.setActualStartTime(scheduledStart) [NOT now, to match UI display] contest.setStatus(RUNNING) → contestRepository.save()</code></div>
+  <div class="c x"></div>
+</div>
+<div class="row">
+  <div class="c x"></div><div class="c x"></div>
+  <div class="c sv"><b>Publish auto transition event</b><code>publishAutoTransitionEvent(id, RUNNING) → contestService.buildResponseForId(id) [REQUIRES_NEW — avoids L1 cache stale read] → publishEvent(ContestUpdatedEvent(AUTO_START, response))</code></div>
+  <div class="c x"></div>
+</div>
+<div class="row">
+  <div class="c x"></div><div class="c x"></div><div class="c x"></div>
+  <div class="c ss"><b>@TransactionalEventListener(AUTO_START)</b><code>ContestTransitionScheduler.onContestUpdated() [REQUIRES_NEW] → contestRepository.findById() [fresh PC, not stale UPCOMING] → reschedule(contest)</code></div>
+</div>
+<div class="row">
+  <div class="c x"></div><div class="c x"></div><div class="c x"></div>
+  <div class="c ss"><b>Chain: schedule auto-end task</b><code>resolveNextTransitionInstant(RUNNING) = lifecycleService.resolveEffectiveEndTime() = actualStart + durationMs + totalPauseMs → taskScheduler.schedule(triggerSyncAndChain, effectiveEndTime)</code></div>
+</div>
+<div class="row">
+  <div class="c x"></div><div class="c x"></div><div class="c x"></div>
+  <div class="c ss"><b>Broadcast SSE</b><code>broadcaster.onContestUpdated(AUTO_START) → "contest-update" {reason:"AUTO_START", snapshot}</code></div>
+</div>
+<div class="row">
+  <div class="c fe"><b>→ 'active' tab + start countdown</b><code>placeContest(snap) → setActiveContest(snap) switchTabForReason('AUTO_START') useEffect: setRemainingMs(contest.remainingMillis) → setInterval(−1000ms, 1s)</code></div>
+  <div class="c x"></div><div class="c x"></div><div class="c x"></div>
+</div>
+<div class="note">🔒 REQUIRES_NEW on sync executor = suspends outer readOnly tx, opens fresh read-write tx with SELECT FOR UPDATE — concurrent scheduler invocations block at row lock, preventing double-transition</div>
+<div class="note">🕐 ContestStatusSyncScheduler also runs every 30 s as safety net (fixedDelay, initialDelay=10s, enabled via contest.sync.enabled=true)</div>
+
+<!-- 4. MANUAL START -->
+<div class="ph-bar bg-mstart"><span class="ph-num">④</span> Manual start (admin triggers before scheduled time)</div>
+<div class="row">
+  <div class="c fe"><b>Click "Start Contest"</b><code>canStart = (lifecycleState === 'UPCOMING') handleStart() → startContest(contest.id)</code></div>
+  <div class="c ct"><b>PUT /api/contest/{id}/start</b><code>ContestController.startContest() → contestService.updateStatus(id, RUNNING)</code></div>
+  <div class="c sv"><b>Validate + stamp</b><code>isValidTransition(UPCOMING→RUNNING) ✓ no other RUNNING contest exists contest.setActualStartTime(now) [real clock, not scheduled start]</code></div>
+  <div class="c x"></div>
+</div>
+<div class="row">
+  <div class="c x"></div><div class="c x"></div>
+  <div class="c sv"><b>Save + publish</b><code>contest.setStatus(RUNNING) → contestRepository.save() → manualReason(UPCOMING→RUNNING) = MANUAL_START publishEvent(ContestUpdatedEvent(MANUAL_START, response))</code></div>
+  <div class="c x"></div>
+</div>
+<div class="row">
+  <div class="c x"></div><div class="c x"></div><div class="c x"></div>
+  <div class="c ss"><b>reschedule() at effectiveEndTime</b><code>onContestUpdated(MANUAL_START) → contestRepository.findById() → reschedule(contest) → taskScheduler.schedule(triggerSyncAndChain, effectiveEndTime)</code></div>
+</div>
+<div class="row">
+  <div class="c fe"><b>→ 'active' tab</b><code>SSE received → placeContest(snap) → setActiveContest(snap) switchTabForReason('MANUAL_START') toast.success("Contest started")</code></div>
+  <div class="c x"></div><div class="c x"></div>
+  <div class="c ss"><b>Broadcast</b><code>"contest-update" {reason:"MANUAL_START", snapshot}</code></div>
+</div>
+
+<!-- 5. PAUSE -->
+<div class="ph-bar bg-pause"><span class="ph-num">⑤</span> Pause</div>
+<div class="row">
+  <div class="c fe"><b>Click "Pause Contest"</b><code>canPause = (lifecycleState === 'RUNNING') handlePause() → pauseContest(contest.id) PUT /api/contest/{id}/pause</code></div>
+  <div class="c ct"><b>pauseContest()</b><code>ContestController → updateStatus(id, PAUSED)</code></div>
+  <div class="c sv"><b>Validate + stamp</b><code>isValidTransition(RUNNING→PAUSED) ✓ contest.setPausedAt(now) → contest.setStatus(PAUSED) → contestRepository.save() → publishEvent(MANUAL_PAUSE)</code></div>
+  <div class="c x"></div>
+</div>
+<div class="row">
+  <div class="c x"></div><div class="c x"></div><div class="c x"></div>
+  <div class="c ss"><b>cancelPending(id)</b><code>onContestUpdated(MANUAL_PAUSE): pendingTasks.remove(id) → existing.cancel(false) Clock is now frozen — resolveEffectiveEndTime() returns null while PAUSED</code></div>
+</div>
+<div class="row">
+  <div class="c fe"><b>→ 'paused' tab</b><code>placeContest(snap) → setPausedContest(snap) switchTabForReason('MANUAL_PAUSE') countdown interval cleared (lifecycleState ≠ RUNNING) toast.success("Contest paused")</code></div>
+  <div class="c x"></div><div class="c x"></div>
+  <div class="c ss"><b>Broadcast</b><code>"contest-update" {reason:"MANUAL_PAUSE", snapshot}</code></div>
+</div>
+<div class="note">⏸ Frontend: remainingMs stops ticking; shows frozen value + "(paused)" label; effectiveEndTime shows "— (paused)"; isFrozen check uses remainingMs ≤ freezeWindowMs</div>
+
+<!-- 6. RESUME -->
+<div class="ph-bar bg-resume"><span class="ph-num">⑥</span> Resume</div>
+<div class="row">
+  <div class="c fe"><b>Click "Resume Contest"</b><code>canResume = (lifecycleState === 'PAUSED') handleResume() → resumeContest(contest.id) PUT /api/contest/{id}/resume</code></div>
+  <div class="c ct"><b>resumeContest()</b><code>ContestController → updateStatus(id, RUNNING) [semantically distinct from start]</code></div>
+  <div class="c sv"><b>Accumulate pause duration</b><code>isValidTransition(PAUSED→RUNNING) ✓ existing = contest.getTotalPauseMillis() contest.setTotalPauseMillis(existing + (now − pausedAt)) contest.setPausedAt(null) → setStatus(RUNNING) → save → publishEvent(MANUAL_RESUME)</code></div>
+  <div class="c x"></div>
+</div>
+<div class="row">
+  <div class="c x"></div><div class="c x"></div><div class="c x"></div>
+  <div class="c ss"><b>reschedule() at new effectiveEndTime</b><code>onContestUpdated(MANUAL_RESUME) → effectiveEndTime = actualStartTime + durationMs + totalPauseMillis [slides forward by exact pause duration] → taskScheduler.schedule(triggerSyncAndChain, newEffectiveEndTime)</code></div>
+</div>
+<div class="row">
+  <div class="c fe"><b>→ 'active' tab</b><code>placeContest(snap) → setActiveContest(snap) switchTabForReason('MANUAL_RESUME') countdown resumes from server's remainingMillis value toast.success("Contest resumed")</code></div>
+  <div class="c x"></div><div class="c x"></div>
+  <div class="c ss"><b>Broadcast</b><code>"contest-update" {reason:"MANUAL_RESUME", snapshot}</code></div>
+</div>
+<div class="note">⏳ Freeze window slides with pauses: scoreboardFreezeTime = effectiveEndTime − freezeMinutes; isFrozen = remainingMs ≤ freezeWindowMs (computed client-side between SSE pushes)</div>
+
+<!-- 7. AUTO-END -->
+<div class="ph-bar bg-autoend"><span class="ph-num">⑦</span> Auto-end (scheduled task fires at effectiveEndTime)</div>
+<div class="row">
+  <div class="c x"></div><div class="c x"></div><div class="c x"></div>
+  <div class="c ss"><b>Task fires at effectiveEndTime</b><code>triggerSyncAndChain(id) → syncService.syncAllEligibleContests()</code></div>
+</div>
+<div class="row">
+  <div class="c x"></div><div class="c x"></div>
+  <div class="c sv"><b>Resolve RUNNING → ENDED</b><code>resolveEffectiveState(): now ≥ effectiveEndTime → ENDED; statusLocked check (false) → proceed isAllowedAutoTransition(RUNNING→ENDED) = true</code></div>
+  <div class="c x"></div>
+</div>
+<div class="row">
+  <div class="c x"></div><div class="c x"></div>
+  <div class="c sv"><b>Sync (REQUIRES_NEW)</b><code>syncExecutor.syncContestStatus(id, now) findByIdWithLock() → SELECT FOR UPDATE → contest.setStatus(ENDED) → contestRepository.save() → return Optional.of(ENDED)</code></div>
+  <div class="c x"></div>
+</div>
+<div class="row">
+  <div class="c x"></div><div class="c x"></div>
+  <div class="c sv"><b>Publish auto event</b><code>publishAutoTransitionEvent(id, ENDED) → contestService.buildResponseForId(id) [REQUIRES_NEW — avoids L1 cache returning pre-commit RUNNING entity] → publishEvent(ContestUpdatedEvent(AUTO_END, response))</code></div>
+  <div class="c x"></div>
+</div>
+<div class="row">
+  <div class="c x"></div><div class="c x"></div><div class="c x"></div>
+  <div class="c ss"><b>cancelPending + broadcast</b><code>onContestUpdated(AUTO_END): cancelPending(id) [terminal] → broadcaster: "contest-update" {reason:"AUTO_END", snapshot}</code></div>
+</div>
+<div class="row">
+  <div class="c fe"><b>→ 'ended' tab</b><code>placeContest(snap) → setEndedContests([snap, ...prev]) switchTabForReason('AUTO_END') remainingMs = 0</code></div>
+  <div class="c x"></div><div class="c x"></div><div class="c x"></div>
+</div>
+
+<!-- 8. MANUAL END -->
+<div class="ph-bar bg-mend"><span class="ph-num">⑧</span> Manual end</div>
+<div class="row">
+  <div class="c fe"><b>Click "End Contest"</b><code>canEnd = (lifecycleState === 'RUNNING' || 'PAUSED') → setEndDialogOpen(true) optional: setJuryOverride(true) via checkbox</code></div>
+  <div class="c x"></div><div class="c x"></div><div class="c x"></div>
+</div>
+<div class="row">
+  <div class="c fe"><b>Confirm → handleEnd()</b><code>endContest(contest.id, juryOverride) PUT /api/contest/{id}/end?juryOverride=true|false</code></div>
+  <div class="c ct"><b>endContest()</b><code>ContestController → updateStatus(id, ENDED, juryOverride)</code></div>
+  <div class="c sv"><b>Validate end condition</b><code>isValidTransition(RUNNING|PAUSED → ENDED) ✓ if !juryOverride: effectiveEndTime = resolveEffectiveEndTime() [null if PAUSED → throws InvalidContestStateException — must use juryOverride] if effectiveEndTime not null: now.isBefore(effectiveEndTime) → throws</code></div>
+  <div class="c x"></div>
+</div>
+<div class="row">
+  <div class="c x"></div><div class="c x"></div>
+  <div class="c sv"><b>Save + publish</b><code>contest.setStatus(ENDED) → contestRepository.save() → manualReason(*→ENDED) = MANUAL_END → publishEvent(ContestUpdatedEvent(MANUAL_END, response)) → return toResponse(contest)</code></div>
+  <div class="c x"></div>
+</div>
+<div class="row">
+  <div class="c x"></div><div class="c x"></div><div class="c x"></div>
+  <div class="c ss"><b>cancelPending + broadcast</b><code>onContestUpdated(MANUAL_END): cancelPending(id) [terminal] broadcaster: "contest-update" {reason:"MANUAL_END", snapshot}</code></div>
+</div>
+<div class="row">
+  <div class="c fe"><b>→ 'ended' tab</b><code>placeContest(snap) → setEndedContests([snap, ...prev]) switchTabForReason('MANUAL_END') setEndDialogOpen(false) setJuryOverride(false) toast.success("Contest ended")</code></div>
+  <div class="c x"></div><div class="c x"></div><div class="c x"></div>
+</div>
+
+<!-- STATE MACHINE -->
+<div class="ph-bar bg-load">Valid state transitions</div>
+<div class="sm">
+  <span>UPCOMING</span>
+  <span class="arr">→ manual/auto start →</span>
+  <span>RUNNING</span>
+  <span class="arr">→ manual pause →</span>
+  <span>PAUSED</span>
+  <span class="arr">→ manual resume →</span>
+  <span>RUNNING</span>
+  <span class="arr">→ auto/manual end →</span>
+  <span>ENDED ⛔</span>
+</div>
+<div class="note">UPCOMING → ENDED direct: allowed via manual end (juryOverride required — no effectiveEndTime for UPCOMING)</div>
+<div class="note">PAUSED → ENDED: always requires juryOverride (resolveEffectiveEndTime() returns null while PAUSED)</div>
+<div class="note">RUNNING → ENDED: auto when now ≥ effectiveEndTime; manual with juryOverride before effectiveEndTime</div>
+<div class="note">ENDED → anything: ❌ terminal; isValidTransition(ENDED, *) always returns false</div>
+
+</body>
+</html>

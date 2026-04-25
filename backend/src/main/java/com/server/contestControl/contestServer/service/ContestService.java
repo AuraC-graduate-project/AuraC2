@@ -4,119 +4,377 @@ import com.server.contestControl.contestServer.dto.contest.ContestRequest;
 import com.server.contestControl.contestServer.dto.contest.ContestResponse;
 import com.server.contestControl.contestServer.entity.Contest;
 import com.server.contestControl.contestServer.enums.ContestStatus;
+import com.server.contestControl.contestServer.event.ContestUpdatedEvent;
+import com.server.contestControl.contestServer.exception.ContestNotFoundException;
+import com.server.contestControl.contestServer.exception.ContestValidationException;
+import com.server.contestControl.contestServer.exception.InvalidContestStateException;
 import com.server.contestControl.contestServer.repository.ContestRepository;
+import com.server.contestControl.contestServer.sse.ContestStreamSnapshot;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ContestService {
 
     private final ContestRepository contestRepository;
+    private final ContestLifecycleService contestLifecycleService;
+    private final ApplicationEventPublisher eventPublisher;
 
+    private static final DateTimeFormatter ISO_FORMATTER =
+            DateTimeFormatter.ISO_INSTANT.withZone(ZoneOffset.UTC);
+    private static final Comparator<Contest> CONTEST_START_TIME_DESC =
+            Comparator.comparing(Contest::getStartTime, Comparator.nullsLast(Comparator.reverseOrder()));
+
+    //@Transactional means everything inside this method runs inside one database transaction.
+    // or If an exception happens, rollback everything that was done in this method so the database is not left in an inconsistent state.
+    @Transactional
     public ContestResponse createContest(ContestRequest request) {
+        Instant now = Instant.now();
 
-        boolean existsActive = contestRepository
-                .existsByStatusIn(List.of(ContestStatus.UPCOMING, ContestStatus.RUNNING));
-
+        // Validate no conflicting contest exists, to prevent creating another live contest.
+        boolean existsActive = hasAnyContestInEffectiveStates(
+                List.of(ContestStatus.UPCOMING, ContestStatus.RUNNING, ContestStatus.PAUSED),
+                now
+        );
         if (existsActive) {
-            throw new RuntimeException("A contest is already scheduled or running. " +
-                    "Please end it before creating a new one.");
+            throw new InvalidContestStateException(
+                    "A contest is already scheduled, running, or paused. End it before creating a new one.");
         }
 
+        // Validate startTime is in the future
+        if (request.startTime().isBefore(now)) {
+            throw new ContestValidationException("Start time must be in the future.");
+        }
 
+        // Validate scoreboardFreezeMinutes if provided
+        if (request.scoreboardFreezeMinutes() != null) {
+            if (request.scoreboardFreezeMinutes() >= request.durationMinutes()) {
+                throw new ContestValidationException(
+                        "Scoreboard freeze time must be less than contest duration.");
+            }
+        }
 
         Contest contest = Contest.builder()
                 .title(request.title())
                 .description(request.description())
                 .startTime(request.startTime())
                 .durationMinutes(request.durationMinutes())
-                .status(ContestStatus.UPCOMING)
+                .scoreboardFreezeMinutes(request.scoreboardFreezeMinutes())
+                .penaltyMinutes(request.penaltyMinutes())
+                .status(ContestStatus.UPCOMING)// persistedStatus --> UPCOMING
                 .build();
 
         contestRepository.save(contest);
-        return ContestResponse.fromEntity(contest);
+        ContestResponse response = toResponse(contest);
+        eventPublisher.publishEvent(new ContestUpdatedEvent(ContestUpdatedEvent.Reason.CREATED, response));
+
+
+        return response;
     }
 
+    @Transactional
     public ContestResponse updateStatus(Long id, ContestStatus newStatus) {
+        return updateStatus(id, newStatus, false);
+    }
+
+    /**
+     * Updates contest status with time-based validation.
+     *
+     * @param id              Contest ID
+     * @param newStatus       Target status
+     * @param juryOverride    If true, allows ending contest before scheduled time (jury decision)
+     */
+    @Transactional
+    public ContestResponse updateStatus(Long id, ContestStatus newStatus, boolean juryOverride) {
         Contest contest = contestRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Contest not found"));
+                .orElseThrow(() -> new ContestNotFoundException(id));
 
         ContestStatus current = contest.getStatus();
 
         if (!isValidTransition(current, newStatus)) {
-            throw new RuntimeException("Invalid contest status transition: " + current + " -> " + newStatus);
+            throw new InvalidContestStateException(
+                    "Invalid contest status transition: " + current + " -> " + newStatus);
         }
 
-        if (newStatus == ContestStatus.RUNNING &&
-                contestRepository.existsByStatus(ContestStatus.RUNNING) &&
-                contest.getStatus() != ContestStatus.RUNNING) {
-            throw new RuntimeException("Another contest is already running.");
+        Instant now = Instant.now();
+
+        // Time-based validations & lifecycle bookkeeping
+        switch (newStatus) {
+            // If target is RUNNING(manual start), handle start/resume logic.
+            case RUNNING -> {
+                // This checks if another contest is already RUNNING.
+                if (contestRepository.existsByStatus(ContestStatus.RUNNING)
+                        && current != ContestStatus.PAUSED) {
+                    throw new InvalidContestStateException("Another contest is already running.");
+                }
+
+                // Manual start logic:
+                if (current == ContestStatus.UPCOMING) {
+                    //There are two start times:
+                    //      startTime = scheduled/planned start time
+                    //      actualStartTime = when the contest actually started
+
+                    // Duration should count from actual start.
+                    contest.setActualStartTime(now);
+                    log.info(
+                            "Manual start stamped actualStartTime | contestId={} | startTime={} | actualStartTime={}",
+                            contest.getId(),
+                            contest.getStartTime(),
+                            contest.getActualStartTime()
+                    );
+                  // Resume logic:
+                } else if (current == ContestStatus.PAUSED) {
+                    // Resume: accumulate pause duration, clear pause marker.
+                    Instant pausedAt = contest.getPausedAt();
+                    if (pausedAt != null) {
+                        long existing = contest.getTotalPauseMillis() != null
+                                ? contest.getTotalPauseMillis() : 0L;
+                        contest.setTotalPauseMillis(existing + (now.toEpochMilli() - pausedAt.toEpochMilli()));// Adds new pause duration to existing pause duration.
+                    }
+                    contest.setPausedAt(null);
+                }
+            }
+            // Case PAUSED
+            case PAUSED -> {
+                contest.setPausedAt(now);// Store exact pause time.
+            }
+            // Case manual ENDING
+            case ENDED -> {
+                if (!juryOverride) {
+                    // Pause-aware effective end — null when paused, so jury override is required to end paused contests.
+                    Instant effectiveEnd = contestLifecycleService.resolveEffectiveEndTime(contest, now);
+                    if (effectiveEnd == null || now.isBefore(effectiveEnd)) {
+                        throw new InvalidContestStateException(
+                                "Cannot end contest before its effective end time. Use jury override to force end.");
+                    }
+                }
+            }
+            default -> { }
         }
 
         contest.setStatus(newStatus);
         contestRepository.save(contest);
 
-        return ContestResponse.fromEntity(contest);
+        ContestResponse response = toResponse(contest);
+
+        // That means: when ContestService publishes ContestUpdatedEvent,
+        // Spring will automatically call those listener methods.
+        // The service itself does not directly call the broadcaster or scheduler.
+        // It only publishes the event.
+        // Spring searches the application for methods listening to ContestUpdatedEvent.
+        eventPublisher.publishEvent(new ContestUpdatedEvent(
+                manualReason(current, newStatus),
+                response
+        ));
+
+
+        return response;
+    }
+
+    // Converts state transition into event reason.
+    private ContestUpdatedEvent.Reason manualReason(ContestStatus from, ContestStatus to) {
+        return switch (to) {
+            case RUNNING -> from == ContestStatus.PAUSED
+                    ? ContestUpdatedEvent.Reason.MANUAL_RESUME// active tab
+                    : ContestUpdatedEvent.Reason.MANUAL_START;// active tab
+            case PAUSED -> ContestUpdatedEvent.Reason.MANUAL_PAUSE; // paused tab
+            case ENDED -> ContestUpdatedEvent.Reason.MANUAL_END;// ended tab
+            default -> throw new IllegalStateException("Unexpected transition target: " + to);
+        };
     }
 
     private boolean isValidTransition(ContestStatus from, ContestStatus to) {
         return switch (from) {
             case UPCOMING -> (to == ContestStatus.RUNNING || to == ContestStatus.ENDED);
-            case RUNNING  -> (to == ContestStatus.PAUSED || to == ContestStatus.ENDED);
-            case PAUSED   -> (to == ContestStatus.RUNNING || to == ContestStatus.ENDED);
-            case ENDED    -> false;
+            case RUNNING -> (to == ContestStatus.PAUSED || to == ContestStatus.ENDED);
+            case PAUSED -> (to == ContestStatus.RUNNING || to == ContestStatus.ENDED);
+            case ENDED -> false;
         };
     }
+
+    // Get active contests by effective state
     public ContestResponse getActiveContest() {
-        Contest contest = contestRepository.findByStatus(ContestStatus.RUNNING)
-                .orElseThrow(() -> new RuntimeException("No active contest found"));
+        Contest contest = findLatestContestByEffectiveState(ContestStatus.RUNNING)
+                .orElseThrow(() -> new ContestNotFoundException("No active contest found"));
 
-        return ContestResponse.fromEntity(contest);
+        return toResponse(contest);
     }
-
 
     public Contest getContestEntity() {
-        Contest contest = contestRepository.findByStatus(ContestStatus.RUNNING)
-                .orElseThrow(() -> new RuntimeException("No active contest found"));
-
-        return contest;
+        return findLatestContestByEffectiveState(ContestStatus.RUNNING)
+                .orElseThrow(() -> new ContestNotFoundException("No active contest found"));
     }
-    public ContestResponse getUpcomingContest() {
-        Contest contest = contestRepository.findByStatus(ContestStatus.UPCOMING)
-                .orElseThrow(() -> new RuntimeException("No upcoming contest found"));
 
-        return ContestResponse.fromEntity(contest);
+    public ContestResponse getUpcomingContest() {
+        Contest contest = findLatestContestByEffectiveState(ContestStatus.UPCOMING)
+                .orElseThrow(() -> new ContestNotFoundException("No upcoming contest found"));
+
+        return toResponse(contest);
     }
 
     public ContestResponse getPausedContest() {
-        Contest contest = contestRepository.findByStatus(ContestStatus.PAUSED)
-                .orElseThrow(() -> new RuntimeException("No paused contest found"));
+        Contest contest = findLatestContestByEffectiveState(ContestStatus.PAUSED)
+                .orElseThrow(() -> new ContestNotFoundException("No paused contest found"));
 
-        return ContestResponse.fromEntity(contest);
+        return toResponse(contest);
     }
 
     public ContestResponse getEndedContest() {
-        Contest contest = contestRepository.findTopByStatusOrderByStartTimeDesc(ContestStatus.ENDED)
-                .orElseThrow(() -> new RuntimeException("No ended contest found"));
+        Contest contest = findLatestContestByEffectiveState(ContestStatus.ENDED)
+                .orElseThrow(() -> new ContestNotFoundException("No ended contest found"));
 
-        return ContestResponse.fromEntity(contest);
+        return toResponse(contest);
     }
 
     public List<ContestResponse> getEndedContests() {
-        return contestRepository.findAllByStatus(ContestStatus.ENDED)
+        return findAllContestsByEffectiveState(ContestStatus.ENDED)
                 .stream()
-                .map(ContestResponse::fromEntity)
+                .map(this::toResponse)
                 .toList();
     }
 
     public ContestResponse getContestByStatus(ContestStatus status) {
         Contest contest = contestRepository.findByStatus(status)
-                .orElseThrow(() -> new RuntimeException("No contest found with status " + status));
+                .orElseThrow(() -> new ContestNotFoundException("No contest found with status " + status));
 
-        return ContestResponse.fromEntity(contest);
+        return toResponse(contest);
     }
 
+    // This builds the full snapshot sent to frontend when SSE connects.
+    public ContestStreamSnapshot getStreamSnapshot() {
+        Instant now = Instant.now();
+        List<Contest> all = contestRepository.findAll();
+
+        ContestResponse active = all.stream()
+                .filter(c -> contestLifecycleService.resolveEffectiveState(c, now) == ContestStatus.RUNNING)
+                .sorted(CONTEST_START_TIME_DESC)
+                .findFirst()
+                .map(this::toResponse)
+                .orElse(null);
+
+        ContestResponse upcoming = all.stream()
+                .filter(c -> contestLifecycleService.resolveEffectiveState(c, now) == ContestStatus.UPCOMING)
+                .sorted(CONTEST_START_TIME_DESC)
+                .findFirst()
+                .map(this::toResponse)
+                .orElse(null);
+
+        ContestResponse paused = all.stream()
+                .filter(c -> contestLifecycleService.resolveEffectiveState(c, now) == ContestStatus.PAUSED)
+                .sorted(CONTEST_START_TIME_DESC)
+                .findFirst()
+                .map(this::toResponse)
+                .orElse(null);
+
+        List<ContestResponse> ended = all.stream()
+                .filter(c -> contestLifecycleService.resolveEffectiveState(c, now) == ContestStatus.ENDED)
+                .sorted(CONTEST_START_TIME_DESC)
+                .map(this::toResponse)
+                .toList();
+
+        return ContestStreamSnapshot.builder()
+                .active(active)
+                .upcoming(upcoming)
+                .paused(paused)
+                .ended(ended)
+                .build();
+    }
+
+    /**
+     * Opens a separate read-only transaction so the response is built from the
+     * latest committed contest state, not from an older Hibernate L1 cache.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
+    public Optional<ContestResponse> buildResponseForId(Long contestId) {
+        return contestRepository.findById(contestId).map(this::toResponse);
+    }
+
+    ContestResponse toResponse(Contest contest) {
+        Instant now = Instant.now();
+        Instant endTime = contest.getEndTime();
+        Instant effectiveEndTime = contestLifecycleService.resolveEffectiveEndTime(contest, now);
+        Instant freezeTime = contestLifecycleService.resolveEffectiveScoreboardFreezeTime(contest, now);
+        ContestStatus effectiveState = contestLifecycleService.resolveEffectiveState(contest, now);
+        boolean scoreboardFrozen = contestLifecycleService.isScoreboardFrozen(contest, now);
+        long remainingMillis = contestLifecycleService.resolveRemainingMillis(contest, now);
+        long totalPauseMillis = contest.getTotalPauseMillis() != null ? contest.getTotalPauseMillis() : 0L;
+
+        log.info(
+                "toResponse | contestId={} | persistedStatus={} | effectiveState={} | startTime={} | actualStartTime={} | endTime={} | effectiveEndTime={}",
+                contest.getId(),
+                contest.getStatus(),
+                effectiveState,
+                contest.getStartTime(),
+                contest.getActualStartTime(),
+                endTime,
+                effectiveEndTime
+        );
+        return ContestResponse.builder()
+                .id(contest.getId())
+                .title(contest.getTitle())
+                .description(contest.getDescription())
+                .durationMinutes(contest.getDurationMinutes())
+                .status(contest.getStatus().name())
+                .effectiveState(effectiveState.name())
+                .statusLocked(Boolean.TRUE.equals(contest.getStatusLocked()))
+                .startTime(formatInstant(contest.getStartTime()))
+                .actualStartTime(formatInstant(contest.getActualStartTime()))
+                .pausedAt(formatInstant(contest.getPausedAt()))
+                .totalPauseMillis(totalPauseMillis)
+                .remainingMillis(remainingMillis)
+                .endTime(formatInstant(endTime))
+                .effectiveEndTime(formatInstant(effectiveEndTime))
+                .scoreboardFreezeMinutes(contest.getScoreboardFreezeMinutes())
+                .scoreboardFreezeTime(formatInstant(freezeTime))
+                .penaltyMinutes(contest.getPenaltyMinutes())
+                .scoreboardFrozen(scoreboardFrozen)
+                .build();
+    }
+
+    private String formatInstant(Instant instant) {
+        return instant != null ? ISO_FORMATTER.format(instant) : null;
+    }
+
+    // This checks if any contest currently has an effective state in the target list.
+    // Example target list: List.of(UPCOMING, RUNNING, PAUSED)
+    private boolean hasAnyContestInEffectiveStates(List<ContestStatus> targetStates, Instant now) {
+        return contestRepository.findAll()
+                .stream()
+                .map(contest -> contestLifecycleService.resolveEffectiveState(contest, now))
+                .anyMatch(targetStates::contains);
+    }
+
+
+    // Finds all contests whose calculated state equals the expected state.
+    private List<Contest> findAllContestsByEffectiveState(ContestStatus expectedState) {
+        Instant now = Instant.now();
+        return contestRepository.findAll()
+                .stream()
+                .filter(contest -> contestLifecycleService.resolveEffectiveState(contest, now) == expectedState)
+                .sorted(CONTEST_START_TIME_DESC)
+                .toList();
+    }
+
+    // Finds one latest contest by effective state.
+    private java.util.Optional<Contest> findLatestContestByEffectiveState(ContestStatus expectedState) {
+        Instant now = Instant.now();
+        return contestRepository.findAll()
+                .stream()
+                .sorted(CONTEST_START_TIME_DESC)
+                .filter(contest -> contestLifecycleService.resolveEffectiveState(contest, now) == expectedState)
+                .findFirst();
+    }
 }

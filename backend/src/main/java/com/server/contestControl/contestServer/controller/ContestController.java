@@ -4,6 +4,7 @@ import com.server.contestControl.contestServer.dto.contest.ContestRequest;
 import com.server.contestControl.contestServer.dto.contest.ContestResponse;
 import com.server.contestControl.contestServer.enums.ContestStatus;
 import com.server.contestControl.contestServer.service.ContestService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,14 +22,22 @@ public class ContestController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ContestResponse> createContest(
-            @RequestBody ContestRequest request) {
-
+            @Valid @RequestBody ContestRequest request) {
         return ResponseEntity.ok(contestService.createContest(request));
     }
 
     @PutMapping("/{id}/start")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ContestResponse> startContest(@PathVariable Long id) {
+        return ResponseEntity.ok(contestService.updateStatus(id, ContestStatus.RUNNING));
+    }
+
+    /**
+     * Resume a paused contest. Semantically distinct from start.
+     */
+    @PutMapping("/{id}/resume")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ContestResponse> resumeContest(@PathVariable Long id) {
         return ResponseEntity.ok(contestService.updateStatus(id, ContestStatus.RUNNING));
     }
 
@@ -40,8 +49,10 @@ public class ContestController {
 
     @PutMapping("/{id}/end")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ContestResponse> endContest(@PathVariable Long id) {
-        return ResponseEntity.ok(contestService.updateStatus(id, ContestStatus.ENDED));
+    public ResponseEntity<ContestResponse> endContest(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "false") boolean juryOverride) {
+        return ResponseEntity.ok(contestService.updateStatus(id, ContestStatus.ENDED, juryOverride));
     }
 
     @GetMapping("/active")
@@ -63,7 +74,5 @@ public class ContestController {
     public ResponseEntity<List<ContestResponse>> getEnded() {
         return ResponseEntity.ok(contestService.getEndedContests());
     }
-
-
 }
 

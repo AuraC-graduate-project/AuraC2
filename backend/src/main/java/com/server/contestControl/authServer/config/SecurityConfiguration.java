@@ -53,7 +53,8 @@ public class SecurityConfiguration {
                                 "/api/contest/active",
                                 "/api/contest/upcoming",
                                 "/api/contest/paused",
-                                "/api/contest/ended"
+                                "/api/contest/ended",
+                                "/api/contest/stream"
                         ).permitAll()
 
                         .requestMatchers("/api/contest/**").hasRole("ADMIN")
