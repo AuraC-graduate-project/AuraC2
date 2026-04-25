@@ -14,13 +14,24 @@ interface CreateContestModalProps {
   onSuccess: () => void;
 }
 
+interface FormData {
+  title: string;
+  description: string;
+  startTime: string;
+  durationMinutes: number;
+  scoreboardFreezeMinutes: number | null;
+  penaltyMinutes: number;
+}
+
 export function CreateContestModal({ open, onOpenChange, onSuccess }: CreateContestModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<ContestRequest>({
+  const [formData, setFormData] = useState<FormData>({
     title: '',
     description: '',
     startTime: '',
     durationMinutes: 0,
+    scoreboardFreezeMinutes: null,
+    penaltyMinutes: 20, // ICPC default
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -28,12 +39,33 @@ export function CreateContestModal({ open, onOpenChange, onSuccess }: CreateCont
     setIsSubmitting(true);
 
     try {
-      // Convert datetime-local to ISO 8601
-      const startTimeISO = new Date(formData.startTime).toISOString();
-      await createContest({
-        ...formData,
+      // Validate freeze time < duration
+      if (
+        formData.scoreboardFreezeMinutes !== null &&
+        formData.scoreboardFreezeMinutes >= formData.durationMinutes
+      ) {
+        throw new Error('Scoreboard freeze time must be less than contest duration');
+      }
+
+      // time **************************************************************
+      // Convert datetime-local to ISO 8601 UTC
+      // datetime-local gives us local time; we must explicitly convert to UTC
+      const localDate = new Date(formData.startTime);
+      if (isNaN(localDate.getTime())) {
+        throw new Error('Invalid start time');
+      }
+      const startTimeISO = localDate.toISOString();
+
+      const payload: ContestRequest = {
+        title: formData.title,
+        description: formData.description,
         startTime: startTimeISO,
-      });
+        durationMinutes: formData.durationMinutes,
+        scoreboardFreezeMinutes: formData.scoreboardFreezeMinutes,
+        penaltyMinutes: formData.penaltyMinutes,
+      };
+
+      await createContest(payload);
       toast.success('Contest created successfully');
       onOpenChange(false);
       onSuccess();
@@ -43,6 +75,8 @@ export function CreateContestModal({ open, onOpenChange, onSuccess }: CreateCont
         description: '',
         startTime: '',
         durationMinutes: 0,
+        scoreboardFreezeMinutes: null,
+        penaltyMinutes: 20,
       });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to create contest');
@@ -68,7 +102,7 @@ export function CreateContestModal({ open, onOpenChange, onSuccess }: CreateCont
                 required
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
               <Textarea
@@ -79,9 +113,9 @@ export function CreateContestModal({ open, onOpenChange, onSuccess }: CreateCont
                 required
               />
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="startTime">Start Time</Label>
+              <Label htmlFor="startTime">Start Time (your local timezone)</Label>
               <Input
                 id="startTime"
                 type="datetime-local"
@@ -89,21 +123,64 @@ export function CreateContestModal({ open, onOpenChange, onSuccess }: CreateCont
                 onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
                 required
               />
+              <p className="text-xs text-slate-500">
+                Time will be converted to UTC for server storage
+              </p>
             </div>
-            
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="durationMinutes">Duration (minutes)</Label>
+                <Input
+                  id="durationMinutes"
+                  type="number"
+                  min="1"
+                  value={formData.durationMinutes || ''}
+                  onChange={(e) =>
+                    setFormData({ ...formData, durationMinutes: parseInt(e.target.value) || 0 })
+                  }
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="penaltyMinutes">Penalty (minutes per wrong answer)</Label>
+                <Input
+                  id="penaltyMinutes"
+                  type="number"
+                  min="0"
+                  value={formData.penaltyMinutes}
+                  onChange={(e) =>
+                    setFormData({ ...formData, penaltyMinutes: parseInt(e.target.value) || 0 })
+                  }
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label htmlFor="durationMinutes">Duration (minutes)</Label>
+              <Label htmlFor="scoreboardFreezeMinutes">
+                Scoreboard Freeze (minutes before end)
+              </Label>
               <Input
-                id="durationMinutes"
+                id="scoreboardFreezeMinutes"
                 type="number"
                 min="0"
-                value={formData.durationMinutes || ''}
-                onChange={(e) => setFormData({ ...formData, durationMinutes: parseInt(e.target.value) || 0 })}
-                required
+                placeholder="e.g., 60 (leave empty for no freeze)"
+                value={formData.scoreboardFreezeMinutes ?? ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setFormData({
+                    ...formData,
+                    scoreboardFreezeMinutes: val === '' ? null : parseInt(val) || 0,
+                  });
+                }}
               />
+              <p className="text-xs text-slate-500">
+                ICPC standard: 60 minutes. Leave empty to disable freeze.
+              </p>
             </div>
           </div>
-          
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel

@@ -54,6 +54,12 @@ bootstrap:
     username: ${BOOTSTRAP_ADMIN_USERNAME:admin}
     credentials-file: ${BOOTSTRAP_ADMIN_CREDENTIALS_FILE:admin-account.txt}
 
+contest:
+  sync:
+    enabled: true
+    delay-ms: 30000
+    initial-delay-ms: 10000
+
 springdoc:
   swagger-ui:
     enabled: true
