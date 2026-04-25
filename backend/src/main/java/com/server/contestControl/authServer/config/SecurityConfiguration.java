@@ -57,6 +57,7 @@ public class SecurityConfiguration {
                         ).permitAll()
 
                         .requestMatchers("/api/contest/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/submissions/**").hasAnyRole("TEAM", "ADMIN")
 
                         .requestMatchers("/api/clarifications/public/**").permitAll()

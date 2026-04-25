@@ -8,6 +8,7 @@ public enum Verdict {
     RUNTIME_ERROR,
     INTERNAL_ERROR,
     PENDING,
+    PENDING_REJUDGE,
     RUNNING;
 
     public static Verdict fromJudge0Status(int statusId) {

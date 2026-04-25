@@ -43,10 +43,12 @@ public class Submission {
     private LocalDateTime createdAt;
     private Integer executionTime;
     private Integer memoryUsage;
+    private Long judgeRunId;
 
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
         this.verdict = Verdict.PENDING;
+        this.judgeRunId = 0L;
     }
 }

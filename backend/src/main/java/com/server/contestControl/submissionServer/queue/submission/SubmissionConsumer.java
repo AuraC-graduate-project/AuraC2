@@ -12,8 +12,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 
+import java.util.EnumSet;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 import static com.server.contestControl.submissionServer.util.LanguageMapper.convertLanguage;
 
@@ -21,6 +22,11 @@ import static com.server.contestControl.submissionServer.util.LanguageMapper.con
 @RequiredArgsConstructor
 @Slf4j
 public class SubmissionConsumer {
+
+    private static final Set<Verdict> QUEUEABLE_VERDICTS = EnumSet.of(
+            Verdict.PENDING,
+            Verdict.PENDING_REJUDGE
+    );
 
     private final SubmissionRepository submissionRepository;
     private final TestCaseRepository testCaseRepository;
@@ -31,11 +37,29 @@ public class SubmissionConsumer {
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new RuntimeException("Submission not found"));
 
+        if (!QUEUEABLE_VERDICTS.contains(submission.getVerdict())) {
+            log.info(
+                    "Skipping submission queue message because submission is not pending. submissionId={} verdict={}",
+                    submissionId,
+                    submission.getVerdict()
+            );
+            return;
+        }
+
         List<TestCase> testCases = testCaseRepository.findByProblemId(submission.getProblem().getId());
         int languageId = convertLanguage(submission.getLanguage());
 
+        Long nextJudgeRunId = submission.getJudgeRunId() == null ? 1L : submission.getJudgeRunId() + 1;
+        submission.setJudgeRunId(nextJudgeRunId);
         submission.setVerdict(Verdict.RUNNING);
         submissionRepository.save(submission);
+
+        log.info(
+                "Dispatching submission to Judge0. submissionId={} judgeRunId={} testCaseCount={}",
+                submission.getId(),
+                submission.getJudgeRunId(),
+                testCases.size()
+        );
 
         for (int i = 0; i < testCases.size(); i++) {
             TestCase tc = testCases.get(i);
