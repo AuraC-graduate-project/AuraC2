@@ -10,13 +10,6 @@ import {
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './ui/select';
 import { registerUser } from '../services/api';
 import { RegisterRequest } from '../types/api';
 import { toast } from 'sonner';
@@ -29,7 +22,6 @@ interface RegisterModalProps {
 export function RegisterModal({ open, onOpenChange }: RegisterModalProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'TEAM' | 'ADMIN'>('TEAM');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,7 +38,7 @@ export function RegisterModal({ open, onOpenChange }: RegisterModalProps) {
       const data: RegisterRequest = {
         username: username.trim(),
         password,
-        role,
+        role: 'TEAM',
       };
       
       await registerUser(data);
@@ -56,7 +48,6 @@ export function RegisterModal({ open, onOpenChange }: RegisterModalProps) {
       // Reset form
       setUsername('');
       setPassword('');
-      setRole('TEAM');
       onOpenChange(false);
     } catch (error) {
       console.error('Registration failed:', error);
@@ -70,7 +61,6 @@ export function RegisterModal({ open, onOpenChange }: RegisterModalProps) {
     if (!isSubmitting) {
       setUsername('');
       setPassword('');
-      setRole('TEAM');
       onOpenChange(false);
     }
   };
@@ -79,9 +69,9 @@ export function RegisterModal({ open, onOpenChange }: RegisterModalProps) {
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Register Team / User</DialogTitle>
+          <DialogTitle>Register Team</DialogTitle>
           <DialogDescription>
-            Create a new team or admin user account.
+            Create a new team account. The server keeps a single bootstrap admin account.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -107,22 +97,6 @@ export function RegisterModal({ open, onOpenChange }: RegisterModalProps) {
                 placeholder="Enter password"
                 disabled={isSubmitting}
               />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="role">Role</Label>
-              <Select 
-                value={role} 
-                onValueChange={(value) => setRole(value as 'TEAM' | 'ADMIN')}
-                disabled={isSubmitting}
-              >
-                <SelectTrigger id="role">
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="TEAM">TEAM</SelectItem>
-                  <SelectItem value="ADMIN">ADMIN</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
           <DialogFooter>

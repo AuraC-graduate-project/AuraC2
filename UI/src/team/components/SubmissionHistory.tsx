@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -20,16 +20,19 @@ import {
   CheckCircle2, XCircle, Clock, Eye, AlertTriangle, Timer,
   Bug,
   ServerCrash,} from "lucide-react";
+import { getStoredToken } from "../../auth/tokenStore";
+import { decodeJwtSubject } from "../../auth/jwt";
+import { clearDraftFromStorage, getDraftKey } from "../../hooks/useCodeDraft";
 
 export interface Submission {
   id: number;
   problem: string;
+  problemId: number;
+  contestId: number;
   verdict: "Accepted" | "Wrong Answer" | "Time Limit Exceeded" | "Pending" | "Compilation Error" | "Runtime Error" | "System Error" | "Running";
   language: string;
   time: string;
   executionTime: string;
-
-  // 🔥 THIS IS WHAT YOU WERE ASKING FOR
   code: string;
 }
 
@@ -40,6 +43,31 @@ type Props = {
 export function SubmissionHistory({ submissions }: Props) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Submission | null>(null);
+
+  // Get user ID from JWT token
+  const userId = React.useMemo(() => {
+    const token = getStoredToken();
+    if (!token) return "unknown";
+    return decodeJwtSubject(token) ?? "unknown";
+  }, []);
+
+  // Clear drafts for problems that have been accepted
+  useEffect(() => {
+    if (!userId || userId === "unknown") return;
+
+    // Track which problem+language combinations have been cleared
+    const cleared = new Set<string>();
+
+    submissions.forEach((s) => {
+      if (s.verdict === "Accepted") {
+        const key = `${s.problemId}-${s.language}`;
+        if (!cleared.has(key)) {
+          clearDraftFromStorage(userId, String(s.contestId), String(s.problemId), s.language);
+          cleared.add(key);
+        }
+      }
+    });
+  }, [submissions, userId]);
 
   const openCode = (s: Submission) => {
     setSelected(s);

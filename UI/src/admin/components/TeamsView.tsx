@@ -53,6 +53,8 @@ export function TeamsView() {
     return `${selectedUser.username} (#${selectedUser.id})`;
   }, [selectedUser]);
 
+  const isAdminUser = (user: UserResponse) => user.role === 'ADMIN';
+
   const loadUsers = async () => {
     setLoading(true);
     try {
@@ -84,6 +86,10 @@ export function TeamsView() {
   };
 
   const openDelete = (user: UserResponse) => {
+    if (isAdminUser(user)) {
+      toast.error('Admin account cannot be deleted');
+      return;
+    }
     setSelectedUser(user);
     setDeleteOpen(true);
   };
@@ -127,6 +133,11 @@ export function TeamsView() {
 
   const handleDelete = async () => {
     if (!selectedUser) return;
+    if (isAdminUser(selectedUser)) {
+      toast.error('Admin account cannot be deleted');
+      setDeleteOpen(false);
+      return;
+    }
     try {
       await deleteUser(selectedUser.id);
       toast.success('User deleted');
@@ -159,7 +170,7 @@ export function TeamsView() {
                 onClick={() => setRegisterModalOpen(true)}
               >
                 <UserPlus className="w-4 h-4" />
-                Register Team / User
+                Register Team
               </Button>
             </div>
           </div>
@@ -211,9 +222,11 @@ export function TeamsView() {
                             variant="destructive"
                             className="gap-2"
                             onClick={() => openDelete(u)}
+                            disabled={isAdminUser(u)}
+                            title={isAdminUser(u) ? 'Admin account cannot be deleted' : undefined}
                           >
                             <Trash2 className="w-4 h-4" />
-                            Delete
+                            {isAdminUser(u) ? 'Protected' : 'Delete'}
                           </Button>
                         </div>
                       </TableCell>
