@@ -41,6 +41,12 @@ judge0:
   url: ${JUDGE0_URL:https://ce.judge0.com/submissions?wait=false}
   callback: ${JUDGE0_CALLBACK_URL:http://localhost:8080/api/callback/judge0}
 
+contest:
+  sync:
+    enabled: ${CONTEST_SYNC_ENABLED:true}
+    delay-ms: ${CONTEST_SYNC_DELAY_MS:30000}
+    initial-delay-ms: ${CONTEST_SYNC_INITIAL_DELAY_MS:10000}
+
 jwt:
   #dont change me. hallaq cry to make it work :) (i have 64B problem)
   # Dev-safe fallbacks let IDE runs work even when env vars are not configured.
