@@ -6,6 +6,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.util.List;
+
 /**
  * Sends an SSE comment (":keepalive") to every connected client every 15 seconds.
  *
@@ -13,23 +15,18 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
  * to produce traffic that prevents proxies, load balancers, and browsers from
  * treating an idle connection as dead and closing it.
  *
- * Extracted into its own bean so that SseEmitterRegistry stays a pure store
- * (no scheduling annotations) and SsePublisher stays a pure push API
- * (no scheduling annotations).
+ * Spring auto-collects every SseEmitterRegistry bean (e.g. AdminSseRegistry)
+ * into the injected list, so adding a new audience requires no change here.
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class SseHeartbeatScheduler {
 
-    private final SseEmitterRegistry registry;
+    private final List<SseEmitterRegistry> registries;
 
     @Scheduled(fixedDelay = 15_000)
     public void heartbeat() {
-        int count = registry.activeCount();
-        if (count == 0) return;
-        log.debug("[SseHeartbeatScheduler] Keepalive → {} client(s)", count);
-        registry.broadcastAll(SseEmitter.event().comment("keepalive"));
+        registries.forEach(r -> r.broadcastAll(SseEmitter.event().comment("keepalive")));
     }
 }
-

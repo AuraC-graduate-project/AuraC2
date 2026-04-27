@@ -1,9 +1,8 @@
 package com.server.contestControl.contestServer.controller;
 
 import com.server.contestControl.contestServer.service.ContestService;
+import com.server.contestControl.contestServer.sse.AdminSseRegistry;
 import com.server.contestControl.contestServer.sse.ContestStreamSnapshot;
-import com.server.contestControl.shared.sse.SseEmitterRegistry;
-import com.server.contestControl.shared.sse.SsePublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -21,22 +20,19 @@ public class ContestStreamController {
     // One connection is allowed to stay open for up to 30 minutes unless refreshed, completed, or broken.
     private static final long STREAM_TIMEOUT_MILLIS = 30L * 60_000L;
 
-    private final SseEmitterRegistry registry;
+    private final AdminSseRegistry adminSseRegistry;
     private final ContestService contestService;
 
-    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)// This endpoint is an SSE endpoint, not a one-time JSON endpoint.
+    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter stream() {
-        // This creates one SSE connection object for one browser client.
         SseEmitter emitter = new SseEmitter(STREAM_TIMEOUT_MILLIS);
 
-        // The moment the page connects, backend immediately sends the initial current state.
         ContestStreamSnapshot snapshot = contestService.getStreamSnapshot();
-        registry.safeSend(emitter, SseEmitter.event()
+        adminSseRegistry.safeSend(emitter, SseEmitter.event()
                 .name("snapshot")
                 .data(snapshot, MediaType.APPLICATION_JSON));
 
-        // store this client connection in the registry so it can be notified of future updates
-        registry.register(emitter);
+        adminSseRegistry.register(emitter);
         return emitter;
     }
 }
