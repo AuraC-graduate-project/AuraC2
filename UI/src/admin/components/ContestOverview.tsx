@@ -31,7 +31,7 @@ import {
   ContestStreamUpdate,
   ContestUpdateReason
 } from '../types/api';
-import { useContestStream } from '../hooks/useContestStream';
+import { useContestStream } from '../../hooks/useContestStream';
 import { CreateContestModal } from './CreateContestModal';
 import {
   AlertDialog,

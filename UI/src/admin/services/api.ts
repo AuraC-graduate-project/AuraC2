@@ -88,7 +88,10 @@ async function refreshAccessToken(): Promise<string | null> {
   return null;
 }
 
-async function ensureRefreshedOnce(): Promise<string | null> {
+// Exported so the SSE hook can share the same coalesced refresh promise
+// (refreshInFlight) as apiFetch — preventing a stream 401 and a REST 401
+// from racing two concurrent /auth/refresh requests.
+export async function ensureRefreshedOnce(): Promise<string | null> {
   if (!refreshInFlight) {
     refreshInFlight = refreshAccessToken().finally(() => {
       refreshInFlight = null;
