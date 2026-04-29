@@ -13,7 +13,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Owns the live collection of {@link SseEmitter}s — one per connected browser tab.
  *
  * Plain class (not @Component) — concrete subclasses are the Spring beans
- * (e.g. AdminSseRegistry). That lets a single class power multiple audience-specific
+ * (e.g. ContestSseRegistry). That lets a single class power multiple audience-specific
  * registries that {@link SseHeartbeatScheduler} can iterate uniformly.
  *
  * ── Two registration modes ───────────────────────────────────────────────────
@@ -23,8 +23,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * ── Thread safety ────────────────────────────────────────────────────────────
  *  CopyOnWriteArrayList makes add/remove safe while iterating.
  *  ConcurrentHashMap.computeIfAbsent atomically lazy-creates per-id buckets.
- *  safeSend() uses a per-emitter synchronized block so two threads can write
- *  to different clients in parallel without blocking each other.
+ *  safeBroadcastSend / safeTargetedSend use a per-emitter synchronized block
+ *  so two threads can write to different clients in parallel without blocking.
  */
 @Slf4j
 public class SseEmitterRegistry {
@@ -67,7 +67,7 @@ public class SseEmitterRegistry {
      */
     public void broadcastAll(SseEmitter.SseEventBuilder event) {
         for (SseEmitter emitter : emitters) {
-            safeSend(emitter, event);
+            safeBroadcastSend(emitter, event);
         }
     }
 
@@ -78,23 +78,56 @@ public class SseEmitterRegistry {
     public void publishTo(Long id, SseEmitter.SseEventBuilder event) {
         List<SseEmitter> list = targetedEmitters.get(id);
         if (list == null) return;
-        list.forEach(emitter -> safeSend(emitter, event));
+        list.forEach(emitter -> safeTargetedSend(id, emitter, event));
     }
 
     /**
-     * Sends to a single emitter, removing it from all internal lists on any
-     * I/O or state error. Synchronized per-emitter — parallel sends to
-     * different clients never block each other.
+     * Keepalives must reach BOTH broadcast and targeted clients,
+     * otherwise targeted emitters get reaped by proxies/browsers after
+     * 30–120s of idle silence. Walks every emitter the registry knows about.
      */
-    public void safeSend(SseEmitter emitter, SseEmitter.SseEventBuilder event) {
+    public void keepAliveAll(SseEmitter.SseEventBuilder event) {
+        for (SseEmitter emitter : emitters) {
+            safeBroadcastSend(emitter, event);
+        }
+        targetedEmitters.forEach((id, list) ->
+                list.forEach(emitter -> safeTargetedSend(id, emitter, event)));
+    }
+
+    /**
+     * Returns true on successful send, false on I/O or state error.
+     * Cleans up only the broadcast list — was previously scanning every targeted
+     * bucket as well, which is wasteful when the failed emitter was broadcast-only.
+     */
+    public boolean safeBroadcastSend(SseEmitter emitter, SseEmitter.SseEventBuilder event) {
         synchronized (emitter) {
             try {
                 emitter.send(event);
+                return true;
             } catch (IOException | IllegalStateException e) {
-                log.debug("[SseEmitterRegistry] Dropping dead emitter: {}", e.getMessage());
+                log.debug("[SseEmitterRegistry] Dropping dead broadcast emitter: {}", e.getMessage());
                 try { emitter.complete(); } catch (Exception ignored) { }
                 emitters.remove(emitter);
-                targetedEmitters.values().forEach(list -> list.remove(emitter));
+                return false;
+            }
+        }
+    }
+
+    /**
+     * Returns true on successful send, false on I/O or state error.
+     * Cleans up only the targeted bucket for {@code id} — no scan of unrelated
+     * buckets, no touch of the broadcast list.
+     */
+    public boolean safeTargetedSend(Long id, SseEmitter emitter, SseEmitter.SseEventBuilder event) {
+        synchronized (emitter) {
+            try {
+                emitter.send(event);
+                return true;
+            } catch (IOException | IllegalStateException e) {
+                log.debug("[SseEmitterRegistry] Dropping dead targeted emitter (id={}): {}", id, e.getMessage());
+                try { emitter.complete(); } catch (Exception ignored) { }
+                removeTargeted(id, emitter);
+                return false;
             }
         }
     }

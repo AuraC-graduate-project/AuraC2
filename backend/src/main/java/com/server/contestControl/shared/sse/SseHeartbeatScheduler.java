@@ -15,7 +15,7 @@ import java.util.List;
  * to produce traffic that prevents proxies, load balancers, and browsers from
  * treating an idle connection as dead and closing it.
  *
- * Spring auto-collects every SseEmitterRegistry bean (e.g. AdminSseRegistry)
+ * Spring auto-collects every SseEmitterRegistry bean (e.g. ContestSseRegistry)
  * into the injected list, so adding a new audience requires no change here.
  */
 @Component
@@ -27,6 +27,12 @@ public class SseHeartbeatScheduler {
 
     @Scheduled(fixedDelay = 15_000)
     public void heartbeat() {
-        registries.forEach(r -> r.broadcastAll(SseEmitter.event().comment("keepalive")));
+        // KeepAliveAll instead of broadcastAll — targeted (per-id) emitters
+        // were never receiving keepalives and got reaped by proxies on idle connections.
+        //
+        // Named "ping" event instead of an SSE comment: @microsoft/fetch-event-source
+        // silently drops comment lines before onmessage fires, which would prevent the
+        // client-side watchdog from observing keepalives on an otherwise idle stream.
+        registries.forEach(r -> r.keepAliveAll(SseEmitter.event().name("ping").data("ping")));
     }
 }
