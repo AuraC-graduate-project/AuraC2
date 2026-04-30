@@ -47,4 +47,18 @@ public class SsePublisher {
                         .data(payload, MediaType.APPLICATION_JSON)
         );
     }
+
+    /**
+     * Broadcasts an SSE event to every targeted emitter across all id buckets
+     * of {@code registry}. Used for fan-out to audiences that register under
+     * an id (e.g. all connected teams), where {@link #publish} would miss them
+     * because it only reaches broadcast-registered emitters.
+     */
+    public void publishToAllTeams(String eventName, Object payload, SseEmitterRegistry registry) {
+        registry.broadcastToAllTargeted(
+                SseEmitter.event()
+                        .name(eventName)
+                        .data(payload, MediaType.APPLICATION_JSON)
+        );
+    }
 }

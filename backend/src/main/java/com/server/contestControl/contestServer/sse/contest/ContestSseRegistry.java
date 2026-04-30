@@ -1,4 +1,4 @@
-package com.server.contestControl.contestServer.sse;
+package com.server.contestControl.contestServer.sse.contest;
 
 import com.server.contestControl.shared.sse.SseEmitterRegistry;
 import org.springframework.stereotype.Component;

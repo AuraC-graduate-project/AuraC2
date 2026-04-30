@@ -1,8 +1,8 @@
 package com.server.contestControl.contestServer.controller;
 
 import com.server.contestControl.contestServer.service.ContestService;
-import com.server.contestControl.contestServer.sse.ContestSseRegistry;
-import com.server.contestControl.contestServer.sse.ContestStreamSnapshot;
+import com.server.contestControl.contestServer.sse.contest.ContestSseRegistry;
+import com.server.contestControl.contestServer.sse.contest.ContestStreamSnapshot;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -24,10 +24,10 @@ public class ContestStreamController {
     private final ContestSseRegistry contestSseRegistry;
     private final ContestService contestService;
 
-    // Stream is consumed by both admin dashboard and team workspace
+    // Stream is consumed by admin dashboard
     // (live transitions, countdown), so allow both roles. Authentication is
     // required — the previous permitAll on this path is no longer sufficient.
-    @PreAuthorize("hasAnyRole('ADMIN', 'TEAM')")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter stream() {
         SseEmitter emitter = new SseEmitter(STREAM_TIMEOUT_MILLIS);
