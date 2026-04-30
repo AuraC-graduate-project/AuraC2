@@ -18,16 +18,17 @@ import com.server.contestControl.submissionServer.queue.submission.SubmissionPro
 import com.server.contestControl.submissionServer.repository.SubmissionRepository;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class SubmissionService {
 
     private final SubmissionRepository submissionRepository;
