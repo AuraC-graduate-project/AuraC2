@@ -1,22 +1,17 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Header } from "./components/Header";
-import { ProblemSidebar, ProblemStatus } from "./components/ProblemSidebar";
-import { CodeEditor } from "./components/CodeEditor";
-import { SubmissionHistory, Submission } from "./components/SubmissionHistory";
-import { Clarifications } from "./components/Clarifications";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
+import { useEffect, useMemo, useState } from "react";
+import TeamWorkspace from "./TeamWorkspace";
+import TeamLandingPage, { LandingLifecycle } from "./components/TeamLandingPage";
 import { ContestResponse } from "../admin/types/api";
 import { decodeJwtSubject } from "../auth/jwt";
 import {
   getActiveContest,
-  getProblemsByContest,
-  getMySubmissions,
-  getMyAllSubmissions,
+  getUpcomingContest,
+  getPausedContest,
 } from "./services/teamApi";
 
-/* ============================================================
-   SAFE HELPERS
-============================================================ */
+type ResolvedState =
+  | { lifecycle: "RUNNING" | "UPCOMING" | "PAUSED"; contest: ContestResponse }
+  | { lifecycle: "NONE"; contest: null };
 
 /** JWT sub = TEAM NAME (SAFE) */
 function getTeamNameFromToken(): string {
@@ -29,265 +24,72 @@ function getTeamNameFromToken(): string {
   }
 }
 
-/** Backend verdict → UI verdict */
-function mapVerdict(v: string): Submission["verdict"] {
-  switch (v) {
-    case "ACCEPTED":
-      return "Accepted";
-    case "WRONG_ANSWER":
-      return "Wrong Answer";
-    case "TLE":
-      return "Time Limit Exceeded";
-    case "COMPILATION_ERROR":
-      return "Compilation Error";
-    case "RUNTIME_ERROR":
-      return "Runtime Error";
-    case "INTERNAL_ERROR":
-      return "System Error";
-    case "RUNNING":
-      return "Running";
-    default:
-      return "Pending";
+async function resolveContestState(): Promise<ResolvedState> {
+  try {
+    const c = await getActiveContest();
+    if (c) return { lifecycle: "RUNNING", contest: c };
+  } catch {
+    // 404 / no active contest — fall through.
   }
-}
 
-/* ============================================================
-   TEAM APP
-============================================================ */
+  try {
+    const c = await getUpcomingContest();
+    if (c) return { lifecycle: "UPCOMING", contest: c };
+  } catch {
+    // fall through
+  }
+
+  try {
+    const c = await getPausedContest();
+    if (c) return { lifecycle: "PAUSED", contest: c };
+  } catch {
+    // fall through
+  }
+
+  // Note: ENDED state is intentionally not probed on cold load — past
+  // contests would otherwise greet a freshly logged-in team. The ENDED
+  // lifecycle is reserved for the SSE transition (contest ends while the
+  // team is on the page), which lands in the follow-up task.
+
+  return { lifecycle: "NONE", contest: null };
+}
 
 export default function TeamApp({ onLogout }: { onLogout: () => void }) {
   const teamName = useMemo(getTeamNameFromToken, []);
 
-  const [contest, setContest] = useState<ContestResponse | null>(null);
-  const [problems, setProblems] = useState<any[]>([]);
-  const [selectedProblem, setSelectedProblem] = useState<any | null>(null);
-  const [loaded, setLoaded] = useState(false);
-
-  // Sidebar vs Editor submissions (DO NOT MIX)
-  const [allSubmissions, setAllSubmissions] = useState<Submission[]>([]);
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
-
-  /* ================= LOAD CONTEST + PROBLEMS ================= */
+  const [state, setState] = useState<ResolvedState | null>(null);
 
   useEffect(() => {
     let mounted = true;
-
     (async () => {
-      try {
-        const c = await getActiveContest();
-        if (!mounted) return;
-
-        setContest(c ?? null);
-
-        if (!c) {
-          setProblems([]);
-          setSelectedProblem(null);
-          setLoaded(true);
-          return;
-        }
-
-        const p = await getProblemsByContest(c.id);
-        if (!mounted) return;
-
-        setProblems(p);
-        setSelectedProblem(p[0] ?? null);
-      } catch (e) {
-        console.error("Contest load failed", e);
-      } finally {
-        if (mounted) setLoaded(true);
-      }
+      const resolved = await resolveContestState();
+      if (mounted) setState(resolved);
     })();
-
     return () => {
       mounted = false;
     };
   }, []);
 
-  /* ================= LOAD ALL SUBMISSIONS (SIDEBAR) ================= */
+  if (!state) return <div className="p-6">Loading…</div>;
 
-  useEffect(() => {
-    if (!contest || problems.length === 0) return;
-
-    let mounted = true;
-
-    (async () => {
-      try {
-        const res = await getMyAllSubmissions();
-        if (!mounted) return;
-
-        setAllSubmissions(
-          res.map(api => ({
-            id: api.id,
-            problem:
-              problems.find(p => p.id === api.problemId)?.title ??
-              `#${api.problemId}`,
-            problemId: api.problemId,
-            contestId: api.contestId,
-            verdict: mapVerdict(api.verdict),
-            language: api.language,
-            time: new Date(api.createdAt).toLocaleTimeString(),
-            executionTime: `${api.executionTime} ms`,
-            code: api.code,
-          }))
-        );
-      } catch (e) {
-        console.warn("Sidebar submissions failed — ignored", e);
-        if (mounted) setAllSubmissions([]);
-      }
-    })();
-
-    return () => {
-      mounted = false;
-    };
-  }, [contest?.id, problems.length]);
-
-  /* ================= LOAD SUBMISSIONS (EDITOR) ================= */
-
-  useEffect(() => {
-    if (!selectedProblem) {
-      setSubmissions([]);
-      return;
-    }
-
-    let mounted = true;
-    setLoadingSubmissions(true);
-
-    (async () => {
-      try {
-        const res = await getMySubmissions(selectedProblem.id);
-        if (!mounted) return;
-
-        setSubmissions(
-          res.map(api => ({
-            id: api.id,
-            problem:
-              problems.find(p => p.id === api.problemId)?.title ??
-              `#${api.problemId}`,
-            problemId: api.problemId,
-            contestId: api.contestId,
-            verdict: mapVerdict(api.verdict),
-            language: api.language,
-            time: new Date(api.createdAt).toLocaleTimeString(),
-            executionTime: `${api.executionTime} ms`,
-            code: api.code,
-          }))
-        );
-      } catch (e) {
-        console.error("Editor submissions failed", e);
-        if (mounted) setSubmissions([]);
-      } finally {
-        if (mounted) setLoadingSubmissions(false);
-      }
-    })();
-
-    return () => {
-      mounted = false;
-    };
-  }, [selectedProblem?.id, problems]);
-
-  /* ================= COMPUTE SIDEBAR STATUS ================= */
-
-  const problemsWithStatus = useMemo(() => {
-    return problems.map(p => {
-      const subs = allSubmissions.filter(s => s.problemId === p.id);
-
-      let status: ProblemStatus = "unsolved";
-
-      if (subs.length > 0) {
-        if (subs.some(s => s.verdict === "Accepted")) {
-          status = "solved";
-        } else if (
-          subs.every(
-            s => s.verdict === "Pending" || s.verdict === "Running"
-          )
-        ) {
-          status = "pending";
-        } else {
-          status = "wrong";
-        }
-      }
-
-      return { ...p, status };
-    });
-  }, [problems, allSubmissions]);
-
-  /* ================= TIMER ================= */
-
-  const contestEndTime = contest?.effectiveEndTime ?? contest?.endTime ?? undefined;
-
-  if (!loaded) return <div className="p-6">Loading…</div>;
-
-  /* ================= RENDER ================= */
-
-  return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Header
-        contestName={contest?.title}
-        contestEndTime={contestEndTime}
+  if (state.lifecycle === "RUNNING") {
+    return (
+      <TeamWorkspace
+        contest={state.contest}
         teamName={teamName}
         onLogout={onLogout}
       />
+    );
+  }
 
-      <div className="flex flex-1 overflow-hidden">
-        <ProblemSidebar
-          problems={problemsWithStatus}
-          selectedProblem={selectedProblem}
-          onSelectProblem={setSelectedProblem}
-        />
+  const landingLifecycle: LandingLifecycle =
+    state.lifecycle === "NONE" ? "NONE" : (state.lifecycle as LandingLifecycle);
 
-        <main className="flex-1 overflow-auto">
-          <div className="p-6 space-y-6">
-            <Tabs defaultValue="editor">
-              <TabsList className="bg-gray-100 p-1 rounded-lg w-fit">
-                <TabsTrigger
-                  value="editor"
-                  className="
-      px-4 py-1.5 rounded-md text-sm font-medium
-      text-gray-600
-      data-[state=active]:bg-[#FACC15]
-      data-[state=active]:text-gray-900
-      data-[state=active]:shadow-sm
-    "
-                >
-                  Code Editor
-                </TabsTrigger>
-
-                <TabsTrigger
-                  value="clarifications"
-                  className="
-      px-4 py-1.5 rounded-md text-sm font-medium
-      text-gray-600
-      data-[state=active]:bg-[#FACC15]
-      data-[state=active]:text-gray-900
-      data-[state=active]:shadow-sm
-    "
-                >
-                  Clarifications
-                </TabsTrigger>
-              </TabsList>
-
-
-              <TabsContent value="editor" className="space-y-6">
-                <CodeEditor
-                  contestId={contest?.id}
-                  problem={selectedProblem}
-                />
-
-                {loadingSubmissions ? (
-                  <div className="text-gray-500">Loading submissions…</div>
-                ) : (
-                  <SubmissionHistory submissions={submissions} />
-                )}
-              </TabsContent>
-
-              <TabsContent value="clarifications">
-                <Clarifications />
-              </TabsContent>
-            </Tabs>
-          </div>
-        </main>
-      </div>
-    </div>
+  return (
+    <TeamLandingPage
+      lifecycle={landingLifecycle}
+      contest={state.contest}
+      onLogout={onLogout}
+    />
   );
 }
