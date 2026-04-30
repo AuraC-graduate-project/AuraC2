@@ -39,8 +39,8 @@ public class SseEmitterRegistry {
         emitters.add(emitter);
         emitter.onCompletion(() -> emitters.remove(emitter));
         emitter.onTimeout(() -> {
-            emitter.complete();
             emitters.remove(emitter);
+            completeSafely(emitter);
         });
         emitter.onError(t -> emitters.remove(emitter));
         log.debug("[SseEmitterRegistry] Broadcast client registered — broadcast active: {}", emitters.size());
@@ -54,8 +54,8 @@ public class SseEmitterRegistry {
         targetedEmitters.computeIfAbsent(id, k -> new CopyOnWriteArrayList<>()).add(emitter);
         emitter.onCompletion(() -> removeTargeted(id, emitter));
         emitter.onTimeout(() -> {
-            emitter.complete();
             removeTargeted(id, emitter);
+            completeSafely(emitter);
         });
         emitter.onError(t -> removeTargeted(id, emitter));
         log.debug("[SseEmitterRegistry] Targeted client registered for id={}", id);
@@ -79,6 +79,17 @@ public class SseEmitterRegistry {
         List<SseEmitter> list = targetedEmitters.get(id);
         if (list == null) return;
         list.forEach(emitter -> safeTargetedSend(id, emitter, event));
+    }
+
+    /**
+     * Sends the same event to every targeted emitter in this registry, across
+     * all id buckets. broadcastAll() only walks broadcast-registered emitters,
+     * so audiences that register under an id (e.g. teams keyed by team id) are
+     * invisible to it — this method covers that case.
+     */
+    public void broadcastToAllTargeted(SseEmitter.SseEventBuilder event) {
+        targetedEmitters.forEach((id, list) ->
+                list.forEach(emitter -> safeTargetedSend(id, emitter, event)));
     }
 
     /**
@@ -106,7 +117,6 @@ public class SseEmitterRegistry {
                 return true;
             } catch (IOException | IllegalStateException e) {
                 log.debug("[SseEmitterRegistry] Dropping dead broadcast emitter: {}", e.getMessage());
-                try { emitter.complete(); } catch (Exception ignored) { }
                 emitters.remove(emitter);
                 return false;
             }
@@ -125,7 +135,6 @@ public class SseEmitterRegistry {
                 return true;
             } catch (IOException | IllegalStateException e) {
                 log.debug("[SseEmitterRegistry] Dropping dead targeted emitter (id={}): {}", id, e.getMessage());
-                try { emitter.complete(); } catch (Exception ignored) { }
                 removeTargeted(id, emitter);
                 return false;
             }
@@ -143,6 +152,14 @@ public class SseEmitterRegistry {
         list.remove(emitter);
         if (list.isEmpty()) {
             targetedEmitters.remove(id, list);
+        }
+    }
+
+    private void completeSafely(SseEmitter emitter) {
+        try {
+            emitter.complete();
+        } catch (Exception e) {
+            log.debug("[SseEmitterRegistry] Ignoring emitter completion failure: {}", e.getMessage());
         }
     }
 }

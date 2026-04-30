@@ -16,8 +16,7 @@ type ContestStreamHandlers = {
 const API_BASE_URL =
   (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "";
 
-function streamUrl(): string {
-  const path = "/api/contest/stream";
+function streamUrl(path: string): string {
   return API_BASE_URL ? `${API_BASE_URL}${path}` : path;
 }
 
@@ -34,8 +33,10 @@ const BASE_BACKOFF_MS = 1000;
 const WATCHDOG_TIMEOUT_MS = 30_000;
 
 /**
- * Subscribes to /api/contest/stream and forwards `snapshot` / `contest-update`
- * events to the supplied handlers.
+ * Subscribes to a contest SSE stream and forwards `snapshot` / `contest-update`
+ * events to the supplied handlers. The default endpoint is the admin stream
+ * (/api/contest/stream); pass `/api/team/stream` to consume the team stream
+ * instead. Both expose the same wire format.
  *
  * Uses @microsoft/fetch-event-source so we can attach `Authorization: Bearer ...`.
  * Includes a watchdog that detects silent connection drops by tracking time
@@ -43,7 +44,8 @@ const WATCHDOG_TIMEOUT_MS = 30_000;
  * 15s "ping" keepalive).
  */
 export function useContestStream(
-  handlers: ContestStreamHandlers
+  handlers: ContestStreamHandlers,
+  endpoint = "/api/contest/stream"
 ): { connectionState: ContestStreamConnectionState } {
   const handlersRef = useRef<ContestStreamHandlers>(handlers);
   handlersRef.current = handlers;
@@ -81,7 +83,7 @@ export function useContestStream(
       setConnectionState("connecting");
 
       try {
-        await fetchEventSource(streamUrl(), {
+        await fetchEventSource(streamUrl(endpoint), {
           signal: controller.signal,
           openWhenHidden: true,
           headers: {
@@ -178,7 +180,7 @@ export function useContestStream(
       clearWatchdog();
       controller.abort();
     };
-  }, []);
+  }, [endpoint]);
 
   return { connectionState };
 }

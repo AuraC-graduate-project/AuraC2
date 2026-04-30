@@ -71,14 +71,7 @@ public class ProblemService {
     }
 
     public List<ProblemResponse> getAllProblems(Long contestId) {
-
-        List<Problem> problems = problemRepository.findAllByContest_id(contestId);
-
-        if (problems.isEmpty()) {
-            throw new RuntimeException("No problems found for contest id " + contestId);
-        }
-
-        return problems.stream()
+        return problemRepository.findAllByContest_id(contestId).stream()
                 .map(ProblemResponse::from)
                 .toList();
     }

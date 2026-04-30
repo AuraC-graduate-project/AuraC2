@@ -10,6 +10,13 @@ spring:
     driver-class-name: org.postgresql.Driver
 
   jpa:
+    # Disabled because long-lived SSE requests (/api/contest/stream,
+    # /api/team/stream) would otherwise hold a Hikari connection for the
+    # entire 30-minute stream lifetime, exhausting the pool and timing out
+    # /auth/refresh and the cold-load REST probe. DTO mapping already
+    # happens inside @Transactional service methods, so disabling OSIV
+    # is safe here.
+    open-in-view: false
     hibernate:
       ddl-auto: ${SPRING_JPA_DDL_AUTO:update}
     show-sql: false

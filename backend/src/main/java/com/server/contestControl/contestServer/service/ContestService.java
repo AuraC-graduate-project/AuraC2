@@ -9,7 +9,7 @@ import com.server.contestControl.contestServer.exception.ContestNotFoundExceptio
 import com.server.contestControl.contestServer.exception.ContestValidationException;
 import com.server.contestControl.contestServer.exception.InvalidContestStateException;
 import com.server.contestControl.contestServer.repository.ContestRepository;
-import com.server.contestControl.contestServer.sse.ContestStreamSnapshot;
+import com.server.contestControl.contestServer.sse.contest.ContestStreamSnapshot;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
