@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-public class TestCaseRequest {
+public class TestCaseUpdateRequest {
 
     @NotBlank
     @JsonProperty("inputData")

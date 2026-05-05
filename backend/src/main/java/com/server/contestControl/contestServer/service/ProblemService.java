@@ -2,16 +2,19 @@ package com.server.contestControl.contestServer.service;
 
 import com.server.contestControl.contestServer.dto.problem.ProblemRequest;
 import com.server.contestControl.contestServer.dto.problem.ProblemResponse;
+import com.server.contestControl.contestServer.dto.problem.ProblemUpdateRequest;
 import com.server.contestControl.contestServer.entity.Contest;
 import com.server.contestControl.contestServer.entity.Problem;
 import com.server.contestControl.contestServer.enums.Difficulty;
+import com.server.contestControl.contestServer.exceptions.ContestNotFoundException;
+import com.server.contestControl.contestServer.exceptions.InvalidDifficultyException;
+import com.server.contestControl.contestServer.exceptions.ProblemNotFoundException;
 import com.server.contestControl.contestServer.repository.ContestRepository;
 import com.server.contestControl.contestServer.repository.ProblemRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -23,7 +26,7 @@ public class ProblemService {
     public ProblemResponse createProblem(ProblemRequest request) {
 
         Contest contest = contestRepository.findById(request.getContestId())
-                .orElseThrow(() -> new RuntimeException("Contest not found"));
+                .orElseThrow(() -> new ContestNotFoundException(request.getContestId()));
 
         Problem problem = Problem.builder()
                 .contest(contest)
@@ -31,25 +34,31 @@ public class ProblemService {
                 .description(request.getDescription())
                 .timeLimit(request.getTimeLimit())
                 .memoryLimit(request.getMemoryLimit())
-                .difficulty(Difficulty.fromString(request.getDifficulty()))
+                .difficulty(parseDifficulty(request.getDifficulty()))
                 .build();
 
         problemRepository.save(problem);
 
-        return ProblemResponse.builder()
-                .id(problem.getId())
-                .title(problem.getTitle())
-                .description(problem.getDescription())
-                .timeLimit(problem.getTimeLimit())
-                .memoryLimit(problem.getMemoryLimit())
-                .difficulty(problem.getDifficulty().name())
-                .contestId(contest.getId())
-                .build();
+        return ProblemResponse.from(problem);
+    }
+
+    public ProblemResponse updateProblem(Long id, ProblemUpdateRequest request) {
+        Problem problem = problemRepository.findById(id)
+                .orElseThrow(() -> new ProblemNotFoundException(id));
+
+        problem.setTitle(request.getTitle());
+        problem.setDescription(request.getDescription());
+        problem.setTimeLimit(request.getTimeLimit());
+        problem.setMemoryLimit(request.getMemoryLimit());
+        problem.setDifficulty(parseDifficulty(request.getDifficulty()));
+
+        problemRepository.save(problem);
+        return ProblemResponse.from(problem);
     }
 
     public ProblemResponse getProblem(Long id) {
         Problem problem = problemRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Problem not found"));
+                .orElseThrow(() -> new ProblemNotFoundException(id));
 
         return ProblemResponse.builder()
                 .id(problem.getId())
@@ -65,7 +74,7 @@ public class ProblemService {
 
     public Problem getProblemEntity(Long id) {
         Problem problem = problemRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Problem not found"));
+                .orElseThrow(() -> new ProblemNotFoundException(id));
 
         return problem;
     }
@@ -81,5 +90,13 @@ public class ProblemService {
         return problems.stream()
                 .map(ProblemResponse::from)
                 .toList();
+    }
+
+    private Difficulty parseDifficulty(String value) {
+        try {
+            return Difficulty.fromString(value);
+        } catch (IllegalArgumentException ex) {
+            throw new InvalidDifficultyException(value);
+        }
     }
 }

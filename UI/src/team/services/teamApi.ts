@@ -1,7 +1,10 @@
 import {
     ContestResponse,
+    ClarificationRequest,
+    ClarificationResponse,
     ProblemResponse,
     SubmissionResponse,
+    TestCaseResponse,
 } from "../../admin/types/api";
 
 const API_BASE_URL =
@@ -98,6 +101,15 @@ export function getProblemsByContest(
     return apiFetch(`/api/problems/contest/${contestId}`);
 }
 
+export async function getPublicTestCasesForProblem(
+    problemId: number
+): Promise<TestCaseResponse[]> {
+    const testCases = await apiFetch<TestCaseResponse[]>(
+        `/api/testcases/problem/${problemId}`
+    );
+    return testCases.filter((testCase) => testCase.isPublic);
+}
+
 export async function getMySubmissions(
     problemId: number
 ): Promise<SubmissionResponse[]> {
@@ -121,4 +133,20 @@ export function submitCode(body: {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
     });
+}
+
+export function submitClarification(
+    body: ClarificationRequest
+): Promise<ClarificationResponse> {
+    return apiFetch("/api/clarifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+    });
+}
+
+export function getMyClarifications(
+    contestId: number
+): Promise<ClarificationResponse[]> {
+    return apiFetch(`/api/clarifications/my/${contestId}`);
 }

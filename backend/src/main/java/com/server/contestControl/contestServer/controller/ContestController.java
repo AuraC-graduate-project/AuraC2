@@ -2,8 +2,10 @@ package com.server.contestControl.contestServer.controller;
 
 import com.server.contestControl.contestServer.dto.contest.ContestRequest;
 import com.server.contestControl.contestServer.dto.contest.ContestResponse;
+import com.server.contestControl.contestServer.dto.contest.ContestUpdateRequest;
 import com.server.contestControl.contestServer.enums.ContestStatus;
 import com.server.contestControl.contestServer.service.ContestService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,9 +23,18 @@ public class ContestController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ContestResponse> createContest(
-            @RequestBody ContestRequest request) {
+            @Valid @RequestBody ContestRequest request) {
 
         return ResponseEntity.ok(contestService.createContest(request));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ContestResponse> updateContestDetails(
+            @PathVariable Long id,
+            @Valid @RequestBody ContestUpdateRequest request
+    ) {
+        return ResponseEntity.ok(contestService.updateContestDetails(id, request));
     }
 
     @PutMapping("/{id}/start")

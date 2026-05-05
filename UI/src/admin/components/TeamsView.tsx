@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { UserPlus, Pencil, KeyRound, Trash2, RefreshCw } from 'lucide-react';
+import { UserPlus, Pencil, KeyRound, Trash2, RefreshCw, Search, ShieldCheck } from 'lucide-react';
 import { RegisterModal } from './RegisterModal';
 import { Input } from './ui/input';
 import {
@@ -32,12 +32,14 @@ import {
 import { toast } from 'sonner';
 import { deleteUser, getAllUsers, updateUserName, updateUserPassword } from '../services/api';
 import { UserResponse } from '../types/api';
+import { StatusBadge } from '../../components/StatusBadge';
 
 export function TeamsView() {
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
 
   const [users, setUsers] = useState<UserResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState('');
 
   const [editNameOpen, setEditNameOpen] = useState(false);
   const [editPasswordOpen, setEditPasswordOpen] = useState(false);
@@ -54,6 +56,16 @@ export function TeamsView() {
   }, [selectedUser]);
 
   const isAdminUser = (user: UserResponse) => user.role === 'ADMIN';
+
+  const filteredUsers = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return users;
+    return users.filter((user) => (
+      String(user.id).includes(q) ||
+      user.username.toLowerCase().includes(q) ||
+      user.role.toLowerCase().includes(q)
+    ));
+  }, [users, query]);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -151,14 +163,17 @@ export function TeamsView() {
   return (
     <>
       <Card className="border border-gray-200 shadow-sm">
-        <CardHeader className="bg-[#1E293B] text-white">
-          <div className="flex items-center justify-between">
-            <CardTitle>Teams</CardTitle>
+        <CardHeader className="border-b border-slate-200 bg-slate-50">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <CardTitle className="text-2xl text-slate-950">Teams Management</CardTitle>
+              <p className="mt-1 text-sm text-slate-600">Register teams and manage non-admin accounts.</p>
+            </div>
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
                 variant="outline"
-                className="gap-2 bg-white text-slate-900 hover:bg-slate-100"
+                className="gap-2 bg-white"
                 onClick={loadUsers}
               >
                 <RefreshCw className="w-4 h-4" />
@@ -166,7 +181,7 @@ export function TeamsView() {
               </Button>
               <Button
                 size="sm"
-                className="gap-2"
+                className="gap-2 bg-blue-700 hover:bg-blue-800"
                 onClick={() => setRegisterModalOpen(true)}
               >
                 <UserPlus className="w-4 h-4" />
@@ -176,10 +191,28 @@ export function TeamsView() {
           </div>
         </CardHeader>
         <CardContent className="p-6">
+          <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="relative w-full md:max-w-md">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search by ID, username, or role..."
+                className="h-10 pl-9"
+              />
+            </div>
+            <p className="text-sm text-slate-500">
+              Showing <span className="font-semibold text-slate-800">{filteredUsers.length}</span> of{" "}
+              <span className="font-semibold text-slate-800">{users.length}</span>
+            </p>
+          </div>
+
           {loading ? (
             <p className="text-slate-600 py-8 text-center">Loading users...</p>
           ) : users.length === 0 ? (
             <p className="text-slate-600 py-8 text-center">No users found.</p>
+          ) : filteredUsers.length === 0 ? (
+            <p className="text-slate-600 py-8 text-center">No teams match your search.</p>
           ) : (
             <div className="border border-gray-200 rounded-lg overflow-hidden">
               <Table>
@@ -192,11 +225,21 @@ export function TeamsView() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.map((u) => (
+                  {filteredUsers.map((u) => (
                     <TableRow key={u.id}>
                       <TableCell className="font-mono text-sm">{u.id}</TableCell>
-                      <TableCell>{u.username}</TableCell>
-                      <TableCell>{u.role}</TableCell>
+                      <TableCell>
+                        <div className="font-medium text-slate-900">{u.username}</div>
+                        {isAdminUser(u) && (
+                          <div className="mt-1 inline-flex items-center gap-1 text-xs text-slate-500">
+                            <ShieldCheck className="h-3 w-3" />
+                            Protected account
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge kind="neutral" value={u.role} />
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Button
@@ -294,7 +337,7 @@ export function TeamsView() {
               placeholder="Confirm new password"
             />
             <div className="text-xs text-slate-500">
-              ⚠️ Password is sent to the server; it is not stored in the browser.
+              Password is sent to the server; it is not stored in the browser.
             </div>
           </div>
           <DialogFooter>

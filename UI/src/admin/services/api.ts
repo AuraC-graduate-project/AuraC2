@@ -1,15 +1,21 @@
 import {
   ContestResponse,
   ContestRequest,
+  ContestUpdateRequest,
   ProblemRequest,
+  ProblemUpdateRequest,
   ProblemResponse,
   SubmissionResponse,
   UpdatePasswordRequest,
   UpdateUserNameRequest,
   UserResponse,
   TestCaseRequest,
+  TestCaseUpdateRequest,
   TestCaseResponse,
   RegisterRequest,
+  ClarificationRequest,
+  ClarificationResponse,
+  ReplyRequest,
 } from "../types/api";
 
 /**
@@ -190,6 +196,17 @@ export async function createContest(data: ContestRequest): Promise<ContestRespon
   });
 }
 
+export async function updateContestDetails(
+  id: number,
+  data: ContestUpdateRequest
+): Promise<ContestResponse> {
+  return apiFetch<ContestResponse>(`/api/contest/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
 export async function startContest(id: number): Promise<void> {
   await apiFetch<void>(`/api/contest/${id}/start`, { method: "PUT" });
 }
@@ -229,6 +246,17 @@ export async function getProblem(id: number): Promise<ProblemResponse> {
 
 export async function getProblemsByContest(contestId: number): Promise<ProblemResponse[]> {
   return apiFetch<ProblemResponse[]>(`/api/problems/contest/${contestId}`);
+}
+
+export async function updateProblem(
+  id: number,
+  data: ProblemUpdateRequest
+): Promise<ProblemResponse> {
+  return apiFetch<ProblemResponse>(`/api/problems/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
 }
 
 // -----------------------------
@@ -296,6 +324,60 @@ export async function getTestCasesForProblem(problemId: number): Promise<TestCas
   return apiFetch<TestCaseResponse[]>(`/api/testcases/problem/${problemId}`);
 }
 
+export async function updateTestCase(
+  id: number,
+  data: TestCaseUpdateRequest
+): Promise<TestCaseResponse> {
+  return apiFetch<TestCaseResponse>(`/api/testcases/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+// -----------------------------
+// Clarifications
+// -----------------------------
+
+export async function getAllClarifications(): Promise<ClarificationResponse[]> {
+  return apiFetch<ClarificationResponse[]>("/api/clarifications/admin/all");
+}
+
+export async function getContestClarifications(
+  contestId: number
+): Promise<ClarificationResponse[]> {
+  return apiFetch<ClarificationResponse[]>(
+    `/api/clarifications/admin/contest/${contestId}`
+  );
+}
+
+export async function submitClarification(
+  data: ClarificationRequest
+): Promise<ClarificationResponse> {
+  return apiFetch<ClarificationResponse>("/api/clarifications", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getMyClarifications(
+  contestId: number
+): Promise<ClarificationResponse[]> {
+  return apiFetch<ClarificationResponse[]>(`/api/clarifications/my/${contestId}`);
+}
+
+export async function replyClarification(
+  id: number,
+  data: ReplyRequest
+): Promise<ClarificationResponse> {
+  return apiFetch<ClarificationResponse>(`/api/clarifications/admin/${id}/reply`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
 // -----------------------------
 // Auth endpoints
 // -----------------------------
@@ -305,7 +387,6 @@ export async function registerUser(data: RegisterRequest): Promise<void> {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
-    skipAuth: true,
   });
 }
 

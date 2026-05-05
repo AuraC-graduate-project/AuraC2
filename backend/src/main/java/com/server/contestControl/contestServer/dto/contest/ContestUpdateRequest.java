@@ -8,12 +8,11 @@ import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
 
-public record ContestRequest(
+public record ContestUpdateRequest(
         @JsonProperty("title")
         @NotBlank
         @Size(max = 255)
         String title,
-        @JsonProperty("description") String description,
         @JsonProperty("startTime")
         @NotNull
         Instant startTime,

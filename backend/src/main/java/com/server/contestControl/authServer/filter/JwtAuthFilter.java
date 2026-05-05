@@ -37,7 +37,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         // ✅ Skip endpoints that must work without access token
         // (keep this list in sync with SecurityConfiguration permitAll)
-        if (path.startsWith("/auth/")
+        if ((path.startsWith("/auth/") && !path.equals("/auth/register"))
                 || path.startsWith("/verify/")
                 || path.startsWith("/v3/api-docs/")
                 || path.startsWith("/swagger-ui/")

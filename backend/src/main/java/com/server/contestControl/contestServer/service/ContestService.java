@@ -2,8 +2,11 @@ package com.server.contestControl.contestServer.service;
 
 import com.server.contestControl.contestServer.dto.contest.ContestRequest;
 import com.server.contestControl.contestServer.dto.contest.ContestResponse;
+import com.server.contestControl.contestServer.dto.contest.ContestUpdateRequest;
 import com.server.contestControl.contestServer.entity.Contest;
 import com.server.contestControl.contestServer.enums.ContestStatus;
+import com.server.contestControl.contestServer.exceptions.ContestNotFoundException;
+import com.server.contestControl.contestServer.exceptions.InvalidContestStateException;
 import com.server.contestControl.contestServer.repository.ContestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,7 +25,7 @@ public class ContestService {
                 .existsByStatusIn(List.of(ContestStatus.UPCOMING, ContestStatus.RUNNING));
 
         if (existsActive) {
-            throw new RuntimeException("A contest is already scheduled or running. " +
+            throw new InvalidContestStateException("A contest is already scheduled or running. " +
                     "Please end it before creating a new one.");
         }
 
@@ -40,20 +43,38 @@ public class ContestService {
         return ContestResponse.fromEntity(contest);
     }
 
+    public ContestResponse updateContestDetails(Long id, ContestUpdateRequest request) {
+        Contest contest = contestRepository.findById(id)
+                .orElseThrow(() -> new ContestNotFoundException(id));
+
+        if (contest.getStatus() != ContestStatus.UPCOMING) {
+            throw new InvalidContestStateException(
+                    "Contest name, start time, and duration can only be updated while contest is UPCOMING."
+            );
+        }
+
+        contest.setTitle(request.title());
+        contest.setStartTime(request.startTime());
+        contest.setDurationMinutes(request.durationMinutes());
+        contestRepository.save(contest);
+
+        return ContestResponse.fromEntity(contest);
+    }
+
     public ContestResponse updateStatus(Long id, ContestStatus newStatus) {
         Contest contest = contestRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Contest not found"));
+                .orElseThrow(() -> new ContestNotFoundException(id));
 
         ContestStatus current = contest.getStatus();
 
         if (!isValidTransition(current, newStatus)) {
-            throw new RuntimeException("Invalid contest status transition: " + current + " -> " + newStatus);
+            throw new InvalidContestStateException("Invalid contest status transition: " + current + " -> " + newStatus);
         }
 
         if (newStatus == ContestStatus.RUNNING &&
                 contestRepository.existsByStatus(ContestStatus.RUNNING) &&
                 contest.getStatus() != ContestStatus.RUNNING) {
-            throw new RuntimeException("Another contest is already running.");
+            throw new InvalidContestStateException("Another contest is already running.");
         }
 
         contest.setStatus(newStatus);

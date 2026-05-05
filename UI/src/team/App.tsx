@@ -1,11 +1,13 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Header } from "./components/Header";
 import { ProblemSidebar, ProblemStatus } from "./components/ProblemSidebar";
 import { CodeEditor } from "./components/CodeEditor";
 import { SubmissionHistory, Submission } from "./components/SubmissionHistory";
 import { Clarifications } from "./components/Clarifications";
+import { ProblemStatementPanel } from "./components/ProblemStatementPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
 import { decodeJwtSubject } from "../auth/jwt";
+import { ContestResponse, ProblemResponse, SubmissionResponse, Verdict } from "../admin/types/api";
 import {
   getActiveContest,
   getProblemsByContest,
@@ -13,11 +15,6 @@ import {
   getMyAllSubmissions,
 } from "./services/teamApi";
 
-/* ============================================================
-   SAFE HELPERS
-============================================================ */
-
-/** JWT sub = TEAM NAME (SAFE) */
 function getTeamNameFromToken(): string {
   try {
     const token = localStorage.getItem("access_token");
@@ -28,71 +25,84 @@ function getTeamNameFromToken(): string {
   }
 }
 
-/** Backend verdict → UI verdict */
-function mapVerdict(v: string): Submission["verdict"] {
-  switch (v) {
+function normalizeVerdict(value: string | null | undefined): Verdict {
+  switch (value) {
     case "ACCEPTED":
-      return "Accepted";
     case "WRONG_ANSWER":
-      return "Wrong Answer";
     case "TLE":
-      return "Time Limit Exceeded";
     case "COMPILATION_ERROR":
-      return "Compilation Error";
     case "RUNTIME_ERROR":
-      return "Runtime Error";
     case "INTERNAL_ERROR":
-      return "System Error";
+    case "PENDING":
     case "RUNNING":
-      return "Running";
+      return value;
+    case "TIME_LIMIT_EXCEEDED":
+      return "TLE";
     default:
-      return "Pending";
+      return "PENDING";
   }
 }
 
-/* ============================================================
-   TEAM APP
-============================================================ */
+function formatSubmission(
+  api: SubmissionResponse,
+  problems: ProblemResponse[]
+): Submission {
+  const created = api.createdAt ? new Date(api.createdAt) : null;
+  const problem = problems.find((item) => item.id === api.problemId);
+  return {
+    id: api.id,
+    problem: problem?.title ?? `#${api.problemId}`,
+    problemId: api.problemId,
+    contestId: api.contestId,
+    verdict: normalizeVerdict(String(api.verdict)),
+    language: api.language,
+    time: created && !Number.isNaN(created.getTime()) ? created.toLocaleString() : String(api.createdAt ?? "-"),
+    executionTime: api.executionTime == null ? "-" : `${api.executionTime} ms`,
+    memoryUsage: api.memoryUsage == null ? "-" : `${api.memoryUsage} MB`,
+    code: api.code,
+  };
+}
 
 export default function TeamApp({ onLogout }: { onLogout: () => void }) {
   const teamName = useMemo(getTeamNameFromToken, []);
 
-  const [contest, setContest] = useState<any | null>(null);
-  const [problems, setProblems] = useState<any[]>([]);
-  const [selectedProblem, setSelectedProblem] = useState<any | null>(null);
+  const [contest, setContest] = useState<ContestResponse | null>(null);
+  const [problems, setProblems] = useState<ProblemResponse[]>([]);
+  const [selectedProblem, setSelectedProblem] = useState<ProblemResponse | null>(null);
   const [loaded, setLoaded] = useState(false);
-
-  // Sidebar vs Editor submissions (DO NOT MIX)
   const [allSubmissions, setAllSubmissions] = useState<Submission[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
-
-  /* ================= LOAD CONTEST + PROBLEMS ================= */
+  const [codeExpanded, setCodeExpanded] = useState(false);
 
   useEffect(() => {
     let mounted = true;
 
     (async () => {
       try {
-        const c = await getActiveContest();
+        const activeContest = await getActiveContest();
         if (!mounted) return;
 
-        setContest(c ?? null);
+        setContest(activeContest ?? null);
 
-        if (!c) {
+        if (!activeContest) {
           setProblems([]);
           setSelectedProblem(null);
-          setLoaded(true);
           return;
         }
 
-        const p = await getProblemsByContest(c.id);
+        const contestProblems = await getProblemsByContest(activeContest.id);
         if (!mounted) return;
 
-        setProblems(p);
-        setSelectedProblem(p[0] ?? null);
-      } catch (e) {
-        console.error("Contest load failed", e);
+        setProblems(contestProblems);
+        setSelectedProblem(contestProblems[0] ?? null);
+      } catch (error) {
+        console.error("Contest load failed", error);
+        if (mounted) {
+          setContest(null);
+          setProblems([]);
+          setSelectedProblem(null);
+        }
       } finally {
         if (mounted) setLoaded(true);
       }
@@ -103,194 +113,159 @@ export default function TeamApp({ onLogout }: { onLogout: () => void }) {
     };
   }, []);
 
-  /* ================= LOAD ALL SUBMISSIONS (SIDEBAR) ================= */
+  const loadAllSubmissions = useCallback(async () => {
+    if (!contest) {
+      setAllSubmissions([]);
+      return;
+    }
 
-  useEffect(() => {
-    if (!contest || problems.length === 0) return;
+    try {
+      const response = await getMyAllSubmissions();
+      setAllSubmissions(response.map((item) => formatSubmission(item, problems)));
+    } catch (error) {
+      console.warn("All submissions failed", error);
+      setAllSubmissions([]);
+    }
+  }, [contest, problems]);
 
-    let mounted = true;
-
-    (async () => {
-      try {
-        const res = await getMyAllSubmissions();
-        if (!mounted) return;
-
-        setAllSubmissions(
-          res.map(api => ({
-            id: api.id,
-            problem:
-              problems.find(p => p.id === api.problemId)?.title ??
-              `#${api.problemId}`,
-            problemId: api.problemId,
-            contestId: api.contestId,
-            verdict: mapVerdict(api.verdict),
-            language: api.language,
-            time: new Date(api.createdAt).toLocaleTimeString(),
-            executionTime: `${api.executionTime} ms`,
-            code: api.code,
-          }))
-        );
-      } catch (e) {
-        console.warn("Sidebar submissions failed — ignored", e);
-        if (mounted) setAllSubmissions([]);
-      }
-    })();
-
-    return () => {
-      mounted = false;
-    };
-  }, [contest?.id, problems.length]);
-
-  /* ================= LOAD SUBMISSIONS (EDITOR) ================= */
-
-  useEffect(() => {
+  const loadProblemSubmissions = useCallback(async () => {
     if (!selectedProblem) {
       setSubmissions([]);
       return;
     }
 
-    let mounted = true;
     setLoadingSubmissions(true);
+    try {
+      const response = await getMySubmissions(selectedProblem.id);
+      setSubmissions(response.map((item) => formatSubmission(item, problems)));
+    } catch (error) {
+      console.error("Problem submissions failed", error);
+      setSubmissions([]);
+    } finally {
+      setLoadingSubmissions(false);
+    }
+  }, [selectedProblem, problems]);
 
-    (async () => {
-      try {
-        const res = await getMySubmissions(selectedProblem.id);
-        if (!mounted) return;
+  useEffect(() => {
+    if (!contest || problems.length === 0) return;
+    loadAllSubmissions();
+  }, [contest, problems.length, loadAllSubmissions]);
 
-        setSubmissions(
-          res.map(api => ({
-            id: api.id,
-            problem:
-              problems.find(p => p.id === api.problemId)?.title ??
-              `#${api.problemId}`,
-            problemId: api.problemId,
-            contestId: api.contestId,
-            verdict: mapVerdict(api.verdict),
-            language: api.language,
-            time: new Date(api.createdAt).toLocaleTimeString(),
-            executionTime: `${api.executionTime} ms`,
-            code: api.code,
-          }))
-        );
-      } catch (e) {
-        console.error("Editor submissions failed", e);
-        if (mounted) setSubmissions([]);
-      } finally {
-        if (mounted) setLoadingSubmissions(false);
-      }
-    })();
+  useEffect(() => {
+    loadProblemSubmissions();
+  }, [loadProblemSubmissions]);
 
-    return () => {
-      mounted = false;
-    };
-  }, [selectedProblem?.id, problems]);
-
-  /* ================= COMPUTE SIDEBAR STATUS ================= */
+  const handleSubmitted = async () => {
+    await Promise.all([loadAllSubmissions(), loadProblemSubmissions()]);
+  };
 
   const problemsWithStatus = useMemo(() => {
-    return problems.map(p => {
-      const subs = allSubmissions.filter(s => s.problemId === p.id);
-
+    return problems.map((problem) => {
+      const problemSubmissions = allSubmissions.filter((submission) => submission.problemId === problem.id);
       let status: ProblemStatus = "unsolved";
 
-      if (subs.length > 0) {
-        if (subs.some(s => s.verdict === "Accepted")) {
+      if (problemSubmissions.length > 0) {
+        if (problemSubmissions.some((submission) => submission.verdict === "ACCEPTED")) {
           status = "solved";
-        } else if (
-          subs.every(
-            s => s.verdict === "Pending" || s.verdict === "Running"
-          )
-        ) {
+        } else if (problemSubmissions.every((submission) => submission.verdict === "PENDING" || submission.verdict === "RUNNING")) {
           status = "pending";
         } else {
           status = "wrong";
         }
       }
 
-      return { ...p, status };
+      return { ...problem, status };
     });
   }, [problems, allSubmissions]);
 
-  /* ================= TIMER ================= */
-
   const contestEndTime =
     contest?.startTime && contest?.durationMinutes
-      ? new Date(
-        new Date(contest.startTime).getTime() +
-        contest.durationMinutes * 60_000
-      ).toISOString()
+      ? new Date(new Date(contest.startTime).getTime() + contest.durationMinutes * 60_000).toISOString()
       : undefined;
 
-  if (!loaded) return <div className="p-6">Loading…</div>;
-
-  /* ================= RENDER ================= */
+  if (!loaded) {
+    return (
+      <div className="aura-app-shell flex min-h-screen items-center justify-center bg-[#F8FAFC] text-slate-600">
+        Loading AuraC² workspace...
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="aura-app-shell aura-team-shell flex min-h-screen flex-col bg-[#F8FAFC] text-slate-900">
       <Header
         contestName={contest?.title}
+        contestStatus={contest?.status}
         contestEndTime={contestEndTime}
         teamName={teamName}
         onLogout={onLogout}
       />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         <ProblemSidebar
           problems={problemsWithStatus}
-          selectedProblem={selectedProblem}
+          selectedProblem={selectedProblem ? { ...selectedProblem, status: problemsWithStatus.find((p) => p.id === selectedProblem.id)?.status ?? "unsolved" } : null}
           onSelectProblem={setSelectedProblem}
         />
 
-        <main className="flex-1 overflow-auto">
-          <div className="p-6 space-y-6">
-            <Tabs defaultValue="editor">
-              <TabsList className="bg-gray-100 p-1 rounded-lg w-fit">
-                <TabsTrigger
-                  value="editor"
-                  className="
-      px-4 py-1.5 rounded-md text-sm font-medium
-      text-gray-600
-      data-[state=active]:bg-[#FACC15]
-      data-[state=active]:text-gray-900
-      data-[state=active]:shadow-sm
-    "
-                >
-                  Code Editor
-                </TabsTrigger>
+        <main className="aura-main flex-1 overflow-auto">
+          {!contest ? (
+            <div className="m-6 rounded-lg border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
+              <p className="font-medium text-slate-800">No active contest is available.</p>
+              <p className="mt-1 text-sm text-slate-500">Your workspace will unlock when the administrator starts a contest.</p>
+            </div>
+          ) : (
+            <div className="aura-view-transition p-5">
+              <Tabs defaultValue="code" className="space-y-5">
+                <TabsList className="aura-tabs rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
+                  <TabsTrigger value="code" className="rounded-md px-4 py-2 data-[state=active]:bg-blue-700 data-[state=active]:text-white">
+                    Problems & Code
+                  </TabsTrigger>
+                  <TabsTrigger value="submissions" className="rounded-md px-4 py-2 data-[state=active]:bg-blue-700 data-[state=active]:text-white">
+                    Submissions
+                  </TabsTrigger>
+                  <TabsTrigger value="clarifications" className="rounded-md px-4 py-2 data-[state=active]:bg-blue-700 data-[state=active]:text-white">
+                    Clarifications
+                  </TabsTrigger>
+                </TabsList>
 
-                <TabsTrigger
-                  value="clarifications"
-                  className="
-      px-4 py-1.5 rounded-md text-sm font-medium
-      text-gray-600
-      data-[state=active]:bg-[#FACC15]
-      data-[state=active]:text-gray-900
-      data-[state=active]:shadow-sm
-    "
-                >
-                  Clarifications
-                </TabsTrigger>
-              </TabsList>
+                <TabsContent value="code" className="space-y-5">
+                  <div className={`aura-workspace-grid grid gap-5 ${codeExpanded ? "aura-workspace-grid-wide" : ""}`}>
+                    <ProblemStatementPanel problem={selectedProblem} />
+                    <CodeEditor
+                      contestId={contest?.id}
+                      problem={selectedProblem}
+                      onSubmitted={handleSubmitted}
+                      isExpanded={codeExpanded}
+                      onToggleExpanded={() => setCodeExpanded((value) => !value)}
+                    />
+                  </div>
 
+                  {loadingSubmissions ? (
+                    <div className="rounded-lg border border-slate-200 bg-white p-5 text-slate-500 shadow-sm">
+                      Loading submissions...
+                    </div>
+                  ) : (
+                    <SubmissionHistory submissions={submissions} title="Selected Problem Submissions" />
+                  )}
+                </TabsContent>
 
-              <TabsContent value="editor" className="space-y-6">
-                <CodeEditor
-                  contestId={contest?.id}
-                  problem={selectedProblem}
-                />
+                <TabsContent value="submissions">
+                  <SubmissionHistory submissions={allSubmissions} title="All Contest Submissions" />
+                </TabsContent>
 
-                {loadingSubmissions ? (
-                  <div className="text-gray-500">Loading submissions…</div>
-                ) : (
-                  <SubmissionHistory submissions={submissions} />
-                )}
-              </TabsContent>
-
-              <TabsContent value="clarifications">
-                <Clarifications />
-              </TabsContent>
-            </Tabs>
-          </div>
+                <TabsContent value="clarifications">
+                  <Clarifications
+                    contestId={contest?.id ?? null}
+                    problems={problems.map((problem) => ({
+                      id: Number(problem.id),
+                      title: String(problem.title ?? `#${problem.id}`),
+                    }))}
+                  />
+                </TabsContent>
+              </Tabs>
+            </div>
+          )}
         </main>
       </div>
     </div>

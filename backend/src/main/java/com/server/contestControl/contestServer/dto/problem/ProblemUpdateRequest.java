@@ -7,10 +7,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
-public class ProblemRequest {
-    @NotNull
-    private Long contestId;
-
+public class ProblemUpdateRequest {
     @NotBlank
     @Size(max = 255)
     private String title;

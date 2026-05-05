@@ -2,8 +2,11 @@ package com.server.contestControl.contestServer.service;
 
 import com.server.contestControl.contestServer.dto.testcase.TestCaseRequest;
 import com.server.contestControl.contestServer.dto.testcase.TestCaseResponse;
+import com.server.contestControl.contestServer.dto.testcase.TestCaseUpdateRequest;
 import com.server.contestControl.contestServer.entity.Problem;
 import com.server.contestControl.contestServer.entity.TestCase;
+import com.server.contestControl.contestServer.exceptions.ProblemNotFoundException;
+import com.server.contestControl.contestServer.exceptions.TestCaseNotFoundException;
 import com.server.contestControl.contestServer.repository.ProblemRepository;
 import com.server.contestControl.contestServer.repository.TestCaseRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +26,7 @@ public class TestCaseService {
     public TestCaseResponse addTestCase(Long problemId, TestCaseRequest request) {
 
         Problem problem = problemRepository.findById(problemId)
-                .orElseThrow(() -> new RuntimeException("Problem not found"));
+                .orElseThrow(() -> new ProblemNotFoundException(problemId));
 
         TestCase testCase = TestCase.builder()
                 .problem(problem)
@@ -34,12 +37,19 @@ public class TestCaseService {
 
         testCaseRepository.save(testCase);
 
-        return TestCaseResponse.builder()
-                .id(testCase.getId())
-                .inputData(testCase.getInputData())
-                .expectedOutput(testCase.getExpectedOutput())
-                .isPublic(testCase.isPublic())
-                .build();
+        return TestCaseResponse.fromEntity(testCase);
+    }
+
+    public TestCaseResponse updateTestCase(Long id, TestCaseUpdateRequest request) {
+        TestCase testCase = testCaseRepository.findById(id)
+                .orElseThrow(() -> new TestCaseNotFoundException(id));
+
+        testCase.setInputData(request.getInputData());
+        testCase.setExpectedOutput(request.getExpectedOutput());
+        testCase.setPublic(request.isPublic());
+
+        testCaseRepository.save(testCase);
+        return TestCaseResponse.fromEntity(testCase);
     }
 
     public List<TestCaseResponse> getTestCases(Long problemId) {
