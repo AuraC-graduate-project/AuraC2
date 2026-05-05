@@ -81,9 +81,9 @@ export function AddTestCaseModal({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Add Test Case</DialogTitle>
+          <DialogTitle className="text-xl text-slate-950">Add Test Case</DialogTitle>
           <DialogDescription>
-            Create a new test case for this problem.
+            Public samples are visible to teams; private tests stay hidden for judging.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -96,6 +96,7 @@ export function AddTestCaseModal({
                 onChange={(e) => setInputData(e.target.value)}
                 placeholder="Enter test case input"
                 rows={4}
+                className="font-mono text-sm"
                 disabled={isSubmitting}
               />
             </div>
@@ -107,6 +108,7 @@ export function AddTestCaseModal({
                 onChange={(e) => setExpectedOutput(e.target.value)}
                 placeholder="Enter expected output"
                 rows={4}
+                className="font-mono text-sm"
                 disabled={isSubmitting}
               />
             </div>
@@ -134,7 +136,7 @@ export function AddTestCaseModal({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="bg-blue-700 hover:bg-blue-800">
               {isSubmitting ? 'Adding...' : 'Add Test Case'}
             </Button>
           </DialogFooter>

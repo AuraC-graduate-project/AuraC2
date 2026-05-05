@@ -1,7 +1,10 @@
 import {
     ContestResponse,
+    ClarificationRequest,
+    ClarificationResponse,
     ProblemResponse,
     SubmissionResponse,
+    TestCaseResponse,
 } from "../../admin/types/api";
 
 const API_BASE_URL =
@@ -92,10 +95,31 @@ export function getActiveContest(): Promise<ContestResponse> {
     return apiFetch("/api/contest/active");
 }
 
+export function getUpcomingContest(): Promise<ContestResponse> {
+    return apiFetch("/api/contest/upcoming");
+}
+
+export function getPausedContest(): Promise<ContestResponse> {
+    return apiFetch("/api/contest/paused");
+}
+
+export function getEndedContests(): Promise<ContestResponse[]> {
+    return apiFetch("/api/contest/ended");
+}
+
 export function getProblemsByContest(
     contestId: number
 ): Promise<ProblemResponse[]> {
     return apiFetch(`/api/problems/contest/${contestId}`);
+}
+
+export async function getPublicTestCasesForProblem(
+    problemId: number
+): Promise<TestCaseResponse[]> {
+    const testCases = await apiFetch<TestCaseResponse[]>(
+        `/api/testcases/problem/${problemId}`
+    );
+    return testCases.filter((testCase) => testCase.isPublic);
 }
 
 export async function getMySubmissions(
@@ -121,4 +145,20 @@ export function submitCode(body: {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
     });
+}
+
+export function submitClarification(
+    body: ClarificationRequest
+): Promise<ClarificationResponse> {
+    return apiFetch("/api/clarifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+    });
+}
+
+export function getMyClarifications(
+    contestId: number
+): Promise<ClarificationResponse[]> {
+    return apiFetch(`/api/clarifications/my/${contestId}`);
 }

@@ -1,15 +1,17 @@
 import { useState, useEffect } from "react";
 import { Sidebar } from "./components/Sidebar";
 import { TopNav } from "./components/TopNav";
+import { AdminOverview } from "./components/AdminOverview";
 import { ContestOverview } from "./components/ContestOverview";
-import { StatsPanel } from "./components/StatsPanel";
 import { ProblemsView } from "./components/ProblemsView";
 import { TeamsView } from "./components/TeamsView";
+import { TeamAccountsPage } from "./components/TeamAccountsPage";
 import { SubmissionsView } from "./components/SubmissionsView";
-import { PlaceholderView } from "./components/PlaceholderView";
+import { ClarificationsView } from "./components/ClarificationsView";
 import { getActiveContest, getUpcomingContest } from "./services/api";
 import { ContestResponse } from "./types/api";
 import { Toaster } from "./components/ui/sonner";
+import { UnderDevelopmentPage } from "../components/UnderDevelopmentPage";
 
 export default function AdminApp({ onLogout }: { onLogout: () => void }) {
   const [activeView, setActiveView] = useState("Overview");
@@ -37,77 +39,84 @@ export default function AdminApp({ onLogout }: { onLogout: () => void }) {
   const renderView = () => {
     switch (activeView) {
       case "Overview":
-        return (
-          <>
-            <h1 className="mb-6 text-slate-800">
-              Contest Management
-            </h1>
+        return <AdminOverview onNavigate={setActiveView} />;
 
-            <ContestOverview />
-
-            <div className="mt-8">
-              <h2 className="mb-4 text-slate-700">
-                Quick Statistics
-              </h2>
-              <StatsPanel />
-            </div>
-          </>
-        );
+      case "Contests":
+        return <ContestOverview />;
 
       case "Problems":
-        return (
-          <>
-            <h1 className="mb-6 text-slate-800">
-              Problems Management
-            </h1>
-            <ProblemsView contestId={currentContest?.id ?? null} />
-          </>
-        );
+        return <ProblemsView contestId={currentContest?.id ?? null} />;
 
       case "Teams":
-        return (
-          <>
-            <h1 className="mb-6 text-slate-800">
-              Teams
-            </h1>
-            <TeamsView />
-          </>
-        );
+        return <TeamsView />;
+
+      case "Team Accounts":
+        return <TeamAccountsPage />;
 
       case "Submissions":
-        return (
-          <>
-            <h1 className="mb-6 text-slate-800">
-              Submissions
-            </h1>
-            <SubmissionsView />
-          </>
-        );
+        return <SubmissionsView />;
 
       case "Clarifications":
+        return <ClarificationsView />;
+
+      case "Statistics (Future)":
         return (
-          <>
-            <h1 className="mb-6 text-slate-800">
-              Clarifications
-            </h1>
-            <PlaceholderView
-              title="Clarifications"
-              message="Coming soon. This page will be wired once clarification endpoints are available."
-            />
-          </>
+          <UnderDevelopmentPage
+            title="Statistics and Analytics"
+            subtitle="Future contest analytics"
+            relatedCurrentFeature="Submissions review"
+            plannedItems={[
+              "Contest-level solve counts and verdict distribution",
+              "Problem difficulty and acceptance trends",
+              "Team activity timelines without fake data",
+            ]}
+            onBack={() => setActiveView("Overview")}
+          />
         );
 
-      case "Security Monitor":
+      case "Security Monitor (Future)":
         return (
-          <>
-            <h1 className="mb-6 text-slate-800">
-              Security Monitor
-            </h1>
-            <PlaceholderView
-              title="Security Monitor"
-              message="Coming soon. This page will be wired once security monitoring endpoints are available."
-            />
-          </>
+          <UnderDevelopmentPage
+            title="Security Monitor"
+            subtitle="Future operational monitoring"
+            relatedCurrentFeature="Teams and submissions management"
+            plannedItems={[
+              "Session and suspicious activity review",
+              "System logs once backend endpoints exist",
+              "Clear admin alerts without using fabricated health metrics",
+            ]}
+            onBack={() => setActiveView("Teams")}
+          />
+        );
+
+      case "Scoreboard (Future)":
+        return (
+          <UnderDevelopmentPage
+            title="Scoreboard and Standings"
+            subtitle="Future team rankings"
+            relatedCurrentFeature="Submissions review"
+            plannedItems={[
+              "Solved problem count and penalty time",
+              "Frozen scoreboard states during contest endgame",
+              "Public/team-readable standings once backend ranking exists",
+            ]}
+            onBack={() => setActiveView("Submissions")}
+          />
+        );
+
+      case "Rejudge (Future)":
+        return (
+          <UnderDevelopmentPage
+            title="Rejudge"
+            subtitle="Future judging operations"
+            relatedCurrentFeature="Submissions review"
+            plannedItems={[
+              "Rejudge a single submission",
+              "Rejudge all submissions for one problem",
+              "Rejudge a whole contest with audit trail",
+            ]}
+            onBack={() => setActiveView("Submissions")}
+          />
         );
 
       default:
@@ -116,19 +125,17 @@ export default function AdminApp({ onLogout }: { onLogout: () => void }) {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      <Sidebar activeView={activeView} setActiveView={setActiveView} />
+    <div className="aura-app-shell aura-admin-shell flex h-screen bg-[#F8FAFC] text-slate-900">
+      <Sidebar activeView={activeView} setActiveView={setActiveView} onLogout={onLogout} />
 
-      {/* Main column */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top bar */}
-        <TopNav onLogout={onLogout} />
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <TopNav activeView={activeView} onLogout={onLogout} />
 
-        {/* Main content */}
-        <main className="flex-1 overflow-y-auto p-8">
-          <div className="max-w-7xl mx-auto">
-            {renderView()}
+        <main className="aura-main flex-1 overflow-y-auto p-6 lg:p-8">
+          <div className="mx-auto max-w-7xl">
+            <div key={activeView} className="aura-view-transition">
+              {renderView()}
+            </div>
           </div>
         </main>
       </div>

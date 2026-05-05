@@ -2,6 +2,7 @@ package com.server.contestControl.contestServer.controller;
 
 import com.server.contestControl.contestServer.dto.contest.ContestRequest;
 import com.server.contestControl.contestServer.dto.contest.ContestResponse;
+import com.server.contestControl.contestServer.dto.contest.ContestUpdateRequest;
 import com.server.contestControl.contestServer.enums.ContestStatus;
 import com.server.contestControl.contestServer.service.ContestService;
 import jakarta.validation.Valid;
@@ -24,6 +25,15 @@ public class ContestController {
     public ResponseEntity<ContestResponse> createContest(
             @Valid @RequestBody ContestRequest request) {
         return ResponseEntity.ok(contestService.createContest(request));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ContestResponse> updateContestDetails(
+            @PathVariable Long id,
+            @Valid @RequestBody ContestUpdateRequest request
+    ) {
+        return ResponseEntity.ok(contestService.updateContestDetails(id, request));
     }
 
     @PutMapping("/{id}/start")

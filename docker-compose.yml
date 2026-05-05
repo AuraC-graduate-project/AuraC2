@@ -37,56 +37,56 @@ services:
       timeout: 5s
       retries: 5
 
-  backend:
-    build:
-      context: backend
-      dockerfile: Dockerfile
-    container_name: aura-backend
-    ports:
-      - "8080:8080"
-    environment:
-      # Database
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-
-      # RabbitMQ
-      SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
-      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
-
-      # Judge0
-      JUDGE0_CALLBACK_URL: http://backend:8080/api/callback/judge0
-
-      # JWT
-      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
-
-      # JPA
-      SPRING_JPA_DDL_AUTO: update
-
-    depends_on:
-      postgres:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    networks:
-      - aura-network
-    restart: unless-stopped
-
-  frontend:
-    build:
-      context: ./UI
-      dockerfile: Dockerfile
-    container_name: aura-frontend
-    ports:
-      - "80:80"
-    depends_on:
-      - backend
-    networks:
-      - aura-network
-    restart: unless-stopped
+#  backend:
+#    build:
+#      context: backend
+#      dockerfile: Dockerfile
+#    container_name: aura-backend
+#    ports:
+#      - "8080:8080"
+#    environment:
+#      # Database
+#      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+#      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+#      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+#
+#      # RabbitMQ
+#      SPRING_RABBITMQ_HOST: rabbitmq
+#      SPRING_RABBITMQ_PORT: 5672
+#      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+#      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+#
+#      # Judge0
+#      JUDGE0_CALLBACK_URL: http://backend:8080/api/callback/judge0
+#
+#      # JWT
+#      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+#      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+#
+#      # JPA
+#      SPRING_JPA_DDL_AUTO: update
+#
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      rabbitmq:
+#        condition: service_healthy
+#    networks:
+#      - aura-network
+#    restart: unless-stopped
+#
+#  frontend:
+#    build:
+#      context: ./UI
+#      dockerfile: Dockerfile
+#    container_name: aura-frontend
+#    ports:
+#      - "80:80"
+#    depends_on:
+#      - backend
+#    networks:
+#      - aura-network
+#    restart: unless-stopped
 
 networks:
   aura-network:

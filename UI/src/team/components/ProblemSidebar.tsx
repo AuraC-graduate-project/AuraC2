@@ -1,17 +1,26 @@
-import React from "react";
-import { CheckCircle2, XCircle, Clock, Circle } from "lucide-react";
+import { CheckCircle2, Circle, Clock, XCircle } from "lucide-react";
+import { ProblemResponse } from "../../admin/types/api";
 
 export type ProblemStatus =
-  | "solved"    // ACCEPTED exists
-  | "wrong"     // submissions exist but none accepted
-  | "pending"   // only PENDING / RUNNING
-  | "unsolved"; // no submissions at all
+  | "solved"
+  | "wrong"
+  | "pending"
+  | "unsolved";
 
-type Problem = {
-  id: number;
-  title: string;
-  status: ProblemStatus; // 🔒 REQUIRED
-};
+type Problem = ProblemResponse & { status: ProblemStatus };
+
+function statusIcon(status: ProblemStatus) {
+  switch (status) {
+    case "solved":
+      return <CheckCircle2 className="h-4 w-4 text-emerald-600" />;
+    case "wrong":
+      return <XCircle className="h-4 w-4 text-rose-600" />;
+    case "pending":
+      return <Clock className="h-4 w-4 text-amber-600" />;
+    default:
+      return <Circle className="h-4 w-4 text-slate-400" />;
+  }
+}
 
 export function ProblemSidebar({
   problems,
@@ -20,72 +29,56 @@ export function ProblemSidebar({
 }: {
   problems: Problem[];
   selectedProblem: Problem | null;
-  onSelectProblem: (p: Problem) => void;
+  onSelectProblem: (p: ProblemResponse) => void;
 }) {
-  const getStatusIcon = (status: ProblemStatus) => {
-    switch (status) {
-      case "solved":
-        return <CheckCircle2 className="w-5 h-5 text-green-600" />;
-
-      case "wrong":
-        return <XCircle className="w-5 h-5 text-red-600" />;
-
-      case "pending":
-        return <Clock className="w-5 h-5 text-yellow-600" />;
-
-      case "unsolved":
-      default:
-        return <Circle className="w-5 h-5 text-gray-400" />;
-    }
-  };
-
-  const getStatusStyle = (status: ProblemStatus) => {
-    switch (status) {
-      case "solved":
-        return "bg-green-50 border-green-200";
-
-      case "wrong":
-        return "bg-red-50 border-red-200";
-
-      case "pending":
-        return "bg-yellow-50 border-yellow-200";
-
-      case "unsolved":
-      default:
-        return "bg-gray-50 border-gray-200";
-    }
-  };
-
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 shadow-sm">
-      <div className="p-4 border-b border-gray-200">
-        <h2 className="text-gray-900 font-semibold">Problems</h2>
+    <aside className="aura-problem-rail w-72 shrink-0 overflow-y-auto border-r border-slate-200 bg-white">
+      <div className="border-b border-slate-200 p-5">
+        <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Problems</p>
+        <h2 className="mt-1 text-lg font-semibold text-slate-950">{problems.length} available</h2>
       </div>
 
-      <div className="p-3 space-y-2">
-        {problems.map((p, idx) => (
-          <button
-            key={p.id}
-            onClick={() => onSelectProblem(p)}
-            className={`
-              w-full flex items-center gap-3 p-3 rounded-lg border transition-all
-              ${getStatusStyle(p.status)}
-              ${selectedProblem?.id === p.id
-                ? "ring-2 ring-[#FACC15] shadow-md"
-                : "hover:shadow-md"
-              }
-            `}
-          >
-            {getStatusIcon(p.status)}
-
-            <div className="flex-1 text-left">
-              <div className="text-gray-900 font-medium">
-                {String.fromCharCode(65 + idx)}
-              </div>
-              <div className="text-sm text-gray-600">{p.title}</div>
-            </div>
-          </button>
-        ))}
+      <div className="space-y-2 p-3">
+        {problems.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+            No problems have been published for this contest.
+          </div>
+        ) : (
+          problems.map((problem, index) => {
+            const active = selectedProblem?.id === problem.id;
+            return (
+              <button
+                key={problem.id}
+                type="button"
+                onClick={() => onSelectProblem(problem)}
+                className={`aura-problem-card w-full rounded-lg border p-3 text-left transition ${
+                  active
+                    ? "border-blue-300 bg-blue-50 shadow-sm"
+                    : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white font-semibold text-slate-700">
+                    {String.fromCharCode(65 + index)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold text-slate-900">{problem.title}</p>
+                    <div className="mt-2 flex items-center gap-2 text-xs font-medium text-slate-500">
+                      {statusIcon(problem.status)}
+                      {problem.status === "solved"
+                        ? "Solved"
+                        : problem.status === "wrong"
+                          ? "Attempted"
+                          : problem.status === "pending"
+                            ? "Judging"
+                            : "Unsolved"}
+                    </div>
+                  </div>
+                </div>
+              </button>
+            );
+          })
+        )}
       </div>
     </aside>
   );

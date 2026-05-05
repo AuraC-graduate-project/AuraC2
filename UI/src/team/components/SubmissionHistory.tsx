@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -14,139 +14,80 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./ui/dialog";
-
-
-import {
-  CheckCircle2, XCircle, Clock, Eye, AlertTriangle, Timer,
-  Bug,
-  ServerCrash,} from "lucide-react";
+import { Eye } from "lucide-react";
 import { getStoredToken } from "../../auth/tokenStore";
 import { decodeJwtSubject } from "../../auth/jwt";
-import { clearDraftFromStorage, getDraftKey } from "../../hooks/useCodeDraft";
+import { clearDraftFromStorage } from "../../hooks/useCodeDraft";
+import { StatusBadge, VerdictLabel } from "../../components/StatusBadge";
 
 export interface Submission {
   id: number;
   problem: string;
   problemId: number;
   contestId: number;
-  verdict: "Accepted" | "Wrong Answer" | "Time Limit Exceeded" | "Pending" | "Compilation Error" | "Runtime Error" | "System Error" | "Running";
+  verdict: VerdictLabel;
   language: string;
   time: string;
   executionTime: string;
+  memoryUsage: string;
   code: string;
 }
 
 type Props = {
   submissions: Submission[];
+  title?: string;
 };
 
-export function SubmissionHistory({ submissions }: Props) {
+function getUserId(): string {
+  const token = getStoredToken();
+  if (!token) return "unknown";
+  return decodeJwtSubject(token) ?? "unknown";
+}
+
+export function SubmissionHistory({ submissions, title = "Submission History" }: Props) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Submission | null>(null);
+  const userId = getUserId();
 
-  // Get user ID from JWT token
-  const userId = React.useMemo(() => {
-    const token = getStoredToken();
-    if (!token) return "unknown";
-    return decodeJwtSubject(token) ?? "unknown";
-  }, []);
-
-  // Clear drafts for problems that have been accepted
   useEffect(() => {
     if (!userId || userId === "unknown") return;
 
-    // Track which problem+language combinations have been cleared
     const cleared = new Set<string>();
-
-    submissions.forEach((s) => {
-      if (s.verdict === "Accepted") {
-        const key = `${s.problemId}-${s.language}`;
+    submissions.forEach((submission) => {
+      if (submission.verdict === "ACCEPTED") {
+        const key = `${submission.problemId}-${submission.language}`;
         if (!cleared.has(key)) {
-          clearDraftFromStorage(userId, String(s.contestId), String(s.problemId), s.language);
+          clearDraftFromStorage(userId, String(submission.contestId), String(submission.problemId), submission.language);
           cleared.add(key);
         }
       }
     });
   }, [submissions, userId]);
 
-  const openCode = (s: Submission) => {
-    setSelected(s);
-    setOpen(true);
-  };
-
-  const getVerdictIcon = (verdict: Submission["verdict"]) => {
-    switch (verdict) {
-      case "Accepted":
-        return <CheckCircle2 className="w-4 h-4 text-green-600" />;
-
-      case "Pending":
-      case "Running":
-        return <Clock className="w-4 h-4 text-yellow-600" />;
-
-      case "Wrong Answer":
-        return <XCircle className="w-4 h-4 text-red-600" />;
-
-      case "Time Limit Exceeded":
-        return <Timer className="w-4 h-4 text-orange-600" />;
-
-      case "Compilation Error":
-        return <AlertTriangle className="w-4 h-4 text-purple-600" />;
-
-      case "Runtime Error":
-        return <Bug className="w-4 h-4 text-pink-600" />;
-
-      case "System Error":
-        return <ServerCrash className="w-4 h-4 text-gray-600" />;
-
-      default:
-        return <XCircle className="w-4 h-4 text-gray-500" />;
-    }
-  };
-
-  const getVerdictColor = (verdict: Submission["verdict"]) => {
-    switch (verdict) {
-      case "Accepted":
-        return "text-green-600";
-
-      case "Pending":
-      case "Running":
-        return "text-yellow-600";
-
-      case "Wrong Answer":
-        return "text-red-600";
-
-      case "Time Limit Exceeded":
-        return "text-orange-600";
-
-      case "Compilation Error":
-        return "text-purple-600";
-
-      case "Runtime Error":
-        return "text-pink-600";
-
-      case "System Error":
-        return "text-gray-600";
-
-      default:
-        return "text-gray-500";
-    }
-  };
   return (
     <>
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-        <div className="p-4 border-b border-gray-200 bg-gray-50">
-          <h3 className="text-gray-900">Submission History</h3>
+      <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 p-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Submissions</p>
+            <h2 className="text-lg font-semibold text-slate-950">{title}</h2>
+          </div>
+          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">
+            {submissions.length} total
+          </span>
         </div>
 
         <div className="overflow-auto">
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[90px]">ID</TableHead>
                 <TableHead>Problem</TableHead>
-                <TableHead>Verdict</TableHead>
                 <TableHead>Language</TableHead>
-                <TableHead>Time</TableHead>
+                <TableHead>Verdict</TableHead>
                 <TableHead>Execution</TableHead>
+                <TableHead>Memory</TableHead>
+                <TableHead>Submitted</TableHead>
                 <TableHead className="text-right">Code</TableHead>
               </TableRow>
             </TableHeader>
@@ -154,39 +95,34 @@ export function SubmissionHistory({ submissions }: Props) {
             <TableBody>
               {submissions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-gray-500 py-6">
-                    No submissions yet
+                  <TableCell colSpan={8} className="py-8 text-center text-slate-500">
+                    No submissions yet.
                   </TableCell>
                 </TableRow>
               ) : (
-                submissions.map((s) => (
-                  <TableRow key={s.id}>
-                    <TableCell>{s.problem}</TableCell>
-
+                submissions.map((submission) => (
+                  <TableRow key={submission.id}>
+                    <TableCell className="font-mono text-sm">{submission.id}</TableCell>
+                    <TableCell className="font-medium text-slate-900">{submission.problem}</TableCell>
+                    <TableCell className="font-mono text-sm">{submission.language}</TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getVerdictIcon(s.verdict)}
-                        <span className={getVerdictColor(s.verdict)}>
-                          {s.verdict}
-                        </span>
-                      </div>
+                      <StatusBadge kind="verdict" value={submission.verdict} />
                     </TableCell>
-
-                    <TableCell className="font-mono text-sm">
-                      {s.language}
-                    </TableCell>
-
-                    <TableCell>{s.time}</TableCell>
-
-                    <TableCell>{s.executionTime}</TableCell>
-
+                    <TableCell className="text-sm">{submission.executionTime}</TableCell>
+                    <TableCell className="text-sm">{submission.memoryUsage}</TableCell>
+                    <TableCell className="text-sm text-slate-600">{submission.time}</TableCell>
                     <TableCell className="text-right">
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => openCode(s)}
+                        className="gap-2"
+                        onClick={() => {
+                          setSelected(submission);
+                          setOpen(true);
+                        }}
                       >
-                        <Eye className="w-4 h-4" />
+                        <Eye className="h-4 w-4" />
+                        View
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -195,21 +131,35 @@ export function SubmissionHistory({ submissions }: Props) {
             </TableBody>
           </Table>
         </div>
-      </div>
+      </section>
 
-      {/* 🔥 CODE DIALOG */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>
-              Submission Code {selected ? `#${selected.id}` : ""}
-            </DialogTitle>
+            <DialogTitle>Submission Code {selected ? `#${selected.id}` : ""}</DialogTitle>
           </DialogHeader>
 
-          <div className="bg-slate-900 text-slate-100 rounded-lg p-4 max-h-[60vh] overflow-auto">
-            <pre className="text-xs whitespace-pre-wrap">
-              {selected?.code ?? ""}
-            </pre>
+          {selected && (
+            <div className="mb-3 grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm md:grid-cols-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Problem</p>
+                <p className="mt-1 font-medium text-slate-900">{selected.problem}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Language</p>
+                <p className="mt-1 font-mono text-slate-900">{selected.language}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Verdict</p>
+                <div className="mt-1">
+                  <StatusBadge kind="verdict" value={selected.verdict} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="max-h-[60vh] overflow-auto rounded-lg bg-slate-950 p-4 text-slate-100">
+            <pre className="whitespace-pre-wrap text-xs">{selected?.code ?? ""}</pre>
           </div>
         </DialogContent>
       </Dialog>

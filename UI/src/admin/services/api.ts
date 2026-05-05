@@ -1,15 +1,21 @@
 import {
   ContestResponse,
   ContestRequest,
+  ContestUpdateRequest,
   ProblemRequest,
+  ProblemUpdateRequest,
   ProblemResponse,
   SubmissionResponse,
   UpdatePasswordRequest,
   UpdateUserNameRequest,
   UserResponse,
   TestCaseRequest,
+  TestCaseUpdateRequest,
   TestCaseResponse,
   RegisterRequest,
+  ClarificationRequest,
+  ClarificationResponse,
+  ReplyRequest,
 } from "../types/api";
 
 /**
@@ -88,7 +94,10 @@ async function refreshAccessToken(): Promise<string | null> {
   return null;
 }
 
-async function ensureRefreshedOnce(): Promise<string | null> {
+// Exported so the SSE hook can share the same coalesced refresh promise
+// (refreshInFlight) as apiFetch — preventing a stream 401 and a REST 401
+// from racing two concurrent /auth/refresh requests.
+export async function ensureRefreshedOnce(): Promise<string | null> {
   if (!refreshInFlight) {
     refreshInFlight = refreshAccessToken().finally(() => {
       refreshInFlight = null;
@@ -191,16 +200,27 @@ export async function createContest(data: ContestRequest): Promise<ContestRespon
   });
 }
 
+export async function updateContestDetails(
+  id: number,
+  data: ContestUpdateRequest
+): Promise<ContestResponse> {
+  return apiFetch<ContestResponse>(`/api/contest/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
 export async function startContest(id: number): Promise<ContestResponse> {
-  await apiFetch<void>(`/api/contest/${id}/start`, { method: "PUT" });
+  return apiFetch<ContestResponse>(`/api/contest/${id}/start`, { method: "PUT" });
 }
 
 export async function resumeContest(id: number): Promise<ContestResponse> {
-  await apiFetch<void>(`/api/contest/${id}/resume`, { method: "PUT" });
+  return apiFetch<ContestResponse>(`/api/contest/${id}/resume`, { method: "PUT" });
 }
 
 export async function pauseContest(id: number): Promise<ContestResponse> {
-  await apiFetch<void>(`/api/contest/${id}/pause`, { method: "PUT" });
+  return apiFetch<ContestResponse>(`/api/contest/${id}/pause`, { method: "PUT" });
 }
 
 export async function endContest(id: number, juryOverride = false): Promise<void> {
@@ -235,6 +255,17 @@ export async function getProblem(id: number): Promise<ProblemResponse> {
 
 export async function getProblemsByContest(contestId: number): Promise<ProblemResponse[]> {
   return apiFetch<ProblemResponse[]>(`/api/problems/contest/${contestId}`);
+}
+
+export async function updateProblem(
+  id: number,
+  data: ProblemUpdateRequest
+): Promise<ProblemResponse> {
+  return apiFetch<ProblemResponse>(`/api/problems/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
 }
 
 // -----------------------------
@@ -300,6 +331,60 @@ export async function addTestCase(
 
 export async function getTestCasesForProblem(problemId: number): Promise<TestCaseResponse[]> {
   return apiFetch<TestCaseResponse[]>(`/api/testcases/problem/${problemId}`);
+}
+
+export async function updateTestCase(
+  id: number,
+  data: TestCaseUpdateRequest
+): Promise<TestCaseResponse> {
+  return apiFetch<TestCaseResponse>(`/api/testcases/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+// -----------------------------
+// Clarifications
+// -----------------------------
+
+export async function getAllClarifications(): Promise<ClarificationResponse[]> {
+  return apiFetch<ClarificationResponse[]>("/api/clarifications/admin/all");
+}
+
+export async function getContestClarifications(
+  contestId: number
+): Promise<ClarificationResponse[]> {
+  return apiFetch<ClarificationResponse[]>(
+    `/api/clarifications/admin/contest/${contestId}`
+  );
+}
+
+export async function submitClarification(
+  data: ClarificationRequest
+): Promise<ClarificationResponse> {
+  return apiFetch<ClarificationResponse>("/api/clarifications", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getMyClarifications(
+  contestId: number
+): Promise<ClarificationResponse[]> {
+  return apiFetch<ClarificationResponse[]>(`/api/clarifications/my/${contestId}`);
+}
+
+export async function replyClarification(
+  id: number,
+  data: ReplyRequest
+): Promise<ClarificationResponse> {
+  return apiFetch<ClarificationResponse>(`/api/clarifications/admin/${id}/reply`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
 }
 
 // -----------------------------

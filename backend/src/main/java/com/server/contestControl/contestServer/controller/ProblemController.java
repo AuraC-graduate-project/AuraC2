@@ -2,6 +2,8 @@ package com.server.contestControl.contestServer.controller;
 
 import com.server.contestControl.contestServer.dto.problem.ProblemRequest;
 import com.server.contestControl.contestServer.dto.problem.ProblemResponse;
+import com.server.contestControl.contestServer.dto.problem.ProblemUpdateRequest;
+import jakarta.validation.Valid;
 import com.server.contestControl.contestServer.service.ProblemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,8 +21,17 @@ public class ProblemController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ProblemResponse> createProblem(@RequestBody ProblemRequest request) {
+    public ResponseEntity<ProblemResponse> createProblem(@Valid @RequestBody ProblemRequest request) {
         return ResponseEntity.ok(problemService.createProblem(request));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ProblemResponse> updateProblem(
+            @PathVariable Long id,
+            @Valid @RequestBody ProblemUpdateRequest request
+    ) {
+        return ResponseEntity.ok(problemService.updateProblem(id, request));
     }
 
     @GetMapping("/{id}")

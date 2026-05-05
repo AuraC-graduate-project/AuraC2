@@ -2,6 +2,7 @@ package com.server.contestControl.contestServer.service;
 
 import com.server.contestControl.contestServer.dto.contest.ContestRequest;
 import com.server.contestControl.contestServer.dto.contest.ContestResponse;
+import com.server.contestControl.contestServer.dto.contest.ContestUpdateRequest;
 import com.server.contestControl.contestServer.entity.Contest;
 import com.server.contestControl.contestServer.enums.ContestStatus;
 import com.server.contestControl.contestServer.event.ContestUpdatedEvent;
@@ -9,7 +10,7 @@ import com.server.contestControl.contestServer.exception.ContestNotFoundExceptio
 import com.server.contestControl.contestServer.exception.ContestValidationException;
 import com.server.contestControl.contestServer.exception.InvalidContestStateException;
 import com.server.contestControl.contestServer.repository.ContestRepository;
-import com.server.contestControl.contestServer.sse.ContestStreamSnapshot;
+import com.server.contestControl.contestServer.sse.contest.ContestStreamSnapshot;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -83,6 +84,25 @@ public class ContestService {
 
 
         return response;
+    }
+
+    @Transactional
+    public ContestResponse updateContestDetails(Long id, ContestUpdateRequest request) {
+        Contest contest = contestRepository.findById(id)
+                .orElseThrow(() -> new ContestNotFoundException(id));
+
+        if (contest.getStatus() != ContestStatus.UPCOMING) {
+            throw new InvalidContestStateException(
+                    "Contest name, start time, and duration can only be updated while contest is UPCOMING."
+            );
+        }
+
+        contest.setTitle(request.title());
+        contest.setStartTime(request.startTime());
+        contest.setDurationMinutes(request.durationMinutes());
+        contestRepository.save(contest);
+
+        return toResponse(contest);
     }
 
     @Transactional

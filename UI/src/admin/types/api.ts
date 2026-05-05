@@ -52,8 +52,22 @@ export interface ContestRequest {
   penaltyMinutes?: number;
 }
 
+export interface ContestUpdateRequest {
+  title: string;
+  startTime: string; // ISO 8601
+  durationMinutes: number;
+}
+
 export interface ProblemRequest {
   contestId: number;
+  title: string;
+  description: string;
+  timeLimit: number;
+  memoryLimit: number;
+  difficulty: 'EASY' | 'MEDIUM' | 'HARD';
+}
+
+export interface ProblemUpdateRequest {
   title: string;
   description: string;
   timeLimit: number;
@@ -77,12 +91,55 @@ export interface TestCaseRequest {
   isPublic: boolean;
 }
 
+export interface TestCaseUpdateRequest {
+  inputData: string;
+  expectedOutput: string;
+  isPublic: boolean;
+}
+
 export interface TestCaseResponse {
   id: number;
   problemId: number;
   inputData: string;
   expectedOutput: string;
   isPublic: boolean;
+}
+
+export type ClarificationStatus = 'PENDING' | 'ANSWERED' | 'CLOSED';
+export type ClarificationType = 'PRIVATE' | 'PUBLIC';
+export type StandardReply =
+  | 'NO_COMMENT'
+  | 'READ_PROBLEM_STATEMENT_CAREFULLY'
+  | 'YES'
+  | 'NO'
+  | 'ANSWERED'
+  | 'CUSTOM';
+
+export interface ClarificationRequest {
+  contestId: number;
+  problemId: number | null;
+  question: string;
+}
+
+export interface ReplyRequest {
+  standardReply: StandardReply | null;
+  reply: string | null;
+  replyType: ClarificationType;
+}
+
+export interface ClarificationResponse {
+  id: number;
+  contestId: number;
+  problemId: number | null;
+  problemTitle: string | null;
+  question: string;
+  standardReply: StandardReply | null;
+  reply: string | null;
+  status: ClarificationStatus;
+  replyType: ClarificationType | null;
+  createdAt: string;
+  repliedAt: string | null;
+  username: string;
 }
 
 export interface RegisterRequest {
@@ -121,13 +178,12 @@ export interface UpdatePasswordRequest {
 export type Verdict =
   | 'ACCEPTED'
   | 'WRONG_ANSWER'
-  | 'TIME_LIMIT_EXCEEDED'
-  | 'MEMORY_LIMIT_EXCEEDED'
+  | 'TLE'
   | 'RUNTIME_ERROR'
   | 'COMPILATION_ERROR'
+  | 'INTERNAL_ERROR'
   | 'PENDING'
-  | 'RUNNING'
-  | 'UNKNOWN';
+  | 'RUNNING';
 
 export interface SubmissionResponse {
   id: number;

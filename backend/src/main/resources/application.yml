@@ -10,6 +10,13 @@ spring:
     driver-class-name: org.postgresql.Driver
 
   jpa:
+    # Disabled because long-lived SSE requests (/api/contest/stream,
+    # /api/team/stream) would otherwise hold a Hikari connection for the
+    # entire 30-minute stream lifetime, exhausting the pool and timing out
+    # /auth/refresh and the cold-load REST probe. DTO mapping already
+    # happens inside @Transactional service methods, so disabling OSIV
+    # is safe here.
+    open-in-view: false
     hibernate:
       ddl-auto: ${SPRING_JPA_DDL_AUTO:update}
     show-sql: false
@@ -41,6 +48,12 @@ judge0:
   url: ${JUDGE0_URL:https://ce.judge0.com/submissions?wait=false}
   callback: ${JUDGE0_CALLBACK_URL:http://localhost:8080/api/callback/judge0}
 
+contest:
+  sync:
+    enabled: ${CONTEST_SYNC_ENABLED:true}
+    delay-ms: ${CONTEST_SYNC_DELAY_MS:30000}
+    initial-delay-ms: ${CONTEST_SYNC_INITIAL_DELAY_MS:10000}
+
 jwt:
   #dont change me. hallaq cry to make it work :) (i have 64B problem)
   # Dev-safe fallbacks let IDE runs work even when env vars are not configured.
@@ -53,12 +66,6 @@ bootstrap:
   admin:
     username: ${BOOTSTRAP_ADMIN_USERNAME:admin}
     credentials-file: ${BOOTSTRAP_ADMIN_CREDENTIALS_FILE:admin-account.txt}
-
-contest:
-  sync:
-    enabled: true
-    delay-ms: 30000
-    initial-delay-ms: 10000
 
 springdoc:
   swagger-ui:

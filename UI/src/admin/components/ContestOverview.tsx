@@ -8,6 +8,7 @@ import {
   Pause,
   StopCircle,
   Plus,
+  Pencil,
   Calendar,
   Clock,
   FileText,
@@ -31,8 +32,9 @@ import {
   ContestStreamUpdate,
   ContestUpdateReason
 } from '../types/api';
-import { useContestStream } from '../hooks/useContestStream';
+import { useContestStream } from '../../hooks/useContestStream';
 import { CreateContestModal } from './CreateContestModal';
+import { EditContestModal } from './EditContestModal';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -72,6 +74,7 @@ export function ContestOverview() {// Every render, React runs this function aga
 
   // These control modal/dialog behavior.
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [endDialogOpen, setEndDialogOpen] = useState(false);
   const [juryOverride, setJuryOverride] = useState(false);
 
@@ -374,6 +377,7 @@ export function ContestOverview() {// Every render, React runs this function aga
   const canResume = lifecycleState === 'PAUSED';
   const canPause = lifecycleState === 'RUNNING';
   const canEnd = lifecycleState === 'RUNNING' || lifecycleState === 'PAUSED';
+  const canEdit = lifecycleState === 'UPCOMING';
 
   /**
    * The backend gives the base truth, and frontend creates a smooth local ticking timer between SSE updates.
@@ -625,6 +629,16 @@ export function ContestOverview() {// Every render, React runs this function aga
                 <h3 className="text-slate-700 mb-4">Contest Controls</h3>
                 <div className="flex flex-wrap gap-3">
                   <Button
+                    variant="outline"
+                    className="gap-2"
+                    disabled={!canEdit}
+                    onClick={() => setEditModalOpen(true)}
+                  >
+                    <Pencil className="w-4 h-4" />
+                    Edit Contest
+                  </Button>
+
+                  <Button
                     className="bg-green-600 hover:bg-green-700 gap-2"
                     disabled={!canStart}
                     onClick={handleStart}
@@ -671,6 +685,18 @@ export function ContestOverview() {// Every render, React runs this function aga
           onOpenChange={setCreateModalOpen}
           onSuccess={() => setContestType('upcoming')}
       />
+
+      {contest && (
+        <EditContestModal
+          open={editModalOpen}
+          onOpenChange={setEditModalOpen}
+          contest={contest}
+          onSuccess={(updated) => {
+            placeContest(updated);
+            setContestType('upcoming');
+          }}
+        />
+      )}
 
       <AlertDialog open={endDialogOpen} onOpenChange={setEndDialogOpen}>
         <AlertDialogContent>

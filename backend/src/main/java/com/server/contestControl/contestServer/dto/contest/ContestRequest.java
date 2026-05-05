@@ -4,21 +4,26 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
 
 public record ContestRequest(
+        @JsonProperty("title")
         @NotBlank(message = "Title is required")
-        @JsonProperty("title") String title,
+        @Size(max = 255)
+        String title,
 
         @JsonProperty("description") String description,
 
+        @JsonProperty("startTime")
         @NotNull(message = "Start time is required")
-        @JsonProperty("startTime") Instant startTime,
+        Instant startTime,
 
+        @JsonProperty("durationMinutes")
         @NotNull(message = "Duration is required")
         @Min(value = 1, message = "Duration must be at least 1 minute")
-        @JsonProperty("durationMinutes") Integer durationMinutes,
+        Integer durationMinutes,
 
         @Min(value = 0, message = "Scoreboard freeze time cannot be negative")
         @JsonProperty("scoreboardFreezeMinutes") Integer scoreboardFreezeMinutes,

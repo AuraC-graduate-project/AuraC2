@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import {
@@ -19,15 +18,9 @@ import {
 } from './ui/table';
 import { getAllSubmissions, getAllUsers, getProblemsByContest } from '../services/api';
 import { ProblemResponse, SubmissionResponse, UserResponse } from '../types/api';
-import { RefreshCw, Eye } from 'lucide-react';
+import { RefreshCw, Eye, Search } from 'lucide-react';
 import { toast } from 'sonner';
-
-function verdictBadgeVariant(v: string): 'default' | 'secondary' | 'destructive' {
-  const x = (v ?? '').toUpperCase();
-  if (x === 'ACCEPTED' || x === 'OK') return 'default';
-  if (x === 'PENDING' || x === 'RUNNING') return 'secondary';
-  return 'destructive';
-}
+import { StatusBadge, formatStatusText, normalizeVerdict } from '../../components/StatusBadge';
 
 function formatDateTime(iso: string): string {
   if (!iso) return '-';
@@ -138,13 +131,16 @@ export function SubmissionsView() {
   return (
     <>
       <Card className="border border-gray-200 shadow-sm">
-        <CardHeader className="bg-[#1E293B] text-white">
-          <div className="flex items-center justify-between">
-            <CardTitle>Submissions</CardTitle>
+        <CardHeader className="border-b border-slate-200 bg-slate-50">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <CardTitle className="text-2xl text-slate-950">Submissions</CardTitle>
+              <p className="mt-1 text-sm text-slate-600">Review aggregate verdicts and submitted source code.</p>
+            </div>
             <Button
               size="sm"
               variant="outline"
-              className="gap-2 bg-white text-slate-900 hover:bg-slate-100"
+              className="gap-2 bg-white"
               onClick={load}
             >
               <RefreshCw className="w-4 h-4" />
@@ -155,12 +151,15 @@ export function SubmissionsView() {
 
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by id, username, verdict, language..."
-              className="md:max-w-md"
-            />
+            <div className="relative w-full md:max-w-md">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search by ID, username, verdict, language..."
+                className="h-10 pl-9"
+              />
+            </div>
 
             <div className="flex items-center gap-2">
               <span className="text-sm text-slate-600">Verdict:</span>
@@ -171,7 +170,7 @@ export function SubmissionsView() {
               >
                 <option value="">All</option>
                 {uniqueVerdicts.map(v => (
-                  <option key={v} value={v.toLowerCase()}>{v}</option>
+                  <option key={v} value={v.toLowerCase()}>{formatStatusText(normalizeVerdict(v))}</option>
                 ))}
               </select>
             </div>
@@ -228,9 +227,7 @@ export function SubmissionsView() {
                         </TableCell>
                         <TableCell className="font-mono text-sm">{s.language}</TableCell>
                         <TableCell>
-                          <Badge variant={verdictBadgeVariant(String(s.verdict))}>
-                            {String(s.verdict)}
-                          </Badge>
+                          <StatusBadge kind="verdict" value={String(s.verdict)} />
                         </TableCell>
                         <TableCell className="text-sm">
                           {s.executionTime == null ? '-' : `${s.executionTime} ms`}
@@ -247,6 +244,7 @@ export function SubmissionsView() {
                             onClick={() => openCode(s)}
                           >
                             <Eye className="w-4 h-4" />
+                            Details
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -260,19 +258,50 @@ export function SubmissionsView() {
       </Card>
 
       <Dialog open={codeOpen} onOpenChange={setCodeOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>
-              Submission Code {codeItem ? `#${codeItem.id}` : ''}
+              Submission Details {codeItem ? `#${codeItem.id}` : ''}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             {codeItem && (
-              <div className="text-sm text-slate-600">
-                Contest <b>{codeItem.contestId}</b> · Problem <b>{codeItem.problemId}</b> · User <b>{codeItem.userId}</b> · {String(codeItem.language)}
+              <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm md:grid-cols-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Team</p>
+                  <p className="mt-1 font-medium text-slate-900">{userMap[codeItem.userId]?.username ?? `#${codeItem.userId}`}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Problem</p>
+                  <p className="mt-1 font-medium text-slate-900">
+                    {problemMapByContest[codeItem.contestId]?.[codeItem.problemId]?.title ?? `#${codeItem.problemId}`}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Verdict</p>
+                  <div className="mt-1">
+                    <StatusBadge kind="verdict" value={String(codeItem.verdict)} />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Language</p>
+                  <p className="mt-1 font-mono text-slate-900">{String(codeItem.language)}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Execution</p>
+                  <p className="mt-1 text-slate-900">{codeItem.executionTime == null ? '-' : `${codeItem.executionTime} ms`}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Memory</p>
+                  <p className="mt-1 text-slate-900">{codeItem.memoryUsage == null ? '-' : `${codeItem.memoryUsage} MB`}</p>
+                </div>
+                <div className="md:col-span-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Submitted at</p>
+                  <p className="mt-1 text-slate-900">{formatDateTime(codeItem.createdAt)}</p>
+                </div>
               </div>
             )}
-            <div className="bg-slate-900 text-slate-100 rounded-lg p-4 overflow-auto max-h-[60vh]">
+            <div className="bg-slate-950 text-slate-100 rounded-lg p-4 overflow-auto max-h-[60vh]">
               <pre className="text-xs whitespace-pre-wrap">{codeItem?.code ?? ''}</pre>
             </div>
           </div>

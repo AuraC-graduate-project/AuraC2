@@ -47,7 +47,13 @@ export default function App() {
     }
   };
 
-  if (booting) return <div>Loading…</div>;
+  if (booting) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC] text-slate-600">
+        Loading AuraC²...
+      </div>
+    );
+  }
   if (!token) return <LoginPage onLoginSuccess={onLoginSuccess} />;
   if (role === "UNKNOWN") return <LoginPage onLoginSuccess={onLoginSuccess} />;
 

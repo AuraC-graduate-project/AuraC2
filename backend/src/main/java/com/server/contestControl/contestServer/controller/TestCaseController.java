@@ -2,6 +2,8 @@ package com.server.contestControl.contestServer.controller;
 
 import com.server.contestControl.contestServer.dto.testcase.TestCaseRequest;
 import com.server.contestControl.contestServer.dto.testcase.TestCaseResponse;
+import com.server.contestControl.contestServer.dto.testcase.TestCaseUpdateRequest;
+import jakarta.validation.Valid;
 import com.server.contestControl.contestServer.service.TestCaseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,9 +23,18 @@ public class TestCaseController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<TestCaseResponse> addTestCase(
             @PathVariable Long problemId,
-            @RequestBody TestCaseRequest request
+            @Valid @RequestBody TestCaseRequest request
     ) {
         return ResponseEntity.ok(testCaseService.addTestCase(problemId, request));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<TestCaseResponse> updateTestCase(
+            @PathVariable Long id,
+            @Valid @RequestBody TestCaseUpdateRequest request
+    ) {
+        return ResponseEntity.ok(testCaseService.updateTestCase(id, request));
     }
 
     @GetMapping("/problem/{problemId}")

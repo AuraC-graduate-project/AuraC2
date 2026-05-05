@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -38,23 +39,30 @@ public class SecurityConfiguration {
                                 "/assets/**",
                                 "/favicon.ico",
 
+                                "/error",
+
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/swagger-resources/**",
                                 "/webjars/**",
 
-                                "/auth/**",
+                                "/auth/login",
+                                "/auth/refresh",
+                                "/auth/logout",
                                 "/verify/**",
                                 "/api/callback/judge0/**"
                         ).permitAll()
+
+                        .requestMatchers(HttpMethod.POST, "/auth/register").hasRole("ADMIN")
 
                         .requestMatchers(
                                 "/api/contest/active",
                                 "/api/contest/upcoming",
                                 "/api/contest/paused",
                                 "/api/contest/ended",
-                                "/api/contest/stream"
+                                "/api/contest/stream",
+                                "/api/team/stream"
                         ).permitAll()
 
                         .requestMatchers("/api/contest/**").hasRole("ADMIN")
