@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Public Clarifications - ContestEngine</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;family=Space+Grotesk:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary-fixed": "#dbe1ff",
+                      "outline-variant": "#c4c6cf",
+                      "inverse-surface": "#213145",
+                      "on-background": "#0b1c30",
+                      "primary-container": "#1e3a5f",
+                      "on-secondary-fixed-variant": "#003ea8",
+                      "surface-tint": "#455f87",
+                      "tertiary-fixed": "#ffe083",
+                      "on-error": "#ffffff",
+                      "surface-bright": "#f8f9ff",
+                      "on-tertiary-container": "#4e3e00",
+                      "on-tertiary-fixed-variant": "#574500",
+                      "on-primary-fixed": "#001c3b",
+                      "surface-container-high": "#dce9ff",
+                      "on-tertiary": "#ffffff",
+                      "tertiary": "#735c00",
+                      "inverse-primary": "#adc8f5",
+                      "outline": "#74777f",
+                      "on-tertiary-fixed": "#231b00",
+                      "surface-variant": "#d3e4fe",
+                      "surface-container": "#e5eeff",
+                      "error-container": "#ffdad6",
+                      "surface-container-lowest": "#ffffff",
+                      "secondary-container": "#316bf3",
+                      "primary-fixed-dim": "#adc8f5",
+                      "primary": "#022448",
+                      "on-secondary-container": "#fefcff",
+                      "on-secondary-fixed": "#00174b",
+                      "error": "#ba1a1a",
+                      "secondary": "#0051d5",
+                      "on-surface-variant": "#43474e",
+                      "tertiary-container": "#cea700",
+                      "secondary-fixed-dim": "#b4c5ff",
+                      "on-error-container": "#93000a",
+                      "on-primary": "#ffffff",
+                      "surface": "#f8f9ff",
+                      "surface-container-highest": "#d3e4fe",
+                      "background": "#f8f9ff",
+                      "on-primary-fixed-variant": "#2d486d",
+                      "on-primary-container": "#8aa4cf",
+                      "surface-dim": "#cbdbf5",
+                      "tertiary-fixed-dim": "#eec200",
+                      "on-surface": "#0b1c30",
+                      "surface-container-low": "#eff4ff",
+                      "on-secondary": "#ffffff",
+                      "primary-fixed": "#d5e3ff",
+                      "inverse-on-surface": "#eaf1ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "base": "4px",
+                      "xs": "4px",
+                      "xl": "32px",
+                      "md": "16px",
+                      "container-max": "1440px",
+                      "sm": "8px",
+                      "gutter": "20px",
+                      "lg": "24px"
+              },
+              "fontFamily": {
+                      "label-caps": [
+                              "inter"
+                      ],
+                      "code-block": [
+                              "spaceGrotesk"
+                      ],
+                      "body-base": [
+                              "inter"
+                      ],
+                      "h1": [
+                              "manrope"
+                      ],
+                      "table-data": [
+                              "spaceGrotesk"
+                      ],
+                      "body-sm": [
+                              "inter"
+                      ],
+                      "h3": [
+                              "manrope"
+                      ],
+                      "h2": [
+                              "manrope"
+                      ]
+              },
+              "fontSize": {
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "code-block": [
+                              "14px",
+                              {
+                                      "lineHeight": "22px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-base": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "h1": [
+                              "30px",
+                              {
+                                      "lineHeight": "38px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "table-data": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "h3": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "h2": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+</head>
+<body class="bg-background text-on-surface font-body-base antialiased min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="bg-white dark:bg-slate-900 text-[#2563EB] dark:text-blue-400 font-manrope antialiased text-slate-700 dark:text-slate-200 docked full-width top-0 border-b border-[#E2E8F0] dark:border-slate-800 shadow-sm z-50">
+<div class="flex justify-between items-center w-full px-6 h-16 max-w-[1440px] mx-auto">
+<div class="flex items-center gap-md">
+<span class="text-xl font-bold tracking-tight text-[#1E3A5F] dark:text-white">ContestEngine</span>
+</div>
+<div class="flex-1 flex justify-start px-xl">
+<!-- Search Bar Placeholder if needed -->
+</div>
+<div class="flex items-center gap-md text-slate-500 hover:text-slate-700">
+<span class="font-table-data text-table-data text-[#1E3A5F] mr-md bg-surface-container px-sm py-xs rounded border border-outline-variant">Timer: 02:45:31</span>
+<button class="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors scale-95 duration-150 p-xs rounded-full">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors scale-95 duration-150 p-xs rounded-full">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+<img alt="User Profile" class="w-8 h-8 rounded-full border border-outline-variant cursor-pointer ml-sm" data-alt="professional headshot of a person wearing round glasses and a neutral expression, soft studio lighting against a clean white background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD7dt6BNjrsUATFJ9kyPEpTMEFfOSMK6ALFgG0DGxEi1o7PMaraJrQhEuUrewG9bNC9PtK6vvJy2LJxMRVdK-Rnu5J24flGwHxzEyfHOHcpn9OfH0VskEy2CnmXmKiMLBGl6RnBtig0Bj9ZWJx38VU1d0aHrrq36eVVduNCO0vy6k2HTxIhNYULhKjKeMH_GDP5G43cewKyfKazA3LfqywJxROMeUwFg2dwLC_xRF8dGTEhFE7FQ-azDO4FBs-M2uonyeFXlH03Q5s"/>
+</div>
+</div>
+</header>
+<div class="flex flex-1 max-w-[1440px] mx-auto w-full relative">
+<!-- SideNavBar -->
+<nav class="hidden md:flex flex-col bg-[#1E3A5F] text-white font-manrope text-sm font-medium fixed left-0 top-0 h-full w-64 border-r border-slate-700 z-40 pt-16">
+<div class="flex flex-col h-full py-6 space-y-2">
+<div class="px-md pb-md border-b border-slate-700 mb-sm">
+<div class="flex items-center gap-sm mb-xs">
+<img alt="University Crest" class="w-8 h-8 rounded bg-white p-1" data-alt="academic crest or logo with a shield design, minimal clean vector style, primarily navy and gold colors" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDuHZzXVmGxZ_iJb74nqTUxuutVzThZ79XsErl49fOF4CJSeUjmzyKjtfxnTEa_7LWDv2q6b_5W67OrnCEt5A8nrC57CqRw44-b90dSk-feX_VP0VFkQAa_ny633avLoWD8EYACZrYLw3SOb1n4kzMk2bolx2KvqrxU6qGWIPAgzprq7SpEP8oKsIfX_2bPa5_qE8ppewF2rmyccn0Nz2C6fgURuKHo23ebZBmIui1c9U_e6GxJgzfLcJnc-ErOPQ4foUwstYTUVxg"/>
+<div>
+<div class="text-lg font-black text-white leading-tight">ACM-ICPC Portal</div>
+<div class="text-slate-300 text-xs">Regional Qualifier</div>
+</div>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto">
+<a class="text-slate-300 hover:text-white flex items-center px-4 py-3 hover:bg-white/5 transition-all active:opacity-80 gap-sm" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="text-slate-300 hover:text-white flex items-center px-4 py-3 hover:bg-white/5 transition-all active:opacity-80 gap-sm" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="code">code</span>
+<span>Problems</span>
+</a>
+<a class="text-slate-300 hover:text-white flex items-center px-4 py-3 hover:bg-white/5 transition-all active:opacity-80 gap-sm" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="history">history</span>
+<span>Submissions</span>
+</a>
+<a class="text-slate-300 hover:text-white flex items-center px-4 py-3 hover:bg-white/5 transition-all active:opacity-80 gap-sm" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="leaderboard">leaderboard</span>
+<span>Standings</span>
+</a>
+<a class="bg-blue-600/20 border-l-4 border-[#2563EB] text-white flex items-center px-4 py-3 hover:bg-white/5 transition-all active:opacity-80 gap-sm" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="chat_bubble_outline">chat_bubble_outline</span>
+<span>Clarifications</span>
+</a>
+<a class="text-slate-300 hover:text-white flex items-center px-4 py-3 hover:bg-white/5 transition-all active:opacity-80 gap-sm" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="groups">groups</span>
+<span>Team Settings</span>
+</a>
+</div>
+<div class="mt-auto border-t border-slate-700 pt-sm">
+<a class="text-slate-300 hover:text-white flex items-center px-4 py-3 hover:bg-white/5 transition-all active:opacity-80 gap-sm" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="menu_book">menu_book</span>
+<span>Documentation</span>
+</a>
+<a class="text-slate-300 hover:text-white flex items-center px-4 py-3 hover:bg-white/5 transition-all active:opacity-80 gap-sm" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="terminal">terminal</span>
+<span>System Logs</span>
+</a>
+</div>
+</div>
+</nav>
+<!-- Main Content -->
+<main class="flex-1 md:ml-64 p-xl max-w-[1440px] w-full">
+<!-- Header Section -->
+<div class="mb-xl">
+<div class="flex items-center gap-sm mb-xs">
+<span class="bg-surface-tint text-white font-label-caps text-label-caps px-2 py-1 rounded uppercase tracking-wider">Announcement</span>
+</div>
+<h1 class="font-h1 text-h1 text-on-surface mb-sm">Public Clarifications</h1>
+<p class="font-body-base text-body-base text-on-surface-variant max-w-3xl">
+                    Important updates and answers from the jury applicable to all teams. Please review these carefully as they may impact problem definitions or contest rules.
+                </p>
+<div class="mt-md inline-flex items-center gap-sm bg-surface-container px-sm py-xs rounded border border-outline-variant">
+<span class="material-symbols-outlined text-outline text-sm" data-icon="info">info</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Frontend future enhancement zone for landing page.</span>
+</div>
+</div>
+<!-- Clarifications Data Table (Card Style) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg shadow-[0px_1px_3px_rgba(0,0,0,0.05)] overflow-hidden">
+<div class="border-b border-[#F1F5F9] px-lg py-md bg-surface-bright flex justify-between items-center">
+<h2 class="font-h2 text-h2 text-primary-container">Publicly Answered Clarifications</h2>
+<button class="bg-primary text-white font-body-sm text-body-sm px-md py-sm rounded hover:bg-secondary transition-colors flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                        Ask Question
+                    </button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-variant bg-surface">
+<th class="py-md px-lg font-label-caps text-label-caps text-on-surface-variant uppercase w-1/6">Context</th>
+<th class="py-md px-lg font-label-caps text-label-caps text-on-surface-variant uppercase w-2/6">Question</th>
+<th class="py-md px-lg font-label-caps text-label-caps text-on-surface-variant uppercase w-3/6">Jury Reply</th>
+</tr>
+</thead>
+<tbody class="font-table-data text-table-data text-on-surface">
+<tr class="border-b border-[#F1F5F9] hover:bg-surface-bright transition-colors">
+<td class="py-md px-lg align-top">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary text-[16px]" data-icon="campaign">campaign</span>
+<span class="font-medium text-primary">General</span>
+</div>
+</td>
+<td class="py-md px-lg align-top text-on-surface-variant">
+                                    Are we allowed to use the standard template library (STL) in C++?
+                                </td>
+<td class="py-md px-lg align-top">
+<div class="bg-surface-container-low p-sm rounded border border-outline-variant">
+                                        Yes, standard libraries for all supported languages are fully permitted.
+                                    </div>
+</td>
+</tr>
+<tr class="border-b border-[#F1F5F9] hover:bg-surface-bright transition-colors">
+<td class="py-md px-lg align-top">
+<div class="flex flex-col gap-xs">
+<span class="font-medium text-secondary">Problem B</span>
+<span class="text-outline text-xs">Graph Theory</span>
+</div>
+</td>
+<td class="py-md px-lg align-top text-on-surface-variant">
+                                    In the input specification, is it guaranteed that the graph is connected?
+                                </td>
+<td class="py-md px-lg align-top">
+<div class="bg-surface-container-low p-sm rounded border border-outline-variant border-l-4 border-l-error">
+<span class="font-bold text-error mr-1">Correction:</span> No, the graph may be disconnected. Please handle isolated components.
+                                    </div>
+</td>
+</tr>
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="py-md px-lg align-top">
+<div class="flex flex-col gap-xs">
+<span class="font-medium text-secondary">Problem E</span>
+<span class="text-outline text-xs">Dynamic Programming</span>
+</div>
+</td>
+<td class="py-md px-lg align-top text-on-surface-variant">
+                                    The memory limit is listed as 256MB, but my Java solution is getting MLE. Can this be increased?
+                                </td>
+<td class="py-md px-lg align-top">
+<div class="bg-surface-container-low p-sm rounded border border-outline-variant">
+                                        The memory limit is strict and will not be changed. Ensure your DP state is optimized.
+                                    </div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="border-t border-[#F1F5F9] px-lg py-sm bg-surface flex justify-end">
+<span class="font-body-sm text-body-sm text-outline-variant">Showing 3 latest clarifications</span>
+</div>
+</div>
+</main>
+</div>
+</body></html>

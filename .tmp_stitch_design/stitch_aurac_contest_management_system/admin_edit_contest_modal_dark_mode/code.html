@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Edit Contest Settings - AuraC²</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#ffdcc6",
+                        "surface-container": "#1d2027",
+                        "inverse-on-surface": "#2e3038",
+                        "tertiary-fixed-dim": "#ffb786",
+                        "primary": "#adc6ff",
+                        "tertiary": "#ffb786",
+                        "on-primary": "#002e6a",
+                        "surface": "#10131a",
+                        "on-tertiary-fixed-variant": "#723600",
+                        "secondary-container": "#3f465c",
+                        "on-tertiary-container": "#461f00",
+                        "on-secondary": "#283044",
+                        "secondary-fixed-dim": "#bec6e0",
+                        "on-secondary-fixed-variant": "#3f465c",
+                        "primary-fixed": "#d8e2ff",
+                        "on-secondary-fixed": "#131b2e",
+                        "surface-bright": "#363941",
+                        "error": "#ffb4ab",
+                        "on-primary-container": "#00285d",
+                        "on-error-container": "#ffdad6",
+                        "surface-tint": "#adc6ff",
+                        "surface-container-high": "#272a31",
+                        "primary-fixed-dim": "#adc6ff",
+                        "on-tertiary-fixed": "#311400",
+                        "secondary": "#bec6e0",
+                        "outline-variant": "#424754",
+                        "secondary-fixed": "#dae2fd",
+                        "surface-container-low": "#191b23",
+                        "on-secondary-container": "#adb4ce",
+                        "on-primary-fixed-variant": "#004395",
+                        "on-primary-fixed": "#001a42",
+                        "on-tertiary": "#502400",
+                        "surface-variant": "#32353c",
+                        "primary-container": "#4d8eff",
+                        "tertiary-container": "#df7412",
+                        "on-error": "#690005",
+                        "outline": "#8c909f",
+                        "surface-container-lowest": "#0b0e15",
+                        "on-surface": "#e1e2ec",
+                        "on-background": "#e1e2ec",
+                        "surface-dim": "#10131a",
+                        "inverse-surface": "#e1e2ec",
+                        "surface-container-highest": "#32353c",
+                        "background": "#10131a",
+                        "on-surface-variant": "#c2c6d6",
+                        "inverse-primary": "#005ac2",
+                        "error-container": "#93000a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "1rem",
+                        "xxl": "3rem",
+                        "xs": "0.25rem",
+                        "sm": "0.5rem",
+                        "xl": "2rem",
+                        "lg": "1.5rem"
+                    },
+                    "fontFamily": {
+                        "h1": ["Manrope"],
+                        "body-lg": ["Manrope"],
+                        "label-sm": ["Manrope"],
+                        "body-sm": ["Manrope"],
+                        "h3": ["Manrope"],
+                        "label-md": ["Manrope"],
+                        "h2": ["Manrope"],
+                        "body-md": ["Manrope"],
+                        "display": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "h1": ["2.25rem", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "body-lg": ["1.125rem", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "label-sm": ["0.75rem", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "body-sm": ["0.875rem", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "h3": ["1.5rem", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "label-md": ["0.875rem", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                        "h2": ["1.875rem", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "body-md": ["1rem", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "display": ["3.75rem", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #32353c; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #424754; }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md h-screen overflow-hidden flex flex-col">
+<!-- TopNavBar -->
+<nav class="bg-[#1E293B] font-manrope antialiased tracking-tight docked full-width top-0 z-50 border-b border-[#334155] flat no shadows flex justify-between items-center h-16 px-6 w-full flex-shrink-0">
+<div class="flex items-center gap-xl">
+<span class="text-lg font-bold text-[#F1F5F9] tracking-tighter">CodeMetric Pro</span>
+<div class="flex items-center gap-md">
+<!-- Navigation Links -->
+<a class="text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#334155]/50 transition-all duration-200 ease-in-out px-sm py-xs rounded-md" href="#">Dashboard</a>
+<a class="text-[#3B82F6] border-b-2 border-[#3B82F6] pb-1 hover:text-[#F1F5F9] hover:bg-[#334155]/50 transition-all duration-200 ease-in-out px-sm py-xs" href="#">Contests</a>
+<a class="text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#334155]/50 transition-all duration-200 ease-in-out px-sm py-xs rounded-md" href="#">Standings</a>
+</div>
+</div>
+<div class="flex items-center gap-lg">
+<!-- Search Bar (on_left relative to actions) -->
+<div class="relative hidden md:block">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-[#94A3B8] text-sm">search</span>
+<input class="bg-[#0F172A] border border-[#334155] rounded-md pl-xl pr-sm py-sm text-sm text-[#F1F5F9] focus:outline-none focus:border-[#3B82F6] transition-colors w-64" placeholder="Search..." type="text"/>
+</div>
+<div class="flex items-center gap-sm">
+<button class="text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#334155]/50 transition-all duration-200 ease-in-out p-xs rounded-md flex items-center justify-center">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#334155]/50 transition-all duration-200 ease-in-out p-xs rounded-md flex items-center justify-center">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<div class="h-8 w-8 rounded-full bg-[#3B82F6] flex items-center justify-center text-[#F1F5F9] font-bold text-xs" data-alt="User profile avatar">
+                A
+            </div>
+</div>
+</nav>
+<div class="flex flex-1 overflow-hidden">
+<!-- SideNavBar -->
+<aside class="bg-[#0F172A] font-manrope text-sm font-medium docked left-0 h-full w-64 border-r border-[#334155] flat no shadows flex flex-col h-screen py-4 space-y-2 flex-shrink-0">
+<div class="px-md mb-lg">
+<div class="flex items-center gap-sm mb-xs">
+<div class="h-6 w-6 rounded-md bg-[#1E293B] border border-[#334155] flex items-center justify-center text-[10px] text-[#94A3B8]" data-alt="University Logo">U</div>
+<span class="text-[#F1F5F9] font-bold">ACM-ICPC Portal</span>
+</div>
+<span class="text-xs text-[#94A3B8]">Admin Console</span>
+</div>
+<button class="mx-md mb-xl bg-[#3B82F6] text-[#F1F5F9] rounded-md py-sm px-md flex items-center justify-center gap-sm font-bold scale-95 active:scale-100 transition-transform">
+<span class="material-symbols-outlined text-sm">add</span>
+                Create Contest
+            </button>
+<div class="flex-1 overflow-y-auto space-y-xs px-sm">
+<!-- Active Tab -->
+<a class="bg-[#334155] text-[#F1F5F9] border-r-4 border-[#3B82F6] rounded-r-sm flex items-center gap-md px-md py-sm hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined text-[#3B82F6]">dashboard</span>
+                    Overview
+                </a>
+<a class="text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform flex items-center gap-md px-md py-sm rounded-md" href="#">
+<span class="material-symbols-outlined">code</span>
+                    Problems
+                </a>
+<a class="text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform flex items-center gap-md px-md py-sm rounded-md" href="#">
+<span class="material-symbols-outlined">history</span>
+                    Submissions
+                </a>
+<a class="text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform flex items-center gap-md px-md py-sm rounded-md" href="#">
+<span class="material-symbols-outlined">groups</span>
+                    Teams
+                </a>
+<a class="text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform flex items-center gap-md px-md py-sm rounded-md" href="#">
+<span class="material-symbols-outlined">forum</span>
+                    Clarifications
+                </a>
+<a class="text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform flex items-center gap-md px-md py-sm rounded-md" href="#">
+<span class="material-symbols-outlined">terminal</span>
+                    Logs
+                </a>
+</div>
+<div class="mt-auto px-sm pt-xl border-t border-[#334155] space-y-xs pb-xxl">
+<a class="text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform flex items-center gap-md px-md py-sm rounded-md" href="#">
+<span class="material-symbols-outlined">help</span>
+                    Documentation
+                </a>
+<a class="text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform flex items-center gap-md px-md py-sm rounded-md" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+                    Support
+                </a>
+</div>
+</aside>
+<!-- Main Canvas Area -->
+<main class="flex-1 bg-background relative overflow-y-auto">
+<!-- Simulated background content to provide context for the modal -->
+<div class="p-xxl opacity-30 select-none pointer-events-none">
+<div class="h-8 w-1/4 bg-surface-container rounded-md mb-lg"></div>
+<div class="grid grid-cols-3 gap-xl mb-xl">
+<div class="h-32 bg-surface-container rounded-xl border border-outline-variant"></div>
+<div class="h-32 bg-surface-container rounded-xl border border-outline-variant"></div>
+<div class="h-32 bg-surface-container rounded-xl border border-outline-variant"></div>
+</div>
+<div class="h-64 bg-surface-container rounded-xl border border-outline-variant"></div>
+</div>
+<!-- Dark Overlay -->
+<div class="absolute inset-0 bg-background/80 backdrop-blur-sm z-40 flex items-center justify-center p-md">
+<!-- Modal Component -->
+<div class="bg-surface-container border border-outline-variant rounded-xl w-full max-w-2xl shadow-[0_4px_40px_-10px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden">
+<!-- Modal Header -->
+<div class="px-xl py-lg border-b border-outline-variant flex items-center justify-between bg-surface-container-high">
+<div>
+<h2 class="font-h3 text-h3 text-on-surface">Edit Contest Settings</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">AuraC² Regional Qualifiers 2024</p>
+</div>
+<button class="text-on-surface-variant hover:text-on-surface hover:bg-surface-variant p-sm rounded-lg transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Modal Body -->
+<div class="p-xl flex flex-col gap-xl">
+<!-- Info Banner -->
+<div class="bg-surface-container-highest border border-outline-variant rounded-lg p-md flex items-start gap-md">
+<span class="material-symbols-outlined text-primary mt-0.5" style="font-variation-settings: 'FILL' 1;">info</span>
+<div class="flex-1">
+<p class="font-body-md text-body-md text-on-surface">Editing allowed only while UPCOMING</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">Once the contest starts, core settings will be locked to ensure fairness.</p>
+</div>
+</div>
+<!-- Form Grid -->
+<div class="grid grid-cols-1 gap-lg">
+<!-- Title Field -->
+<div class="flex flex-col gap-sm">
+<label class="font-label-md text-label-md text-on-surface-variant flex items-center gap-xs" for="contest-title">
+                                    Contest Title <span class="text-error">*</span>
+</label>
+<div class="relative group">
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-md py-md font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm" id="contest-title" type="text" value="AuraC² Regional Qualifiers 2024"/>
+<div class="absolute inset-0 rounded-lg pointer-events-none group-focus-within:shadow-[0_0_8px_rgba(173,198,255,0.1)] transition-shadow"></div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-lg">
+<!-- Start Date/Time Field -->
+<div class="flex flex-col gap-sm">
+<label class="font-label-md text-label-md text-on-surface-variant flex items-center gap-xs" for="start-datetime">
+                                        Start Date &amp; Time (UTC) <span class="text-error">*</span>
+</label>
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-md flex items-center pointer-events-none text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">calendar_month</span>
+</div>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg pl-xl pr-md py-md font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm [color-scheme:dark]" id="start-datetime" type="datetime-local" value="2024-11-15T09:00"/>
+<div class="absolute inset-0 rounded-lg pointer-events-none group-focus-within:shadow-[0_0_8px_rgba(173,198,255,0.1)] transition-shadow"></div>
+</div>
+</div>
+<!-- Duration Field -->
+<div class="flex flex-col gap-sm">
+<label class="font-label-md text-label-md text-on-surface-variant flex items-center gap-xs" for="duration">
+                                        Duration <span class="text-error">*</span>
+</label>
+<div class="flex items-center gap-sm">
+<div class="relative group flex-1">
+<div class="absolute inset-y-0 left-0 pl-md flex items-center pointer-events-none text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">timer</span>
+</div>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg pl-xl pr-md py-md font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm text-right" id="duration" max="72" min="1" type="number" value="5"/>
+<div class="absolute inset-0 rounded-lg pointer-events-none group-focus-within:shadow-[0_0_8px_rgba(173,198,255,0.1)] transition-shadow"></div>
+</div>
+<div class="bg-surface-variant border border-outline-variant rounded-lg px-md py-md text-on-surface font-label-md text-label-md whitespace-nowrap">
+                                            Hours
+                                        </div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Modal Footer -->
+<div class="px-xl py-lg border-t border-outline-variant bg-surface-container-high flex items-center justify-end gap-md">
+<button class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-variant px-lg py-sm rounded-lg transition-colors border border-transparent">
+                            Cancel
+                        </button>
+<button class="font-label-md text-label-md bg-primary text-on-primary hover:bg-primary-fixed transition-colors px-lg py-sm rounded-lg shadow-sm flex items-center gap-sm">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">save</span>
+                            Save Changes
+                        </button>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

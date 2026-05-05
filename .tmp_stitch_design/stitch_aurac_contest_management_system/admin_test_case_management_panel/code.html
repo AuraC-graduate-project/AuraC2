@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Test-Case Management Panel - AuraC²</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@500;600;700;800&amp;family=Space+Grotesk:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#022448",
+                        "tertiary-container": "#cea700",
+                        "background": "#f8f9ff",
+                        "on-error": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "secondary-fixed": "#dbe1ff",
+                        "on-error-container": "#93000a",
+                        "surface-bright": "#f8f9ff",
+                        "on-secondary-fixed-variant": "#003ea8",
+                        "on-tertiary-container": "#4e3e00",
+                        "surface-tint": "#455f87",
+                        "primary-container": "#1e3a5f",
+                        "on-primary": "#ffffff",
+                        "surface-container-high": "#dce9ff",
+                        "on-secondary-container": "#fefcff",
+                        "error": "#ba1a1a",
+                        "secondary-container": "#316bf3",
+                        "tertiary-fixed-dim": "#eec200",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "on-tertiary-fixed-variant": "#574500",
+                        "on-secondary-fixed": "#00174b",
+                        "on-primary-container": "#8aa4cf",
+                        "surface-variant": "#d3e4fe",
+                        "secondary": "#0051d5",
+                        "primary-fixed": "#d5e3ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed": "#231b00",
+                        "surface-container": "#e5eeff",
+                        "surface-container-highest": "#d3e4fe",
+                        "surface-container-low": "#eff4ff",
+                        "on-surface": "#0b1c30",
+                        "surface": "#f8f9ff",
+                        "on-surface-variant": "#43474e",
+                        "inverse-on-surface": "#eaf1ff",
+                        "inverse-surface": "#213145",
+                        "tertiary-fixed": "#ffe083",
+                        "on-background": "#0b1c30",
+                        "outline": "#74777f",
+                        "on-primary-fixed-variant": "#2d486d",
+                        "primary-fixed-dim": "#adc8f5",
+                        "inverse-primary": "#adc8f5",
+                        "on-secondary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#001c3b",
+                        "surface-dim": "#cbdbf5",
+                        "outline-variant": "#c4c6cf",
+                        "tertiary": "#735c00"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "xl": "32px",
+                        "md": "16px",
+                        "sm": "8px",
+                        "base": "4px",
+                        "xs": "4px",
+                        "lg": "24px",
+                        "gutter": "20px",
+                        "container-max": "1440px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["inter"],
+                        "body-sm": ["inter"],
+                        "table-data": ["spaceGrotesk"],
+                        "h3": ["manrope"],
+                        "h2": ["manrope"],
+                        "h1": ["manrope"],
+                        "code-block": ["spaceGrotesk"],
+                        "body-base": ["inter"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "table-data": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "h3": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "h2": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "h1": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "code-block": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+                        "body-base": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-base antialiased flex">
+<!-- SideNavBar -->
+<nav class="bg-[#1E3A5F] dark:bg-slate-950 text-white font-manrope text-sm h-screen w-64 fixed left-0 top-0 border-r border-slate-800 flat no shadows flex flex-col h-full py-4 z-50">
+<div class="px-6 mb-8 flex items-center gap-3">
+<img alt="University Logo" class="w-8 h-8 rounded" data-alt="minimalist academic university logo shield on dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBs2LEkMRZCsr-dmwO0QEe819IU5rbCC5YBQrYRGNtp-6T7mR9U9xrofJTsgRH-T2xnVz3m1a_gjZEVPTJkFC0NBXi5y2kgU_HR35cUS3SRRBKG0si7i_hRoSn8OAIukp8gr_7hd6NYojcYyd4vYYkAEAfpQPFoqR6rSuLV25v-A-i-VkGltmSGnvJ8Ai6KRrO1w7duLt3Cc-CH7rO748C81JSEuuHyTFjbhDvbdq_mb7e4HlLbamzEigc7wDWXS0M5EQNMTDQHlds"/>
+<div>
+<h1 class="text-xl font-extrabold text-white tracking-tight">Global Admin</h1>
+<p class="text-xs text-slate-300 opacity-80">Contest Management</p>
+</div>
+</div>
+<div class="flex-1 flex flex-col gap-1">
+<a class="text-slate-300 flex items-center px-4 py-3 opacity-70 hover:bg-white/5 hover:opacity-100 transition-all gap-3" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+<a class="text-slate-300 flex items-center px-4 py-3 opacity-70 hover:bg-white/5 hover:opacity-100 transition-all gap-3" href="#">
+<span class="material-symbols-outlined">code</span>
+                Contests
+            </a>
+<a class="text-slate-300 flex items-center px-4 py-3 opacity-70 hover:bg-white/5 hover:opacity-100 transition-all gap-3" href="#">
+<span class="material-symbols-outlined">group</span>
+                Teams
+            </a>
+<a class="bg-white/10 text-white border-l-4 border-blue-500 flex items-center px-4 py-3 Active: scale-95 transition-transform gap-3" href="#">
+<span class="material-symbols-outlined">storage</span>
+                Test Cases
+            </a>
+<a class="text-slate-300 flex items-center px-4 py-3 opacity-70 hover:bg-white/5 hover:opacity-100 transition-all gap-3" href="#">
+<span class="material-symbols-outlined">question_answer</span>
+                Clarifications
+            </a>
+</div>
+<div class="mt-auto flex flex-col gap-1 border-t border-slate-800 pt-4">
+<a class="text-slate-300 flex items-center px-4 py-3 opacity-70 hover:bg-white/5 hover:opacity-100 transition-all gap-3" href="#">
+<span class="material-symbols-outlined">terminal</span>
+                System Logs
+            </a>
+<a class="text-slate-300 flex items-center px-4 py-3 opacity-70 hover:bg-white/5 hover:opacity-100 transition-all gap-3" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+                Support
+            </a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="ml-64 flex-1 flex flex-col min-h-screen max-w-[1440px] mx-auto w-full">
+<!-- TopNavBar -->
+<header class="bg-white dark:bg-slate-950 text-blue-600 dark:text-blue-400 font-manrope text-sm font-medium docked full-width top-0 border-b border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none flex justify-between items-center w-full px-6 h-16 sticky z-40">
+<div class="flex items-center gap-4">
+<div class="font-bold text-slate-900 dark:text-slate-100 text-lg">ICPC Admin</div>
+</div>
+<!-- Search on Left (Relative to center) -->
+<div class="flex-1 px-8">
+<div class="relative max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+<input class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded bg-slate-50 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-colors text-slate-900 placeholder:text-slate-500" placeholder="Search test cases..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4 text-slate-500 dark:text-slate-400">
+<button class="hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors p-2 rounded-full Active: opacity-80 transition-opacity">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors p-2 rounded-full Active: opacity-80 transition-opacity">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<button class="hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors p-2 rounded-full Active: opacity-80 transition-opacity">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="ml-2 border-l border-slate-200 pl-4">
+<img alt="Administrator Profile" class="w-8 h-8 rounded-full border border-slate-200" data-alt="professional headshot of a man with glasses wearing a dark suit" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_p8Ev8UFpN_jnqS8mPsvrz2Uf0KWoCMUfIgEdh3A5DrMerIvBmh5w2uGY_IbhvEfEHWVBoSJdNRt3W_HRNk9isBY8OYCqJOpgOX7tfj5SSfyR2EKmP4oS2AFYmItQoM3HSXMTcE-Z2rxuFPgBENWgjiQUoupRvtB6cz9CQpKI7rnc4DVg3r4g83oLvX1Oj8HtxQx0vc1ohSTbf2_wwkFu-2G8hOiran0vk9CzBsxUQ2nOlcLO5zXE5mJXv0H8zg1UmGPCCK7DTi8"/>
+</div>
+</div>
+</header>
+<!-- Canvas -->
+<main class="flex-1 p-8 pb-xl bg-surface-bright">
+<!-- Page Header -->
+<div class="flex justify-between items-end mb-lg">
+<div>
+<div class="text-body-sm text-outline mb-base">Problem ID: PRB-2049</div>
+<h2 class="font-h1 text-h1 text-on-surface">Test-Case Management</h2>
+<p class="font-body-base text-body-base text-on-surface-variant mt-xs">Configure validation inputs and expected outputs for 'Dynamic Pathfinding Optimization'.</p>
+</div>
+<button class="bg-[#2563EB] hover:bg-blue-700 text-white font-body-sm text-body-sm px-4 py-2 rounded flex items-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                    Add Test Case
+                </button>
+</div>
+<!-- Stats/Summary Bento Row -->
+<div class="grid grid-cols-12 gap-gutter mb-xl">
+<div class="col-span-3 bg-surface-container-lowest border border-[#E2E8F0] rounded-lg p-md shadow-[0px_1px_3px_rgba(0,0,0,0.05)]">
+<div class="text-label-caps font-label-caps text-outline mb-sm uppercase">Total Cases</div>
+<div class="font-h2 text-h2 text-on-surface">24</div>
+</div>
+<div class="col-span-3 bg-surface-container-lowest border border-[#E2E8F0] rounded-lg p-md shadow-[0px_1px_3px_rgba(0,0,0,0.05)]">
+<div class="text-label-caps font-label-caps text-outline mb-sm uppercase">Public / Sample</div>
+<div class="font-h2 text-h2 text-on-surface">3</div>
+</div>
+<div class="col-span-3 bg-surface-container-lowest border border-[#E2E8F0] rounded-lg p-md shadow-[0px_1px_3px_rgba(0,0,0,0.05)]">
+<div class="text-label-caps font-label-caps text-outline mb-sm uppercase">Hidden / Private</div>
+<div class="font-h2 text-h2 text-on-surface">21</div>
+</div>
+<div class="col-span-3 bg-surface-container-lowest border border-[#E2E8F0] rounded-lg p-md shadow-[0px_1px_3px_rgba(0,0,0,0.05)]">
+<div class="text-label-caps font-label-caps text-outline mb-sm uppercase">Total Size</div>
+<div class="font-h2 text-h2 text-on-surface">1.2 MB</div>
+</div>
+</div>
+<!-- Data Table Card -->
+<div class="bg-surface-container-lowest border border-[#E2E8F0] rounded-lg shadow-[0px_1px_3px_rgba(0,0,0,0.05)] overflow-hidden">
+<div class="px-lg py-md border-b border-[#F1F5F9] flex justify-between items-center bg-white">
+<h3 class="font-h3 text-h3 text-on-surface">Validation Suite</h3>
+<div class="flex gap-2">
+<button class="bg-white border border-[#E2E8F0] text-[#1E3A5F] hover:bg-slate-50 font-body-sm text-body-sm px-3 py-1.5 rounded flex items-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-[16px]">filter_list</span>
+                            Filter
+                        </button>
+<button class="bg-white border border-[#E2E8F0] text-[#1E3A5F] hover:bg-slate-50 font-body-sm text-body-sm px-3 py-1.5 rounded flex items-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-[16px]">download</span>
+                            Export
+                        </button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-[#E2E8F0] bg-surface-container-low">
+<th class="px-md py-sm text-label-caps font-label-caps text-on-surface-variant uppercase w-24">ID</th>
+<th class="px-md py-sm text-label-caps font-label-caps text-on-surface-variant uppercase">Input Preview</th>
+<th class="px-md py-sm text-label-caps font-label-caps text-on-surface-variant uppercase">Expected Output</th>
+<th class="px-md py-sm text-label-caps font-label-caps text-on-surface-variant uppercase w-32">Visibility</th>
+<th class="px-md py-sm text-label-caps font-label-caps text-on-surface-variant uppercase w-24">Weight</th>
+<th class="px-md py-sm text-label-caps font-label-caps text-on-surface-variant uppercase w-32 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="font-table-data text-table-data">
+<!-- Row 1 -->
+<tr class="border-b border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors group">
+<td class="px-md py-md text-on-surface">TC-001</td>
+<td class="px-md py-md">
+<div class="bg-[#F1F5F9] border border-[#E2E8F0] rounded p-2 font-code-block text-code-block text-on-surface max-h-20 overflow-hidden text-ellipsis whitespace-pre-wrap">3 4
+0 1 1
+1 0 1
+1 1 0</div>
+</td>
+<td class="px-md py-md">
+<div class="bg-[#F1F5F9] border border-[#E2E8F0] rounded p-2 font-code-block text-code-block text-on-surface max-h-20 overflow-hidden text-ellipsis whitespace-pre-wrap">12</div>
+</td>
+<td class="px-md py-md">
+<span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                        Public
+                                    </span>
+</td>
+<td class="px-md py-md text-on-surface-variant">10 pts</td>
+<td class="px-md py-md text-right">
+<div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 text-slate-500 hover:text-[#2563EB] rounded hover:bg-blue-50 transition-colors">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="p-1 text-slate-500 hover:text-error rounded hover:bg-red-50 transition-colors">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="border-b border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors group">
+<td class="px-md py-md text-on-surface">TC-002</td>
+<td class="px-md py-md">
+<div class="bg-[#F1F5F9] border border-[#E2E8F0] rounded p-2 font-code-block text-code-block text-on-surface max-h-20 overflow-hidden text-ellipsis whitespace-pre-wrap">5 5
+0 0 0 0 1
+0 1 1 0 1
+...</div>
+</td>
+<td class="px-md py-md">
+<div class="bg-[#F1F5F9] border border-[#E2E8F0] rounded p-2 font-code-block text-code-block text-on-surface max-h-20 overflow-hidden text-ellipsis whitespace-pre-wrap">0</div>
+</td>
+<td class="px-md py-md">
+<span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                        Public
+                                    </span>
+</td>
+<td class="px-md py-md text-on-surface-variant">10 pts</td>
+<td class="px-md py-md text-right">
+<div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 text-slate-500 hover:text-[#2563EB] rounded hover:bg-blue-50 transition-colors">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="p-1 text-slate-500 hover:text-error rounded hover:bg-red-50 transition-colors">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="border-b border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors group">
+<td class="px-md py-md text-on-surface">TC-003</td>
+<td class="px-md py-md">
+<div class="bg-[#F1F5F9] border border-[#E2E8F0] rounded p-2 font-code-block text-code-block text-on-surface max-h-20 overflow-hidden text-ellipsis whitespace-pre-wrap">100 100
+1 1 1 1 1 1 1 1...
+[Large Dataset Truncated]</div>
+</td>
+<td class="px-md py-md">
+<div class="bg-[#F1F5F9] border border-[#E2E8F0] rounded p-2 font-code-block text-code-block text-on-surface max-h-20 overflow-hidden text-ellipsis whitespace-pre-wrap">9801</div>
+</td>
+<td class="px-md py-md">
+<span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200">
+                                        Private
+                                    </span>
+</td>
+<td class="px-md py-md text-on-surface-variant">20 pts</td>
+<td class="px-md py-md text-right">
+<div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 text-slate-500 hover:text-[#2563EB] rounded hover:bg-blue-50 transition-colors">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="p-1 text-slate-500 hover:text-error rounded hover:bg-red-50 transition-colors">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="border-b border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors group">
+<td class="px-md py-md text-on-surface">TC-004</td>
+<td class="px-md py-md">
+<div class="bg-[#F1F5F9] border border-[#E2E8F0] rounded p-2 font-code-block text-code-block text-on-surface max-h-20 overflow-hidden text-ellipsis whitespace-pre-wrap">1000 1000
+[Maximum Bounds Test]</div>
+</td>
+<td class="px-md py-md">
+<div class="bg-[#F1F5F9] border border-[#E2E8F0] rounded p-2 font-code-block text-code-block text-on-surface max-h-20 overflow-hidden text-ellipsis whitespace-pre-wrap">-1</div>
+</td>
+<td class="px-md py-md">
+<span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200">
+                                        Private
+                                    </span>
+</td>
+<td class="px-md py-md text-on-surface-variant">30 pts</td>
+<td class="px-md py-md text-right">
+<div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 text-slate-500 hover:text-[#2563EB] rounded hover:bg-blue-50 transition-colors">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="p-1 text-slate-500 hover:text-error rounded hover:bg-red-50 transition-colors">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination Footer -->
+<div class="px-lg py-md border-t border-[#E2E8F0] bg-surface flex items-center justify-between">
+<span class="text-body-sm font-body-sm text-on-surface-variant">Showing 1 to 4 of 24 cases</span>
+<div class="flex gap-1">
+<button class="px-3 py-1 border border-[#E2E8F0] rounded bg-white text-slate-400 cursor-not-allowed font-body-sm">Prev</button>
+<button class="px-3 py-1 border border-[#E2E8F0] rounded bg-white text-[#1E3A5F] hover:bg-slate-50 font-body-sm">1</button>
+<button class="px-3 py-1 border border-[#E2E8F0] rounded bg-white text-[#1E3A5F] hover:bg-slate-50 font-body-sm">2</button>
+<button class="px-3 py-1 border border-[#E2E8F0] rounded bg-white text-[#1E3A5F] hover:bg-slate-50 font-body-sm">...</button>
+<button class="px-3 py-1 border border-[#E2E8F0] rounded bg-white text-[#1E3A5F] hover:bg-slate-50 font-body-sm">6</button>
+<button class="px-3 py-1 border border-[#E2E8F0] rounded bg-white text-[#1E3A5F] hover:bg-slate-50 font-body-sm">Next</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

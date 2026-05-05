@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AuraC² - Team Contest Workspace</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@500;600;700;800;900&amp;family=Space+Grotesk:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline": "#74777f",
+                    "error": "#ba1a1a",
+                    "on-tertiary-fixed-variant": "#574500",
+                    "on-secondary": "#ffffff",
+                    "on-surface-variant": "#43474e",
+                    "primary-container": "#1e3a5f",
+                    "on-primary": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "primary-fixed": "#d5e3ff",
+                    "on-secondary-fixed-variant": "#003ea8",
+                    "on-tertiary-fixed": "#231b00",
+                    "on-error": "#ffffff",
+                    "surface-bright": "#f8f9ff",
+                    "tertiary": "#735c00",
+                    "on-secondary-container": "#fefcff",
+                    "error-container": "#ffdad6",
+                    "on-error-container": "#93000a",
+                    "on-background": "#0b1c30",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-variant": "#d3e4fe",
+                    "surface-container-low": "#eff4ff",
+                    "on-surface": "#0b1c30",
+                    "background": "#f8f9ff",
+                    "surface-container": "#e5eeff",
+                    "on-secondary-fixed": "#00174b",
+                    "secondary-container": "#316bf3",
+                    "inverse-surface": "#213145",
+                    "surface-tint": "#455f87",
+                    "secondary": "#0051d5",
+                    "secondary-fixed-dim": "#b4c5ff",
+                    "surface-dim": "#cbdbf5",
+                    "outline-variant": "#c4c6cf",
+                    "inverse-on-surface": "#eaf1ff",
+                    "surface-container-highest": "#d3e4fe",
+                    "on-primary-fixed": "#001c3b",
+                    "primary-fixed-dim": "#adc8f5",
+                    "inverse-primary": "#adc8f5",
+                    "secondary-fixed": "#dbe1ff",
+                    "tertiary-fixed-dim": "#eec200",
+                    "tertiary-container": "#cea700",
+                    "primary": "#022448",
+                    "on-tertiary-container": "#4e3e00",
+                    "surface-container-high": "#dce9ff",
+                    "surface": "#f8f9ff",
+                    "on-primary-fixed-variant": "#2d486d",
+                    "tertiary-fixed": "#ffe083",
+                    "on-primary-container": "#8aa4cf"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "xs": "4px",
+                    "md": "16px",
+                    "xl": "32px",
+                    "lg": "24px",
+                    "container-max": "1440px",
+                    "sm": "8px",
+                    "gutter": "20px",
+                    "base": "4px"
+            },
+            "fontFamily": {
+                    "h1": [
+                            "Manrope"
+                    ],
+                    "code-block": [
+                            "Space Grotesk"
+                    ],
+                    "body-base": [
+                            "Inter"
+                    ],
+                    "h2": [
+                            "Manrope"
+                    ],
+                    "table-data": [
+                            "Space Grotesk"
+                    ],
+                    "body-sm": [
+                            "Inter"
+                    ],
+                    "h3": [
+                            "Manrope"
+                    ],
+                    "label-caps": [
+                            "Inter"
+                    ]
+            },
+            "fontSize": {
+                    "h1": [
+                            "30px",
+                            {
+                                    "lineHeight": "38px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "code-block": [
+                            "14px",
+                            {
+                                    "lineHeight": "22px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "body-base": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "h2": [
+                            "24px",
+                            {
+                                    "lineHeight": "32px",
+                                    "letterSpacing": "-0.01em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "table-data": [
+                            "13px",
+                            {
+                                    "lineHeight": "18px",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "body-sm": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "h3": [
+                            "20px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "label-caps": [
+                            "12px",
+                            {
+                                    "lineHeight": "16px",
+                                    "letterSpacing": "0.05em",
+                                    "fontWeight": "600"
+                            }
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .scroll-hidden::-webkit-scrollbar { display: none; }
+        .scroll-hidden { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-base antialiased h-screen w-full flex overflow-hidden">
+<!-- Shared Component: SideNavBar -->
+<nav class="h-full w-64 fixed left-0 top-0 z-40 bg-[#1E3A5F] dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 flex flex-col py-6">
+<div class="px-6 mb-8 flex flex-col">
+<span class="text-2xl font-bold tracking-tight text-white font-['Manrope']">AuraC²</span>
+<span class="text-blue-600 dark:text-blue-400 font-['Manrope'] text-sm font-medium tracking-wide mt-1">Academic Console</span>
+</div>
+<ul class="flex-1 flex flex-col gap-1 w-full">
+<!-- Inactive -->
+<li><a class="font-['Manrope'] text-sm font-medium tracking-wide flex items-center gap-3 px-6 py-3 text-slate-300 hover:text-white hover:bg-white/5 transition-all w-full" href="#">
+<span class="material-symbols-outlined">dashboard</span> Overview
+            </a></li>
+<!-- Inactive -->
+<li><a class="font-['Manrope'] text-sm font-medium tracking-wide flex items-center gap-3 px-6 py-3 text-slate-300 hover:text-white hover:bg-white/5 transition-all w-full" href="#">
+<span class="material-symbols-outlined">emoji_events</span> Contests
+            </a></li>
+<!-- Inactive -->
+<li><a class="font-['Manrope'] text-sm font-medium tracking-wide flex items-center gap-3 px-6 py-3 text-slate-300 hover:text-white hover:bg-white/5 transition-all w-full" href="#">
+<span class="material-symbols-outlined">groups</span> Teams
+            </a></li>
+<!-- ACTIVE: Problems (Semantic Match for Workspace) -->
+<li><a class="font-['Manrope'] text-sm tracking-wide flex items-center gap-3 px-6 py-3 border-l-4 border-blue-500 bg-white/10 text-white font-bold w-full translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined">description</span> Problems
+            </a></li>
+<!-- Inactive -->
+<li><a class="font-['Manrope'] text-sm font-medium tracking-wide flex items-center gap-3 px-6 py-3 text-slate-300 hover:text-white hover:bg-white/5 transition-all w-full" href="#">
+<span class="material-symbols-outlined">terminal</span> Submissions
+            </a></li>
+<!-- Inactive -->
+<li><a class="font-['Manrope'] text-sm font-medium tracking-wide flex items-center gap-3 px-6 py-3 text-slate-300 hover:text-white hover:bg-white/5 transition-all w-full" href="#">
+<span class="material-symbols-outlined">forum</span> Clarifications
+            </a></li>
+<!-- Inactive -->
+<li><a class="font-['Manrope'] text-sm font-medium tracking-wide flex items-center gap-3 px-6 py-3 text-slate-300 hover:text-white hover:bg-white/5 transition-all w-full" href="#">
+<span class="material-symbols-outlined">analytics</span> Statistics
+            </a></li>
+<!-- Inactive -->
+<li><a class="font-['Manrope'] text-sm font-medium tracking-wide flex items-center gap-3 px-6 py-3 text-slate-300 hover:text-white hover:bg-white/5 transition-all w-full" href="#">
+<span class="material-symbols-outlined">security</span> Security
+            </a></li>
+</ul>
+</nav>
+<!-- Shared Component: TopAppBar -->
+<header class="fixed top-0 right-0 left-64 h-16 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-sm flex justify-between items-center px-8 w-full">
+<!-- User Context Header (Overrides generic search for workspace) -->
+<div class="flex items-center gap-lg">
+<h2 class="font-h3 text-h3 text-on-surface">ACM University Spring Contest</h2>
+<div class="flex items-center gap-sm bg-error-container border border-[#ffb4ab] px-md py-sm rounded-DEFAULT shadow-[0px_1px_3px_rgba(0,0,0,0.05)]">
+<span class="material-symbols-outlined text-on-error-container text-[18px]">timer</span>
+<span class="font-code-block text-code-block text-on-error-container font-bold tracking-widest">02:14:36</span>
+</div>
+<div class="h-6 w-px bg-outline-variant mx-sm"></div>
+<div class="flex items-center gap-sm">
+<div class="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-label-caps text-[10px]">TA</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant font-medium">team-alpha</span>
+</div>
+</div>
+<!-- Trailing Actions from JSON -->
+<div class="flex items-center gap-md">
+<button class="text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors p-sm">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors p-sm">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="bg-surface-container border border-outline-variant text-primary-container px-md py-sm rounded-DEFAULT font-['Manrope'] text-sm uppercase tracking-wider font-semibold hover:bg-surface-dim transition-colors">
+                Create Contest
+            </button>
+</div>
+</header>
+<!-- Main Canvas Area -->
+<main class="ml-64 mt-16 flex-1 h-[calc(100vh-64px)] p-gutter overflow-hidden bg-background">
+<!-- 3-Column Workspace Grid -->
+<div class="grid grid-cols-12 gap-gutter h-full">
+<!-- LEFT PANEL: Problem List -->
+<aside class="col-span-2 flex flex-col h-full bg-surface-container-lowest border border-outline-variant rounded-lg shadow-[0px_1px_3px_rgba(0,0,0,0.05)] overflow-hidden">
+<div class="p-md border-b border-surface-container-high bg-surface-bright flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-on-surface-variant tracking-widest uppercase">Problems</span>
+<span class="font-table-data text-table-data text-on-surface bg-surface-container px-sm py-[2px] rounded">3</span>
+</div>
+<div class="flex-1 overflow-y-auto scroll-hidden">
+<ul class="flex flex-col">
+<!-- Active Problem -->
+<li class="border-l-4 border-secondary bg-surface-container p-md cursor-pointer hover:bg-surface-dim transition-colors flex flex-col gap-xs">
+<div class="flex items-center justify-between w-full">
+<span class="font-h3 text-h3 text-on-surface">A</span>
+<span class="material-symbols-outlined text-outline text-[16px]">visibility</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface font-medium truncate">Array Balance</span>
+</li>
+<!-- Inactive Problems -->
+<li class="border-l-4 border-transparent p-md cursor-pointer hover:bg-surface transition-colors border-b border-surface-container flex flex-col gap-xs group">
+<div class="flex items-center justify-between w-full">
+<span class="font-h3 text-h3 text-on-surface-variant group-hover:text-on-surface">B</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant group-hover:text-on-surface truncate">Binary Search Tree Validation</span>
+</li>
+<li class="border-l-4 border-transparent p-md cursor-pointer hover:bg-surface transition-colors border-b border-surface-container flex flex-col gap-xs group">
+<div class="flex items-center justify-between w-full">
+<span class="font-h3 text-h3 text-on-surface-variant group-hover:text-on-surface">C</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant group-hover:text-on-surface truncate">Convex Hull Optimization</span>
+</li>
+</ul>
+</div>
+</aside>
+<!-- CENTER PANEL: Problem Statement & History -->
+<section class="col-span-5 flex flex-col h-full gap-gutter overflow-hidden">
+<!-- Problem Statement Card -->
+<div class="flex-1 bg-surface-container-lowest border border-outline-variant rounded-lg shadow-[0px_1px_3px_rgba(0,0,0,0.05)] flex flex-col overflow-hidden">
+<div class="p-lg border-b border-surface-container-high flex flex-col gap-md shrink-0">
+<div class="flex items-start justify-between">
+<h1 class="font-h1 text-h1 text-on-surface">A. Array Balance</h1>
+<div class="flex gap-sm">
+<div class="bg-surface-container px-sm py-xs rounded flex flex-col items-end">
+<span class="font-label-caps text-label-caps text-outline text-[10px]">Time Limit</span>
+<span class="font-table-data text-table-data text-on-surface">1.0s</span>
+</div>
+<div class="bg-surface-container px-sm py-xs rounded flex flex-col items-end">
+<span class="font-label-caps text-label-caps text-outline text-[10px]">Memory Limit</span>
+<span class="font-table-data text-table-data text-on-surface">256MB</span>
+</div>
+</div>
+</div>
+</div>
+<div class="flex-1 p-lg overflow-y-auto scroll-hidden font-body-base text-body-base text-on-surface-variant flex flex-col gap-lg">
+<p>You are given an array <span class="font-code-block text-code-block bg-surface px-sm py-[2px] rounded border border-outline-variant text-on-surface">a</span> of length <span class="font-code-block text-code-block bg-surface px-sm py-[2px] rounded border border-outline-variant text-on-surface">n</span>. An array is considered <em>balanced</em> if the sum of elements at even indices is equal to the sum of elements at odd indices.</p>
+<p>In one operation, you can choose any element <span class="font-code-block text-code-block bg-surface px-sm py-[2px] rounded border border-outline-variant text-on-surface">a_i</span> and increase or decrease it by 1. Find the minimum number of operations required to make the array balanced.</p>
+<div class="flex flex-col gap-sm mt-md">
+<h3 class="font-h3 text-h3 text-on-surface">Input</h3>
+<p>The first line contains a single integer <span class="font-code-block text-code-block bg-surface px-sm py-[2px] rounded border border-outline-variant text-on-surface">t</span> (1 ≤ t ≤ 10⁴) — the number of test cases.</p>
+<p>The first line of each test case contains a single integer <span class="font-code-block text-code-block bg-surface px-sm py-[2px] rounded border border-outline-variant text-on-surface">n</span> (1 ≤ n ≤ 2·10⁵) — the length of the array.</p>
+<p>The second line contains <span class="font-code-block text-code-block bg-surface px-sm py-[2px] rounded border border-outline-variant text-on-surface">n</span> integers <span class="font-code-block text-code-block bg-surface px-sm py-[2px] rounded border border-outline-variant text-on-surface">a_1, a_2, ..., a_n</span> (-10⁹ ≤ a_i ≤ 10⁹).</p>
+</div>
+<div class="flex flex-col gap-sm">
+<h3 class="font-h3 text-h3 text-on-surface">Output</h3>
+<p>For each test case, output a single integer — the minimum operations required.</p>
+</div>
+<!-- Example Block -->
+<div class="bg-surface-container rounded-DEFAULT border border-outline-variant overflow-hidden mt-md">
+<div class="bg-surface-dim px-md py-sm border-b border-outline-variant font-label-caps text-label-caps text-on-surface">Example</div>
+<div class="grid grid-cols-2">
+<div class="p-md border-r border-outline-variant flex flex-col gap-xs">
+<span class="font-label-caps text-label-caps text-outline">Input</span>
+<pre class="font-code-block text-code-block text-on-surface whitespace-pre-wrap">2
+4
+1 2 3 4
+3
+10 -5 10</pre>
+</div>
+<div class="p-md flex flex-col gap-xs">
+<span class="font-label-caps text-label-caps text-outline">Output</span>
+<pre class="font-code-block text-code-block text-on-surface whitespace-pre-wrap">2
+25</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Submission History Card -->
+<div class="h-48 shrink-0 bg-surface-container-lowest border border-outline-variant rounded-lg shadow-[0px_1px_3px_rgba(0,0,0,0.05)] flex flex-col overflow-hidden">
+<div class="p-sm px-md border-b border-surface-container-high bg-surface-bright flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-on-surface-variant tracking-widest uppercase">My Submissions</span>
+</div>
+<div class="flex-1 overflow-y-auto bg-surface-container-lowest">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-variant bg-surface">
+<th class="p-sm px-md font-label-caps text-label-caps text-outline font-medium">Time</th>
+<th class="p-sm px-md font-label-caps text-label-caps text-outline font-medium">Language</th>
+<th class="p-sm px-md font-label-caps text-label-caps text-outline font-medium text-right">Verdict</th>
+</tr>
+</thead>
+<tbody class="font-table-data text-table-data text-on-surface">
+<tr class="border-b border-surface-container hover:bg-surface transition-colors">
+<td class="p-sm px-md text-on-surface-variant">14:22:10</td>
+<td class="p-sm px-md">C++17 (GCC 11.2)</td>
+<td class="p-sm px-md text-right">
+<span class="inline-flex items-center gap-xs bg-primary-fixed text-on-primary-fixed-variant px-sm py-[2px] rounded font-bold text-[11px] tracking-wide">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> ACCEPTED
+                                        </span>
+</td>
+</tr>
+<tr class="border-b border-surface-container hover:bg-surface transition-colors">
+<td class="p-sm px-md text-on-surface-variant">14:15:03</td>
+<td class="p-sm px-md">C++17 (GCC 11.2)</td>
+<td class="p-sm px-md text-right">
+<span class="inline-flex items-center gap-xs bg-error-container text-on-error-container px-sm py-[2px] rounded font-bold text-[11px] tracking-wide">
+<span class="material-symbols-outlined text-[14px]">cancel</span> WRONG_ANSWER
+                                        </span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<!-- RIGHT PANEL: Code Editor Visual -->
+<section class="col-span-5 h-full bg-[#1E1E1E] border border-outline-variant rounded-lg shadow-[0px_10px_15px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden relative">
+<!-- Editor Toolbar -->
+<div class="bg-[#2D2D2D] p-sm px-md border-b border-[#404040] flex items-center justify-between shrink-0">
+<div class="flex items-center gap-md">
+<select class="bg-[#3C3C3C] border border-[#555] rounded text-[#D4D4D4] font-body-sm text-body-sm px-sm py-xs outline-none focus:border-secondary cursor-pointer hover:bg-[#444]">
+<option>C++17 (GCC 11.2.0)</option>
+<option>Python 3.10.4</option>
+<option>Java 17.0.2</option>
+<option>Rust 1.68.0</option>
+</select>
+<button class="text-[#D4D4D4] hover:text-white flex items-center gap-xs font-label-caps text-label-caps">
+<span class="material-symbols-outlined text-[16px]">settings</span> Editor
+                        </button>
+</div>
+<button class="bg-secondary text-on-secondary px-lg py-sm rounded-DEFAULT font-label-caps text-label-caps font-bold tracking-widest uppercase hover:bg-opacity-90 transition-all flex items-center gap-sm shadow-sm">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">send</span>
+                        Submit Solution
+                    </button>
+</div>
+<!-- Editor Gutter & Canvas -->
+<div class="flex-1 flex overflow-hidden bg-[#1E1E1E]">
+<!-- Line Numbers -->
+<div class="w-12 bg-[#1E1E1E] border-r border-[#404040] flex flex-col items-end py-md px-xs font-code-block text-code-block text-[#858585] select-none text-[13px] leading-relaxed">
+<span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span>18</span><span>19</span><span>20</span>
+</div>
+<!-- Code Canvas (Syntax styled roughly) -->
+<div class="flex-1 p-md overflow-auto font-code-block text-code-block text-[#D4D4D4] whitespace-pre text-[14px] leading-relaxed scroll-hidden outline-none" contenteditable="true" spellcheck="false">
+<span class="text-[#569CD6]">#include</span> <span class="text-[#CE9178]">&lt;iostream&gt;</span>
+<span class="text-[#569CD6]">#include</span> <span class="text-[#CE9178]">&lt;vector&gt;</span>
+<span class="text-[#569CD6]">#include</span> <span class="text-[#CE9178]">&lt;numeric&gt;</span>
+<span class="text-[#569CD6]">#include</span> <span class="text-[#CE9178]">&lt;cmath&gt;</span>
+<span class="text-[#569CD6]">using</span> <span class="text-[#569CD6]">namespace</span> std;
+
+<span class="text-[#4EC9B0]">void</span> <span class="text-[#DCDCAA]">solve</span>() {
+    <span class="text-[#4EC9B0]">int</span> n;
+    cin &gt;&gt; n;
+    vector&lt;<span class="text-[#4EC9B0]">long</span> <span class="text-[#4EC9B0]">long</span>&gt; a(n);
+    <span class="text-[#4EC9B0]">long</span> <span class="text-[#4EC9B0]">long</span> sum_even = <span class="text-[#B5CEA8]">0</span>, sum_odd = <span class="text-[#B5CEA8]">0</span>;
+    
+    <span class="text-[#C586C0]">for</span>(<span class="text-[#4EC9B0]">int</span> i = <span class="text-[#B5CEA8]">0</span>; i &lt; n; i++) {
+        cin &gt;&gt; a[i];
+        <span class="text-[#C586C0]">if</span>(i % <span class="text-[#B5CEA8]">2</span> == <span class="text-[#B5CEA8]">0</span>) sum_even += a[i];
+        <span class="text-[#C586C0]">else</span> sum_odd += a[i];
+    }
+    
+    cout &lt;&lt; <span class="text-[#DCDCAA]">abs</span>(sum_even - sum_odd) &lt;&lt; <span class="text-[#CE9178]">"\n"</span>;
+}
+
+<span class="text-[#4EC9B0]">int</span> <span class="text-[#DCDCAA]">main</span>() {
+    ios_base::<span class="text-[#DCDCAA]">sync_with_stdio</span>(<span class="text-[#569CD6]">false</span>);
+    cin.<span class="text-[#DCDCAA]">tie</span>(<span class="text-[#569CD6]">NULL</span>);
+    
+    <span class="text-[#4EC9B0]">int</span> t;
+    cin &gt;&gt; t;
+    <span class="text-[#C586C0]">while</span>(t--) {
+        <span class="text-[#DCDCAA]">solve</span>();
+    }
+    <span class="text-[#C586C0]">return</span> <span class="text-[#B5CEA8]">0</span>;
+}
+                    </div>
+</div>
+<!-- Bottom Status Bar -->
+<div class="h-6 bg-[#007ACC] text-white flex items-center justify-between px-md font-body-sm text-[11px] shrink-0">
+<div class="flex items-center gap-md">
+<span class="flex items-center gap-xs"><span class="material-symbols-outlined text-[14px]">error</span> 0</span>
+<span class="flex items-center gap-xs"><span class="material-symbols-outlined text-[14px]">warning</span> 0</span>
+</div>
+<div class="flex items-center gap-md">
+<span>Ln 22, Col 1</span>
+<span>UTF-8</span>
+<span>C++</span>
+</div>
+</div>
+</section>
+</div>
+</main>
+</body></html>

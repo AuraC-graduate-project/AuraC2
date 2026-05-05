@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AuraC² - Admin Clarifications</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;family=Space+Grotesk:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-low": "#eff4ff",
+                      "outline-variant": "#c4c6cf",
+                      "on-secondary-fixed": "#00174b",
+                      "inverse-on-surface": "#eaf1ff",
+                      "on-primary-container": "#8aa4cf",
+                      "tertiary-fixed": "#ffe083",
+                      "primary": "#022448",
+                      "on-primary-fixed-variant": "#2d486d",
+                      "error": "#ba1a1a",
+                      "secondary-fixed-dim": "#b4c5ff",
+                      "tertiary-container": "#cea700",
+                      "on-tertiary-fixed": "#231b00",
+                      "inverse-primary": "#adc8f5",
+                      "surface-container-highest": "#d3e4fe",
+                      "on-tertiary-fixed-variant": "#574500",
+                      "on-secondary-container": "#fefcff",
+                      "on-primary": "#ffffff",
+                      "background": "#f8f9ff",
+                      "on-surface-variant": "#43474e",
+                      "surface-container": "#e5eeff",
+                      "surface-container-high": "#dce9ff",
+                      "on-error": "#ffffff",
+                      "surface-dim": "#cbdbf5",
+                      "surface-tint": "#455f87",
+                      "on-surface": "#0b1c30",
+                      "secondary": "#0051d5",
+                      "on-error-container": "#93000a",
+                      "secondary-container": "#316bf3",
+                      "primary-container": "#1e3a5f",
+                      "inverse-surface": "#213145",
+                      "primary-fixed-dim": "#adc8f5",
+                      "surface-bright": "#f8f9ff",
+                      "on-tertiary": "#ffffff",
+                      "error-container": "#ffdad6",
+                      "secondary-fixed": "#dbe1ff",
+                      "surface-variant": "#d3e4fe",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary-fixed": "#001c3b",
+                      "on-secondary-fixed-variant": "#003ea8",
+                      "tertiary": "#735c00",
+                      "on-background": "#0b1c30",
+                      "on-tertiary-container": "#4e3e00",
+                      "tertiary-fixed-dim": "#eec200",
+                      "outline": "#74777f",
+                      "on-secondary": "#ffffff",
+                      "surface": "#f8f9ff",
+                      "primary-fixed": "#d5e3ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "container-max": "1440px",
+                      "base": "4px",
+                      "gutter": "20px",
+                      "xl": "32px",
+                      "lg": "24px",
+                      "xs": "4px",
+                      "md": "16px",
+                      "sm": "8px"
+              },
+              "fontFamily": {
+                      "h3": ["Manrope", "sans-serif"],
+                      "h2": ["Manrope", "sans-serif"],
+                      "table-data": ["Space Grotesk", "monospace"],
+                      "body-base": ["Inter", "sans-serif"],
+                      "h1": ["Manrope", "sans-serif"],
+                      "body-sm": ["Inter", "sans-serif"],
+                      "code-block": ["Space Grotesk", "monospace"],
+                      "label-caps": ["Inter", "sans-serif"]
+              },
+              "fontSize": {
+                      "h3": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "h2": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "table-data": ["13px", {"lineHeight": "18px", "fontWeight": "500"}],
+                      "body-base": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "h1": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "code-block": ["14px", {"lineHeight": "22px", "fontWeight": "400"}],
+                      "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        body { background-color: #f8f9ff; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="font-body-base text-body-base text-on-background bg-background h-screen flex overflow-hidden">
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-0 bottom-0 w-64 flex flex-col z-50 bg-[#1E3A5F] dark:bg-slate-950 text-white font-['Manrope'] text-sm font-medium flat no shadows no-border">
+<div class="p-6 border-b border-white/10 flex items-center gap-4">
+<img alt="University Logo" class="w-10 h-10 rounded-lg bg-white/20" data-alt="Minimalist abstract logo for a university tech portal with a modern geometric U shape in deep blue and white" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBV8mt3zVqu7KNbBkHsDh9LpcNBTqTRR2eP3dnM12SwgZtehKOqpfdxF2gK0FKFZSm_VB2odNkER4yKMma0I4H-2JjDVYR1iQALREJE2P-Jcf8W2OLV_tkW15tEGyUayA08yOZoJIazBpzL6dsvfz149TQiehJaGJTzvB_ZbQrPXHPd4KWYlk1si2gcjJdqAFoiR8GmUR9ykVk2Fs5_eYGxyCU_-mbr3cwAqDP_VfkxLRHGTy0KQ41JT1Kc6elfWniNJ-dCaHtE_C8"/>
+<div>
+<div class="text-white font-bold text-lg leading-tight">AuraC² Admin</div>
+<div class="text-slate-300 text-xs mt-1">Management Portal</div>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto py-4 flex flex-col gap-1 px-2">
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200 rounded" href="#">
+<span class="material-symbols-outlined text-lg">dashboard</span>
+<span>Overview</span>
+</a>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200 rounded" href="#">
+<span class="material-symbols-outlined text-lg">emoji_events</span>
+<span>Contests</span>
+</a>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200 rounded" href="#">
+<span class="material-symbols-outlined text-lg">groups</span>
+<span>Teams</span>
+</a>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200 rounded" href="#">
+<span class="material-symbols-outlined text-lg">terminal</span>
+<span>Problems</span>
+</a>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200 rounded" href="#">
+<span class="material-symbols-outlined text-lg">list_alt</span>
+<span>Submissions</span>
+</a>
+<a class="bg-blue-600/20 text-white border-l-4 border-blue-500 px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200 Active: scale-[0.98] transition-transform rounded-r" href="#">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">forum</span>
+<span>Clarifications</span>
+</a>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200 rounded" href="#">
+<span class="material-symbols-outlined text-lg">query_stats</span>
+<span>Future Stats</span>
+</a>
+</div>
+<div class="p-4 border-t border-white/10">
+<div class="flex items-center gap-3 text-sm text-slate-300 px-2">
+<img alt="Admin Avatar" class="w-8 h-8 rounded-full bg-slate-800" data-alt="Professional headshot placeholder avatar with a dark background and a white letter A" src="https://lh3.googleusercontent.com/aida-public/AB6AXuADHNLa7LcYu2EtO6M4JZCF3Wu8jgD2Sd8aXTh-G34dSNPvPV8KBo0wDuMm_jO5znJG-rY4Ev0pKYygkqgMMBrY8857k8sEEbXwgz1BKvY6Y1wRPOzCjdwpNTLnU7vS81WICAcc8t38njcxBftT94lLwEy_4EhTGY23fyfVfqMBifaRB2z7dwogYxq4zHB8a8gA91p6MwcV9ILMTLWGg_ledcOZe1cLun1zFTXPMGEY16oiVTvJyKc5oW8JHPo73rPDV79VAUq4zIs"/>
+<div class="flex-1 truncate">Admin User</div>
+<span class="material-symbols-outlined text-lg cursor-pointer hover:text-white transition-colors">logout</span>
+</div>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="ml-64 flex-1 flex flex-col h-screen overflow-hidden bg-background">
+<!-- TopAppBar -->
+<header class="h-16 flex items-center justify-between px-6 z-40 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm shrink-0">
+<div class="flex items-center gap-4">
+<div class="font-['Manrope'] text-sm tracking-tight text-xl font-extrabold text-[#1E3A5F] dark:text-white tracking-tighter hidden">AuraC²</div>
+<div class="relative hidden md:block w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+<input class="w-full bg-slate-50 border border-slate-200 rounded-DEFAULT pl-9 pr-4 py-1.5 text-sm focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors" placeholder="Search clarifications..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="font-table-data text-table-data text-secondary-container bg-surface-container px-3 py-1 rounded-DEFAULT border border-secondary-fixed">
+                    02:45:12 Remaining
+                </div>
+<div class="flex items-center gap-4 text-slate-500">
+<button class="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors p-1.5 rounded-DEFAULT relative">
+<span class="material-symbols-outlined text-lg">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors p-1.5 rounded-DEFAULT">
+<span class="material-symbols-outlined text-lg">help_outline</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<main class="flex-1 overflow-y-auto p-gutter lg:p-xl flex justify-center">
+<div class="w-full max-w-[container-max] flex flex-col gap-lg">
+<!-- Header & Tabs -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div class="flex flex-col gap-sm">
+<h1 class="font-h1 text-h1 text-on-surface">Clarifications</h1>
+<p class="font-body-base text-body-base text-on-surface-variant">Manage incoming questions and broadast updates.</p>
+</div>
+<div class="flex bg-surface-container-low rounded-DEFAULT p-1 border border-outline-variant/30">
+<button class="px-4 py-1.5 text-sm font-medium rounded-sm bg-white shadow-[0px_1px_3px_rgba(0,0,0,0.05)] text-primary-container border border-outline-variant/20">All</button>
+<button class="px-4 py-1.5 text-sm font-medium rounded-sm text-on-surface-variant hover:text-primary-container hover:bg-surface-container-high transition-colors flex items-center gap-2">
+                            Pending
+                            <span class="bg-error/10 text-error px-1.5 py-0.5 rounded text-[10px] leading-none font-bold">2</span>
+</button>
+<button class="px-4 py-1.5 text-sm font-medium rounded-sm text-on-surface-variant hover:text-primary-container hover:bg-surface-container-high transition-colors">Answered</button>
+</div>
+</div>
+<!-- Inbox/Table Surface -->
+<div class="bg-white rounded-lg border border-outline-variant/50 shadow-[0px_1px_3px_rgba(0,0,0,0.05)] flex flex-col overflow-hidden">
+<!-- Toolbar -->
+<div class="bg-surface-bright border-b border-surface-container-high p-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<input class="rounded-sm border-outline-variant text-secondary focus:ring-secondary cursor-pointer" type="checkbox"/>
+<button class="p-1.5 text-on-surface-variant hover:bg-surface-container hover:text-on-surface rounded transition-colors" title="Mark as Read">
+<span class="material-symbols-outlined text-lg">mark_email_read</span>
+</button>
+<button class="p-1.5 text-on-surface-variant hover:bg-surface-container hover:text-on-surface rounded transition-colors" title="Delete">
+<span class="material-symbols-outlined text-lg">delete</span>
+</button>
+</div>
+<div class="flex items-center gap-2 text-sm text-on-surface-variant">
+<span class="font-body-sm text-body-sm">1-10 of 42</span>
+<div class="flex gap-1">
+<button class="p-1 hover:bg-surface-container rounded transition-colors disabled:opacity-50"><span class="material-symbols-outlined text-lg">chevron_left</span></button>
+<button class="p-1 hover:bg-surface-container rounded transition-colors"><span class="material-symbols-outlined text-lg">chevron_right</span></button>
+</div>
+</div>
+</div>
+<!-- Table Data -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface border-b border-surface-container-high font-label-caps text-label-caps text-on-surface-variant uppercase">
+<th class="p-4 w-12 text-center"><input class="rounded-sm border-outline-variant text-secondary focus:ring-secondary cursor-pointer" type="checkbox"/></th>
+<th class="p-4 font-semibold">Status</th>
+<th class="p-4 font-semibold">Team</th>
+<th class="p-4 font-semibold">Problem</th>
+<th class="p-4 font-semibold w-1/2">Question</th>
+<th class="p-4 font-semibold text-right">Action</th>
+</tr>
+</thead>
+<tbody class="font-body-sm text-body-sm divide-y divide-surface-container-high">
+<!-- Pending Row -->
+<tr class="bg-surface-container-low/50 hover:bg-surface-container-low transition-colors group">
+<td class="p-4 text-center align-top pt-5"><input class="rounded-sm border-outline-variant text-secondary focus:ring-secondary cursor-pointer" type="checkbox"/></td>
+<td class="p-4 align-top pt-5">
+<div class="inline-flex items-center gap-1.5 bg-error/10 text-error px-2 py-1 rounded-sm border border-error/20 whitespace-nowrap">
+<span class="material-symbols-outlined text-[14px]">error</span>
+<span class="font-table-data text-table-data">PENDING</span>
+</div>
+</td>
+<td class="p-4 align-top pt-5">
+<div class="font-table-data text-table-data text-on-surface font-semibold">syntax-squad</div>
+<div class="text-xs text-on-surface-variant mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">visibility_off</span> Private
+                                        </div>
+</td>
+<td class="p-4 align-top pt-5">
+<div class="font-table-data text-table-data text-secondary-container">Problem B</div>
+<div class="text-xs text-on-surface-variant mt-1">Graph Traversal</div>
+</td>
+<td class="p-4 align-top pt-5">
+<p class="text-on-surface leading-relaxed">"For problem B, are roads bidirectional? The sample input suggests they are, but the problem description says 'directed roads'."</p>
+<div class="text-xs text-on-surface-variant mt-2">Received 12 mins ago</div>
+</td>
+<td class="p-4 align-top pt-5 text-right">
+<button class="bg-secondary text-on-primary hover:bg-secondary-container transition-colors px-4 py-2 rounded-DEFAULT text-sm font-medium shadow-sm inline-flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">reply</span>
+                                            Reply
+                                        </button>
+</td>
+</tr>
+<!-- Answered Row -->
+<tr class="bg-white hover:bg-surface-container-low/30 transition-colors group">
+<td class="p-4 text-center align-top pt-5"><input class="rounded-sm border-outline-variant text-secondary focus:ring-secondary cursor-pointer" type="checkbox"/></td>
+<td class="p-4 align-top pt-5">
+<div class="inline-flex items-center gap-1.5 bg-surface-container-highest text-surface-tint px-2 py-1 rounded-sm border border-surface-container-highest whitespace-nowrap">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span class="font-table-data text-table-data text-surface-tint">ANSWERED</span>
+</div>
+</td>
+<td class="p-4 align-top pt-5">
+<div class="font-table-data text-table-data text-on-surface">binary-bosses</div>
+<div class="text-xs text-secondary mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">public</span> Public
+                                        </div>
+</td>
+<td class="p-4 align-top pt-5">
+<div class="font-table-data text-table-data text-secondary-container">Problem A</div>
+<div class="text-xs text-on-surface-variant mt-1">Math</div>
+</td>
+<td class="p-4 align-top pt-5">
+<p class="text-on-surface-variant line-clamp-1">"Is N guaranteed to be even?"</p>
+<div class="mt-2 pl-3 border-l-2 border-surface-container-highest text-on-surface text-sm">
+<span class="font-semibold mr-1">A:</span> No, N can be any integer within the constraints.
+                                        </div>
+</td>
+<td class="p-4 align-top pt-5 text-right">
+<button class="bg-white border border-outline-variant text-primary-container hover:bg-surface transition-colors px-4 py-2 rounded-DEFAULT text-sm font-medium shadow-[0px_1px_2px_rgba(0,0,0,0.05)] inline-flex items-center gap-2 opacity-0 group-hover:opacity-100 focus:opacity-100">
+<span class="material-symbols-outlined text-sm">edit</span>
+                                            Edit
+                                        </button>
+</td>
+</tr>
+<!-- Another Answered Row -->
+<tr class="bg-white hover:bg-surface-container-low/30 transition-colors group">
+<td class="p-4 text-center align-top pt-5"><input class="rounded-sm border-outline-variant text-secondary focus:ring-secondary cursor-pointer" type="checkbox"/></td>
+<td class="p-4 align-top pt-5">
+<div class="inline-flex items-center gap-1.5 bg-surface-container-highest text-surface-tint px-2 py-1 rounded-sm border border-surface-container-highest whitespace-nowrap">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span class="font-table-data text-table-data text-surface-tint">ANSWERED</span>
+</div>
+</td>
+<td class="p-4 align-top pt-5">
+<div class="font-table-data text-table-data text-on-surface">null-pointers</div>
+<div class="text-xs text-on-surface-variant mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">visibility_off</span> Private
+                                        </div>
+</td>
+<td class="p-4 align-top pt-5">
+<div class="font-table-data text-table-data text-secondary-container">Problem C</div>
+<div class="text-xs text-on-surface-variant mt-1">DP</div>
+</td>
+<td class="p-4 align-top pt-5">
+<p class="text-on-surface-variant line-clamp-1">"Can we use Python's built-in sum function, or will it TLE?"</p>
+<div class="mt-2 pl-3 border-l-2 border-surface-container-highest text-on-surface text-sm">
+<span class="font-semibold mr-1">A:</span> Please refer to the general contest rules regarding language-specific optimizations. We cannot comment on specific function performance.
+                                        </div>
+</td>
+<td class="p-4 align-top pt-5 text-right">
+<button class="bg-white border border-outline-variant text-primary-container hover:bg-surface transition-colors px-4 py-2 rounded-DEFAULT text-sm font-medium shadow-[0px_1px_2px_rgba(0,0,0,0.05)] inline-flex items-center gap-2 opacity-0 group-hover:opacity-100 focus:opacity-100">
+<span class="material-symbols-outlined text-sm">edit</span>
+                                            Edit
+                                        </button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Submission Code Review - Admin</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=JetBrains+Mono:ital,wght@0,400;0,700;1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed": "#ffdcc6",
+                    "surface-container": "#1d2027",
+                    "inverse-on-surface": "#2e3038",
+                    "tertiary-fixed-dim": "#ffb786",
+                    "primary": "#adc6ff",
+                    "tertiary": "#ffb786",
+                    "on-primary": "#002e6a",
+                    "surface": "#10131a",
+                    "on-tertiary-fixed-variant": "#723600",
+                    "secondary-container": "#3f465c",
+                    "on-tertiary-container": "#461f00",
+                    "on-secondary": "#283044",
+                    "secondary-fixed-dim": "#bec6e0",
+                    "on-secondary-fixed-variant": "#3f465c",
+                    "primary-fixed": "#d8e2ff",
+                    "on-secondary-fixed": "#131b2e",
+                    "surface-bright": "#363941",
+                    "error": "#ffb4ab",
+                    "on-primary-container": "#00285d",
+                    "on-error-container": "#ffdad6",
+                    "surface-tint": "#adc6ff",
+                    "surface-container-high": "#272a31",
+                    "primary-fixed-dim": "#adc6ff",
+                    "on-tertiary-fixed": "#311400",
+                    "secondary": "#bec6e0",
+                    "outline-variant": "#424754",
+                    "secondary-fixed": "#dae2fd",
+                    "surface-container-low": "#191b23",
+                    "on-secondary-container": "#adb4ce",
+                    "on-primary-fixed-variant": "#004395",
+                    "on-primary-fixed": "#001a42",
+                    "on-tertiary": "#502400",
+                    "surface-variant": "#32353c",
+                    "primary-container": "#4d8eff",
+                    "tertiary-container": "#df7412",
+                    "on-error": "#690005",
+                    "outline": "#8c909f",
+                    "surface-container-lowest": "#0b0e15",
+                    "on-surface": "#e1e2ec",
+                    "on-background": "#e1e2ec",
+                    "surface-dim": "#10131a",
+                    "inverse-surface": "#e1e2ec",
+                    "surface-container-highest": "#32353c",
+                    "background": "#10131a",
+                    "on-surface-variant": "#c2c6d6",
+                    "inverse-primary": "#005ac2",
+                    "error-container": "#93000a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "md": "1rem",
+                    "xxl": "3rem",
+                    "xs": "0.25rem",
+                    "sm": "0.5rem",
+                    "xl": "2rem",
+                    "lg": "1.5rem"
+            },
+            "fontFamily": {
+                    "h1": ["Manrope"],
+                    "body-lg": ["Manrope"],
+                    "label-sm": ["Manrope"],
+                    "body-sm": ["Manrope"],
+                    "h3": ["Manrope"],
+                    "label-md": ["Manrope"],
+                    "h2": ["Manrope"],
+                    "body-md": ["Manrope"],
+                    "display": ["Manrope"]
+            },
+            "fontSize": {
+                    "h1": ["2.25rem", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "body-lg": ["1.125rem", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-sm": ["0.75rem", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "body-sm": ["0.875rem", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "h3": ["1.5rem", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "label-md": ["0.875rem", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "h2": ["1.875rem", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "body-md": ["1rem", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "display": ["3.75rem", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .code-font { font-family: 'JetBrains Mono', monospace; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md h-screen overflow-hidden flex antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- JSON Component: SideNavBar -->
+<aside class="bg-[#0F172A] font-manrope text-sm font-medium docked left-0 h-full w-64 border-r border-[#334155] flex flex-col h-screen py-4 space-y-2 flex-shrink-0 relative z-10">
+<div class="px-6 mb-8 mt-2 flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-primary/20 flex items-center justify-center border border-primary/30">
+<span class="material-symbols-outlined text-primary text-[20px]">school</span>
+</div>
+<div>
+<div class="text-sm font-black uppercase text-[#94A3B8] tracking-widest leading-none mb-1">ACM-ICPC Portal</div>
+<div class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Admin Console</div>
+</div>
+</div>
+<div class="px-4 mb-6">
+<button class="w-full py-2.5 bg-[#3B82F6] text-[#F1F5F9] rounded text-sm font-bold shadow-lg shadow-[#3B82F6]/20 hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span> Create Contest
+            </button>
+</div>
+<nav class="flex-1 px-3 space-y-1">
+<a class="flex items-center px-3 py-2.5 text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform rounded" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">dashboard</span> Overview
+            </a>
+<a class="flex items-center px-3 py-2.5 text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform rounded" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">code</span> Problems
+            </a>
+<!-- Active State Applied -->
+<a class="flex items-center px-3 py-2.5 bg-[#334155] text-[#F1F5F9] border-r-4 border-[#3B82F6] rounded-r-sm scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]" style="font-variation-settings: 'FILL' 1;">history</span> Submissions
+            </a>
+<a class="flex items-center px-3 py-2.5 text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform rounded" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">groups</span> Teams
+            </a>
+<a class="flex items-center px-3 py-2.5 text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform rounded" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">forum</span> Clarifications
+            </a>
+<a class="flex items-center px-3 py-2.5 text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform rounded" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">terminal</span> Logs
+            </a>
+</nav>
+<div class="px-3 mt-auto pt-4 border-t border-[#334155]">
+<a class="flex items-center px-3 py-2 text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors rounded" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">help</span> Documentation
+            </a>
+<a class="flex items-center px-3 py-2 text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors rounded" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">contact_support</span> Support
+            </a>
+</div>
+</aside>
+<main class="flex-1 flex flex-col min-w-0 relative">
+<!-- JSON Component: TopNavBar -->
+<header class="bg-[#1E293B] font-manrope antialiased tracking-tight docked full-width top-0 z-10 border-b border-[#334155] flex justify-between items-center h-16 px-6 w-full flex-shrink-0">
+<div class="flex items-center gap-6 w-1/3">
+<div class="text-lg font-bold text-[#F1F5F9] tracking-tighter">CodeMetric Pro</div>
+<div class="relative w-64 hidden lg:block">
+<span class="material-symbols-outlined absolute left-2.5 top-1.5 text-[#94A3B8] text-[18px]">search</span>
+<input class="w-full bg-[#0F172A] border border-[#334155] text-[#F1F5F9] text-sm rounded py-1 pl-9 pr-3 focus:outline-none focus:border-[#3B82F6] transition-colors" placeholder="Search ID, User, Problem..." type="text"/>
+</div>
+</div>
+<nav class="flex items-center gap-1">
+<a class="text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#334155]/50 transition-all duration-200 ease-in-out px-3 py-1.5 rounded text-sm font-medium" href="#">Dashboard</a>
+<a class="text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#334155]/50 transition-all duration-200 ease-in-out px-3 py-1.5 rounded text-sm font-medium" href="#">Contests</a>
+<a class="text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#334155]/50 transition-all duration-200 ease-in-out px-3 py-1.5 rounded text-sm font-medium" href="#">Standings</a>
+</nav>
+<div class="flex items-center justify-end gap-4 w-1/3">
+<button class="text-[#94A3B8] hover:text-[#F1F5F9] transition-colors relative">
+<span class="material-symbols-outlined text-[22px]">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-[#1E293B]"></span>
+</button>
+<button class="text-[#94A3B8] hover:text-[#F1F5F9] transition-colors">
+<span class="material-symbols-outlined text-[22px]">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full border border-[#334155] overflow-hidden ml-2 cursor-pointer bg-[#0F172A] flex items-center justify-center">
+<span class="material-symbols-outlined text-[#94A3B8] text-[18px]">person</span>
+</div>
+</div>
+</header>
+<!-- Dummy Canvas Content to show depth -->
+<div class="flex-1 p-xl overflow-y-auto bg-background/50">
+<div class="max-w-7xl mx-auto space-y-md">
+<div class="h-10 w-48 bg-surface-container rounded animate-pulse opacity-20"></div>
+<div class="h-64 w-full bg-surface-container border border-outline-variant rounded animate-pulse opacity-20"></div>
+<div class="h-64 w-full bg-surface-container border border-outline-variant rounded animate-pulse opacity-20"></div>
+</div>
+</div>
+<!-- Drawer Overlay -->
+<div class="fixed inset-0 z-50 flex justify-end">
+<!-- Backdrop -->
+<div class="absolute inset-0 bg-background/80 backdrop-blur-sm transition-opacity"></div>
+<!-- Drawer Panel -->
+<div class="relative w-full max-w-[840px] h-full bg-surface-container shadow-2xl border-l border-outline-variant flex flex-col animate-[slideIn_0.3s_ease-out]">
+<!-- Drawer Header -->
+<div class="flex items-center justify-between px-xl py-lg border-b border-outline-variant bg-surface-container-high flex-shrink-0">
+<div class="flex items-center gap-lg">
+<div class="w-10 h-10 rounded bg-primary-container/20 flex items-center justify-center border border-primary-container/30">
+<span class="material-symbols-outlined text-primary text-[24px]">terminal</span>
+</div>
+<div>
+<div class="flex items-center gap-md">
+<h2 class="font-h2 text-h2 text-on-surface m-0 tracking-tight">Submission <span class="text-outline">#104829</span></h2>
+<div class="px-2.5 py-1 rounded-DEFAULT text-[11px] font-bold tracking-wider uppercase bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]">
+                                    Accepted
+                                </div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">Reviewed automatically by Judge System Alpha-04</p>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<button class="flex items-center gap-sm px-md py-sm rounded border border-outline-variant bg-surface-container hover:bg-surface-variant text-on-surface-variant hover:text-on-surface transition-colors font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">gavel</span> Rejudge
+                        </button>
+<div class="w-px h-6 bg-outline-variant mx-1"></div>
+<button class="p-sm rounded hover:bg-surface-variant text-on-surface-variant hover:text-on-surface transition-colors group">
+<span class="material-symbols-outlined group-hover:rotate-90 transition-transform duration-300">close</span>
+</button>
+</div>
+</div>
+<!-- Bento Grid Meta Data -->
+<div class="p-xl border-b border-outline-variant bg-surface-container-lowest flex-shrink-0 grid grid-cols-5 gap-md">
+<div class="bg-surface-container border border-outline-variant rounded-lg p-md flex flex-col justify-center">
+<span class="font-label-sm text-label-sm text-outline mb-1 uppercase tracking-widest flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">person</span> User</span>
+<a class="font-label-md text-label-md text-primary hover:text-primary-fixed transition-colors truncate" href="#">@alex_chen_dev</a>
+</div>
+<div class="bg-surface-container border border-outline-variant rounded-lg p-md flex flex-col justify-center col-span-2">
+<span class="font-label-sm text-label-sm text-outline mb-1 uppercase tracking-widest flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">psychology</span> Problem</span>
+<a class="font-label-md text-label-md text-on-surface hover:text-primary transition-colors truncate" href="#">D. Minimum Cost Neural Path</a>
+</div>
+<div class="bg-surface-container border border-outline-variant rounded-lg p-md flex flex-col justify-center">
+<span class="font-label-sm text-label-sm text-outline mb-1 uppercase tracking-widest flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">timer</span> Time</span>
+<span class="font-body-md text-body-md text-on-surface">42 <span class="text-outline text-sm">ms</span></span>
+</div>
+<div class="bg-surface-container border border-outline-variant rounded-lg p-md flex flex-col justify-center">
+<span class="font-label-sm text-label-sm text-outline mb-1 uppercase tracking-widest flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">memory</span> Memory</span>
+<span class="font-body-md text-body-md text-on-surface">1.2 <span class="text-outline text-sm">MB</span></span>
+</div>
+</div>
+<!-- Code Container Area -->
+<div class="flex-1 overflow-hidden flex flex-col bg-[#0b0e15] relative">
+<!-- File Header Bar -->
+<div class="flex items-center justify-between px-lg py-sm border-b border-outline-variant/50 bg-[#0d1117] flex-shrink-0">
+<div class="flex items-center gap-md">
+<span class="font-label-sm text-label-sm text-secondary px-2 py-1 bg-secondary-container/30 rounded border border-secondary-container/50">C++20 (GCC 11.2)</span>
+<span class="font-body-sm text-body-sm text-outline font-mono text-[13px]">main.cpp</span>
+</div>
+<div class="flex items-center gap-xs">
+<button class="p-1.5 rounded hover:bg-surface-variant text-outline hover:text-on-surface transition-colors" title="Copy Code">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+</button>
+<button class="p-1.5 rounded hover:bg-surface-variant text-outline hover:text-on-surface transition-colors" title="Download Source">
+<span class="material-symbols-outlined text-[18px]">download</span>
+</button>
+</div>
+</div>
+<!-- Scrollable Code Area -->
+<div class="flex-1 overflow-auto p-lg relative code-font text-[14px] leading-relaxed">
+<!-- Line Numbers (Simulated conceptually via layout, simplified here for structure) -->
+<div class="absolute left-0 top-0 bottom-0 w-12 border-r border-outline-variant/30 bg-[#0d1117] py-lg flex flex-col items-end pr-3 text-outline/50 select-none">
+<span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span>18</span><span>19</span><span>20</span><span>21</span><span>22</span><span>23</span><span>24</span><span>25</span><span>26</span><span>27</span><span>28</span>
+</div>
+<pre class="pl-10 m-0 text-on-surface-variant"><code class="block">
+<span class="text-tertiary">#include</span> <span class="text-primary-fixed-dim">&lt;iostream&gt;</span>
+<span class="text-tertiary">#include</span> <span class="text-primary-fixed-dim">&lt;vector&gt;</span>
+<span class="text-tertiary">#include</span> <span class="text-primary-fixed-dim">&lt;algorithm&gt;</span>
+
+<span class="text-primary">using</span> <span class="text-primary">namespace</span> <span class="text-secondary-fixed">std</span>;
+
+<span class="text-outline italic">// Core optimization logic for node traversal</span>
+<span class="text-primary">int</span> <span class="text-[#d8e2ff] font-bold">main</span>() {
+    <span class="text-primary">ios_base</span>::sync_with_stdio(<span class="text-tertiary-fixed-dim">false</span>);
+    <span class="text-primary">cin</span>.tie(<span class="text-tertiary-fixed-dim">NULL</span>);
+
+    <span class="text-primary">int</span> n, m;
+    <span class="text-primary">if</span> (!(<span class="text-primary">cin</span> &gt;&gt; n &gt;&gt; m)) <span class="text-primary">return</span> <span class="text-tertiary-fixed-dim">0</span>;
+
+    <span class="text-primary">vector</span>&lt;<span class="text-primary">long long</span>&gt; weights(n);
+    <span class="text-primary">for</span> (<span class="text-primary">int</span> i = <span class="text-tertiary-fixed-dim">0</span>; i &lt; n; ++i) {
+        <span class="text-primary">cin</span> &gt;&gt; weights[i];
+    }
+
+    <span class="text-primary">sort</span>(weights.begin(), weights.end());
+
+    <span class="text-primary">long long</span> optimal_path = <span class="text-tertiary-fixed-dim">0</span>;
+    <span class="text-primary">for</span> (<span class="text-primary">int</span> i = <span class="text-tertiary-fixed-dim">0</span>; i &lt; m; ++i) {
+        optimal_path += weights[n - <span class="text-tertiary-fixed-dim">1</span> - i];
+    }
+
+    <span class="text-primary">cout</span> &lt;&lt; optimal_path &lt;&lt; <span class="text-primary-fixed-dim">"\n"</span>;
+    <span class="text-primary">return</span> <span class="text-tertiary-fixed-dim">0</span>;
+}
+</code></pre>
+</div>
+</div>
+</div>
+</div>
+</main>
+<style>
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+    </style>
+</body></html>

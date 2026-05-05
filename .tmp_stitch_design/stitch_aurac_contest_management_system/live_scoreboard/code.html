@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Live Scoreboard - AuraC²</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;family=Space+Grotesk:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-variant": "#d3e4fe",
+                      "secondary": "#0051d5",
+                      "on-primary-fixed-variant": "#2d486d",
+                      "error-container": "#ffdad6",
+                      "tertiary-container": "#cea700",
+                      "surface-container-high": "#dce9ff",
+                      "surface-container": "#e5eeff",
+                      "background": "#f8f9ff",
+                      "secondary-container": "#316bf3",
+                      "inverse-primary": "#adc8f5",
+                      "on-surface-variant": "#43474e",
+                      "on-secondary-fixed": "#00174b",
+                      "on-secondary": "#ffffff",
+                      "on-primary-container": "#8aa4cf",
+                      "on-tertiary-fixed": "#231b00",
+                      "primary-container": "#1e3a5f",
+                      "on-tertiary-container": "#4e3e00",
+                      "secondary-fixed": "#dbe1ff",
+                      "error": "#ba1a1a",
+                      "on-secondary-container": "#fefcff",
+                      "surface-container-low": "#eff4ff",
+                      "on-tertiary": "#ffffff",
+                      "on-primary-fixed": "#001c3b",
+                      "primary": "#022448",
+                      "on-surface": "#0b1c30",
+                      "on-error-container": "#93000a",
+                      "inverse-on-surface": "#eaf1ff",
+                      "surface-container-lowest": "#ffffff",
+                      "surface": "#f8f9ff",
+                      "on-primary": "#ffffff",
+                      "on-tertiary-fixed-variant": "#574500",
+                      "tertiary-fixed": "#ffe083",
+                      "outline-variant": "#c4c6cf",
+                      "on-error": "#ffffff",
+                      "surface-bright": "#f8f9ff",
+                      "surface-tint": "#455f87",
+                      "tertiary": "#735c00",
+                      "surface-dim": "#cbdbf5",
+                      "tertiary-fixed-dim": "#eec200",
+                      "secondary-fixed-dim": "#b4c5ff",
+                      "primary-fixed-dim": "#adc8f5",
+                      "surface-container-highest": "#d3e4fe",
+                      "inverse-surface": "#213145",
+                      "primary-fixed": "#d5e3ff",
+                      "outline": "#74777f",
+                      "on-background": "#0b1c30",
+                      "on-secondary-fixed-variant": "#003ea8"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "sm": "8px",
+                      "base": "4px",
+                      "md": "16px",
+                      "lg": "24px",
+                      "container-max": "1440px",
+                      "xs": "4px",
+                      "xl": "32px",
+                      "gutter": "20px"
+              },
+              "fontFamily": {
+                      "code-block": [
+                              "spaceGrotesk"
+                      ],
+                      "table-data": [
+                              "spaceGrotesk"
+                      ],
+                      "h3": [
+                              "manrope"
+                      ],
+                      "h2": [
+                              "manrope"
+                      ],
+                      "label-caps": [
+                              "inter"
+                      ],
+                      "h1": [
+                              "manrope"
+                      ],
+                      "body-sm": [
+                              "inter"
+                      ],
+                      "body-base": [
+                              "inter"
+                      ]
+              },
+              "fontSize": {
+                      "code-block": [
+                              "14px",
+                              {
+                                      "lineHeight": "22px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "table-data": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "h3": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "h2": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "h1": [
+                              "30px",
+                              {
+                                      "lineHeight": "38px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-base": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+</head>
+<body class="bg-background text-on-background font-body-base min-h-screen flex">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-primary-container text-white border-r border-slate-800 flex flex-col overflow-y-auto hidden md:flex z-20">
+<div class="p-6">
+<h1 class="text-xl font-black text-white font-h2 text-h2 tracking-tight">ProCode</h1>
+<p class="text-on-primary-container text-body-sm mt-1">ICPC Regional</p>
+<p class="text-xs text-secondary-fixed-dim mt-1 font-medium">Phase 1: Live</p>
+</div>
+<nav class="flex-1 mt-4 px-2">
+<ul class="space-y-1">
+<li>
+<a class="flex items-center gap-3 text-slate-300 py-3 px-4 opacity-80 hover:bg-white/10 hover:opacity-100 transition-all font-body-sm text-body-sm rounded-lg" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">grid_view</span>
+                        Dashboard
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-3 bg-blue-600/20 text-white border-l-[3px] border-blue-500 py-3 px-4 transition-all font-body-sm text-body-sm rounded-r-lg" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">leaderboard</span>
+                        Scoreboard
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-3 text-slate-300 py-3 px-4 opacity-80 hover:bg-white/10 hover:opacity-100 transition-all font-body-sm text-body-sm rounded-lg" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">code</span>
+                        Problem Set
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-3 text-slate-300 py-3 px-4 opacity-80 hover:bg-white/10 hover:opacity-100 transition-all font-body-sm text-body-sm rounded-lg" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">history</span>
+                        My Submissions
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-3 text-slate-300 py-3 px-4 opacity-80 hover:bg-white/10 hover:opacity-100 transition-all font-body-sm text-body-sm rounded-lg" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">chat_bubble</span>
+                        Clarifications
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-3 text-slate-300 py-3 px-4 opacity-80 hover:bg-white/10 hover:opacity-100 transition-all font-body-sm text-body-sm rounded-lg" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">gavel</span>
+                        Rules
+                    </a>
+</li>
+</ul>
+</nav>
+<div class="p-4 mt-auto">
+<button class="w-full py-2.5 bg-secondary text-white rounded-md font-body-sm font-medium hover:bg-secondary/90 transition-colors shadow-sm mb-4">
+                Submit Solution
+            </button>
+<ul class="space-y-1">
+<li>
+<a class="flex items-center gap-3 text-slate-400 py-2 px-4 opacity-80 hover:text-white hover:opacity-100 transition-all font-body-sm text-body-sm rounded-lg" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">help</span>
+                        Support
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-3 text-slate-400 py-2 px-4 opacity-80 hover:text-white hover:opacity-100 transition-all font-body-sm text-body-sm rounded-lg" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">settings</span>
+                        Settings
+                    </a>
+</li>
+</ul>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 md:ml-64 flex flex-col min-h-screen bg-background">
+<!-- TopNavBar -->
+<header class="bg-surface-container-lowest flex justify-between items-center w-full px-6 h-16 border-b border-outline-variant/30 sticky top-0 z-10">
+<div class="flex items-center gap-4">
+<!-- Mobile Menu Button -->
+<button class="md:hidden text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h2 class="font-h3 text-h3 text-on-surface font-semibold hidden sm:block">ACM University Spring Contest</h2>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 bg-surface-container py-1.5 px-4 rounded-full border border-surface-dim/50">
+<span class="material-symbols-outlined text-secondary text-[20px]" style="font-variation-settings: 'FILL' 0;">timer</span>
+<span class="font-code-block text-code-block text-primary font-medium tracking-wide">02:14:36</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-variant border border-outline-variant overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="Default user profile avatar with blue background and white initial" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7pJzXZOxMOtJnY_MeDWednEv_fSCsbNChyipTrLYc7Z43ezjj1g7ICzSHdo557_nsod4E0Q7bYaMy4V8UWPfz8eOUdkd-bNll5KlJHkWaRaa2IMXC_awJNM2CGAbdDA_2QOm1ZnU6IW9b6a_6IFOAKQfAOyeSgBcDAMlmpx5bEYnrP6kr1DPcBrKLwmEfMLxbitZyvum1BYOILXCvG6kO2UYlYgNZBhc44PvAg8umgo8n7ZJNJEPs4LYITixKplfqPkTCwI6W5PY"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<div class="flex-1 p-6 md:p-8 lg:px-12 max-w-[1440px] w-full mx-auto">
+<div class="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+<div>
+<h1 class="font-h1 text-h1 text-on-surface">Live Scoreboard</h1>
+<p class="text-on-surface-variant font-body-base text-body-base mt-1">Standings are updated in real-time. Final frozen hour begins in 14 minutes.</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-4 py-2 bg-surface-container-lowest border border-outline-variant text-on-surface font-body-sm text-body-sm font-medium rounded-md hover:bg-surface-container-low transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">filter_list</span> Filter
+                    </button>
+<button class="px-4 py-2 bg-surface-container-lowest border border-outline-variant text-on-surface font-body-sm text-body-sm font-medium rounded-md hover:bg-surface-container-low transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">download</span> Export
+                    </button>
+</div>
+</div>
+<!-- Scoreboard Table Card -->
+<div class="bg-surface-container-lowest border border-outline-variant/50 rounded-xl overflow-hidden shadow-sm">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse min-w-[800px]">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant/30 font-label-caps text-label-caps text-on-surface-variant uppercase">
+<th class="py-4 px-6 w-16 text-center">Rank</th>
+<th class="py-4 px-6 min-w-[200px]">Team Name</th>
+<th class="py-4 px-4 text-center w-24">Solved</th>
+<th class="py-4 px-4 text-center w-24">Penalty</th>
+<th class="py-4 px-4 text-center w-32 border-l border-outline-variant/20">
+<div class="flex flex-col items-center">
+<span class="font-bold text-on-surface">A</span>
+<span class="text-[10px] text-on-surface-variant/70 font-normal normal-case mt-0.5">Graph Theory</span>
+</div>
+</th>
+<th class="py-4 px-4 text-center w-32 border-l border-outline-variant/20">
+<div class="flex flex-col items-center">
+<span class="font-bold text-on-surface">B</span>
+<span class="text-[10px] text-on-surface-variant/70 font-normal normal-case mt-0.5">Dynamic Prog</span>
+</div>
+</th>
+<th class="py-4 px-4 text-center w-32 border-l border-outline-variant/20">
+<div class="flex flex-col items-center">
+<span class="font-bold text-on-surface">C</span>
+<span class="text-[10px] text-on-surface-variant/70 font-normal normal-case mt-0.5">String Search</span>
+</div>
+</th>
+</tr>
+</thead>
+<tbody class="font-table-data text-table-data text-on-surface divide-y divide-outline-variant/20">
+<!-- Rank 1 -->
+<tr class="hover:bg-surface-container-lowest/50 transition-colors bg-[#f8fafc]">
+<td class="py-3 px-6 text-center">
+<div class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-tertiary-fixed text-tertiary font-bold shadow-sm border border-tertiary-fixed-dim/30">
+<span class="material-symbols-outlined text-[16px] mr-0.5" style="font-variation-settings: 'FILL' 1;">emoji_events</span> 1
+                                    </div>
+</td>
+<td class="py-3 px-6 font-semibold text-primary">team-alpha</td>
+<td class="py-3 px-4 text-center font-bold text-on-surface">2</td>
+<td class="py-3 px-4 text-center text-on-surface-variant">145</td>
+<!-- Prob A -->
+<td class="py-3 px-4 text-center border-l border-outline-variant/20">
+<div class="bg-[#d1fae5] text-[#065f46] border border-[#a7f3d0] rounded p-1.5 flex flex-col items-center justify-center min-h-[44px]">
+<span class="font-bold">+</span>
+<span class="text-[11px] opacity-80 font-normal">43m</span>
+</div>
+</td>
+<!-- Prob B -->
+<td class="py-3 px-4 text-center border-l border-outline-variant/20">
+<div class="bg-error-container/40 text-on-error-container border border-error-container rounded p-1.5 flex flex-col items-center justify-center min-h-[44px]">
+<span class="font-bold">-2</span>
+</div>
+</td>
+<!-- Prob C -->
+<td class="py-3 px-4 text-center border-l border-outline-variant/20">
+<div class="bg-[#d1fae5] text-[#065f46] border border-[#a7f3d0] rounded p-1.5 flex flex-col items-center justify-center min-h-[44px]">
+<span class="font-bold">+</span>
+<span class="text-[11px] opacity-80 font-normal">102m</span>
+</div>
+</td>
+</tr>
+<!-- Rank 2 -->
+<tr class="hover:bg-surface-container-lowest/50 transition-colors">
+<td class="py-3 px-6 text-center">
+<div class="inline-flex items-center justify-center w-7 h-7 rounded bg-surface-container-high text-on-surface-variant font-semibold">
+                                        2
+                                    </div>
+</td>
+<td class="py-3 px-6 font-semibold text-primary">syntax-squad</td>
+<td class="py-3 px-4 text-center font-bold text-on-surface">1</td>
+<td class="py-3 px-4 text-center text-on-surface-variant">91</td>
+<!-- Prob A -->
+<td class="py-3 px-4 text-center border-l border-outline-variant/20">
+<div class="bg-[#d1fae5] text-[#065f46] border border-[#a7f3d0] rounded p-1.5 flex flex-col items-center justify-center min-h-[44px]">
+<span class="font-bold">+</span>
+<span class="text-[11px] opacity-80 font-normal">91m</span>
+</div>
+</td>
+<!-- Prob B -->
+<td class="py-3 px-4 text-center border-l border-outline-variant/20">
+<div class="bg-error-container/40 text-on-error-container border border-error-container rounded p-1.5 flex flex-col items-center justify-center min-h-[44px]">
+<span class="font-bold">-1</span>
+</div>
+</td>
+<!-- Prob C -->
+<td class="py-3 px-4 text-center border-l border-outline-variant/20">
+<span class="text-outline text-lg block min-h-[44px] leading-[44px]">-</span>
+</td>
+</tr>
+<!-- Rank 3 -->
+<tr class="hover:bg-surface-container-lowest/50 transition-colors">
+<td class="py-3 px-6 text-center">
+<div class="inline-flex items-center justify-center w-7 h-7 rounded bg-surface-container text-on-surface-variant font-medium">
+                                        3
+                                    </div>
+</td>
+<td class="py-3 px-6 font-semibold text-primary">byte-benders</td>
+<td class="py-3 px-4 text-center font-bold text-on-surface">0</td>
+<td class="py-3 px-4 text-center text-on-surface-variant">0</td>
+<!-- Prob A -->
+<td class="py-3 px-4 text-center border-l border-outline-variant/20">
+<div class="bg-error-container/40 text-on-error-container border border-error-container rounded p-1.5 flex flex-col items-center justify-center min-h-[44px]">
+<span class="font-bold">-3</span>
+</div>
+</td>
+<!-- Prob B -->
+<td class="py-3 px-4 text-center border-l border-outline-variant/20">
+<span class="text-outline text-lg block min-h-[44px] leading-[44px]">-</span>
+</td>
+<!-- Prob C -->
+<td class="py-3 px-4 text-center border-l border-outline-variant/20">
+<span class="text-outline text-lg block min-h-[44px] leading-[44px]">-</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Footer Legend -->
+<div class="bg-surface-container-lowest border-t border-outline-variant/30 py-3 px-6 flex items-center justify-between gap-4 text-sm flex-wrap">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 bg-[#d1fae5] border border-[#a7f3d0] rounded-sm"></div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Solved</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 bg-error-container/40 border border-error-container rounded-sm"></div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Attempted</span>
+</div>
+</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">
+                        Last updated: Just now
+                    </div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

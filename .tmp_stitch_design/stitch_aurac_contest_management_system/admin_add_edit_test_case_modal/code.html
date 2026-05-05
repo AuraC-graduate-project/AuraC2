@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AuraC² - Add Test Case</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@500;600;700;800&amp;family=Space+Grotesk:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary": "#022448",
+                    "tertiary-container": "#cea700",
+                    "background": "#f8f9ff",
+                    "on-error": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "secondary-fixed": "#dbe1ff",
+                    "on-error-container": "#93000a",
+                    "surface-bright": "#f8f9ff",
+                    "on-secondary-fixed-variant": "#003ea8",
+                    "on-tertiary-container": "#4e3e00",
+                    "surface-tint": "#455f87",
+                    "primary-container": "#1e3a5f",
+                    "on-primary": "#ffffff",
+                    "surface-container-high": "#dce9ff",
+                    "on-secondary-container": "#fefcff",
+                    "error": "#ba1a1a",
+                    "secondary-container": "#316bf3",
+                    "tertiary-fixed-dim": "#eec200",
+                    "secondary-fixed-dim": "#b4c5ff",
+                    "on-tertiary-fixed-variant": "#574500",
+                    "on-secondary-fixed": "#00174b",
+                    "on-primary-container": "#8aa4cf",
+                    "surface-variant": "#d3e4fe",
+                    "secondary": "#0051d5",
+                    "primary-fixed": "#d5e3ff",
+                    "surface-container-lowest": "#ffffff",
+                    "on-tertiary-fixed": "#231b00",
+                    "surface-container": "#e5eeff",
+                    "surface-container-highest": "#d3e4fe",
+                    "surface-container-low": "#eff4ff",
+                    "on-surface": "#0b1c30",
+                    "surface": "#f8f9ff",
+                    "on-surface-variant": "#43474e",
+                    "inverse-on-surface": "#eaf1ff",
+                    "inverse-surface": "#213145",
+                    "tertiary-fixed": "#ffe083",
+                    "on-background": "#0b1c30",
+                    "outline": "#74777f",
+                    "on-primary-fixed-variant": "#2d486d",
+                    "primary-fixed-dim": "#adc8f5",
+                    "inverse-primary": "#adc8f5",
+                    "on-secondary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-primary-fixed": "#001c3b",
+                    "surface-dim": "#cbdbf5",
+                    "outline-variant": "#c4c6cf",
+                    "tertiary": "#735c00"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "xl": "32px",
+                    "md": "16px",
+                    "sm": "8px",
+                    "base": "4px",
+                    "xs": "4px",
+                    "lg": "24px",
+                    "gutter": "20px",
+                    "container-max": "1440px"
+            },
+            "fontFamily": {
+                    "label-caps": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "table-data": ["Space Grotesk"],
+                    "h3": ["Manrope"],
+                    "h2": ["Manrope"],
+                    "h1": ["Manrope"],
+                    "code-block": ["Space Grotesk"],
+                    "body-base": ["Inter"]
+            },
+            "fontSize": {
+                    "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                    "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                    "table-data": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                    "h3": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                    "h2": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                    "h1": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                    "code-block": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+                    "body-base": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        /* Hide scrollbar for textarea line numbers sync illusion */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+</head>
+<body class="bg-background font-body-base text-body-base text-on-background h-screen overflow-hidden flex">
+<!-- SideNavBar (Background Shell) -->
+<nav class="bg-[#1E3A5F] dark:bg-slate-950 text-white font-manrope text-sm h-screen w-64 fixed left-0 top-0 border-r border-slate-800 flat no shadows flex flex-col h-full py-4 z-10">
+<!-- Brand Header -->
+<div class="px-6 pb-6 border-b border-white/10 mb-4 flex flex-col gap-2">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-white/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">school</span>
+</div>
+<span class="text-xl font-extrabold text-white tracking-tight">Global Admin</span>
+</div>
+<span class="text-slate-300 text-xs uppercase tracking-wider font-semibold">Contest Management</span>
+</div>
+<!-- Navigation Links -->
+<div class="flex-1 overflow-y-auto py-2">
+<!-- Inactive -->
+<a class="text-slate-300 flex items-center px-4 py-3 opacity-70 hover:bg-white/5 hover:opacity-100 transition-all gap-3" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+<!-- Inactive -->
+<a class="text-slate-300 flex items-center px-4 py-3 opacity-70 hover:bg-white/5 hover:opacity-100 transition-all gap-3" href="#">
+<span class="material-symbols-outlined">code</span>
+                Contests
+            </a>
+<!-- Inactive -->
+<a class="text-slate-300 flex items-center px-4 py-3 opacity-70 hover:bg-white/5 hover:opacity-100 transition-all gap-3" href="#">
+<span class="material-symbols-outlined">group</span>
+                Teams
+            </a>
+<!-- Active (Test Cases context) -->
+<a class="bg-white/10 text-white border-l-4 border-blue-500 flex items-center px-4 py-3 Active: scale-95 transition-transform gap-3" href="#">
+<span class="material-symbols-outlined">storage</span>
+                Test Cases
+            </a>
+<!-- Inactive -->
+<a class="text-slate-300 flex items-center px-4 py-3 opacity-70 hover:bg-white/5 hover:opacity-100 transition-all gap-3" href="#">
+<span class="material-symbols-outlined">question_answer</span>
+                Clarifications
+            </a>
+</div>
+<!-- Footer Links -->
+<div class="mt-auto border-t border-white/10 pt-4">
+<a class="text-slate-300 flex items-center px-4 py-3 opacity-70 hover:bg-white/5 hover:opacity-100 transition-all gap-3" href="#">
+<span class="material-symbols-outlined">terminal</span>
+                System Logs
+            </a>
+<a class="text-slate-300 flex items-center px-4 py-3 opacity-70 hover:bg-white/5 hover:opacity-100 transition-all gap-3" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+                Support
+            </a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 ml-64 flex flex-col h-screen relative">
+<!-- TopNavBar (Background Shell) -->
+<header class="bg-white dark:bg-slate-950 font-manrope text-sm font-medium docked full-width top-0 border-b border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none flex justify-between items-center w-full px-6 h-16 z-10 shrink-0">
+<!-- Brand/Logo Area (Left) -->
+<div class="flex items-center gap-4">
+<span class="text-lg font-bold text-slate-900 dark:text-slate-100">ICPC Admin</span>
+<!-- Search -->
+<div class="relative ml-4 hidden md:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+<input class="pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent w-64" placeholder="Search test cases..." type="text"/>
+</div>
+</div>
+<!-- Actions (Right) -->
+<div class="flex items-center gap-2">
+<button class="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<button class="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors rounded-full flex items-center justify-center mr-2">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center overflow-hidden">
+<span class="material-symbols-outlined text-blue-600" style="font-variation-settings: 'FILL' 1;">person</span>
+</div>
+</div>
+</header>
+<!-- Mock Canvas Content (Behind Modal) -->
+<main class="flex-1 p-xl overflow-auto bg-background">
+<div class="max-w-container-max mx-auto">
+<div class="flex justify-between items-center mb-xl">
+<h1 class="font-h1 text-h1 text-on-surface">Problem A: Dijkstra's Revenge</h1>
+<button class="bg-secondary text-on-secondary px-4 py-2 rounded font-table-data text-table-data flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                        New Test Case
+                    </button>
+</div>
+<!-- Blurred background elements to imply depth -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-lg shadow-sm opacity-50 blur-[2px]">
+<div class="h-8 bg-surface-variant rounded w-1/4 mb-md"></div>
+<div class="h-4 bg-surface rounded w-full mb-sm"></div>
+<div class="h-4 bg-surface rounded w-full mb-sm"></div>
+<div class="h-4 bg-surface rounded w-3/4"></div>
+</div>
+</div>
+</main>
+<!-- ========================================== -->
+<!-- MODAL OVERLAY: Add/Edit Test-Case          -->
+<!-- ========================================== -->
+<div class="fixed inset-0 bg-on-background/40 backdrop-blur-[2px] z-50 flex items-center justify-center p-md">
+<!-- Modal Container -->
+<div class="bg-surface-container-lowest w-full max-w-[800px] rounded-xl shadow-[0px_10px_15px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden border border-outline-variant">
+<!-- Header -->
+<div class="px-lg py-md border-b border-surface-variant flex justify-between items-center bg-surface-container-lowest">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-outline">data_object</span>
+<h2 class="font-h2 text-h2 text-on-surface">Add Test Case</h2>
+</div>
+<button class="text-on-surface-variant hover:text-on-surface hover:bg-surface p-1 rounded transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Body -->
+<div class="p-lg flex flex-col gap-xl overflow-y-auto max-h-[716px] bg-surface-bright">
+<!-- Alert/Info Banner -->
+<div class="bg-surface-container-low border-l-4 border-secondary p-md rounded-r-lg flex gap-md">
+<span class="material-symbols-outlined text-secondary mt-0.5">info</span>
+<div>
+<p class="font-body-sm text-body-sm text-on-surface font-medium">Formatting Requirements</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Ensure input data strictly follows the problem description constraints. Extraneous whitespace may cause evaluation failures.</p>
+</div>
+</div>
+<!-- Input Data Field -->
+<div class="flex flex-col gap-sm">
+<div class="flex justify-between items-end">
+<label class="font-label-caps text-label-caps text-on-surface">Input Data (stdin)</label>
+<span class="font-body-sm text-body-sm text-outline text-[12px]">Max 50MB</span>
+</div>
+<div class="flex border border-outline-variant rounded-lg overflow-hidden bg-surface focus-within:border-secondary focus-within:ring-1 focus-within:ring-secondary transition-all shadow-sm">
+<!-- Simulated Line Numbers -->
+<div class="bg-surface-variant/30 text-outline font-code-block text-code-block py-md px-md text-right select-none border-r border-outline-variant min-w-[3.5rem] flex flex-col items-end">
+<span>1</span>
+<span>2</span>
+<span>3</span>
+<span>4</span>
+<span>5</span>
+<span>6</span>
+</div>
+<!-- Textarea -->
+<textarea class="w-full bg-transparent border-none focus:ring-0 font-code-block text-code-block p-md text-on-surface resize-y min-h-[160px] whitespace-pre no-scrollbar leading-[22px]" placeholder="5 4
+1 2 10
+2 3 20
+..." spellcheck="false"></textarea>
+</div>
+</div>
+<!-- Expected Output Field -->
+<div class="flex flex-col gap-sm">
+<div class="flex justify-between items-end">
+<label class="font-label-caps text-label-caps text-on-surface">Expected Output (stdout)</label>
+</div>
+<div class="flex border border-outline-variant rounded-lg overflow-hidden bg-surface focus-within:border-secondary focus-within:ring-1 focus-within:ring-secondary transition-all shadow-sm">
+<!-- Simulated Line Numbers -->
+<div class="bg-surface-variant/30 text-outline font-code-block text-code-block py-md px-md text-right select-none border-r border-outline-variant min-w-[3.5rem] flex flex-col items-end">
+<span>1</span>
+<span>2</span>
+</div>
+<!-- Textarea -->
+<textarea class="w-full bg-transparent border-none focus:ring-0 font-code-block text-code-block p-md text-on-surface resize-y min-h-[120px] whitespace-pre no-scrollbar leading-[22px]" placeholder="30
+Path: 1 -&gt; 2 -&gt; 3" spellcheck="false"></textarea>
+</div>
+</div>
+<!-- Visibility Toggle -->
+<div class="bg-surface-container rounded-lg border border-surface-variant p-md flex items-start gap-md mt-sm">
+<div class="pt-0.5 flex items-center h-5">
+<input class="w-5 h-5 text-secondary bg-surface-container-lowest border-outline rounded focus:ring-secondary focus:ring-2 cursor-pointer" id="public-test-case" type="checkbox"/>
+</div>
+<div class="flex flex-col">
+<label class="font-body-base text-body-base text-on-surface font-semibold cursor-pointer" for="public-test-case">Public Test Case</label>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-xs leading-relaxed">
+                                Public test cases are shown directly to teams as sample inputs/outputs in the problem description. Private cases remain hidden and are strictly used for backend evaluation.
+                            </p>
+</div>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="px-lg py-md border-t border-surface-variant bg-surface-container-lowest flex justify-end gap-md items-center">
+<button class="px-lg py-[8px] rounded font-table-data text-table-data bg-transparent text-on-surface-variant hover:bg-surface transition-colors">
+                        Cancel
+                    </button>
+<button class="px-lg py-[8px] rounded font-table-data text-table-data bg-secondary text-on-secondary hover:bg-[#003ea8] transition-colors flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">save</span>
+                        Save Test Case
+                    </button>
+</div>
+</div>
+</div>
+<!-- End Modal Overlay -->
+</div>
+</body></html>

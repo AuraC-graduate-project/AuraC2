@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AuraC² - Team Contest Workspace</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;family=Space+Grotesk:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#eff4ff",
+                        "outline-variant": "#c4c6cf",
+                        "on-secondary-fixed": "#00174b",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-primary-container": "#8aa4cf",
+                        "tertiary-fixed": "#ffe083",
+                        "primary": "#022448",
+                        "on-primary-fixed-variant": "#2d486d",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "tertiary-container": "#cea700",
+                        "on-tertiary-fixed": "#231b00",
+                        "inverse-primary": "#adc8f5",
+                        "surface-container-highest": "#d3e4fe",
+                        "on-tertiary-fixed-variant": "#574500",
+                        "on-secondary-container": "#fefcff",
+                        "on-primary": "#ffffff",
+                        "background": "#f8f9ff",
+                        "on-surface-variant": "#43474e",
+                        "surface-container": "#e5eeff",
+                        "surface-container-high": "#dce9ff",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#cbdbf5",
+                        "surface-tint": "#455f87",
+                        "on-surface": "#0b1c30",
+                        "secondary": "#0051d5",
+                        "on-error-container": "#93000a",
+                        "secondary-container": "#316bf3",
+                        "primary-container": "#1e3a5f",
+                        "inverse-surface": "#213145",
+                        "primary-fixed-dim": "#adc8f5",
+                        "surface-bright": "#f8f9ff",
+                        "on-tertiary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed": "#dbe1ff",
+                        "surface-variant": "#d3e4fe",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed": "#001c3b",
+                        "on-secondary-fixed-variant": "#003ea8",
+                        "tertiary": "#735c00",
+                        "on-background": "#0b1c30",
+                        "on-tertiary-container": "#4e3e00",
+                        "tertiary-fixed-dim": "#eec200",
+                        "outline": "#74777f",
+                        "on-secondary": "#ffffff",
+                        "surface": "#f8f9ff",
+                        "primary-fixed": "#d5e3ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-max": "1440px",
+                        "base": "4px",
+                        "gutter": "20px",
+                        "xl": "32px",
+                        "lg": "24px",
+                        "xs": "4px",
+                        "md": "16px",
+                        "sm": "8px"
+                    },
+                    "fontFamily": {
+                        "h3": ["manrope"],
+                        "h2": ["manrope"],
+                        "table-data": ["spaceGrotesk"],
+                        "body-base": ["inter"],
+                        "h1": ["manrope"],
+                        "body-sm": ["inter"],
+                        "code-block": ["spaceGrotesk"],
+                        "label-caps": ["inter"]
+                    },
+                    "fontSize": {
+                        "h3": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "h2": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "table-data": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "body-base": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "h1": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "code-block": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 4px;
+        }
+        .editor-line-numbers {
+            user-select: none;
+            color: #94a3b8;
+            text-align: right;
+            padding-right: 12px;
+            border-right: 1px solid #e2e8f0;
+            margin-right: 12px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-base text-body-base h-screen flex flex-col overflow-hidden">
+<!-- TopAppBar from JSON (Modified for Workspace context) -->
+<header class="fixed top-0 right-0 left-0 h-16 flex items-center justify-between px-6 z-40 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm font-['Manrope'] text-sm tracking-tight text-slate-500 dark:text-slate-400 font-medium">
+<div class="flex items-center gap-6">
+<span class="text-xl font-extrabold text-[#1E3A5F] dark:text-white tracking-tighter">AuraC²</span>
+<div class="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+<div class="flex items-center gap-3">
+<span class="font-h3 text-h3 text-on-surface">ACM ICPC Regional 2024</span>
+<span class="bg-surface-container-high text-primary px-2 py-1 rounded-DEFAULT font-label-caps text-label-caps flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-secondary"></span> RUNNING
+                </span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 bg-surface px-3 py-1.5 rounded-lg border border-outline-variant">
+<span class="material-symbols-outlined text-[18px]">timer</span>
+<span class="font-table-data text-table-data text-primary font-bold">02:14:36</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors p-2 rounded-full cursor-pointer">notifications</span>
+<span class="material-symbols-outlined hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors p-2 rounded-full cursor-pointer">help_outline</span>
+</div>
+<div class="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<div class="font-body-sm text-body-sm font-semibold text-on-surface">team-alpha</div>
+</div>
+<img alt="Team avatar" class="w-8 h-8 rounded-full border border-outline-variant object-cover" data-alt="Close up of diverse tech team working together looking at a screen in a modern office" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBwuZdEmwu-xV717GGCvL80qWQA9gxbbukqlMGSuTPaYFozM2b53SHy8v_T2ZlBR58orRChfHJwh3GjCPV1jXeblMnwTRONuyWG2wUjdokanKuMrQzjI4DAx1MgsYrDROOXkdhgY8ue6c4EFlAy40rc84XzqSWEQK6YWkZrCs4aBORnIwavsDK-S78XGV_f7NdQYBTftlUWW3nEgDF4dPPx1Jhm6RFH4EBoOcXCbjqv2aiMLV6fH0UTtX5r8pNr9CSikgIG04Z3Wgs"/>
+</div>
+</div>
+</header>
+<!-- SideNavBar from JSON (Semantic Context: Workspace Navigation) -->
+<nav class="fixed left-0 top-16 bottom-0 w-64 flex flex-col z-50 bg-[#1E3A5F] dark:bg-slate-950 font-['Manrope'] text-sm font-medium text-white border-r border-slate-800">
+<div class="p-4">
+<div class="text-slate-400 font-label-caps text-label-caps mb-4 uppercase tracking-wider">Problems</div>
+<ul class="space-y-1">
+<!-- Active Navigation Item (Problem A is currently viewed) -->
+<li>
+<a class="bg-blue-600/20 text-white border-l-4 border-blue-500 px-4 py-3 flex items-center gap-3 w-full hover:bg-white/10 transition-all duration-200" href="#">
+<span class="w-6 h-6 rounded-full bg-secondary flex items-center justify-center font-table-data text-table-data text-white">A</span>
+<span>Array Balance</span>
+<span class="ml-auto material-symbols-outlined text-[16px] text-emerald-400">check_circle</span>
+</a>
+</li>
+<!-- Inactive Navigation Items -->
+<li>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 w-full border-l-4 border-transparent hover:bg-white/10 transition-all duration-200" href="#">
+<span class="w-6 h-6 rounded-full bg-surface-tint text-white flex items-center justify-center font-table-data text-table-data">B</span>
+<span>Campus Shortest Path</span>
+</a>
+</li>
+<li>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 w-full border-l-4 border-transparent hover:bg-white/10 transition-all duration-200" href="#">
+<span class="w-6 h-6 rounded-full bg-surface-tint text-white flex items-center justify-center font-table-data text-table-data">C</span>
+<span>Quantum Queue</span>
+<span class="ml-auto material-symbols-outlined text-[16px] text-rose-400">error</span>
+</a>
+</li>
+<li>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 w-full border-l-4 border-transparent hover:bg-white/10 transition-all duration-200 opacity-50" href="#">
+<span class="w-6 h-6 rounded-full bg-surface-tint text-white flex items-center justify-center font-table-data text-table-data">D</span>
+<span>Network Flow</span>
+<span class="ml-auto material-symbols-outlined text-[16px]">lock</span>
+</a>
+</li>
+</ul>
+</div>
+<div class="mt-auto p-4 border-t border-slate-800">
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 w-full border-l-4 border-transparent hover:bg-white/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Overview</span>
+</a>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 w-full border-l-4 border-transparent hover:bg-white/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">forum</span>
+<span>Clarifications <span class="bg-secondary text-white text-[10px] px-1.5 py-0.5 rounded-full ml-1">2</span></span>
+</a>
+</div>
+</nav>
+<!-- Main Workspace Area -->
+<main class="ml-64 mt-16 flex-1 flex h-[calc(100vh-64px)] overflow-hidden bg-surface-container-low">
+<!-- Center Panel: Problem Statement -->
+<div class="w-1/2 flex flex-col border-r border-outline-variant bg-on-primary">
+<div class="flex-1 overflow-y-auto custom-scrollbar p-8">
+<div class="max-w-2xl mx-auto">
+<div class="mb-8 border-b border-surface-container pb-6">
+<h1 class="font-h1 text-h1 text-primary mb-2">A. Array Balance</h1>
+<div class="flex items-center gap-4 font-body-sm text-body-sm text-on-surface-variant">
+<span>Time Limit: 2.0s</span>
+<span>Memory Limit: 256MB</span>
+</div>
+</div>
+<div class="space-y-6 text-on-surface font-body-base text-body-base">
+<p>You are given an array of <code class="font-code-block text-code-block bg-surface-container px-1 rounded">n</code> positive integers. You need to divide the array into two contiguous subsegments such that the absolute difference between the sums of the elements in the two subsegments is minimized.</p>
+<p>Formally, you need to find an index <code class="font-code-block text-code-block bg-surface-container px-1 rounded">k</code> (1 ≤ k &lt; n) such that the value |(a₁ + a₂ + ... + aₖ) - (aₖ₊₁ + ... + aₙ)| is as small as possible.</p>
+<div class="mt-8">
+<h3 class="font-h3 text-h3 text-on-surface mb-3">Input</h3>
+<p class="mb-2">The first line contains a single integer <code class="font-code-block text-code-block bg-surface-container px-1 rounded">t</code> (1 ≤ t ≤ 10⁴) — the number of test cases.</p>
+<p>For each test case, the first line contains an integer <code class="font-code-block text-code-block bg-surface-container px-1 rounded">n</code> (2 ≤ n ≤ 2·10⁵) — the length of the array. The second line contains <code class="font-code-block text-code-block bg-surface-container px-1 rounded">n</code> integers a₁, a₂, ..., aₙ (1 ≤ aᵢ ≤ 10⁹).</p>
+</div>
+<div class="mt-8">
+<h3 class="font-h3 text-h3 text-on-surface mb-3">Output</h3>
+<p>For each test case, output a single integer — the minimum possible absolute difference.</p>
+</div>
+<div class="mt-8 grid grid-cols-2 gap-4">
+<div>
+<h4 class="font-label-caps text-label-caps text-on-surface-variant mb-2 uppercase tracking-wider">Example Input</h4>
+<pre class="bg-surface-bright border border-outline-variant rounded-lg p-4 font-code-block text-code-block text-on-surface whitespace-pre">3
+5
+3 1 4 1 5
+2
+10 10
+4
+1 2 3 4</pre>
+</div>
+<div>
+<h4 class="font-label-caps text-label-caps text-on-surface-variant mb-2 uppercase tracking-wider">Example Output</h4>
+<pre class="bg-surface-bright border border-outline-variant rounded-lg p-4 font-code-block text-code-block text-on-surface whitespace-pre">2
+0
+2</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Panel: Quick Submissions View -->
+<div class="h-48 border-t border-outline-variant bg-surface flex flex-col">
+<div class="px-4 py-2 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
+<span class="font-label-caps text-label-caps text-on-surface uppercase tracking-wider">Recent Submissions (Problem A)</span>
+<a class="font-body-sm text-body-sm text-secondary hover:underline" href="#">View All</a>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar p-2">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="font-label-caps text-label-caps text-on-surface-variant border-b border-surface-container">
+<th class="p-2 font-medium">ID</th>
+<th class="p-2 font-medium">Time</th>
+<th class="p-2 font-medium">Language</th>
+<th class="p-2 font-medium">Status</th>
+</tr>
+</thead>
+<tbody class="font-table-data text-table-data text-on-surface">
+<tr class="hover:bg-surface-bright transition-colors border-b border-surface-container border-dashed">
+<td class="p-2">#10485</td>
+<td class="p-2 text-on-surface-variant">10 mins ago</td>
+<td class="p-2">C++17</td>
+<td class="p-2"><span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-semibold">Accepted</span></td>
+</tr>
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="p-2">#10472</td>
+<td class="p-2 text-on-surface-variant">15 mins ago</td>
+<td class="p-2">C++17</td>
+<td class="p-2"><span class="bg-rose-100 text-rose-800 px-2 py-0.5 rounded text-xs font-semibold">Wrong Answer on Test 4</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Right Panel: Code Editor -->
+<div class="w-1/2 flex flex-col bg-[#1e1e1e]">
+<div class="flex items-center justify-between px-4 py-2 border-b border-[#333] bg-[#252526]">
+<div class="flex items-center gap-4">
+<select class="bg-[#3c3c3c] text-[#cccccc] border-none rounded px-3 py-1 font-body-sm text-body-sm focus:ring-1 focus:ring-secondary outline-none cursor-pointer">
+<option value="cpp17">C++17 (GCC 11.2)</option>
+<option value="python3">Python 3.10</option>
+<option value="java">Java 17</option>
+</select>
+<span class="text-[#858585] font-body-sm text-body-sm">solution.cpp</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-4 py-1.5 bg-white border border-[#e2e8f0] text-[#1E3A5F] rounded font-body-sm text-body-sm font-medium hover:bg-slate-50 transition-colors">Run Custom Tests</button>
+<button class="px-4 py-1.5 bg-secondary text-white rounded font-body-sm text-body-sm font-medium hover:bg-blue-700 transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.1)] flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">cloud_upload</span>
+                        Submit Solution
+                    </button>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar p-4 font-code-block text-code-block text-[#d4d4d4] flex">
+<div class="editor-line-numbers">
+                    1<br/>2<br/>3<br/>4<br/>5<br/>6<br/>7<br/>8<br/>9<br/>10<br/>11<br/>12<br/>13<br/>14<br/>15<br/>16
+                </div>
+<div class="flex-1 whitespace-pre">
+<span class="text-[#c586c0]">#include</span> <span class="text-[#ce9178]">&lt;iostream&gt;</span>
+<span class="text-[#c586c0]">#include</span> <span class="text-[#ce9178]">&lt;vector&gt;</span>
+<span class="text-[#c586c0]">#include</span> <span class="text-[#ce9178]">&lt;numeric&gt;</span>
+<span class="text-[#569cd6]">using</span> <span class="text-[#569cd6]">namespace</span> std;
+
+<span class="text-[#569cd6]">void</span> <span class="text-[#dcdcaa]">solve</span>() {
+    <span class="text-[#569cd6]">int</span> n;
+    cin &gt;&gt; n;
+    vector&lt;<span class="text-[#569cd6]">long</span> <span class="text-[#569cd6]">long</span>&gt; a(n);
+    <span class="text-[#569cd6]">long</span> <span class="text-[#569cd6]">long</span> total_sum = <span class="text-[#b5cea8]">0</span>;
+    <span class="text-[#c586c0]">for</span> (<span class="text-[#569cd6]">int</span> i = <span class="text-[#b5cea8]">0</span>; i &lt; n; ++i) {
+        cin &gt;&gt; a[i];
+        total_sum += a[i];
+    }
+    <span class="text-[#6a9955]">// Logic goes here</span>
+}
+                </div>
+</div>
+</div>
+</main>
+</body></html>

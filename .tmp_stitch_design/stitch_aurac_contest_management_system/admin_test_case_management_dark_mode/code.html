@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Test-Case Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#ffdcc6",
+                        "surface-container": "#1d2027",
+                        "inverse-on-surface": "#2e3038",
+                        "tertiary-fixed-dim": "#ffb786",
+                        "primary": "#adc6ff",
+                        "tertiary": "#ffb786",
+                        "on-primary": "#002e6a",
+                        "surface": "#10131a",
+                        "on-tertiary-fixed-variant": "#723600",
+                        "secondary-container": "#3f465c",
+                        "on-tertiary-container": "#461f00",
+                        "on-secondary": "#283044",
+                        "secondary-fixed-dim": "#bec6e0",
+                        "on-secondary-fixed-variant": "#3f465c",
+                        "primary-fixed": "#d8e2ff",
+                        "on-secondary-fixed": "#131b2e",
+                        "surface-bright": "#363941",
+                        "error": "#ffb4ab",
+                        "on-primary-container": "#00285d",
+                        "on-error-container": "#ffdad6",
+                        "surface-tint": "#adc6ff",
+                        "surface-container-high": "#272a31",
+                        "primary-fixed-dim": "#adc6ff",
+                        "on-tertiary-fixed": "#311400",
+                        "secondary": "#bec6e0",
+                        "outline-variant": "#424754",
+                        "secondary-fixed": "#dae2fd",
+                        "surface-container-low": "#191b23",
+                        "on-secondary-container": "#adb4ce",
+                        "on-primary-fixed-variant": "#004395",
+                        "on-primary-fixed": "#001a42",
+                        "on-tertiary": "#502400",
+                        "surface-variant": "#32353c",
+                        "primary-container": "#4d8eff",
+                        "tertiary-container": "#df7412",
+                        "on-error": "#690005",
+                        "outline": "#8c909f",
+                        "surface-container-lowest": "#0b0e15",
+                        "on-surface": "#e1e2ec",
+                        "on-background": "#e1e2ec",
+                        "surface-dim": "#10131a",
+                        "inverse-surface": "#e1e2ec",
+                        "surface-container-highest": "#32353c",
+                        "background": "#10131a",
+                        "on-surface-variant": "#c2c6d6",
+                        "inverse-primary": "#005ac2",
+                        "error-container": "#93000a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "1rem",
+                        "xxl": "3rem",
+                        "xs": "0.25rem",
+                        "sm": "0.5rem",
+                        "xl": "2rem",
+                        "lg": "1.5rem"
+                    },
+                    "fontFamily": {
+                        "h1": ["Manrope"],
+                        "body-lg": ["Manrope"],
+                        "label-sm": ["Manrope"],
+                        "body-sm": ["Manrope"],
+                        "h3": ["Manrope"],
+                        "label-md": ["Manrope"],
+                        "h2": ["Manrope"],
+                        "body-md": ["Manrope"],
+                        "display": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "h1": ["2.25rem", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "body-lg": ["1.125rem", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "label-sm": ["0.75rem", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "body-sm": ["0.875rem", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "h3": ["1.5rem", { "lineHeight": "1.4", "fontWeight": "600" }],
+                        "label-md": ["0.875rem", { "lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "h2": ["1.875rem", { "lineHeight": "1.3", "fontWeight": "600" }],
+                        "body-md": ["1rem", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "display": ["3.75rem", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-md overflow-hidden">
+<!-- TopNavBar -->
+<nav class="bg-[#1E293B] text-[#3B82F6] font-manrope antialiased tracking-tight docked full-width top-0 z-50 border-b border-[#334155] flat no shadows flex justify-between items-center h-16 px-6 w-full shrink-0">
+<div class="flex items-center gap-xl">
+<span class="text-lg font-bold text-[#F1F5F9] tracking-tighter">CodeMetric Pro</span>
+<div class="hidden md:flex items-center gap-md h-full">
+<a class="text-[#3B82F6] border-b-2 border-[#3B82F6] pb-1 h-16 flex items-center hover:text-[#F1F5F9] hover:bg-[#334155]/50 transition-all duration-200 ease-in-out px-sm" href="#">Dashboard</a>
+<a class="text-[#94A3B8] h-16 flex items-center hover:text-[#F1F5F9] hover:bg-[#334155]/50 transition-all duration-200 ease-in-out px-sm" href="#">Contests</a>
+<a class="text-[#94A3B8] h-16 flex items-center hover:text-[#F1F5F9] hover:bg-[#334155]/50 transition-all duration-200 ease-in-out px-sm" href="#">Standings</a>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<button class="text-[#94A3B8] hover:text-[#F1F5F9] transition-all duration-200 ease-in-out hover:bg-[#334155]/50 p-sm rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-[#94A3B8] hover:text-[#F1F5F9] transition-all duration-200 ease-in-out hover:bg-[#334155]/50 p-sm rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<img alt="User profile avatar" class="w-8 h-8 rounded-full border border-[#334155]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCbO91q8CiIKRzUrE5CgSSgIY2mCeYHfjowNwlziwKAe1PAp6xq5SUuok9F8zhV4eggBwoFF73nOFy5fe6PWAo1TKvTOylb8962pqoJQNOCK5ihUcD3Ks0kT9O2uBX6e-k-TphfHcsotsvf7oi3OLWrEhplnNMTJ3n9CRkSn7hplZTU3FGuFwGH_zEnG6umzydMzrxrHFAjXo1rdquE-2bcN4DX8EjUWri8P8Sl8MYLGmu1fNGz9As5qYh22S0OfFIDABTcFdkfTU"/>
+</div>
+</nav>
+<div class="flex flex-1 overflow-hidden">
+<!-- SideNavBar -->
+<aside class="bg-[#0F172A] text-[#3B82F6] font-manrope text-sm font-medium docked left-0 h-full w-64 border-r border-[#334155] flat no shadows flex flex-col py-4 space-y-2 shrink-0 overflow-y-auto hidden md:flex">
+<div class="px-6 mb-xl flex items-center gap-sm">
+<div class="w-10 h-10 bg-[#1E293B] rounded flex items-center justify-center border border-[#334155]">
+<span class="material-symbols-outlined text-[#94A3B8]">school</span>
+</div>
+<div>
+<div class="text-[#F1F5F9] font-bold text-sm">ACM-ICPC Portal</div>
+<div class="text-[10px] font-black uppercase text-[#94A3B8] tracking-wider mt-0.5">Admin Console</div>
+</div>
+</div>
+<div class="flex-1 flex flex-col gap-1 px-sm">
+<a class="flex items-center gap-md px-md py-sm rounded text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+                    Overview
+                </a>
+<a class="flex items-center gap-md px-md py-sm bg-[#334155] text-[#F1F5F9] border-r-4 border-[#3B82F6] rounded-r-sm transition-colors scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">code</span>
+                    Problems
+                </a>
+<a class="flex items-center gap-md px-md py-sm rounded text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]">history</span>
+                    Submissions
+                </a>
+<a class="flex items-center gap-md px-md py-sm rounded text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]">groups</span>
+                    Teams
+                </a>
+<a class="flex items-center gap-md px-md py-sm rounded text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]">forum</span>
+                    Clarifications
+                </a>
+<a class="flex items-center gap-md px-md py-sm rounded text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]">terminal</span>
+                    Logs
+                </a>
+</div>
+<div class="px-6 mt-xl mb-md">
+<button class="w-full py-2 bg-[#1E293B] text-[#F1F5F9] border border-[#334155] rounded hover:bg-[#334155] transition-colors text-xs font-bold uppercase tracking-wide">
+                    Create Contest
+                </button>
+</div>
+<div class="border-t border-[#334155] pt-4 px-sm flex flex-col gap-1">
+<a class="flex items-center gap-md px-md py-sm rounded text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform text-xs" href="#">
+<span class="material-symbols-outlined text-[18px]">help</span>
+                    Documentation
+                </a>
+<a class="flex items-center gap-md px-md py-sm rounded text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform text-xs" href="#">
+<span class="material-symbols-outlined text-[18px]">contact_support</span>
+                    Support
+                </a>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="flex-1 overflow-y-auto p-lg md:p-xxl bg-surface-lowest">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-md mb-xl">
+<div>
+<div class="flex items-center gap-sm text-on-surface-variant font-label-md text-label-md mb-sm">
+<span class="material-symbols-outlined text-[16px]">folder</span>
+<span>AuraC² Engine</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span>Problem #1042</span>
+</div>
+<h1 class="font-h2 text-h2 text-on-surface">Test-Case Management</h1>
+</div>
+<button class="bg-primary text-on-primary font-label-md text-label-md px-lg py-sm rounded flex items-center justify-center gap-xs hover:bg-primary-container transition-colors shadow-[0_0_15px_rgba(173,198,255,0.15)]">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                    Add Test Case
+                </button>
+</div>
+<!-- Table Container -->
+<div class="bg-surface-container border border-outline-variant rounded-lg overflow-hidden flex flex-col shadow-sm">
+<!-- Table Header/Toolbar -->
+<div class="bg-surface px-md py-sm border-b border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-md">
+<span class="font-label-md text-label-md text-on-surface-variant">4 Active Cases</span>
+<div class="h-4 w-px bg-outline-variant"></div>
+<span class="font-label-md text-label-md text-on-surface-variant">Total Weight: 100</span>
+</div>
+<div class="flex items-center gap-sm">
+<button class="text-on-surface-variant hover:text-on-surface transition-colors p-xs rounded hover:bg-surface-variant">
+<span class="material-symbols-outlined text-[20px]">filter_list</span>
+</button>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors p-xs rounded hover:bg-surface-variant">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-variant bg-surface-container-low">
+<th class="py-sm px-md font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider w-24">ID</th>
+<th class="py-sm px-md font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider min-w-[200px]">Input Preview</th>
+<th class="py-sm px-md font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider min-w-[200px]">Expected Output</th>
+<th class="py-sm px-md font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider w-32">Visibility</th>
+<th class="py-sm px-md font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider w-24 text-right">Weight</th>
+<th class="py-sm px-md font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider w-16"></th>
+</tr>
+</thead>
+<tbody class="font-body-sm text-body-sm text-on-surface divide-y divide-outline-variant">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-high transition-colors group">
+<td class="py-md px-md font-mono text-secondary">#TC-001</td>
+<td class="py-md px-md">
+<div class="bg-surface border border-outline-variant rounded p-xs font-mono text-[13px] text-primary-fixed-dim whitespace-pre-wrap break-all">[2,7,11,15]
+9</div>
+</td>
+<td class="py-md px-md">
+<div class="bg-surface border border-outline-variant rounded p-xs font-mono text-[13px] text-tertiary whitespace-pre-wrap break-all">[0,1]</div>
+</td>
+<td class="py-md px-md">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold tracking-wide bg-primary/10 text-primary border border-primary/20">
+                                        PUBLIC
+                                    </span>
+</td>
+<td class="py-md px-md text-right font-mono text-on-surface-variant">10</td>
+<td class="py-md px-md text-right">
+<div class="flex items-center justify-end gap-xs opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-high transition-colors group">
+<td class="py-md px-md font-mono text-secondary">#TC-002</td>
+<td class="py-md px-md">
+<div class="bg-surface border border-outline-variant rounded p-xs font-mono text-[13px] text-primary-fixed-dim whitespace-pre-wrap break-all">[3,2,4]
+6</div>
+</td>
+<td class="py-md px-md">
+<div class="bg-surface border border-outline-variant rounded p-xs font-mono text-[13px] text-tertiary whitespace-pre-wrap break-all">[1,2]</div>
+</td>
+<td class="py-md px-md">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold tracking-wide bg-primary/10 text-primary border border-primary/20">
+                                        PUBLIC
+                                    </span>
+</td>
+<td class="py-md px-md text-right font-mono text-on-surface-variant">10</td>
+<td class="py-md px-md text-right">
+<div class="flex items-center justify-end gap-xs opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-high transition-colors group">
+<td class="py-md px-md font-mono text-secondary">#TC-003</td>
+<td class="py-md px-md">
+<div class="bg-surface border border-outline-variant rounded p-xs font-mono text-[13px] text-primary-fixed-dim whitespace-pre-wrap break-all">[3,3]
+6</div>
+</td>
+<td class="py-md px-md">
+<div class="bg-surface border border-outline-variant rounded p-xs font-mono text-[13px] text-tertiary whitespace-pre-wrap break-all">[0,1]</div>
+</td>
+<td class="py-md px-md">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold tracking-wide bg-outline-variant/30 text-on-surface-variant border border-outline-variant/50">
+                                        PRIVATE
+                                    </span>
+</td>
+<td class="py-md px-md text-right font-mono text-on-surface-variant">20</td>
+<td class="py-md px-md text-right">
+<div class="flex items-center justify-end gap-xs opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-high transition-colors group">
+<td class="py-md px-md font-mono text-secondary">#TC-004</td>
+<td class="py-md px-md">
+<div class="bg-surface border border-outline-variant rounded p-xs font-mono text-[13px] text-primary-fixed-dim flex items-center justify-between">
+<span>[1,1,1,1...1] (10^5 elements)</span>
+<span class="material-symbols-outlined text-[16px] text-outline">description</span>
+</div>
+</td>
+<td class="py-md px-md">
+<div class="bg-surface border border-outline-variant rounded p-xs font-mono text-[13px] text-tertiary whitespace-pre-wrap break-all">[99998,99999]</div>
+</td>
+<td class="py-md px-md">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold tracking-wide bg-outline-variant/30 text-on-surface-variant border border-outline-variant/50">
+<span class="material-symbols-outlined text-[12px]">visibility_off</span>
+                                        PRIVATE
+                                    </span>
+</td>
+<td class="py-md px-md text-right font-mono text-on-surface-variant">60</td>
+<td class="py-md px-md text-right">
+<div class="flex items-center justify-end gap-xs opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+</div>
+</body></html>

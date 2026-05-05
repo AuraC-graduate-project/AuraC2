@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Public Clarifications - AuraC²</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@500;600;700;800;900&amp;family=Space+Grotesk:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#74777f",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed-variant": "#574500",
+                        "on-secondary": "#ffffff",
+                        "on-surface-variant": "#43474e",
+                        "primary-container": "#1e3a5f",
+                        "on-primary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#d5e3ff",
+                        "on-secondary-fixed-variant": "#003ea8",
+                        "on-tertiary-fixed": "#231b00",
+                        "on-error": "#ffffff",
+                        "surface-bright": "#f8f9ff",
+                        "tertiary": "#735c00",
+                        "on-secondary-container": "#fefcff",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                        "on-background": "#0b1c30",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-variant": "#d3e4fe",
+                        "surface-container-low": "#eff4ff",
+                        "on-surface": "#0b1c30",
+                        "background": "#f8f9ff",
+                        "surface-container": "#e5eeff",
+                        "on-secondary-fixed": "#00174b",
+                        "secondary-container": "#316bf3",
+                        "inverse-surface": "#213145",
+                        "surface-tint": "#455f87",
+                        "secondary": "#0051d5",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "surface-dim": "#cbdbf5",
+                        "outline-variant": "#c4c6cf",
+                        "inverse-on-surface": "#eaf1ff",
+                        "surface-container-highest": "#d3e4fe",
+                        "on-primary-fixed": "#001c3b",
+                        "primary-fixed-dim": "#adc8f5",
+                        "inverse-primary": "#adc8f5",
+                        "secondary-fixed": "#dbe1ff",
+                        "tertiary-fixed-dim": "#eec200",
+                        "tertiary-container": "#cea700",
+                        "primary": "#022448",
+                        "on-tertiary-container": "#4e3e00",
+                        "surface-container-high": "#dce9ff",
+                        "surface": "#f8f9ff",
+                        "on-primary-fixed-variant": "#2d486d",
+                        "tertiary-fixed": "#ffe083",
+                        "on-primary-container": "#8aa4cf"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "md": "16px",
+                        "xl": "32px",
+                        "lg": "24px",
+                        "container-max": "1440px",
+                        "sm": "8px",
+                        "gutter": "20px",
+                        "base": "4px"
+                    },
+                    "fontFamily": {
+                        "h1": ["manrope"],
+                        "code-block": ["spaceGrotesk"],
+                        "body-base": ["inter"],
+                        "h2": ["manrope"],
+                        "table-data": ["spaceGrotesk"],
+                        "body-sm": ["inter"],
+                        "h3": ["manrope"],
+                        "label-caps": ["inter"]
+                    },
+                    "fontSize": {
+                        "h1": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "code-block": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+                        "body-base": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "h2": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "table-data": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "h3": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex antialiased">
+<!-- SideNavBar -->
+<nav class="bg-[#1E3A5F] dark:bg-slate-950 h-full w-64 fixed left-0 top-0 z-40 border-r border-slate-200 dark:border-slate-800 flex flex-col h-full py-6 transition-transform md:translate-x-0 -translate-x-full">
+<div class="px-6 mb-8 flex items-center gap-4">
+<div class="w-10 h-10 rounded bg-white/20 flex items-center justify-center overflow-hidden">
+<img alt="University Logo" class="w-full h-full object-cover" data-alt="Abstract minimalist geometric logo in white and light blue representing a university emblem on a dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAksdwzILAo98REJNGXAx3V31qDlq_YNWsH8R-kyI66X10EywwAKsxiIJFJwwCLZDRVBOAOHfUYvx_mybMjMT_JGZ5frxIjJ20XywznaWt7z_U6hrpbbZpOLXyLykZW_7CeFSvm9RcyzBm0Ch5XRug0t6a8NLjcrQ-S1k3EtS1x5a1OsFNx4aLCBO0ThU73ykK-PTvwjDZdsXy-iAHMqmC2iptI7ofucxtcN7OC073cyOuWdDOvUC-QmNEuBjht9i7MZbva2Ql6-Ao"/>
+</div>
+<div>
+<h1 class="text-2xl font-bold tracking-tight text-white font-h2 text-h2">AuraC²</h1>
+<p class="font-['Manrope'] text-sm font-medium tracking-wide text-blue-400">Academic Console</p>
+</div>
+</div>
+<ul class="flex-1 overflow-y-auto px-4 space-y-2">
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-body-base text-body-base hover:bg-white/10 transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Overview</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-body-base text-body-base hover:bg-white/10 transition-all" href="#">
+<span class="material-symbols-outlined">emoji_events</span>
+<span>Contests</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-body-base text-body-base hover:bg-white/10 transition-all" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span>Teams</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-body-base text-body-base hover:bg-white/10 transition-all" href="#">
+<span class="material-symbols-outlined">description</span>
+<span>Problems</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-body-base text-body-base hover:bg-white/10 transition-all" href="#">
+<span class="material-symbols-outlined">terminal</span>
+<span>Submissions</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded border-l-4 border-blue-500 bg-white/10 text-white font-bold font-body-base text-body-base translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined fill">forum</span>
+<span>Clarifications</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-body-base text-body-base hover:bg-white/10 transition-all" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span>Statistics</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-body-base text-body-base hover:bg-white/10 transition-all" href="#">
+<span class="material-symbols-outlined">security</span>
+<span>Security</span>
+</a>
+</li>
+</ul>
+</nav>
+<!-- TopAppBar -->
+<header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md fixed top-0 right-0 left-64 h-16 z-30 shadow-sm border-b border-slate-200 dark:border-slate-800 flex justify-between items-center px-8 w-[calc(100%-16rem)]">
+<div class="flex items-center gap-4 flex-1">
+<h2 class="text-slate-900 dark:text-white font-black text-xl font-h2 text-h2 md:hidden">AuraC²</h2>
+</div>
+<div class="flex items-center gap-6 justify-end flex-1">
+<div class="relative focus-within:ring-2 focus-within:ring-blue-500/20 rounded-full hidden md:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border border-outline-variant rounded-full text-sm font-body-sm text-on-surface focus:outline-none focus:border-secondary-container w-64" placeholder="Search..." type="text"/>
+</div>
+<div class="flex items-center gap-4 text-blue-600 dark:text-blue-400">
+<button class="text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors p-2 rounded-full hover:bg-surface-container-low">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors p-2 rounded-full hover:bg-surface-container-low">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="bg-secondary-container hover:bg-secondary text-white font-['Manrope'] text-sm uppercase tracking-wider font-semibold py-2 px-4 rounded transition-colors shadow-sm ml-2 hidden sm:block">
+                    Create Contest
+                </button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant ml-2 cursor-pointer">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="Portrait of a professional software developer looking directly at the camera with a neutral expression, well lit against a subtle background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDn0LMjVWNEGp7iCTbGchGDNe5e7GD2Fhcb25YcPrx40EPqkUboW9zV3-YvHg6iteLjnNs84HKCARxlMcujp_uvBKD8uP8Z_gJlhqw-U6LH0Q_pql0cNmgpCutbZEy-pLIKBBYI3S32-yCq1g_ULgpGglH-ziRbBljPnYdzk3eDNT36Kfacx_0-A-8_rCtJcBtZyonGCgUK9YNK3No6O9dogkifd_VFMfmWoJKy_W_Gf7OcHYwRlNNul-xoqsefyxX7YrFvUPQaBzA"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="ml-64 pt-16 flex-1 bg-background min-h-screen p-8">
+<div class="max-w-[1440px] mx-auto">
+<div class="mb-8 flex flex-col gap-2">
+<h1 class="font-h1 text-h1 text-on-background">Public Clarifications</h1>
+<p class="font-body-base text-body-base text-on-surface-variant max-w-3xl">
+                    Official responses to questions submitted by competing teams. Information listed here applies to all participants.
+                </p>
+</div>
+<!-- Clarifications List -->
+<div class="flex flex-col gap-6">
+<!-- Clarification Item 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+<div class="bg-surface p-6 border-b border-surface-container-high">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-3">
+<span class="bg-primary/10 text-primary font-label-caps text-label-caps px-2 py-1 rounded">Problem A</span>
+<span class="text-on-surface-variant font-code-block text-code-block text-xs">ID: CLR-1042</span>
+</div>
+<span class="text-on-surface-variant font-body-sm text-body-sm">10:45 AM</span>
+</div>
+<h3 class="font-h3 text-h3 text-on-background mb-2">Input constraints for N</h3>
+<p class="font-body-base text-body-base text-on-surface-variant">
+                            The problem statement mentions N can be up to 10^5, but the memory limit is quite strict. Can we assume the sum of N over all test cases will not exceed 2 * 10^5?
+                        </p>
+</div>
+<div class="p-6 bg-surface-bright flex gap-4">
+<div class="w-8 h-8 rounded-full bg-secondary-container/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-secondary-container text-sm">gavel</span>
+</div>
+<div>
+<h4 class="font-body-sm text-body-sm font-semibold text-on-background mb-1">Judge Response</h4>
+<p class="font-body-base text-body-base text-on-surface">
+                                Yes, the sum of N over all test cases in a single file will not exceed 2 × 10^5. This will be updated in the problem description shortly.
+                            </p>
+</div>
+</div>
+</div>
+<!-- Clarification Item 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+<div class="bg-surface p-6 border-b border-surface-container-high">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-3">
+<span class="bg-tertiary-container/20 text-tertiary font-label-caps text-label-caps px-2 py-1 rounded">Problem D</span>
+<span class="text-on-surface-variant font-code-block text-code-block text-xs">ID: CLR-1038</span>
+</div>
+<span class="text-on-surface-variant font-body-sm text-body-sm">09:12 AM</span>
+</div>
+<h3 class="font-h3 text-h3 text-on-background mb-2">Precision requirements</h3>
+<p class="font-body-base text-body-base text-on-surface-variant">
+                            For the geometric intersection points, what absolute or relative error is acceptable? The problem description doesn't specify.
+                        </p>
+</div>
+<div class="p-6 bg-surface-bright flex gap-4">
+<div class="w-8 h-8 rounded-full bg-secondary-container/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-secondary-container text-sm">gavel</span>
+</div>
+<div>
+<h4 class="font-body-sm text-body-sm font-semibold text-on-background mb-1">Judge Response</h4>
+<p class="font-body-base text-body-base text-on-surface">
+                                Your answer will be considered correct if its absolute or relative error doesn't exceed 10^-6. Please use double precision floating point numbers.
+                            </p>
+</div>
+</div>
+</div>
+<!-- Clarification Item 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+<div class="bg-surface p-6 border-b border-surface-container-high">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-3">
+<span class="bg-surface-variant text-on-surface font-label-caps text-label-caps px-2 py-1 rounded">General</span>
+<span class="text-on-surface-variant font-code-block text-code-block text-xs">ID: CLR-1005</span>
+</div>
+<span class="text-on-surface-variant font-body-sm text-body-sm">08:05 AM</span>
+</div>
+<h3 class="font-h3 text-h3 text-on-background mb-2">Compiler versions</h3>
+<p class="font-body-base text-body-base text-on-surface-variant">
+                            Which version of C++ is being used by the grading environment? Can we use C++20 features?
+                        </p>
+</div>
+<div class="p-6 bg-surface-bright flex gap-4">
+<div class="w-8 h-8 rounded-full bg-secondary-container/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-secondary-container text-sm">gavel</span>
+</div>
+<div>
+<h4 class="font-body-sm text-body-sm font-semibold text-on-background mb-1">Judge Response</h4>
+<p class="font-body-base text-body-base text-on-surface">
+                                The grading environment currently uses GCC 11.4.0 with the -std=c++17 flag enabled by default. C++20 features are not fully supported at this time.
+                            </p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

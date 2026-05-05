@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Problems Management - AuraC²</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400..800&amp;family=Inter:wght@400..700&amp;family=Space+Grotesk:wght@400..700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#eff4ff",
+                        "error": "#ba1a1a",
+                        "error-container": "#ffdad6",
+                        "primary-fixed-dim": "#adc8f5",
+                        "inverse-surface": "#213145",
+                        "on-tertiary": "#ffffff",
+                        "secondary-fixed": "#dbe1ff",
+                        "surface-container-high": "#dce9ff",
+                        "primary-fixed": "#d5e3ff",
+                        "surface-variant": "#d3e4fe",
+                        "surface-tint": "#455f87",
+                        "surface-container": "#e5eeff",
+                        "on-primary-fixed": "#001c3b",
+                        "secondary-container": "#316bf3",
+                        "surface-bright": "#f8f9ff",
+                        "outline-variant": "#c4c6cf",
+                        "on-tertiary-fixed": "#231b00",
+                        "inverse-primary": "#adc8f5",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "on-surface": "#0b1c30",
+                        "secondary": "#0051d5",
+                        "on-background": "#0b1c30",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-surface-variant": "#43474e",
+                        "on-secondary-container": "#fefcff",
+                        "surface": "#f8f9ff",
+                        "on-secondary-fixed": "#00174b",
+                        "background": "#f8f9ff",
+                        "on-secondary-fixed-variant": "#003ea8",
+                        "tertiary-fixed": "#ffe083",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#735c00",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#cbdbf5",
+                        "surface-container-highest": "#d3e4fe",
+                        "on-tertiary-fixed-variant": "#574500",
+                        "tertiary-fixed-dim": "#eec200",
+                        "tertiary-container": "#cea700",
+                        "primary": "#022448",
+                        "on-primary-container": "#8aa4cf",
+                        "on-primary": "#ffffff",
+                        "outline": "#74777f",
+                        "on-tertiary-container": "#4e3e00",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#1e3a5f",
+                        "on-primary-fixed-variant": "#2d486d",
+                        "on-secondary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "sm": "8px",
+                        "gutter": "20px",
+                        "base": "4px",
+                        "xs": "4px",
+                        "xl": "32px",
+                        "md": "16px",
+                        "lg": "24px",
+                        "container-max": "1440px"
+                    },
+                    "fontFamily": {
+                        "h1": ["Manrope", "sans-serif"],
+                        "h2": ["Manrope", "sans-serif"],
+                        "body-sm": ["Inter", "sans-serif"],
+                        "body-base": ["Inter", "sans-serif"],
+                        "table-data": ["Space Grotesk", "monospace"],
+                        "label-caps": ["Inter", "sans-serif"],
+                        "h3": ["Manrope", "sans-serif"],
+                        "code-block": ["Space Grotesk", "monospace"]
+                    },
+                    "fontSize": {
+                        "h1": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "h2": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-base": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "table-data": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "h3": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "code-block": ["14px", { "lineHeight": "22px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { background-color: #F8FAFC; }
+    </style>
+</head>
+<body class="bg-background text-on-surface antialiased flex">
+<aside class="fixed left-0 top-0 h-screen w-64 border-r border-slate-200/10 bg-[#1E3A5F] flex flex-col h-full overflow-y-auto z-50">
+<div class="p-lg flex items-center gap-md border-b border-slate-200/10">
+<div class="w-10 h-10 rounded bg-secondary flex items-center justify-center font-['Manrope'] font-black text-white text-xl">A²</div>
+<div>
+<div class="text-2xl font-black text-white tracking-tighter">AuraC²</div>
+<div class="font-['Manrope'] text-sm font-medium tracking-tight text-blue-400">Contest Control</div>
+</div>
+</div>
+<div class="p-4">
+<button class="w-full bg-secondary text-white py-2 rounded font-['Manrope'] text-sm font-medium tracking-tight hover:bg-blue-700 transition-colors">
+                Create Contest
+            </button>
+</div>
+<nav class="flex-1 py-4 flex flex-col gap-1">
+<a class="text-slate-300 hover:text-white py-3 px-4 transition-colors hover:bg-white/5 duration-200 font-['Manrope'] text-sm font-medium tracking-tight flex items-center gap-3" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span> Overview
+            </a>
+<a class="text-slate-300 hover:text-white py-3 px-4 transition-colors hover:bg-white/5 duration-200 font-['Manrope'] text-sm font-medium tracking-tight flex items-center gap-3" href="#">
+<span class="material-symbols-outlined text-[20px]">event_note</span> Contests
+            </a>
+<a class="text-slate-300 hover:text-white py-3 px-4 transition-colors hover:bg-white/5 duration-200 font-['Manrope'] text-sm font-medium tracking-tight flex items-center gap-3" href="#">
+<span class="material-symbols-outlined text-[20px]">groups</span> Teams
+            </a>
+<a class="bg-white/10 text-white border-l-4 border-blue-500 py-3 px-4 font-['Manrope'] text-sm font-medium tracking-tight flex items-center gap-3" href="#">
+<span class="material-symbols-outlined text-[20px] icon-fill">code</span> Problems
+            </a>
+<a class="text-slate-300 hover:text-white py-3 px-4 transition-colors hover:bg-white/5 duration-200 font-['Manrope'] text-sm font-medium tracking-tight flex items-center gap-3" href="#">
+<span class="material-symbols-outlined text-[20px]">send</span> Submissions
+            </a>
+<a class="text-slate-300 hover:text-white py-3 px-4 transition-colors hover:bg-white/5 duration-200 font-['Manrope'] text-sm font-medium tracking-tight flex items-center gap-3" href="#">
+<span class="material-symbols-outlined text-[20px]">forum</span> Clarifications
+            </a>
+<a class="text-slate-300 hover:text-white py-3 px-4 transition-colors hover:bg-white/5 duration-200 font-['Manrope'] text-sm font-medium tracking-tight flex items-center gap-3" href="#">
+<span class="material-symbols-outlined text-[20px]">security</span> Analytics
+            </a>
+</nav>
+<div class="mt-auto border-t border-slate-200/10 py-4 flex flex-col gap-1">
+<a class="text-slate-300 hover:text-white py-3 px-4 transition-colors hover:bg-white/5 duration-200 font-['Manrope'] text-sm font-medium tracking-tight flex items-center gap-3" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span> Settings
+            </a>
+<a class="text-slate-300 hover:text-white py-3 px-4 transition-colors hover:bg-white/5 duration-200 font-['Manrope'] text-sm font-medium tracking-tight flex items-center gap-3" href="#">
+<span class="material-symbols-outlined text-[20px]">help</span> Support
+            </a>
+</div>
+</aside>
+<main class="ml-64 flex-1 min-h-screen">
+<div class="max-w-container-max mx-auto p-xl">
+<header class="flex items-center justify-between mb-lg pb-md border-b border-outline-variant">
+<div>
+<h1 class="font-h1 text-h1 text-on-surface">Problems</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-base">Manage problem sets, limits, and judicial test cases.</p>
+</div>
+<button class="bg-secondary text-on-secondary px-lg py-sm rounded font-label-caps text-label-caps flex items-center gap-sm hover:bg-on-secondary-fixed-variant transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]">add</span> Add Problem
+                </button>
+</header>
+<div class="grid grid-cols-12 gap-gutter">
+<div class="col-span-4 flex flex-col gap-md">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.05)] overflow-hidden flex flex-col h-[calc(100vh-140px)]">
+<div class="p-md border-b border-surface-container flex gap-sm bg-surface">
+<div class="relative flex-1">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded pl-10 pr-3 py-2 font-body-sm text-body-sm focus:border-secondary focus:ring-1 focus:ring-secondary outline-none transition-all" placeholder="Search problems..." type="text"/>
+</div>
+<button class="bg-surface-container-lowest border border-outline-variant rounded px-3 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-[18px]">filter_list</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface sticky top-0 z-10 border-b border-surface-container">
+<tr>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant w-12">ID</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant">Title</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant text-right">Difficulty</th>
+</tr>
+</thead>
+<tbody>
+<tr class="border-b border-surface-container hover:bg-surface transition-colors cursor-pointer group">
+<td class="py-3 px-4 font-table-data text-table-data text-on-surface font-semibold">A</td>
+<td class="py-3 px-4 font-body-sm text-body-sm text-on-surface group-hover:text-secondary transition-colors">Array Manipulation</td>
+<td class="py-3 px-4 text-right">
+<span class="inline-flex items-center px-2 py-1 rounded bg-[#dcfce7] text-[#166534] font-label-caps text-[10px]">Easy</span>
+</td>
+</tr>
+<tr class="border-b border-surface-container bg-surface-container-low border-l-2 border-l-secondary cursor-pointer">
+<td class="py-3 px-4 font-table-data text-table-data text-secondary font-semibold pl-[14px]">B</td>
+<td class="py-3 px-4 font-body-sm text-body-sm text-on-surface font-medium">Network Flow Routing</td>
+<td class="py-3 px-4 text-right">
+<span class="inline-flex items-center px-2 py-1 rounded bg-[#fef08a]/40 text-[#854d0e] font-label-caps text-[10px]">Medium</span>
+</td>
+</tr>
+<tr class="border-b border-surface-container hover:bg-surface transition-colors cursor-pointer group">
+<td class="py-3 px-4 font-table-data text-table-data text-on-surface font-semibold">C</td>
+<td class="py-3 px-4 font-body-sm text-body-sm text-on-surface group-hover:text-secondary transition-colors">Dynamic String Matching</td>
+<td class="py-3 px-4 text-right">
+<span class="inline-flex items-center px-2 py-1 rounded bg-[#fee2e2] text-[#991b1b] font-label-caps text-[10px]">Hard</span>
+</td>
+</tr>
+<tr class="border-b border-surface-container hover:bg-surface transition-colors cursor-pointer group">
+<td class="py-3 px-4 font-table-data text-table-data text-on-surface font-semibold">D</td>
+<td class="py-3 px-4 font-body-sm text-body-sm text-on-surface group-hover:text-secondary transition-colors">Graph Coloring Variant</td>
+<td class="py-3 px-4 text-right">
+<span class="inline-flex items-center px-2 py-1 rounded bg-[#fee2e2] text-[#991b1b] font-label-caps text-[10px]">Hard</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="col-span-8 flex flex-col gap-lg">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+<div class="p-lg border-b border-surface-container flex items-start justify-between bg-surface/50 rounded-t-lg">
+<div>
+<div class="flex items-center gap-sm mb-xs">
+<span class="bg-surface-variant text-on-surface px-2 py-0.5 rounded font-table-data text-table-data font-bold">B</span>
+<span class="inline-flex items-center px-2 py-1 rounded bg-[#fef08a]/40 text-[#854d0e] font-label-caps text-[10px]">Medium</span>
+</div>
+<h2 class="font-h2 text-h2 text-on-surface">Network Flow Routing</h2>
+</div>
+<button class="bg-surface-container-lowest border border-outline-variant text-on-surface px-md py-sm rounded font-label-caps text-label-caps flex items-center gap-sm hover:bg-surface transition-colors">
+<span class="material-symbols-outlined text-[16px]">edit</span> Edit Problem
+                            </button>
+</div>
+<div class="p-lg flex flex-col gap-lg">
+<div class="flex gap-md">
+<div class="bg-surface border border-outline-variant rounded p-md flex-1 flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">timer</span>
+</div>
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-xs">Time Limit</div>
+<div class="font-table-data text-table-data text-on-surface text-lg">2.000 s</div>
+</div>
+</div>
+<div class="bg-surface border border-outline-variant rounded p-md flex-1 flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">memory</span>
+</div>
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-xs">Memory Limit</div>
+<div class="font-table-data text-table-data text-on-surface text-lg">256 MB</div>
+</div>
+</div>
+<div class="bg-surface border border-outline-variant rounded p-md flex-1 flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">description</span>
+</div>
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-xs">I/O Type</div>
+<div class="font-table-data text-table-data text-on-surface text-lg">Standard</div>
+</div>
+</div>
+</div>
+<div>
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-sm uppercase tracking-wider">Description Snippet</h3>
+<p class="font-body-base text-body-base text-on-surface leading-relaxed border-l-2 border-surface-container-highest pl-4 py-1">
+                                    Given a directed graph <em>G = (V, E)</em> representing a network of data centers, where each edge has a capacity <em>c(u, v)</em> and a cost <em>w(u, v)</em>. Find the maximum flow from the source node <em>S</em> to the sink node <em>T</em> such that the total routing cost is minimized. The network may contain up to 10^5 nodes.
+                                </p>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.05)] flex flex-col">
+<div class="p-md border-b border-surface-container flex items-center justify-between bg-surface/50 rounded-t-lg">
+<h3 class="font-h3 text-h3 text-on-surface flex items-center gap-sm">
+<span class="material-symbols-outlined text-outline">fact_check</span> Test Cases
+                            </h3>
+<button class="bg-surface-container-lowest border border-outline-variant text-secondary px-md py-sm rounded font-label-caps text-label-caps flex items-center gap-sm hover:bg-surface transition-colors">
+<span class="material-symbols-outlined text-[16px]">add_circle</span> Add Test Case
+                            </button>
+</div>
+<div class="flex flex-col">
+<div class="p-lg border-b border-surface-container">
+<div class="flex items-center justify-between mb-md">
+<div class="flex items-center gap-md">
+<span class="font-table-data text-table-data font-bold text-on-surface">#01</span>
+<span class="bg-secondary/10 text-secondary px-2 py-1 rounded font-label-caps text-[11px] font-bold tracking-wider flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">public</span> Public Sample
+                                        </span>
+</div>
+<div class="flex gap-2">
+<button class="text-outline hover:text-secondary transition-colors"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="text-outline hover:text-error transition-colors"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-md">
+<div class="flex flex-col">
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-xs">Standard Input</div>
+<div class="bg-[#F1F5F9] border border-outline-variant rounded p-sm font-code-block text-code-block text-on-surface overflow-x-auto whitespace-pre">4 5
+1 4
+1 2 20 2
+2 4 10 3
+1 3 10 1
+3 4 20 4
+2 3 5 1</div>
+</div>
+<div class="flex flex-col">
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-xs">Standard Output</div>
+<div class="bg-[#F1F5F9] border border-outline-variant rounded p-sm font-code-block text-code-block text-on-surface overflow-x-auto whitespace-pre">20 90</div>
+</div>
+</div>
+</div>
+<div class="p-lg">
+<div class="flex items-center justify-between mb-md">
+<div class="flex items-center gap-md">
+<span class="font-table-data text-table-data font-bold text-on-surface">#02</span>
+<span class="bg-surface-tint/10 text-surface-tint px-2 py-1 rounded font-label-caps text-[11px] font-bold tracking-wider flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">lock</span> Private Judge Test
+                                        </span>
+<span class="text-outline text-sm flex items-center gap-1" title="Weight"><span class="material-symbols-outlined text-[14px]">scale</span> 10 pts</span>
+</div>
+<div class="flex gap-2">
+<button class="text-outline hover:text-secondary transition-colors"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="text-outline hover:text-error transition-colors"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-md opacity-80 hover:opacity-100 transition-opacity">
+<div class="flex flex-col">
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-xs flex justify-between">
+<span>Standard Input</span>
+<span class="text-xs normal-case text-outline">large_graph_01.in (1.2MB)</span>
+</div>
+<div class="bg-[#F1F5F9] border border-outline-variant rounded p-sm font-code-block text-code-block text-on-surface overflow-x-auto whitespace-pre italic text-outline">... [Content truncated for preview] ...</div>
+</div>
+<div class="flex flex-col">
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-xs flex justify-between">
+<span>Standard Output</span>
+<span class="text-xs normal-case text-outline">large_graph_01.out (12B)</span>
+</div>
+<div class="bg-[#F1F5F9] border border-outline-variant rounded p-sm font-code-block text-code-block text-on-surface overflow-x-auto whitespace-pre">14500 230495</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

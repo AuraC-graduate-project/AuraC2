@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Contest Workspace</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#ffdcc6",
+                        "surface-container": "#1d2027",
+                        "inverse-on-surface": "#2e3038",
+                        "tertiary-fixed-dim": "#ffb786",
+                        "primary": "#adc6ff",
+                        "tertiary": "#ffb786",
+                        "on-primary": "#002e6a",
+                        "surface": "#10131a",
+                        "on-tertiary-fixed-variant": "#723600",
+                        "secondary-container": "#3f465c",
+                        "on-tertiary-container": "#461f00",
+                        "on-secondary": "#283044",
+                        "secondary-fixed-dim": "#bec6e0",
+                        "on-secondary-fixed-variant": "#3f465c",
+                        "primary-fixed": "#d8e2ff",
+                        "on-secondary-fixed": "#131b2e",
+                        "surface-bright": "#363941",
+                        "error": "#ffb4ab",
+                        "on-primary-container": "#00285d",
+                        "on-error-container": "#ffdad6",
+                        "surface-tint": "#adc6ff",
+                        "surface-container-high": "#272a31",
+                        "primary-fixed-dim": "#adc6ff",
+                        "on-tertiary-fixed": "#311400",
+                        "secondary": "#bec6e0",
+                        "outline-variant": "#424754",
+                        "secondary-fixed": "#dae2fd",
+                        "surface-container-low": "#191b23",
+                        "on-secondary-container": "#adb4ce",
+                        "on-primary-fixed-variant": "#004395",
+                        "on-primary-fixed": "#001a42",
+                        "on-tertiary": "#502400",
+                        "surface-variant": "#32353c",
+                        "primary-container": "#4d8eff",
+                        "tertiary-container": "#df7412",
+                        "on-error": "#690005",
+                        "outline": "#8c909f",
+                        "surface-container-lowest": "#0b0e15",
+                        "on-surface": "#e1e2ec",
+                        "on-background": "#e1e2ec",
+                        "surface-dim": "#10131a",
+                        "inverse-surface": "#e1e2ec",
+                        "surface-container-highest": "#32353c",
+                        "background": "#10131a",
+                        "on-surface-variant": "#c2c6d6",
+                        "inverse-primary": "#005ac2",
+                        "error-container": "#93000a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "1rem",
+                        "xxl": "3rem",
+                        "xs": "0.25rem",
+                        "sm": "0.5rem",
+                        "xl": "2rem",
+                        "lg": "1.5rem"
+                    },
+                    "fontFamily": {
+                        "h1": ["Manrope"],
+                        "body-lg": ["Manrope"],
+                        "label-sm": ["Manrope"],
+                        "body-sm": ["Manrope"],
+                        "h3": ["Manrope"],
+                        "label-md": ["Manrope"],
+                        "h2": ["Manrope"],
+                        "body-md": ["Manrope"],
+                        "display": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "h1": ["2.25rem", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "body-lg": ["1.125rem", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "label-sm": ["0.75rem", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "body-sm": ["0.875rem", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "h3": ["1.5rem", { "lineHeight": "1.4", "fontWeight": "600" }],
+                        "label-md": ["0.875rem", { "lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "h2": ["1.875rem", { "lineHeight": "1.3", "fontWeight": "600" }],
+                        "body-md": ["1rem", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "display": ["3.75rem", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Custom scrollbar for editor feel */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #32353c; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #424754; }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md h-screen w-full flex overflow-hidden selection:bg-primary-container selection:text-on-primary-container">
+<!-- Shell: SideNavBar -->
+<aside class="docked left-0 h-full w-64 border-r border-[#334155] bg-[#0F172A] flex flex-col py-4 space-y-2 shrink-0 z-20">
+<!-- Header -->
+<div class="px-6 pb-6 pt-2 border-b border-[#334155] mb-4 flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-[#1E293B] flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[#3B82F6] text-xl">account_balance</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-black uppercase text-[#94A3B8] tracking-wider leading-tight">ACM-ICPC Portal</span>
+<span class="font-manrope text-sm font-medium text-[#94A3B8]/70 leading-tight">Admin Console</span>
+</div>
+</div>
+<!-- Main Navigation -->
+<nav class="flex-1 px-2 space-y-1 font-manrope text-sm font-medium">
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-sm text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform group" href="#">
+<span class="material-symbols-outlined text-lg opacity-70 group-hover:opacity-100 transition-opacity">dashboard</span>
+                Overview
+            </a>
+<!-- Active Tab -->
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-sm bg-[#334155] text-[#F1F5F9] border-r-4 border-[#3B82F6] rounded-r-sm scale-95 active:scale-100 transition-transform shadow-inner" href="#">
+<span class="material-symbols-outlined text-lg text-[#3B82F6]">code</span>
+                Problems
+            </a>
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-sm text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform group" href="#">
+<span class="material-symbols-outlined text-lg opacity-70 group-hover:opacity-100 transition-opacity">history</span>
+                Submissions
+            </a>
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-sm text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform group" href="#">
+<span class="material-symbols-outlined text-lg opacity-70 group-hover:opacity-100 transition-opacity">groups</span>
+                Teams
+            </a>
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-sm text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform group flex-wrap justify-between" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-lg opacity-70 group-hover:opacity-100 transition-opacity">forum</span>
+                    Clarifications
+                </div>
+<span class="bg-[#3B82F6] text-[#F1F5F9] text-[10px] font-bold px-1.5 py-0.5 rounded-sm leading-none">3</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-sm text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform group" href="#">
+<span class="material-symbols-outlined text-lg opacity-70 group-hover:opacity-100 transition-opacity">terminal</span>
+                Logs
+            </a>
+</nav>
+<!-- CTA & Footer -->
+<div class="px-4 pt-4 border-t border-[#334155] mt-auto">
+<button class="w-full flex items-center justify-center gap-2 py-2 mb-4 bg-[#334155] text-[#F1F5F9] rounded-sm hover:bg-[#3B82F6] transition-colors font-manrope text-sm font-medium border border-[#334155] hover:border-[#3B82F6]">
+<span class="material-symbols-outlined text-sm">add</span>
+                Create Contest
+            </button>
+<div class="space-y-1 font-manrope text-sm font-medium">
+<a class="flex items-center gap-3 px-2 py-2 rounded-sm text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform group" href="#">
+<span class="material-symbols-outlined text-lg opacity-70 group-hover:opacity-100 transition-opacity">help</span>
+                    Documentation
+                </a>
+<a class="flex items-center gap-3 px-2 py-2 rounded-sm text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform group" href="#">
+<span class="material-symbols-outlined text-lg opacity-70 group-hover:opacity-100 transition-opacity">contact_support</span>
+                    Support
+                </a>
+</div>
+</div>
+</aside>
+<!-- Main Content Column -->
+<div class="flex-1 flex flex-col h-screen overflow-hidden bg-surface relative">
+<!-- Shell: TopNavBar -->
+<header class="docked full-width top-0 z-50 flex justify-between items-center h-16 px-6 w-full bg-[#1E293B] border-b border-[#334155] shrink-0 font-manrope antialiased tracking-tight">
+<div class="flex items-center gap-8">
+<!-- Search (on_left) -->
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8] text-sm group-focus-within:text-[#3B82F6] transition-colors">search</span>
+<input class="bg-[#0F172A] border border-[#334155] text-[#F1F5F9] text-sm rounded-sm pl-9 pr-4 py-1.5 focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] transition-all w-64 placeholder:text-[#334155]" placeholder="Search resources..." type="text"/>
+</div>
+</div>
+<!-- Navigation Links -->
+<nav class="flex h-full items-center gap-6 absolute left-1/2 -translate-x-1/2">
+<a class="h-full flex items-center text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#334155]/50 transition-all duration-200 ease-in-out px-3 text-sm font-medium" href="#">Dashboard</a>
+<!-- Active Link -->
+<a class="h-full flex items-center text-[#3B82F6] border-b-2 border-[#3B82F6] pb-1 px-3 text-sm font-medium bg-[#334155]/20" href="#">Contests</a>
+<a class="h-full flex items-center text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#334155]/50 transition-all duration-200 ease-in-out px-3 text-sm font-medium" href="#">Standings</a>
+</nav>
+<!-- Trailing Actions & Profile -->
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1 border-r border-[#334155] pr-4">
+<button class="p-2 text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#334155]/50 transition-all duration-200 ease-in-out rounded-sm relative">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full border border-[#1E293B]"></span>
+</button>
+<button class="p-2 text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#334155]/50 transition-all duration-200 ease-in-out rounded-sm">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+</button>
+</div>
+<div class="flex items-center gap-3 cursor-pointer group">
+<img alt="User profile avatar" class="w-8 h-8 rounded-sm object-cover border border-[#334155] group-hover:border-[#3B82F6] transition-colors" data-alt="Close up professional headshot of a person against a dark studio background, low key lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuASPNeS4lndntzCiX27vyY8FxyS4ZSHs7Z5Q5eVEurO5amyu8tAL-SQaVCYbaotv_zZ79FGU1Tb_1tQOl2b2Sg7zEsVaBCA4QnvJ7ydbMJZzuzpYv5ryi2KtQ315lsTYxja9g5zCsMzcIW_4iCFTD2cxaVAB3kD6MmlrmqOBBx5kZkKeXM_k2Segp23_N2-IHZu9MyYcD9SHJzmN_yfGkgjIze6w-DUkQSaIiZqODDGYFJOvGWtsSFZWXPcwkxRqxanT1cx6-tUYSc"/>
+<div class="flex flex-col hidden md:flex">
+<span class="text-[#F1F5F9] text-xs font-bold leading-none mb-0.5">Alex Chen</span>
+<span class="text-[#94A3B8] text-[10px] uppercase font-black tracking-wider leading-none">AuraC² Div 1</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Contest Sub-Header (Timer & Info) -->
+<div class="h-14 bg-surface-container border-b border-outline-variant flex items-center justify-between px-6 shrink-0 z-10 shadow-sm shadow-black/20">
+<div class="flex items-center gap-4">
+<div class="flex flex-col">
+<h2 class="font-h3 text-h3 text-on-surface leading-none tracking-tight">Round 874 (Div. 1)</h2>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-1 uppercase tracking-widest">AuraC² Global Series</span>
+</div>
+<div class="h-8 w-px bg-outline-variant mx-2"></div>
+<div class="flex gap-2">
+<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-primary-container text-on-primary-container border border-primary/20">RATED</span>
+<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-surface-variant text-on-surface-variant border border-outline-variant">ICPC RULES</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<!-- Progress -->
+<div class="hidden lg:flex items-center gap-3 text-sm">
+<span class="font-label-md text-label-md text-on-surface-variant">Progress</span>
+<div class="w-32 h-1.5 bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[35%] rounded-full relative">
+<div class="absolute inset-0 bg-white/20 w-full animate-pulse"></div>
+</div>
+</div>
+<span class="font-label-md text-label-md text-on-surface">1/5</span>
+</div>
+<!-- Timer -->
+<div class="flex items-center gap-2 bg-surface-variant border border-error/30 text-error px-4 py-1.5 rounded-sm relative overflow-hidden group">
+<div class="absolute inset-0 bg-error/5 group-hover:bg-error/10 transition-colors"></div>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">timer</span>
+<span class="font-mono text-lg font-bold tracking-wider relative z-10 drop-shadow-[0_0_4px_rgba(255,180,171,0.4)]">02:14:36</span>
+</div>
+</div>
+</div>
+<!-- Canvas: 3-Pane Workspace -->
+<div class="flex-1 flex overflow-hidden">
+<!-- Pane 1: Problem List Sidebar -->
+<div class="w-64 border-r border-outline-variant bg-surface-container-low flex flex-col shrink-0">
+<div class="px-4 py-3 border-b border-outline-variant flex justify-between items-center bg-surface-container/50">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Problem Set</span>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-sm">filter_list</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto py-2 space-y-0.5">
+<!-- Active Problem -->
+<a class="flex items-center gap-3 px-4 py-3 bg-surface border-l-2 border-primary relative group cursor-default" href="#">
+<div class="w-6 h-6 rounded flex items-center justify-center bg-primary-container text-on-primary-container font-bold text-sm shrink-0 shadow-[0_0_8px_rgba(77,142,255,0.2)]">A</div>
+<div class="flex flex-col flex-1 min-w-0">
+<span class="font-label-md text-label-md text-on-surface truncate">Array Balance</span>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="text-[10px] font-bold text-on-surface-variant">EASY</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="text-[10px] font-medium text-primary">Attempting...</span>
+</div>
+</div>
+</a>
+<!-- Solved Problem -->
+<a class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container transition-colors border-l-2 border-transparent group" href="#">
+<div class="w-6 h-6 rounded flex items-center justify-center bg-[#10B981]/10 text-[#10B981] font-bold text-sm shrink-0 border border-[#10B981]/20">
+<span class="material-symbols-outlined text-sm">check</span>
+</div>
+<div class="flex flex-col flex-1 min-w-0">
+<span class="font-label-md text-label-md text-on-surface-variant group-hover:text-on-surface transition-colors truncate">String Isomorphism</span>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="text-[10px] font-bold text-on-surface-variant">EASY</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="text-[10px] font-medium text-[#10B981]">14:22</span>
+</div>
+</div>
+</a>
+<!-- Unsolved Problem -->
+<a class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container transition-colors border-l-2 border-transparent group" href="#">
+<div class="w-6 h-6 rounded flex items-center justify-center bg-surface-variant text-on-surface-variant font-bold text-sm shrink-0 border border-outline-variant">C</div>
+<div class="flex flex-col flex-1 min-w-0">
+<span class="font-label-md text-label-md text-on-surface-variant group-hover:text-on-surface transition-colors truncate">Dynamic Tree Routing</span>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="text-[10px] font-bold text-on-surface-variant">MEDIUM</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="text-[10px] font-medium text-on-surface-variant/50">Not started</span>
+</div>
+</div>
+</a>
+<!-- Unsolved Problem -->
+<a class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container transition-colors border-l-2 border-transparent group" href="#">
+<div class="w-6 h-6 rounded flex items-center justify-center bg-surface-variant text-on-surface-variant font-bold text-sm shrink-0 border border-outline-variant">D</div>
+<div class="flex flex-col flex-1 min-w-0">
+<span class="font-label-md text-label-md text-on-surface-variant group-hover:text-on-surface transition-colors truncate">Quantum Flow</span>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="text-[10px] font-bold text-[#F59E0B]">HARD</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="text-[10px] font-medium text-on-surface-variant/50">Not started</span>
+</div>
+</div>
+</a>
+</div>
+</div>
+<!-- Pane 2: Problem Statement (Center) -->
+<div class="flex-1 flex flex-col bg-surface min-w-0">
+<!-- Action Bar -->
+<div class="h-12 border-b border-outline-variant bg-surface-container/30 flex items-center justify-end px-4 gap-2 shrink-0">
+<button class="p-1.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant rounded transition-colors" title="Print">
+<span class="material-symbols-outlined text-sm">print</span>
+</button>
+<button class="p-1.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant rounded transition-colors" title="Download PDF">
+<span class="material-symbols-outlined text-sm">picture_as_pdf</span>
+</button>
+<div class="w-px h-4 bg-outline-variant mx-1"></div>
+<button class="p-1.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant rounded transition-colors" title="Ask Question">
+<span class="material-symbols-outlined text-sm">live_help</span>
+</button>
+</div>
+<!-- Content Area -->
+<div class="flex-1 overflow-y-auto p-8 lg:p-12 xl:px-24">
+<div class="max-w-3xl mx-auto">
+<!-- Problem Header -->
+<div class="mb-8">
+<div class="flex items-center gap-3 mb-2">
+<span class="bg-surface-variant text-on-surface px-2 py-0.5 rounded-sm font-mono text-sm font-bold border border-outline-variant">A</span>
+<h1 class="font-h1 text-h1 text-on-surface">Array Balance</h1>
+</div>
+<div class="flex flex-wrap items-center gap-3 mt-4">
+<span class="px-2 py-1 rounded-sm bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/20 font-label-sm text-label-sm tracking-widest">EASY</span>
+<div class="flex items-center gap-1.5 text-on-surface-variant font-body-sm text-body-sm bg-surface-container px-2 py-1 rounded-sm border border-outline-variant/50">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+                                    Time Limit: 1000ms
+                                </div>
+<div class="flex items-center gap-1.5 text-on-surface-variant font-body-sm text-body-sm bg-surface-container px-2 py-1 rounded-sm border border-outline-variant/50">
+<span class="material-symbols-outlined text-[14px]">memory</span>
+                                    Memory Limit: 256MB
+                                </div>
+<div class="flex items-center gap-1.5 text-on-surface-variant font-body-sm text-body-sm bg-surface-container px-2 py-1 rounded-sm border border-outline-variant/50">
+<span class="material-symbols-outlined text-[14px]">upload_file</span>
+                                    Standard Input/Output
+                                </div>
+</div>
+</div>
+<!-- Problem Body -->
+<div class="prose prose-invert prose-p:text-on-surface-variant prose-headings:text-on-surface max-w-none font-body-md text-body-md space-y-6">
+<p>
+                                You are given an array <code class="bg-surface-variant px-1.5 py-0.5 rounded text-sm text-on-surface font-mono">a</code> consisting of <code class="bg-surface-variant px-1.5 py-0.5 rounded text-sm text-on-surface font-mono">n</code> positive integers. You can perform the following operation any number of times (possibly zero):
+                            </p>
+<p>
+                                Choose two indices <code class="bg-surface-variant px-1.5 py-0.5 rounded text-sm text-on-surface font-mono">i</code> and <code class="bg-surface-variant px-1.5 py-0.5 rounded text-sm text-on-surface font-mono">j</code> (<code class="bg-surface-variant px-1.5 py-0.5 rounded text-sm text-on-surface font-mono">1 ≤ i, j ≤ n</code>, <code class="bg-surface-variant px-1.5 py-0.5 rounded text-sm text-on-surface font-mono">i ≠ j</code>) such that <code class="bg-surface-variant px-1.5 py-0.5 rounded text-sm text-on-surface font-mono">a_i &gt; 0</code>, and simultaneously decrease <code class="bg-surface-variant px-1.5 py-0.5 rounded text-sm text-on-surface font-mono">a_i</code> by 1 and increase <code class="bg-surface-variant px-1.5 py-0.5 rounded text-sm text-on-surface font-mono">a_j</code> by 1.
+                            </p>
+<p>
+                                An array is considered <strong>balanced</strong> if the absolute difference between the maximum and minimum elements in the array is at most 1.
+                            </p>
+<p>
+                                Determine the minimum number of operations required to make the array balanced.
+                            </p>
+<!-- Section: Input -->
+<h3 class="font-h3 text-h3 mt-10 mb-4 border-b border-outline-variant pb-2">Input</h3>
+<p>
+                                The first line contains a single integer <code class="bg-surface-variant px-1.5 py-0.5 rounded text-sm text-on-surface font-mono">t</code> (<code class="bg-surface-variant px-1.5 py-0.5 rounded text-sm text-on-surface font-mono">1 ≤ t ≤ 10^4</code>) — the number of test cases.
+                            </p>
+<p>
+                                The first line of each test case contains a single integer <code class="bg-surface-variant px-1.5 py-0.5 rounded text-sm text-on-surface font-mono">n</code> (<code class="bg-surface-variant px-1.5 py-0.5 rounded text-sm text-on-surface font-mono">1 ≤ n ≤ 2 \cdot 10^5</code>) — the length of the array.
+                            </p>
+<p>
+                                The second line of each test case contains <code class="bg-surface-variant px-1.5 py-0.5 rounded text-sm text-on-surface font-mono">n</code> integers <code class="bg-surface-variant px-1.5 py-0.5 rounded text-sm text-on-surface font-mono">a_1, a_2, \dots, a_n</code> (<code class="bg-surface-variant px-1.5 py-0.5 rounded text-sm text-on-surface font-mono">1 ≤ a_i ≤ 10^9</code>) — the elements of the array.
+                            </p>
+<p class="text-sm text-on-surface-variant/80 italic">
+                                It is guaranteed that the sum of <code class="bg-surface-variant px-1.5 py-0.5 rounded text-sm text-on-surface font-mono">n</code> over all test cases does not exceed <code class="bg-surface-variant px-1.5 py-0.5 rounded text-sm text-on-surface font-mono">2 \cdot 10^5</code>.
+                            </p>
+<!-- Section: Output -->
+<h3 class="font-h3 text-h3 mt-10 mb-4 border-b border-outline-variant pb-2">Output</h3>
+<p>
+                                For each test case, print a single integer — the minimum number of operations to balance the array.
+                            </p>
+<!-- Section: Examples -->
+<h3 class="font-h3 text-h3 mt-10 mb-4 border-b border-outline-variant pb-2">Example</h3>
+<div class="grid grid-cols-2 border border-outline-variant rounded-md overflow-hidden bg-surface-container">
+<div class="p-4 border-r border-outline-variant">
+<div class="font-label-sm text-label-sm text-on-surface-variant mb-2 uppercase tracking-wider flex justify-between">
+                                        Input
+                                        <button class="hover:text-primary transition-colors"><span class="material-symbols-outlined text-[14px]">content_copy</span></button>
+</div>
+<pre class="font-mono text-sm text-on-surface bg-transparent p-0 m-0 leading-relaxed">3
+4
+1 4 2 3
+3
+1 1 1
+5
+10 20 30 40 50</pre>
+</div>
+<div class="p-4">
+<div class="font-label-sm text-label-sm text-on-surface-variant mb-2 uppercase tracking-wider flex justify-between">
+                                        Output
+                                        <button class="hover:text-primary transition-colors"><span class="material-symbols-outlined text-[14px]">content_copy</span></button>
+</div>
+<pre class="font-mono text-sm text-on-surface bg-transparent p-0 m-0 leading-relaxed">2
+0
+30</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Pane 3: Code Editor (Right) -->
+<div class="w-[45%] border-l border-outline-variant flex flex-col bg-[#1E293B] shrink-0 relative shadow-[-4px_0_24px_rgba(0,0,0,0.2)]">
+<!-- Editor Top Bar -->
+<div class="h-12 border-b border-[#334155] bg-[#0F172A] flex justify-between items-center px-4 shrink-0">
+<!-- Language Selector -->
+<div class="relative group">
+<button class="flex items-center gap-2 bg-[#1E293B] border border-[#334155] text-[#F1F5F9] px-3 py-1.5 rounded-sm text-sm font-medium hover:border-[#3B82F6] transition-colors focus:outline-none focus:ring-1 focus:ring-[#3B82F6]">
+<span class="w-2 h-2 rounded-full bg-[#3B82F6]"></span>
+                            C++17 (GCC 12.2)
+                            <span class="material-symbols-outlined text-[16px] text-[#94A3B8]">expand_more</span>
+</button>
+</div>
+<!-- Editor Settings -->
+<div class="flex items-center gap-2">
+<button class="p-1.5 text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#334155] rounded transition-colors" title="Reset Code">
+<span class="material-symbols-outlined text-[18px]">refresh</span>
+</button>
+<button class="p-1.5 text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#334155] rounded transition-colors" title="Editor Settings">
+<span class="material-symbols-outlined text-[18px]">settings_applications</span>
+</button>
+<div class="w-px h-4 bg-[#334155] mx-1"></div>
+<button class="p-1.5 text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#334155] rounded transition-colors" title="Expand Editor">
+<span class="material-symbols-outlined text-[18px]">open_in_full</span>
+</button>
+</div>
+</div>
+<!-- Code Area (Simulated syntax highlighting) -->
+<div class="flex-1 overflow-auto bg-[#1E293B] flex font-mono text-[13px] leading-relaxed relative">
+<!-- Line Numbers -->
+<div class="w-12 bg-[#0F172A]/50 border-r border-[#334155] flex flex-col items-end py-4 pr-3 text-[#64748B] select-none shrink-0 font-medium">
+<div>1</div><div>2</div><div>3</div><div>4</div><div>5</div><div>6</div><div>7</div><div>8</div><div>9</div><div>10</div><div>11</div><div>12</div><div>13</div><div>14</div><div>15</div><div>16</div><div>17</div><div>18</div><div>19</div><div>20</div>
+</div>
+<!-- Code Content -->
+<div class="p-4 flex-1 whitespace-pre outline-none text-[#E2E8F0]" contenteditable="true" spellcheck="false">
+<span class="text-[#F472B6]">#include</span> <span class="text-[#A78BFA]">&lt;iostream&gt;</span>
+<span class="text-[#F472B6]">#include</span> <span class="text-[#A78BFA]">&lt;vector&gt;</span>
+<span class="text-[#F472B6]">#include</span> <span class="text-[#A78BFA]">&lt;numeric&gt;</span>
+<span class="text-[#F472B6]">#include</span> <span class="text-[#A78BFA]">&lt;cmath&gt;</span>
+<span class="text-[#F472B6]">using</span> <span class="text-[#38BDF8]">namespace</span> std;
+
+<span class="text-[#38BDF8]">void</span> <span class="text-[#FCD34D]">solve</span>() {
+    <span class="text-[#38BDF8]">int</span> n;
+    cin &gt;&gt; n;
+    vector&lt;<span class="text-[#38BDF8]">long long</span>&gt; a(n);
+    <span class="text-[#38BDF8]">long long</span> sum = <span class="text-[#FCA5A5]">0</span>;
+    
+    <span class="text-[#F472B6]">for</span> (<span class="text-[#38BDF8]">int</span> i = <span class="text-[#FCA5A5]">0</span>; i &lt; n; ++i) {
+        cin &gt;&gt; a[i];
+        sum += a[i];
+    }
+    
+    <span class="text-[#64748B] italic">// Target values for balanced array</span>
+<span class="text-[#38BDF8]">long long</span> target_base = sum / n;
+    <span class="text-[#38BDF8]">long long</span> remainder = sum % n;
+    
+    <span class="text-[#38BDF8]">long long</span> ops = <span class="text-[#FCA5A5]">0</span>;
+    <span class="text-[#64748B] italic">// Implementation needed here...</span>
+    
+    cout &lt;&lt; ops &lt;&lt; endl;
+}
+
+<span class="text-[#38BDF8]">int</span> <span class="text-[#FCD34D]">main</span>() {
+    <span class="text-[#38BDF8]">ios_base</span>::<span class="text-[#FCD34D]">sync_with_stdio</span>(<span class="text-[#FCA5A5]">false</span>);
+    cin.<span class="text-[#FCD34D]">tie</span>(NULL);
+    
+    <span class="text-[#38BDF8]">int</span> t;
+    cin &gt;&gt; t;
+    <span class="text-[#F472B6]">while</span> (t--) {
+        <span class="text-[#FCD34D]">solve</span>();
+    }
+    
+    <span class="text-[#F472B6]">return</span> <span class="text-[#FCA5A5]">0</span>;
+}<span class="animate-pulse inline-block w-2 h-4 bg-white/50 ml-1 translate-y-1"></span></div>
+</div>
+<!-- Bottom Action Bar -->
+<div class="h-16 border-t border-[#334155] bg-[#0F172A] flex items-center justify-between px-4 shrink-0 shadow-[0_-4px_12px_rgba(0,0,0,0.2)] z-10">
+<button class="flex items-center gap-2 text-[#94A3B8] hover:text-[#F1F5F9] font-label-md transition-colors px-2 py-1 rounded hover:bg-[#1E293B]">
+<span class="material-symbols-outlined text-[18px]">terminal</span>
+                        Console
+                        <span class="bg-[#334155] text-[#94A3B8] text-[10px] px-1.5 rounded ml-1 font-mono">Alt+`</span>
+</button>
+<div class="flex items-center gap-3">
+<button class="bg-[#1E293B] border border-[#334155] text-[#F1F5F9] px-6 py-2 rounded-sm font-label-md text-label-md hover:bg-[#334155] transition-colors focus:ring-2 focus:ring-[#3B82F6]/50 focus:outline-none flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">play_arrow</span>
+                            Run Code
+                        </button>
+<button class="bg-[#3B82F6] text-[#F1F5F9] px-8 py-2 rounded-sm font-label-md text-label-md hover:bg-[#2563EB] transition-colors focus:ring-2 focus:ring-[#3B82F6]/50 focus:outline-none flex items-center gap-2 shadow-[0_0_12px_rgba(59,130,246,0.4)]">
+<span class="material-symbols-outlined text-[16px]">send</span>
+                            Submit
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body></html>

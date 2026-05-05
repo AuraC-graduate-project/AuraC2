@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AuraC² - Submissions</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-low": "#eff4ff",
+                      "outline-variant": "#c4c6cf",
+                      "on-secondary-fixed": "#00174b",
+                      "inverse-on-surface": "#eaf1ff",
+                      "on-primary-container": "#8aa4cf",
+                      "tertiary-fixed": "#ffe083",
+                      "primary": "#022448",
+                      "on-primary-fixed-variant": "#2d486d",
+                      "error": "#ba1a1a",
+                      "secondary-fixed-dim": "#b4c5ff",
+                      "tertiary-container": "#cea700",
+                      "on-tertiary-fixed": "#231b00",
+                      "inverse-primary": "#adc8f5",
+                      "surface-container-highest": "#d3e4fe",
+                      "on-tertiary-fixed-variant": "#574500",
+                      "on-secondary-container": "#fefcff",
+                      "on-primary": "#ffffff",
+                      "background": "#f8f9ff",
+                      "on-surface-variant": "#43474e",
+                      "surface-container": "#e5eeff",
+                      "surface-container-high": "#dce9ff",
+                      "on-error": "#ffffff",
+                      "surface-dim": "#cbdbf5",
+                      "surface-tint": "#455f87",
+                      "on-surface": "#0b1c30",
+                      "secondary": "#0051d5",
+                      "on-error-container": "#93000a",
+                      "secondary-container": "#316bf3",
+                      "primary-container": "#1e3a5f",
+                      "inverse-surface": "#213145",
+                      "primary-fixed-dim": "#adc8f5",
+                      "surface-bright": "#f8f9ff",
+                      "on-tertiary": "#ffffff",
+                      "error-container": "#ffdad6",
+                      "secondary-fixed": "#dbe1ff",
+                      "surface-variant": "#d3e4fe",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary-fixed": "#001c3b",
+                      "on-secondary-fixed-variant": "#003ea8",
+                      "tertiary": "#735c00",
+                      "on-background": "#0b1c30",
+                      "on-tertiary-container": "#4e3e00",
+                      "tertiary-fixed-dim": "#eec200",
+                      "outline": "#74777f",
+                      "on-secondary": "#ffffff",
+                      "surface": "#f8f9ff",
+                      "primary-fixed": "#d5e3ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "container-max": "1440px",
+                      "base": "4px",
+                      "gutter": "20px",
+                      "xl": "32px",
+                      "lg": "24px",
+                      "xs": "4px",
+                      "md": "16px",
+                      "sm": "8px"
+              },
+              "fontFamily": {
+                      "h3": [
+                              "manrope"
+                      ],
+                      "h2": [
+                              "manrope"
+                      ],
+                      "table-data": [
+                              "spaceGrotesk"
+                      ],
+                      "body-base": [
+                              "inter"
+                      ],
+                      "h1": [
+                              "manrope"
+                      ],
+                      "body-sm": [
+                              "inter"
+                      ],
+                      "code-block": [
+                              "spaceGrotesk"
+                      ],
+                      "label-caps": [
+                              "inter"
+                      ]
+              },
+              "fontSize": {
+                      "h3": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "h2": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "table-data": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-base": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "h1": [
+                              "30px",
+                              {
+                                      "lineHeight": "38px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "code-block": [
+                              "14px",
+                              {
+                                      "lineHeight": "22px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+</head>
+<body class="bg-background text-on-background font-body-base antialiased min-h-screen">
+<!-- TopAppBar -->
+<header class="bg-white dark:bg-slate-900 font-['Manrope'] text-sm tracking-tight fixed top-0 right-0 left-0 h-16 flex items-center justify-between px-6 z-40 border-b border-slate-200 dark:border-slate-800 shadow-sm ml-64">
+<div class="flex items-center">
+<!-- Search left empty for now -->
+</div>
+<div class="flex items-center gap-4">
+<span class="text-blue-600 dark:text-blue-400 font-semibold">02:45:12 Remaining</span>
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+<button class="p-2 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-[20px]">help_outline</span>
+</button>
+</div>
+<div class="h-8 w-8 rounded-full bg-surface-variant overflow-hidden ml-2 border border-outline-variant">
+<img alt="User avatar" class="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2hHBxbZZp3DIpx5O0aFU9S7k7X0drcAIwfPn84Bt5D-NzLi9jJIxyDTTvF8xE1QTmb3TOLszcn_hwc5bsYwzIwh2gpp0-5LSYomS3daOOIc-9sCg-uSp490hgtyYQgmE6vzmD6NJatsUUwa2EGdOkeBLXA1UqpqiGWDxzGXWwRs3XIRgksT0JW7D3R_hk_V8W_FpAkNuU-kxpvlR7Pf2h5ZLgWVqEaYotmomRr4iSMelPOclAALkP61VQ5AWpVRaSK4c2xk6hBbE"/>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<nav class="bg-[#1E3A5F] dark:bg-slate-950 font-['Manrope'] text-sm font-medium docked left-0 h-full w-64 fixed left-0 top-0 bottom-0 w-64 flex flex-col z-50 text-white">
+<div class="px-6 py-8 mb-4">
+<div class="flex items-center gap-3">
+<div class="h-10 w-10 bg-white/10 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white">school</span>
+</div>
+<div>
+<h1 class="text-white font-bold text-lg leading-tight">AuraC² Admin</h1>
+<p class="text-slate-300 text-xs">Management Portal</p>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-1 px-2 flex-grow overflow-y-auto">
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Overview
+            </a>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">emoji_events</span>
+                Contests
+            </a>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">groups</span>
+                Teams
+            </a>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">terminal</span>
+                Problems
+            </a>
+<a class="bg-blue-600/20 text-white border-l-4 border-blue-500 px-4 py-3 flex items-center gap-3 rounded-r-lg active:scale-[0.98] transition-transform" href="#">
+<span class="material-symbols-outlined">list_alt</span>
+                Submissions
+            </a>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">forum</span>
+                Clarifications
+            </a>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">query_stats</span>
+                Future Stats
+            </a>
+</div>
+<div class="p-6 mt-auto">
+<button class="w-full flex items-center gap-2 text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-200 p-2 rounded-lg">
+<span class="material-symbols-outlined">logout</span>
+                Logout
+            </button>
+</div>
+</nav>
+<!-- Main Content -->
+<main class="ml-64 pt-16 p-gutter min-h-screen">
+<div class="max-w-container-max mx-auto space-y-lg">
+<!-- Header -->
+<div class="flex items-center justify-between">
+<h2 class="font-h2 text-h2 text-on-surface">Submissions</h2>
+<div class="flex gap-sm">
+<button class="bg-surface hover:bg-surface-variant text-on-surface border border-outline-variant px-4 py-2 rounded-lg font-body-sm text-body-sm flex items-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                        Export CSV
+                    </button>
+<button class="bg-secondary text-on-secondary hover:bg-secondary/90 px-4 py-2 rounded-lg font-body-sm text-body-sm flex items-center gap-2 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]">refresh</span>
+                        Refresh
+                    </button>
+</div>
+</div>
+<!-- Filters -->
+<div class="bg-on-primary rounded-xl border border-outline-variant p-4 shadow-sm flex flex-wrap gap-4 items-end">
+<div class="flex flex-col gap-1 min-w-[200px] flex-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant">TEAM</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant text-[18px]">search</span>
+<input class="w-full pl-10 pr-4 py-2 rounded-lg border border-outline-variant bg-surface font-body-sm text-body-sm focus:border-secondary focus:ring-1 focus:ring-secondary outline-none transition-all" placeholder="Search team..." type="text"/>
+</div>
+</div>
+<div class="flex flex-col gap-1 min-w-[150px] flex-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant">PROBLEM</label>
+<select class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface font-body-sm text-body-sm focus:border-secondary focus:ring-1 focus:ring-secondary outline-none transition-all appearance-none cursor-pointer">
+<option value="">All Problems</option>
+<option value="A">A - Array Balance</option>
+<option value="B">B - Campus Shortest Path</option>
+<option value="C">C - Tree Rotations</option>
+</select>
+</div>
+<div class="flex flex-col gap-1 min-w-[150px] flex-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant">VERDICT</label>
+<select class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface font-body-sm text-body-sm focus:border-secondary focus:ring-1 focus:ring-secondary outline-none transition-all appearance-none cursor-pointer">
+<option value="">All Verdicts</option>
+<option value="AC">Accepted</option>
+<option value="WA">Wrong Answer</option>
+<option value="TLE">Time Limit Exceeded</option>
+<option value="RTE">Run Time Error</option>
+</select>
+</div>
+<div class="flex flex-col gap-1 min-w-[150px] flex-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant">LANGUAGE</label>
+<select class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface font-body-sm text-body-sm focus:border-secondary focus:ring-1 focus:ring-secondary outline-none transition-all appearance-none cursor-pointer">
+<option value="">All Languages</option>
+<option value="cpp">C++17</option>
+<option value="java">Java 11</option>
+<option value="python">Python 3</option>
+</select>
+</div>
+<button class="bg-surface-variant text-on-surface px-4 py-2 rounded-lg font-body-sm text-body-sm hover:bg-surface-dim transition-colors flex items-center gap-2 h-[38px]">
+<span class="material-symbols-outlined text-[18px]">filter_alt_off</span>
+                    Clear
+                </button>
+</div>
+<!-- Table Container -->
+<div class="bg-on-primary rounded-xl border border-outline-variant shadow-[0px_1px_3px_rgba(0,0,0,0.05)] overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-surface-container-high">
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant whitespace-nowrap">ID</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant whitespace-nowrap">TEAM</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant whitespace-nowrap">PROBLEM</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant whitespace-nowrap">LANGUAGE</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant whitespace-nowrap">VERDICT</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant whitespace-nowrap text-right">TIME</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant whitespace-nowrap text-right">MEMORY</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant whitespace-nowrap text-right">SUBMITTED AT</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant whitespace-nowrap text-center">ACTIONS</th>
+</tr>
+</thead>
+<tbody class="font-table-data text-table-data text-on-surface divide-y divide-surface-container-high">
+<!-- Row 1 -->
+<tr class="hover:bg-surface transition-colors group">
+<td class="py-3 px-4 text-outline">#101</td>
+<td class="py-3 px-4 font-body-sm font-medium">team-alpha</td>
+<td class="py-3 px-4 font-body-sm">Array Balance</td>
+<td class="py-3 px-4 font-body-sm text-outline">C++17</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                        ACCEPTED
+                                    </span>
+</td>
+<td class="py-3 px-4 text-right">43ms</td>
+<td class="py-3 px-4 text-right text-outline">10MB</td>
+<td class="py-3 px-4 text-right font-body-sm text-outline">10:42:15 AM</td>
+<td class="py-3 px-4 text-center">
+<button class="text-secondary hover:bg-secondary-container/20 p-1.5 rounded-lg transition-colors inline-flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100" title="View Code">
+<span class="material-symbols-outlined text-[18px]">code</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface transition-colors group">
+<td class="py-3 px-4 text-outline">#102</td>
+<td class="py-3 px-4 font-body-sm font-medium">syntax-squad</td>
+<td class="py-3 px-4 font-body-sm">Array Balance</td>
+<td class="py-3 px-4 font-body-sm text-outline">Python 3</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold bg-red-100 text-red-800 border border-red-200">
+                                        WRONG_ANSWER
+                                    </span>
+</td>
+<td class="py-3 px-4 text-right">91ms</td>
+<td class="py-3 px-4 text-right text-outline">18MB</td>
+<td class="py-3 px-4 text-right font-body-sm text-outline">10:45:02 AM</td>
+<td class="py-3 px-4 text-center">
+<button class="text-secondary hover:bg-secondary-container/20 p-1.5 rounded-lg transition-colors inline-flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100" title="View Code">
+<span class="material-symbols-outlined text-[18px]">code</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface transition-colors group">
+<td class="py-3 px-4 text-outline">#103</td>
+<td class="py-3 px-4 font-body-sm font-medium">byte-benders</td>
+<td class="py-3 px-4 font-body-sm">Campus Shortest Path</td>
+<td class="py-3 px-4 font-body-sm text-outline">Java 11</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200 gap-1">
+<span class="material-symbols-outlined text-[12px] animate-spin">refresh</span>
+                                        RUNNING
+                                    </span>
+</td>
+<td class="py-3 px-4 text-right text-outline">-</td>
+<td class="py-3 px-4 text-right text-outline">-</td>
+<td class="py-3 px-4 text-right font-body-sm text-outline">10:48:30 AM</td>
+<td class="py-3 px-4 text-center">
+<button class="text-secondary hover:bg-secondary-container/20 p-1.5 rounded-lg transition-colors inline-flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100" title="View Code">
+<span class="material-symbols-outlined text-[18px]">code</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 (Extra dummy row) -->
+<tr class="hover:bg-surface transition-colors group">
+<td class="py-3 px-4 text-outline">#100</td>
+<td class="py-3 px-4 font-body-sm font-medium">null-pointers</td>
+<td class="py-3 px-4 font-body-sm">Tree Rotations</td>
+<td class="py-3 px-4 font-body-sm text-outline">C++17</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                                        TIME_LIMIT_EXCEEDED
+                                    </span>
+</td>
+<td class="py-3 px-4 text-right">2005ms</td>
+<td class="py-3 px-4 text-right text-outline">24MB</td>
+<td class="py-3 px-4 text-right font-body-sm text-outline">10:30:11 AM</td>
+<td class="py-3 px-4 text-center">
+<button class="text-secondary hover:bg-secondary-container/20 p-1.5 rounded-lg transition-colors inline-flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100" title="View Code">
+<span class="material-symbols-outlined text-[18px]">code</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-4 py-3 border-t border-surface-container-high bg-surface-container-low flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-outline-variant">Showing 1 to 4 of 420 entries</span>
+<div class="flex gap-1">
+<button class="p-1 rounded text-outline-variant hover:bg-surface-variant hover:text-on-surface disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded bg-secondary text-on-secondary font-body-sm text-body-sm flex items-center justify-center">1</button>
+<button class="w-8 h-8 rounded text-on-surface hover:bg-surface-variant font-body-sm text-body-sm flex items-center justify-center">2</button>
+<button class="w-8 h-8 rounded text-on-surface hover:bg-surface-variant font-body-sm text-body-sm flex items-center justify-center">3</button>
+<span class="w-8 h-8 flex items-center justify-center text-outline-variant">...</span>
+<button class="p-1 rounded text-outline-variant hover:bg-surface-variant hover:text-on-surface">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Overlay for Code Drawer (Hidden by default, shown for structure) -->
+<div class="fixed inset-0 bg-on-surface/20 z-[60] hidden"></div>
+<!-- Code Drawer (Hidden by default, shown for structure) -->
+<div class="fixed right-0 top-0 bottom-0 w-[600px] bg-on-primary shadow-[-10px_0_15px_rgba(0,0,0,0.05)] z-[70] transform translate-x-full transition-transform duration-300 flex flex-col hidden">
+<div class="px-6 py-4 border-b border-surface-container-high flex items-center justify-between">
+<div>
+<h3 class="font-h3 text-h3 text-on-surface">Submission #101</h3>
+<p class="font-body-sm text-body-sm text-outline-variant">team-alpha • Array Balance • C++17</p>
+</div>
+<button class="p-2 rounded-full hover:bg-surface-variant text-outline-variant transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="flex-1 p-6 overflow-y-auto bg-surface-bright">
+<pre class="font-code-block text-code-block text-on-surface bg-[#F1F5F9] p-4 rounded-lg border border-outline-variant overflow-x-auto h-full"><code>#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;numeric&gt;
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    int n;
+    if (!(cin &gt;&gt; n)) return 0;
+    
+    vector&lt;long long&gt; a(n);
+    long long total_sum = 0;
+    
+    for (int i = 0; i &lt; n; i++) {
+        cin &gt;&gt; a[i];
+        total_sum += a[i];
+    }
+    
+    long long current_sum = 0;
+    for (int i = 0; i &lt; n - 1; i++) {
+        current_sum += a[i];
+        if (current_sum == total_sum - current_sum) {
+            cout &lt;&lt; "YES\n";
+            return 0;
+        }
+    }
+    
+    cout &lt;&lt; "NO\n";
+    return 0;
+}</code>
+            </pre>
+</div>
+<div class="px-6 py-4 border-t border-surface-container-high bg-on-primary flex justify-end gap-3">
+<button class="bg-surface hover:bg-surface-variant text-on-surface border border-outline-variant px-4 py-2 rounded-lg font-body-sm text-body-sm transition-colors">
+                Copy Code
+            </button>
+<button class="bg-primary-container text-on-primary px-4 py-2 rounded-lg font-body-sm text-body-sm hover:opacity-90 transition-opacity">
+                Rejudge
+            </button>
+</div>
+</div>
+</body></html>

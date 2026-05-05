@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AuraC² Admin - Teams</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;family=Space+Grotesk:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-low": "#eff4ff",
+                      "outline-variant": "#c4c6cf",
+                      "on-secondary-fixed": "#00174b",
+                      "inverse-on-surface": "#eaf1ff",
+                      "on-primary-container": "#8aa4cf",
+                      "tertiary-fixed": "#ffe083",
+                      "primary": "#022448",
+                      "on-primary-fixed-variant": "#2d486d",
+                      "error": "#ba1a1a",
+                      "secondary-fixed-dim": "#b4c5ff",
+                      "tertiary-container": "#cea700",
+                      "on-tertiary-fixed": "#231b00",
+                      "inverse-primary": "#adc8f5",
+                      "surface-container-highest": "#d3e4fe",
+                      "on-tertiary-fixed-variant": "#574500",
+                      "on-secondary-container": "#fefcff",
+                      "on-primary": "#ffffff",
+                      "background": "#f8f9ff",
+                      "on-surface-variant": "#43474e",
+                      "surface-container": "#e5eeff",
+                      "surface-container-high": "#dce9ff",
+                      "on-error": "#ffffff",
+                      "surface-dim": "#cbdbf5",
+                      "surface-tint": "#455f87",
+                      "on-surface": "#0b1c30",
+                      "secondary": "#0051d5",
+                      "on-error-container": "#93000a",
+                      "secondary-container": "#316bf3",
+                      "primary-container": "#1e3a5f",
+                      "inverse-surface": "#213145",
+                      "primary-fixed-dim": "#adc8f5",
+                      "surface-bright": "#f8f9ff",
+                      "on-tertiary": "#ffffff",
+                      "error-container": "#ffdad6",
+                      "secondary-fixed": "#dbe1ff",
+                      "surface-variant": "#d3e4fe",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary-fixed": "#001c3b",
+                      "on-secondary-fixed-variant": "#003ea8",
+                      "tertiary": "#735c00",
+                      "on-background": "#0b1c30",
+                      "on-tertiary-container": "#4e3e00",
+                      "tertiary-fixed-dim": "#eec200",
+                      "outline": "#74777f",
+                      "on-secondary": "#ffffff",
+                      "surface": "#f8f9ff",
+                      "primary-fixed": "#d5e3ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "container-max": "1440px",
+                      "base": "4px",
+                      "gutter": "20px",
+                      "xl": "32px",
+                      "lg": "24px",
+                      "xs": "4px",
+                      "md": "16px",
+                      "sm": "8px"
+              },
+              "fontFamily": {
+                      "h3": [
+                              "manrope"
+                      ],
+                      "h2": [
+                              "manrope"
+                      ],
+                      "table-data": [
+                              "spaceGrotesk"
+                      ],
+                      "body-base": [
+                              "inter"
+                      ],
+                      "h1": [
+                              "manrope"
+                      ],
+                      "body-sm": [
+                              "inter"
+                      ],
+                      "code-block": [
+                              "spaceGrotesk"
+                      ],
+                      "label-caps": [
+                              "inter"
+                      ]
+              },
+              "fontSize": {
+                      "h3": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "h2": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "table-data": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-base": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "h1": [
+                              "30px",
+                              {
+                                      "lineHeight": "38px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "code-block": [
+                              "14px",
+                              {
+                                      "lineHeight": "22px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex">
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-0 bottom-0 w-64 flex flex-col z-50 bg-[#1E3A5F] dark:bg-slate-950 font-['Manrope'] text-sm font-medium">
+<div class="px-6 py-8 flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-white flex items-center justify-center overflow-hidden">
+<img alt="University Logo" class="w-full h-full object-cover" data-alt="close up of a minimalist university crest logo with a shield and laurel wreath on a white background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDr_Vo3Mj1cIkUGk5l4s4nf1lZppFEMJ72HPONwYeNfeHBLdJY0j32FRoUG5FLaXbr9j_aWKPvs1HYljYmVTeismTTFu5zzzlPURTDRawbwdMv6ALvdhmDQPCdQ53MwOOnKeAfgDG9qCrokfw2rc_BuyBC9rojp4-RXYZajSz2s7zQNUkESc7A6rpDlv59SOUnuDQsSzysqIqeOgZ_mjCioPWriCwtrA61TpKGj5Rtsqx2Mh5QCjnfJe0NeYZo2AQzWEnlVNpQa8wk"/>
+</div>
+<div>
+<h1 class="text-white font-bold text-lg tracking-tight">AuraC² Admin</h1>
+<p class="text-slate-400 text-xs font-normal">Management Portal</p>
+</div>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto py-4 flex flex-col gap-1">
+<a class="text-slate-300 hover:text-white px-6 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-white transition-colors" data-icon="dashboard">dashboard</span>
+                Overview
+            </a>
+<a class="text-slate-300 hover:text-white px-6 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-white transition-colors" data-icon="emoji_events">emoji_events</span>
+                Contests
+            </a>
+<a class="bg-blue-600/20 text-white border-l-4 border-blue-500 px-6 py-3 flex items-center gap-3 active-nav opacity-80 transition-opacity" href="#">
+<span class="material-symbols-outlined text-[20px] text-blue-400" data-icon="groups">groups</span>
+                Teams
+            </a>
+<a class="text-slate-300 hover:text-white px-6 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-white transition-colors" data-icon="terminal">terminal</span>
+                Problems
+            </a>
+<a class="text-slate-300 hover:text-white px-6 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-white transition-colors" data-icon="list_alt">list_alt</span>
+                Submissions
+            </a>
+<a class="text-slate-300 hover:text-white px-6 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-white transition-colors" data-icon="forum">forum</span>
+                Clarifications
+            </a>
+<a class="text-slate-300 hover:text-white px-6 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-white transition-colors" data-icon="query_stats">query_stats</span>
+                Future Stats
+            </a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="ml-64 flex-1 flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 left-64 h-16 flex items-center justify-between px-8 z-40 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm font-['Manrope'] text-sm tracking-tight transition-colors">
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+<input class="pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-lg focus:ring-2 focus:ring-blue-500 w-64 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:bg-white dark:focus:bg-slate-900 transition-all" placeholder="Search teams, IDs, roles..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined text-[18px]">timer</span>
+<span class="font-semibold text-blue-600 dark:text-blue-400">02:45:12 Remaining</span>
+</div>
+<div class="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+<div class="flex items-center gap-4 text-slate-500 dark:text-slate-400">
+<button class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white dark:border-slate-900"></span>
+</button>
+<button class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<button class="w-8 h-8 rounded-full overflow-hidden border-2 border-transparent hover:border-blue-500 transition-all ml-2">
+<img alt="User avatar" class="w-full h-full object-cover" data-alt="close up portrait of a professional man with short dark hair in a well-lit studio setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5JKOio3Z_aSyJK--8g1fXnqKbkuvk8cvqV9hzmQDZG6jINQh6zqiwuIaRsasiJKoPx20Jwj_5fWwE0lVIxCXQNeen-gZluzeuuzhwisHbfIKyTPZK88eLGfUobtuTxgugmVFWs9pPULxTsJTVIdJJ2o0zZktbVnIig02SBJmsV0xNqZBJAQxg-lX5_mWUmkjVnhkTbaLvl6yMiXrqj3eib6x_mhZ2elcs8zDFp6ejm-y_0OeE9iudZohzcF8ioBJGnjGCYttEIWU"/>
+</button>
+</div>
+</div>
+</header>
+<!-- Canvas -->
+<main class="flex-1 mt-16 p-8 overflow-y-auto">
+<div class="max-w-[container-max] mx-auto">
+<!-- Page Header -->
+<div class="flex justify-between items-end mb-8">
+<div>
+<h2 class="font-h1 text-h1 text-primary-container">Teams</h2>
+<p class="font-body-base text-body-base text-on-surface-variant mt-1">Manage competition participants and administrative roles.</p>
+</div>
+<button class="bg-[#2563EB] hover:bg-blue-700 text-white font-body-sm text-body-sm py-2.5 px-5 rounded-lg flex items-center gap-2 shadow-sm transition-all focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                        Register Team
+                    </button>
+</div>
+<!-- Table Container (Card Surface) -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-[0px_1px_3px_rgba(0,0,0,0.05)] overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant">
+<th class="py-4 px-6 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider font-semibold w-24">ID</th>
+<th class="py-4 px-6 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider font-semibold">Username</th>
+<th class="py-4 px-6 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider font-semibold">Role</th>
+<th class="py-4 px-6 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider font-semibold">Account Type</th>
+<th class="py-4 px-6 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider font-semibold text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant font-table-data text-table-data text-on-surface">
+<tr class="hover:bg-surface transition-colors group">
+<td class="py-4 px-6 text-outline">1042</td>
+<td class="py-4 px-6 font-semibold text-primary">team-alpha</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            TEAM
+                                        </span>
+</td>
+<td class="py-4 px-6 text-on-surface-variant">Competitor</td>
+<td class="py-4 px-6 text-right">
+<div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-outline hover:text-secondary rounded bg-transparent hover:bg-surface-container transition-colors" title="Edit">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="p-1.5 text-outline hover:text-secondary rounded bg-transparent hover:bg-surface-container transition-colors" title="Reset Password">
+<span class="material-symbols-outlined text-[18px]">lock_reset</span>
+</button>
+<button class="p-1.5 text-outline hover:text-error rounded bg-transparent hover:bg-error-container transition-colors" title="Delete">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface transition-colors group">
+<td class="py-4 px-6 text-outline">1043</td>
+<td class="py-4 px-6 font-semibold text-primary">syntax-squad</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            TEAM
+                                        </span>
+</td>
+<td class="py-4 px-6 text-on-surface-variant">Competitor</td>
+<td class="py-4 px-6 text-right">
+<div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-outline hover:text-secondary rounded bg-transparent hover:bg-surface-container transition-colors" title="Edit">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="p-1.5 text-outline hover:text-secondary rounded bg-transparent hover:bg-surface-container transition-colors" title="Reset Password">
+<span class="material-symbols-outlined text-[18px]">lock_reset</span>
+</button>
+<button class="p-1.5 text-outline hover:text-error rounded bg-transparent hover:bg-error-container transition-colors" title="Delete">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface transition-colors group">
+<td class="py-4 px-6 text-outline">1044</td>
+<td class="py-4 px-6 font-semibold text-primary">byte-benders</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            TEAM
+                                        </span>
+</td>
+<td class="py-4 px-6 text-on-surface-variant">Competitor</td>
+<td class="py-4 px-6 text-right">
+<div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-outline hover:text-secondary rounded bg-transparent hover:bg-surface-container transition-colors" title="Edit">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="p-1.5 text-outline hover:text-secondary rounded bg-transparent hover:bg-surface-container transition-colors" title="Reset Password">
+<span class="material-symbols-outlined text-[18px]">lock_reset</span>
+</button>
+<button class="p-1.5 text-outline hover:text-error rounded bg-transparent hover:bg-error-container transition-colors" title="Delete">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface transition-colors group bg-surface-container-low/50">
+<td class="py-4 px-6 text-outline">0001</td>
+<td class="py-4 px-6 font-semibold text-primary">admin</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                            ADMIN
+                                        </span>
+</td>
+<td class="py-4 px-6 text-on-surface-variant">System Admin</td>
+<td class="py-4 px-6 text-right">
+<div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-outline hover:text-secondary rounded bg-transparent hover:bg-surface-container transition-colors" title="Edit">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="p-1.5 text-outline hover:text-secondary rounded bg-transparent hover:bg-surface-container transition-colors" title="Reset Password">
+<span class="material-symbols-outlined text-[18px]">lock_reset</span>
+</button>
+<button class="opacity-50 cursor-not-allowed" disabled="" title="Delete">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Footer / Pagination Stub -->
+<div class="px-6 py-4 border-t border-outline-variant bg-surface-container-lowest flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Showing 1 to 4 of 4 entries</span>
+<div class="flex gap-1">
+<button class="w-8 h-8 rounded border border-outline-variant flex items-center justify-center text-outline-variant cursor-not-allowed bg-surface-container-low" disabled="">
+<span class="material-symbols-outlined text-[16px]">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded border border-blue-600 bg-blue-50 text-blue-600 flex items-center justify-center font-table-data text-table-data font-semibold">
+                                1
+                            </button>
+<button class="w-8 h-8 rounded border border-outline-variant flex items-center justify-center text-outline-variant cursor-not-allowed bg-surface-container-low" disabled="">
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

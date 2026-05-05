@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Public Clarifications - CodeMetric Pro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#ffdcc6",
+                        "surface-container": "#1d2027",
+                        "inverse-on-surface": "#2e3038",
+                        "tertiary-fixed-dim": "#ffb786",
+                        "primary": "#adc6ff",
+                        "tertiary": "#ffb786",
+                        "on-primary": "#002e6a",
+                        "surface": "#10131a",
+                        "on-tertiary-fixed-variant": "#723600",
+                        "secondary-container": "#3f465c",
+                        "on-tertiary-container": "#461f00",
+                        "on-secondary": "#283044",
+                        "secondary-fixed-dim": "#bec6e0",
+                        "on-secondary-fixed-variant": "#3f465c",
+                        "primary-fixed": "#d8e2ff",
+                        "on-secondary-fixed": "#131b2e",
+                        "surface-bright": "#363941",
+                        "error": "#ffb4ab",
+                        "on-primary-container": "#00285d",
+                        "on-error-container": "#ffdad6",
+                        "surface-tint": "#adc6ff",
+                        "surface-container-high": "#272a31",
+                        "primary-fixed-dim": "#adc6ff",
+                        "on-tertiary-fixed": "#311400",
+                        "secondary": "#bec6e0",
+                        "outline-variant": "#424754",
+                        "secondary-fixed": "#dae2fd",
+                        "surface-container-low": "#191b23",
+                        "on-secondary-container": "#adb4ce",
+                        "on-primary-fixed-variant": "#004395",
+                        "on-primary-fixed": "#001a42",
+                        "on-tertiary": "#502400",
+                        "surface-variant": "#32353c",
+                        "primary-container": "#4d8eff",
+                        "tertiary-container": "#df7412",
+                        "on-error": "#690005",
+                        "outline": "#8c909f",
+                        "surface-container-lowest": "#0b0e15",
+                        "on-surface": "#e1e2ec",
+                        "on-background": "#e1e2ec",
+                        "surface-dim": "#10131a",
+                        "inverse-surface": "#e1e2ec",
+                        "surface-container-highest": "#32353c",
+                        "background": "#10131a",
+                        "on-surface-variant": "#c2c6d6",
+                        "inverse-primary": "#005ac2",
+                        "error-container": "#93000a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "1rem",
+                        "xxl": "3rem",
+                        "xs": "0.25rem",
+                        "sm": "0.5rem",
+                        "xl": "2rem",
+                        "lg": "1.5rem"
+                    },
+                    "fontFamily": {
+                        "h1": ["Manrope"],
+                        "body-lg": ["Manrope"],
+                        "label-sm": ["Manrope"],
+                        "body-sm": ["Manrope"],
+                        "h3": ["Manrope"],
+                        "label-md": ["Manrope"],
+                        "h2": ["Manrope"],
+                        "body-md": ["Manrope"],
+                        "display": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "h1": ["2.25rem", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "body-lg": ["1.125rem", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "label-sm": ["0.75rem", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "body-sm": ["0.875rem", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "h3": ["1.5rem", { "lineHeight": "1.4", "fontWeight": "600" }],
+                        "label-md": ["0.875rem", { "lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "h2": ["1.875rem", { "lineHeight": "1.3", "fontWeight": "600" }],
+                        "body-md": ["1rem", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "display": ["3.75rem", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Base typography mapping to avoid repetitive class clutter on deep elements */
+        body { @apply font-body-md text-body-md bg-background text-on-background; }
+        h1 { @apply font-h1 text-h1; }
+        h2 { @apply font-h2 text-h2; }
+        h3 { @apply font-h3 text-h3; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden bg-background">
+<!-- Shared Component: SideNavBar -->
+<aside class="bg-[#0F172A] text-[#3B82F6] font-manrope text-sm font-medium docked left-0 h-full w-64 border-r border-[#334155] flat no shadows flex flex-col py-4 space-y-2 flex-shrink-0 z-40">
+<!-- Header -->
+<div class="px-6 mb-6 flex items-center space-x-3">
+<div aria-label="University Logo" class="h-8 w-8 rounded bg-surface-container-highest flex items-center justify-center border border-outline-variant shrink-0">
+<span class="material-symbols-outlined text-on-surface text-lg">school</span>
+</div>
+<div>
+<div class="text-[#F1F5F9] font-bold text-sm tracking-tight">ACM-ICPC Portal</div>
+<div class="text-[#94A3B8] text-xs">Admin Console</div>
+</div>
+</div>
+<!-- Navigation Tabs -->
+<nav class="flex-1 overflow-y-auto space-y-1">
+<!-- Inactive Tab -->
+<a class="flex items-center space-x-3 px-6 py-3 text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined text-lg">dashboard</span>
+<span>Overview</span>
+</a>
+<!-- Inactive Tab -->
+<a class="flex items-center space-x-3 px-6 py-3 text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined text-lg">code</span>
+<span>Problems</span>
+</a>
+<!-- Inactive Tab -->
+<a class="flex items-center space-x-3 px-6 py-3 text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined text-lg">history</span>
+<span>Submissions</span>
+</a>
+<!-- Inactive Tab -->
+<a class="flex items-center space-x-3 px-6 py-3 text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined text-lg">groups</span>
+<span>Teams</span>
+</a>
+<!-- Active Tab -->
+<a class="flex items-center space-x-3 px-6 py-3 bg-[#334155] text-[#F1F5F9] border-r-4 border-[#3B82F6] rounded-r-sm scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined text-lg">forum</span>
+<span>Clarifications</span>
+</a>
+<!-- Inactive Tab -->
+<a class="flex items-center space-x-3 px-6 py-3 text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined text-lg">terminal</span>
+<span>Logs</span>
+</a>
+</nav>
+<!-- CTA & Footer -->
+<div class="px-4 mt-auto pt-4 border-t border-[#334155]">
+<button class="w-full bg-[#3B82F6] text-[#F1F5F9] font-label-md text-label-md py-2 px-4 rounded-DEFAULT hover:bg-primary-container transition-colors mb-4 flex items-center justify-center space-x-2">
+<span class="material-symbols-outlined text-sm">add</span>
+<span>Create Contest</span>
+</button>
+<div class="space-y-1">
+<a class="flex items-center space-x-3 px-2 py-2 text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] rounded-DEFAULT transition-colors" href="#">
+<span class="material-symbols-outlined text-lg">help</span>
+<span class="text-xs">Documentation</span>
+</a>
+<a class="flex items-center space-x-3 px-2 py-2 text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] rounded-DEFAULT transition-colors" href="#">
+<span class="material-symbols-outlined text-lg">contact_support</span>
+<span class="text-xs">Support</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col min-w-0 bg-background">
+<!-- Shared Component: TopNavBar -->
+<header class="bg-[#1E293B] text-[#3B82F6] font-manrope antialiased tracking-tight docked full-width top-0 z-50 border-b border-[#334155] flat no shadows flex justify-between items-center h-16 px-6 w-full flex-shrink-0">
+<!-- Left Group: Logo & Search -->
+<div class="flex items-center space-x-8">
+<div class="text-lg font-bold text-[#F1F5F9] tracking-tighter">CodeMetric Pro</div>
+<!-- Search on Left -->
+<div class="relative hidden lg:block w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
+<input class="w-full bg-[#0F172A] border border-[#334155] text-on-surface text-sm rounded-DEFAULT pl-9 pr-3 py-1.5 focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] focus:outline-none transition-all placeholder:text-outline-variant" placeholder="Search platform..." type="text"/>
+</div>
+</div>
+<!-- Center Group: Navigation Links (All inactive based on context) -->
+<nav class="hidden md:flex space-x-6">
+<a class="text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#334155]/50 transition-all duration-200 ease-in-out px-3 py-1 rounded" href="#">Dashboard</a>
+<a class="text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#334155]/50 transition-all duration-200 ease-in-out px-3 py-1 rounded" href="#">Contests</a>
+<a class="text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#334155]/50 transition-all duration-200 ease-in-out px-3 py-1 rounded" href="#">Standings</a>
+</nav>
+<!-- Right Group: Actions & Profile -->
+<div class="flex items-center space-x-4">
+<button class="text-[#94A3B8] hover:text-[#F1F5F9] transition-colors p-1 rounded-full hover:bg-[#334155]/50">
+<span class="material-symbols-outlined" data-weight="fill">notifications</span>
+</button>
+<button class="text-[#94A3B8] hover:text-[#F1F5F9] transition-colors p-1 rounded-full hover:bg-[#334155]/50">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-surface-container-highest border border-[#334155] overflow-hidden ml-2 cursor-pointer ring-2 ring-transparent hover:ring-[#3B82F6] transition-all">
+<!-- Placeholder for profile image alt text from JSON -->
+<div aria-label="User profile avatar" class="w-full h-full flex items-center justify-center bg-primary-fixed text-on-primary-fixed font-bold text-xs">U</div>
+</div>
+</div>
+</header>
+<!-- Main Canvas (Scrollable) -->
+<main class="flex-1 overflow-y-auto p-xl">
+<div class="max-w-[1024px] mx-auto w-full">
+<!-- Page Header -->
+<div class="mb-xxl flex flex-col md:flex-row md:items-end justify-between border-b border-outline-variant pb-md gap-md">
+<div>
+<div class="flex items-center gap-sm mb-xs">
+<h1 class="text-on-surface">Public Clarifications</h1>
+<span class="bg-tertiary-container text-on-tertiary-container font-label-sm text-label-sm px-2 py-1 rounded-DEFAULT inline-flex items-center">
+<span class="material-symbols-outlined text-[14px] mr-1">bolt</span>
+                                Frontend Future Enhancement
+                            </span>
+</div>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
+                            Global read-only feed of all answered questions from teams. Updates automatically.
+                        </p>
+</div>
+<!-- Contextual Actions -->
+<div class="flex items-center gap-sm">
+<button class="bg-surface-container border border-outline-variant text-on-surface hover:bg-surface-container-high px-4 py-2 rounded-DEFAULT font-label-md text-label-md flex items-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-sm">filter_list</span>
+                            Filter by Problem
+                        </button>
+<button class="bg-surface-container border border-outline-variant text-on-surface hover:bg-surface-container-high px-3 py-2 rounded-DEFAULT transition-colors">
+<span class="material-symbols-outlined text-sm">refresh</span>
+</button>
+</div>
+</div>
+<!-- Clarifications List (Bento/Card Style) -->
+<div class="flex flex-col gap-lg">
+<!-- Card 1 -->
+<article class="bg-surface-container border border-outline-variant rounded-xl overflow-hidden shadow-sm shadow-black/10">
+<div class="p-lg">
+<div class="flex justify-between items-start mb-md">
+<div class="flex items-center gap-sm">
+<span class="bg-primary-container text-on-primary-container font-label-sm text-label-sm px-2 py-1 rounded-DEFAULT border border-primary/20">Problem C</span>
+<h3 class="text-on-surface">Graph Traversal Constraints</h3>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant bg-surface px-2 py-1 rounded border border-outline-variant/50">10:42 AM</span>
+</div>
+<div class="mb-lg">
+<div class="flex gap-sm">
+<span class="material-symbols-outlined text-outline-variant mt-0.5">help</span>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed">
+                                        In the problem statement, it says the number of nodes \( N \) is up to \( 10^5 \). However, the sample input contains a case where \( N \) is slightly larger. Can you confirm the absolute maximum value for \( N \) across all hidden test cases?
+                                    </p>
+</div>
+</div>
+<div class="bg-surface-container-high border-l-4 border-primary rounded-r-lg p-md ml-lg relative">
+<span class="material-symbols-outlined absolute -left-3 top-md bg-surface-container-high text-primary text-sm rounded-full ring-2 ring-surface-container">check_circle</span>
+<div class="flex items-center gap-2 mb-2">
+<span class="font-label-md text-label-md text-on-surface">Jury Response</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Official</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                                    The problem statement is correct. \( N \le 10^5 \). The sample input anomaly has been corrected in the latest PDF revision. All hidden test cases strictly adhere to \( N \le 10^5 \).
+                                </p>
+</div>
+</div>
+</article>
+<!-- Card 2 -->
+<article class="bg-surface-container border border-outline-variant rounded-xl overflow-hidden shadow-sm shadow-black/10">
+<div class="p-lg">
+<div class="flex justify-between items-start mb-md">
+<div class="flex items-center gap-sm">
+<span class="bg-tertiary-container text-on-tertiary-container font-label-sm text-label-sm px-2 py-1 rounded-DEFAULT border border-tertiary/20">Problem A</span>
+<h3 class="text-on-surface">Floating Point Precision</h3>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant bg-surface px-2 py-1 rounded border border-outline-variant/50">09:15 AM</span>
+</div>
+<div class="mb-lg">
+<div class="flex gap-sm">
+<span class="material-symbols-outlined text-outline-variant mt-0.5">help</span>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed">
+                                        Does the checker use absolute or relative error for comparing the floating-point output? The problem asks for 6 decimal places, but what is the acceptable tolerance?
+                                    </p>
+</div>
+</div>
+<div class="bg-surface-container-high border-l-4 border-primary rounded-r-lg p-md ml-lg relative">
+<span class="material-symbols-outlined absolute -left-3 top-md bg-surface-container-high text-primary text-sm rounded-full ring-2 ring-surface-container">check_circle</span>
+<div class="flex items-center gap-2 mb-2">
+<span class="font-label-md text-label-md text-on-surface">Jury Response</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                                    The checker will accept an answer if the absolute or relative error is strictly less than \( 10^{-6} \). Please ensure you use double precision (`double` in C++) for your calculations.
+                                </p>
+</div>
+</div>
+</article>
+<!-- Card 3 -->
+<article class="bg-surface-container border border-outline-variant rounded-xl overflow-hidden shadow-sm shadow-black/10">
+<div class="p-lg">
+<div class="flex justify-between items-start mb-md">
+<div class="flex items-center gap-sm">
+<span class="bg-surface-container-highest text-on-surface font-label-sm text-label-sm px-2 py-1 rounded-DEFAULT border border-outline-variant">General</span>
+<h3 class="text-on-surface">Memory Limit Exceeded Context</h3>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant bg-surface px-2 py-1 rounded border border-outline-variant/50">08:30 AM</span>
+</div>
+<div class="mb-lg">
+<div class="flex gap-sm">
+<span class="material-symbols-outlined text-outline-variant mt-0.5">help</span>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed">
+                                        We received a Memory Limit Exceeded (MLE) on Problem D, but our local tests peak at 150MB, well below the 256MB limit. Does Java incur a specific JVM overhead that counts towards the limit in this environment?
+                                    </p>
+</div>
+</div>
+<div class="bg-surface-container-high border-l-4 border-primary rounded-r-lg p-md ml-lg relative">
+<span class="material-symbols-outlined absolute -left-3 top-md bg-surface-container-high text-primary text-sm rounded-full ring-2 ring-surface-container">check_circle</span>
+<div class="flex items-center gap-2 mb-2">
+<span class="font-label-md text-label-md text-on-surface">System Admin Response</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                                    Yes, the memory limit is strictly enforced on the entire process tree. For Java submissions, we run the JVM with `-Xmx256M -Xms256M`, but non-heap memory (like thread stacks and class metadata) can push the total OS-level memory footprint over the limit. Try optimizing your object allocation or switching to a language with lower runtime overhead if you are very close to the margin.
+                                </p>
+</div>
+</div>
+</article>
+</div>
+<!-- Empty State (Hidden, but structural example) -->
+<!-- 
+                <div class="bg-surface-container border border-outline-variant border-dashed rounded-xl p-xxl flex flex-col items-center justify-center text-center mt-lg">
+                    <span class="material-symbols-outlined text-outline text-[48px] mb-md">forum</span>
+                    <h3 class="text-on-surface mb-2">No public clarifications yet</h3>
+                    <p class="text-on-surface-variant max-w-md mx-auto">When the jury answers a clarification and marks it public, it will appear here for all teams to see.</p>
+                </div>
+                -->
+</div>
+</main>
+</div>
+</body></html>

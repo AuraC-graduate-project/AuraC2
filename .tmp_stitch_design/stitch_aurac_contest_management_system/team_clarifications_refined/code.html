@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AuraC² - Team Clarifications</title>
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@500;600;700;800;900&amp;family=Space+Grotesk:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Theme Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline": "#74777f",
+                    "error": "#ba1a1a",
+                    "on-tertiary-fixed-variant": "#574500",
+                    "on-secondary": "#ffffff",
+                    "on-surface-variant": "#43474e",
+                    "primary-container": "#1e3a5f",
+                    "on-primary": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "primary-fixed": "#d5e3ff",
+                    "on-secondary-fixed-variant": "#003ea8",
+                    "on-tertiary-fixed": "#231b00",
+                    "on-error": "#ffffff",
+                    "surface-bright": "#f8f9ff",
+                    "tertiary": "#735c00",
+                    "on-secondary-container": "#fefcff",
+                    "error-container": "#ffdad6",
+                    "on-error-container": "#93000a",
+                    "on-background": "#0b1c30",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-variant": "#d3e4fe",
+                    "surface-container-low": "#eff4ff",
+                    "on-surface": "#0b1c30",
+                    "background": "#f8f9ff",
+                    "surface-container": "#e5eeff",
+                    "on-secondary-fixed": "#00174b",
+                    "secondary-container": "#316bf3",
+                    "inverse-surface": "#213145",
+                    "surface-tint": "#455f87",
+                    "secondary": "#0051d5",
+                    "secondary-fixed-dim": "#b4c5ff",
+                    "surface-dim": "#cbdbf5",
+                    "outline-variant": "#c4c6cf",
+                    "inverse-on-surface": "#eaf1ff",
+                    "surface-container-highest": "#d3e4fe",
+                    "on-primary-fixed": "#001c3b",
+                    "primary-fixed-dim": "#adc8f5",
+                    "inverse-primary": "#adc8f5",
+                    "secondary-fixed": "#dbe1ff",
+                    "tertiary-fixed-dim": "#eec200",
+                    "tertiary-container": "#cea700",
+                    "primary": "#022448",
+                    "on-tertiary-container": "#4e3e00",
+                    "surface-container-high": "#dce9ff",
+                    "surface": "#f8f9ff",
+                    "on-primary-fixed-variant": "#2d486d",
+                    "tertiary-fixed": "#ffe083",
+                    "on-primary-container": "#8aa4cf"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "xs": "4px",
+                    "md": "16px",
+                    "xl": "32px",
+                    "lg": "24px",
+                    "container-max": "1440px",
+                    "sm": "8px",
+                    "gutter": "20px",
+                    "base": "4px"
+            },
+            "fontFamily": {
+                    "h1": ["manrope"],
+                    "code-block": ["spaceGrotesk"],
+                    "body-base": ["inter"],
+                    "h2": ["manrope"],
+                    "table-data": ["spaceGrotesk"],
+                    "body-sm": ["inter"],
+                    "h3": ["manrope"],
+                    "label-caps": ["inter"]
+            },
+            "fontSize": {
+                    "h1": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "code-block": ["14px", {"lineHeight": "22px", "fontWeight": "400"}],
+                    "body-base": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "h2": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "table-data": ["13px", {"lineHeight": "18px", "fontWeight": "500"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "h3": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background min-h-screen flex font-body-base text-body-base text-on-surface">
+<!-- SideNavBar from JSON -->
+<nav class="bg-[#1E3A5F] dark:bg-slate-950 h-full w-64 fixed left-0 top-0 z-40 border-r border-slate-200 dark:border-slate-800 flat no shadows flex flex-col py-6">
+<div class="px-lg mb-xl flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center overflow-hidden">
+<img alt="University Logo" class="w-full h-full object-cover" data-alt="University Logo avatar placeholder" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6-UYZoGuIhkKb38tfoFlJO2wJzBSe3y2VSd_1kZEy603rG7R3X3HqdsXQ7ieDm7Smu4DsnFFWU8baVev7UHbmSR9AcdZ_aGSHBI8dYWvtsTvNrbCYFhWx4wGis1mbnao0n7cnd2hmQLh54WfY3Yeng4OChoUotDzlQkWRLslS8AvTk4CHU6wo02qbUeQUtRznASvFBRIfJwwlMRNmnfbYaDl3G6Z2j5HTVKVKzpHKYV2nvHizEclaOc0XbMw70wQ0wb0-fzj1csc"/>
+</div>
+<div>
+<h1 class="text-2xl font-bold tracking-tight text-white font-['Manrope']">AuraC²</h1>
+<p class="font-['Manrope'] text-sm font-medium tracking-wide text-blue-600 dark:text-blue-400">Academic Console</p>
+</div>
+</div>
+<ul class="flex flex-col gap-xs flex-1 px-sm">
+<!-- Overview -->
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded text-slate-300 hover:text-white hover:bg-white/5 hover:bg-white/10 transition-all font-['Manrope'] text-sm font-medium tracking-wide" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                    Overview
+                </a>
+</li>
+<!-- Contests -->
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded text-slate-300 hover:text-white hover:bg-white/5 hover:bg-white/10 transition-all font-['Manrope'] text-sm font-medium tracking-wide" href="#">
+<span class="material-symbols-outlined">emoji_events</span>
+                    Contests
+                </a>
+</li>
+<!-- Teams -->
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded text-slate-300 hover:text-white hover:bg-white/5 hover:bg-white/10 transition-all font-['Manrope'] text-sm font-medium tracking-wide" href="#">
+<span class="material-symbols-outlined">groups</span>
+                    Teams
+                </a>
+</li>
+<!-- Problems -->
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded text-slate-300 hover:text-white hover:bg-white/5 hover:bg-white/10 transition-all font-['Manrope'] text-sm font-medium tracking-wide" href="#">
+<span class="material-symbols-outlined">description</span>
+                    Problems
+                </a>
+</li>
+<!-- Submissions -->
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded text-slate-300 hover:text-white hover:bg-white/5 hover:bg-white/10 transition-all font-['Manrope'] text-sm font-medium tracking-wide" href="#">
+<span class="material-symbols-outlined">terminal</span>
+                    Submissions
+                </a>
+</li>
+<!-- Clarifications (ACTIVE) -->
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded-r border-l-4 border-blue-500 bg-white/10 text-white font-bold hover:bg-white/10 transition-all translate-x-1 duration-200 font-['Manrope'] text-sm font-medium tracking-wide" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">forum</span>
+                    Clarifications
+                </a>
+</li>
+<!-- Statistics -->
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded text-slate-300 hover:text-white hover:bg-white/5 hover:bg-white/10 transition-all font-['Manrope'] text-sm font-medium tracking-wide" href="#">
+<span class="material-symbols-outlined">analytics</span>
+                    Statistics
+                </a>
+</li>
+<!-- Security -->
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded text-slate-300 hover:text-white hover:bg-white/5 hover:bg-white/10 transition-all font-['Manrope'] text-sm font-medium tracking-wide" href="#">
+<span class="material-symbols-outlined">security</span>
+                    Security
+                </a>
+</li>
+</ul>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 ml-64 flex flex-col min-h-screen">
+<!-- TopAppBar from JSON -->
+<header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md fixed top-0 right-0 left-64 h-16 z-30 border-b border-slate-200 dark:border-slate-800 shadow-sm flex justify-between items-center px-8 w-full">
+<div class="flex items-center gap-lg">
+<span class="text-slate-900 dark:text-white font-black text-xl font-['Manrope'] uppercase tracking-wider">AuraC²</span>
+</div>
+<div class="flex items-center gap-lg">
+<div class="flex items-center gap-sm">
+<button class="text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors p-sm rounded-full">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors p-sm rounded-full">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<button class="bg-blue-600 hover:bg-blue-700 text-white font-['Manrope'] text-sm uppercase tracking-wider font-semibold px-md py-sm rounded transition-colors focus-within:ring-2 focus-within:ring-blue-500/20 shadow-sm">
+                    Create Contest
+                </button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant ml-sm">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="User profile placeholder avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3LUEi_U0rfDA1RdYyTh8jwqsh1WmcWqNt2pReTTPIL5uXyazM1YIXJUwYt-ldV4WGoh1mPRAHePQIT3HmhiYmmpe1DdaFxUaZLo7oWxFb4Xjbs4DX4Hy8DLRZJNXj5ydBcA561sgsrnQJCBJ0WPzOqe6jrWgm9VBLsZ2rgeoaRECQiQQ0j6dv_X0ZprXprSV-1eOHISQBnds0HbtocS2REShr8vOrjdSTnj57T2dKSMnR_RylEVvI8wHgriavVBHskT-SkqTZa54"/>
+</div>
+</div>
+</header>
+<!-- Canvas -->
+<main class="flex-1 mt-16 p-xl max-w-container-max mx-auto w-full">
+<!-- Page Header -->
+<div class="flex justify-between items-end mb-xl border-b border-outline-variant pb-md">
+<div>
+<h2 class="font-h2 text-h2 text-on-surface">Team Clarifications</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">Submit questions to the jury or review public announcements.</p>
+</div>
+<button class="bg-secondary text-on-secondary font-label-caps text-label-caps px-lg py-[10px] rounded hover:bg-on-secondary-fixed transition-colors shadow-[0px_1px_3px_rgba(0,0,0,0.1)] flex items-center gap-sm">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                    Ask Clarification
+                </button>
+</div>
+<!-- Asymmetric Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-xl">
+<!-- Left Column: Public Clarifications (Wider) -->
+<div class="lg:col-span-2 flex flex-col gap-md">
+<h3 class="font-h3 text-h3 text-on-surface mb-sm flex items-center gap-sm">
+<span class="material-symbols-outlined text-outline">campaign</span>
+                        Public Clarifications
+                    </h3>
+<!-- Announcement Card 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg shadow-[0px_1px_3px_rgba(0,0,0,0.05)] relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-secondary"></div>
+<div class="flex justify-between items-start mb-md">
+<div class="flex gap-sm items-center">
+<span class="bg-surface-container text-on-surface font-table-data text-table-data px-sm py-xs rounded border border-outline-variant">Global</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">10:45 AM</span>
+</div>
+<span class="bg-primary-fixed text-on-primary-fixed-variant font-label-caps text-label-caps px-sm py-xs rounded-full">Jury Announcement</span>
+</div>
+<div class="font-body-base text-body-base text-on-surface">
+<p>We have updated the input limits for Problem C (Graph Routing). The maximum value of N is now 10^5, not 10^6 as originally stated in the PDF. The online judge has been updated to reflect this.</p>
+</div>
+</div>
+<!-- Clarification Card 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg shadow-[0px_1px_3px_rgba(0,0,0,0.05)]">
+<div class="flex justify-between items-start mb-md">
+<div class="flex gap-sm items-center">
+<span class="bg-surface-container text-on-surface font-table-data text-table-data px-sm py-xs rounded border border-outline-variant">Prob A</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">09:12 AM</span>
+</div>
+</div>
+<div class="font-body-base text-body-base text-on-surface mb-md">
+<p class="font-semibold mb-xs">Q: Does the string S contain only uppercase English letters?</p>
+</div>
+<div class="bg-surface border-l-4 border-outline-variant p-md rounded-r-lg font-body-base text-body-base text-on-surface-variant">
+<p><span class="font-semibold text-on-surface">Jury:</span> Yes, as stated in the constraints section, S consists only of characters 'A' through 'Z'.</p>
+</div>
+</div>
+</div>
+<!-- Right Column: My Questions (Narrower) -->
+<div class="lg:col-span-1 flex flex-col gap-md">
+<h3 class="font-h3 text-h3 text-on-surface mb-sm flex items-center gap-sm">
+<span class="material-symbols-outlined text-outline">help_center</span>
+                        My Questions
+                    </h3>
+<!-- Question Card 1 (Pending) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md shadow-[0px_1px_3px_rgba(0,0,0,0.05)]">
+<div class="flex justify-between items-start mb-sm">
+<span class="bg-surface-container text-on-surface font-table-data text-table-data px-sm py-xs rounded border border-outline-variant">Prob D</span>
+<span class="bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-caps text-label-caps px-sm py-xs rounded-full flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]">pending</span>
+                                Pending
+                            </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface line-clamp-3">
+                            In the second sample case, why is the output 4? If we take the sequence 1, 3, 2, the sum is 6, which should be valid under the modulo constraint. Can you verify sample 2?
+                        </p>
+<div class="mt-md font-body-sm text-body-sm text-outline-variant text-right">
+                            Submitted 12 mins ago
+                        </div>
+</div>
+<!-- Question Card 2 (Answered) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md shadow-[0px_1px_3px_rgba(0,0,0,0.05)]">
+<div class="flex justify-between items-start mb-sm">
+<span class="bg-surface-container text-on-surface font-table-data text-table-data px-sm py-xs rounded border border-outline-variant">Prob B</span>
+<span class="bg-surface-container-high text-on-surface font-label-caps text-label-caps px-sm py-xs rounded-full flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]">done</span>
+                                Answered
+                            </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface mb-sm">
+                            Is it possible for the graph to contain self-loops?
+                        </p>
+<div class="bg-surface p-sm rounded font-body-sm text-body-sm text-on-surface-variant border border-surface-container-highest">
+<p><span class="font-semibold text-on-surface text-[12px] uppercase tracking-wider">Response:</span> Read the problem statement carefully.</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

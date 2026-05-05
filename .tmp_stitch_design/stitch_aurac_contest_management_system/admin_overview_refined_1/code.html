@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AuraC² - Overview</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@500;600;700;800;900&amp;family=Space+Grotesk:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#eff4ff",
+                        "error": "#ba1a1a",
+                        "error-container": "#ffdad6",
+                        "primary-fixed-dim": "#adc8f5",
+                        "inverse-surface": "#213145",
+                        "on-tertiary": "#ffffff",
+                        "secondary-fixed": "#dbe1ff",
+                        "surface-container-high": "#dce9ff",
+                        "primary-fixed": "#d5e3ff",
+                        "surface-variant": "#d3e4fe",
+                        "surface-tint": "#455f87",
+                        "surface-container": "#e5eeff",
+                        "on-primary-fixed": "#001c3b",
+                        "secondary-container": "#316bf3",
+                        "surface-bright": "#f8f9ff",
+                        "outline-variant": "#c4c6cf",
+                        "on-tertiary-fixed": "#231b00",
+                        "inverse-primary": "#adc8f5",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "on-surface": "#0b1c30",
+                        "secondary": "#0051d5",
+                        "on-background": "#0b1c30",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-surface-variant": "#43474e",
+                        "on-secondary-container": "#fefcff",
+                        "surface": "#f8f9ff",
+                        "on-secondary-fixed": "#00174b",
+                        "background": "#f8f9ff",
+                        "on-secondary-fixed-variant": "#003ea8",
+                        "tertiary-fixed": "#ffe083",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#735c00",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#cbdbf5",
+                        "surface-container-highest": "#d3e4fe",
+                        "on-tertiary-fixed-variant": "#574500",
+                        "tertiary-fixed-dim": "#eec200",
+                        "tertiary-container": "#cea700",
+                        "primary": "#022448",
+                        "on-primary-container": "#8aa4cf",
+                        "on-primary": "#ffffff",
+                        "outline": "#74777f",
+                        "on-tertiary-container": "#4e3e00",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#1e3a5f",
+                        "on-primary-fixed-variant": "#2d486d",
+                        "on-secondary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "sm": "8px",
+                        "gutter": "20px",
+                        "base": "4px",
+                        "xs": "4px",
+                        "xl": "32px",
+                        "md": "16px",
+                        "lg": "24px",
+                        "container-max": "1440px"
+                    },
+                    "fontFamily": {
+                        "h1": ["Manrope", "sans-serif"],
+                        "h2": ["Manrope", "sans-serif"],
+                        "body-sm": ["Inter", "sans-serif"],
+                        "body-base": ["Inter", "sans-serif"],
+                        "table-data": ["Space Grotesk", "monospace"],
+                        "label-caps": ["Inter", "sans-serif"],
+                        "h3": ["Manrope", "sans-serif"],
+                        "code-block": ["Space Grotesk", "monospace"]
+                    },
+                    "fontSize": {
+                        "h1": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "h2": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-base": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "table-data": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "h3": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "code-block": ["14px", { "lineHeight": "22px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background min-h-screen flex">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-screen w-64 border-r border-slate-200/10 bg-[#1E3A5F] dark:bg-slate-950 flex flex-col h-full overflow-y-auto z-50">
+<div class="p-lg">
+<h1 class="text-2xl font-black text-white tracking-tighter">AuraC²</h1>
+<p class="font-['Manrope'] text-sm font-medium tracking-tight text-slate-300 mt-base">Contest Control</p>
+</div>
+<nav class="flex-1 mt-md">
+<ul class="flex flex-col gap-base font-['Manrope'] text-sm font-medium tracking-tight">
+<li>
+<a class="bg-white/10 text-white border-l-4 border-blue-500 py-3 px-4 flex items-center gap-md Active: scale-95 duration-150" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                        Overview
+                    </a>
+</li>
+<li>
+<a class="text-slate-300 hover:text-white py-3 px-4 transition-colors hover:bg-white/5 transition-all duration-200 flex items-center gap-md" href="#">
+<span class="material-symbols-outlined">event_note</span>
+                        Contests
+                    </a>
+</li>
+<li>
+<a class="text-slate-300 hover:text-white py-3 px-4 transition-colors hover:bg-white/5 transition-all duration-200 flex items-center gap-md" href="#">
+<span class="material-symbols-outlined">groups</span>
+                        Teams
+                    </a>
+</li>
+<li>
+<a class="text-slate-300 hover:text-white py-3 px-4 transition-colors hover:bg-white/5 transition-all duration-200 flex items-center gap-md" href="#">
+<span class="material-symbols-outlined">code</span>
+                        Problems
+                    </a>
+</li>
+<li>
+<a class="text-slate-300 hover:text-white py-3 px-4 transition-colors hover:bg-white/5 transition-all duration-200 flex items-center gap-md" href="#">
+<span class="material-symbols-outlined">send</span>
+                        Submissions
+                    </a>
+</li>
+<li>
+<a class="text-slate-300 hover:text-white py-3 px-4 transition-colors hover:bg-white/5 transition-all duration-200 flex items-center gap-md" href="#">
+<span class="material-symbols-outlined">forum</span>
+                        Clarifications
+                    </a>
+</li>
+<li>
+<a class="text-slate-300 hover:text-white py-3 px-4 transition-colors hover:bg-white/5 transition-all duration-200 flex items-center gap-md" href="#">
+<span class="material-symbols-outlined">security</span>
+                        Analytics
+                    </a>
+</li>
+</ul>
+</nav>
+<div class="p-md">
+<button class="w-full bg-blue-600 text-white font-['Manrope'] text-sm font-medium tracking-tight py-sm rounded-lg hover:bg-blue-700 transition-colors">
+                Create Contest
+            </button>
+</div>
+<div class="mt-auto pb-lg">
+<ul class="flex flex-col gap-base font-['Manrope'] text-sm font-medium tracking-tight">
+<li>
+<a class="text-slate-300 hover:text-white py-3 px-4 transition-colors hover:bg-white/5 transition-all duration-200 flex items-center gap-md" href="#">
+<span class="material-symbols-outlined">settings</span>
+                        Settings
+                    </a>
+</li>
+<li>
+<a class="text-slate-300 hover:text-white py-3 px-4 transition-colors hover:bg-white/5 transition-all duration-200 flex items-center gap-md" href="#">
+<span class="material-symbols-outlined">help</span>
+                        Support
+                    </a>
+</li>
+</ul>
+</div>
+</aside>
+<!-- Main Content Area -->
+<div class="ml-64 flex-1 flex flex-col min-h-screen">
+<!-- TopNavBar -->
+<header class="sticky top-0 z-40 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex items-center justify-between px-6 py-3 shadow-sm dark:shadow-none focus-within:ring-2 focus-within:ring-blue-500/20">
+<div class="flex items-center gap-xl">
+<span class="text-xl font-bold text-[#1E3A5F] dark:text-white">AuraC²</span>
+<nav class="hidden md:flex gap-lg font-['Manrope'] text-sm font-semibold">
+<a class="text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 pb-1" href="#">Dashboard</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md transition-colors px-sm py-xs" href="#">Rankings</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md transition-colors px-sm py-xs" href="#">Documentation</a>
+</nav>
+</div>
+<div class="flex items-center gap-lg">
+<div class="relative hidden md:block">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+<input class="pl-xl pr-sm py-sm rounded-md border border-slate-200 bg-slate-50 font-['Manrope'] text-sm font-semibold w-64 focus:outline-none focus:border-blue-500" placeholder="Search..." type="text"/>
+</div>
+<div class="flex items-center gap-md text-[#1E3A5F] dark:text-white">
+<button class="hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md transition-colors p-xs">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md transition-colors p-xs">
+<span class="material-symbols-outlined">dark_mode</span>
+</button>
+<button class="flex items-center gap-sm hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md transition-colors p-xs font-['Manrope'] text-sm font-semibold text-blue-600 dark:text-blue-400">
+<img alt="User Avatar" class="w-8 h-8 rounded-full object-cover" data-alt="Close-up portrait of a professional academic user in soft studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBw1HPQUI-3ZgbnucO377ZcDCCE3GWUQuE1ZmnxYmGUdQItbVBDtgsNIa-h6qGjkef7z17RkJCYPsLOrvh4uu1iUBvgdb5wqgMM5bOCe7aNk2J2DRa-JYudUAAoYuWVhPpomEMRJe1gU4vEXwahvI_v8xbKWVenkhuj8VH-u1PZK7SJEnCTqovo0SftpUi3345hCIuVVlrdHAXbiWQ5sI1c5ruWXnAEH6TRk0B7qlQ0_uEDE1qBWrSynT45CpmUL5fiC2rMgRvikIc"/>
+                        Profile
+                    </button>
+</div>
+</div>
+</header>
+<!-- Canvas -->
+<main class="flex-1 p-xl max-w-container-max mx-auto w-full">
+<!-- Page Header -->
+<div class="mb-xl flex justify-between items-end">
+<div>
+<h1 class="font-h1 text-h1 text-on-surface">Overview</h1>
+<p class="font-body-base text-body-base text-on-surface-variant mt-base">Admin control center and system status.</p>
+</div>
+<div class="flex items-center gap-sm">
+<span class="flex h-3 w-3 relative">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-3 w-3 bg-secondary"></span>
+</span>
+<span class="font-label-caps text-label-caps text-secondary">System Online</span>
+</div>
+</div>
+<!-- Bento Grid: Contest Status Summary -->
+<div class="grid grid-cols-12 gap-gutter mb-xl">
+<!-- Primary Active Contest Card -->
+<div class="col-span-12 lg:col-span-8 bg-surface-container-lowest border border-outline-variant rounded-xl p-lg shadow-sm flex flex-col justify-between">
+<div class="border-b border-surface-container pb-md mb-md flex justify-between items-start">
+<div>
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-xs block">Active Environment</span>
+<h2 class="font-h2 text-h2 text-on-surface">ICPC Regional Qualifiers 2024</h2>
+</div>
+<div class="bg-surface-container-low text-secondary font-label-caps text-label-caps px-md py-sm rounded-full border border-secondary-fixed">
+                            In Progress
+                        </div>
+</div>
+<div class="grid grid-cols-3 gap-lg mt-sm">
+<div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-base">Time Remaining</p>
+<p class="font-table-data text-table-data text-on-surface text-xl font-bold">02:45:10</p>
+</div>
+<div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-base">Current Phase</p>
+<p class="font-table-data text-table-data text-on-surface text-lg">Main Contest</p>
+</div>
+<div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-base">Judges Active</p>
+<p class="font-table-data text-table-data text-on-surface text-lg">14 / 15</p>
+</div>
+</div>
+</div>
+<!-- Server / Platform Health Card -->
+<div class="col-span-12 lg:col-span-4 bg-surface-container-lowest border border-outline-variant rounded-xl p-lg shadow-sm">
+<div class="border-b border-surface-container pb-md mb-md">
+<h3 class="font-h3 text-h3 text-on-surface">Platform Health</h3>
+</div>
+<ul class="flex flex-col gap-md">
+<li class="flex justify-between items-center">
+<span class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-sm">
+<span class="material-symbols-outlined text-[16px] text-outline">dns</span> Database
+                            </span>
+<span class="font-label-caps text-label-caps text-secondary bg-surface-container-low px-sm py-xs rounded-DEFAULT">Stable</span>
+</li>
+<li class="flex justify-between items-center">
+<span class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-sm">
+<span class="material-symbols-outlined text-[16px] text-outline">memory</span> Autograder Queue
+                            </span>
+<span class="font-label-caps text-label-caps text-secondary bg-surface-container-low px-sm py-xs rounded-DEFAULT">Idle</span>
+</li>
+<li class="flex justify-between items-center">
+<span class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-sm">
+<span class="material-symbols-outlined text-[16px] text-outline">public</span> Web Tier
+                            </span>
+<span class="font-label-caps text-label-caps text-secondary bg-surface-container-low px-sm py-xs rounded-DEFAULT">Stable</span>
+</li>
+</ul>
+</div>
+</div>
+<!-- Analytics Section (Future Features) -->
+<div class="mb-xl">
+<h2 class="font-h2 text-h2 text-on-surface mb-md">Real-time Analytics</h2>
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Metric Card 1 -->
+<div class="col-span-12 md:col-span-4 bg-surface-bright border border-dashed border-outline-variant rounded-xl p-lg relative overflow-hidden flex flex-col min-h-[140px]">
+<div class="absolute top-md right-md bg-surface-container text-outline font-label-caps text-label-caps px-sm py-base rounded-full border border-outline-variant">Data Unavailable</div>
+<div class="flex items-center gap-sm text-outline mb-sm">
+<span class="material-symbols-outlined">send</span>
+<h3 class="font-body-base text-body-base font-medium">Total Submissions</h3>
+</div>
+<div class="font-table-data text-[32px] leading-tight font-light text-outline mt-auto opacity-50">---</div>
+</div>
+<!-- Metric Card 2 -->
+<div class="col-span-12 md:col-span-4 bg-surface-bright border border-dashed border-outline-variant rounded-xl p-lg relative overflow-hidden flex flex-col min-h-[140px]">
+<div class="absolute top-md right-md bg-surface-container text-outline font-label-caps text-label-caps px-sm py-base rounded-full border border-outline-variant">Data Unavailable</div>
+<div class="flex items-center gap-sm text-outline mb-sm">
+<span class="material-symbols-outlined">groups</span>
+<h3 class="font-body-base text-body-base font-medium">Active Teams</h3>
+</div>
+<div class="font-table-data text-[32px] leading-tight font-light text-outline mt-auto opacity-50">---</div>
+</div>
+<!-- Metric Card 3 -->
+<div class="col-span-12 md:col-span-4 bg-surface-bright border border-dashed border-outline-variant rounded-xl p-lg relative overflow-hidden flex flex-col min-h-[140px]">
+<div class="absolute top-md right-md bg-surface-container-high text-on-surface-variant font-label-caps text-label-caps px-sm py-base rounded-full border border-outline-variant">Future Feature</div>
+<div class="flex items-center gap-sm text-outline mb-sm">
+<span class="material-symbols-outlined">monitoring</span>
+<h3 class="font-body-base text-body-base font-medium">System Load</h3>
+</div>
+<div class="font-table-data text-[32px] leading-tight font-light text-outline mt-auto opacity-50">---</div>
+</div>
+</div>
+</div>
+<!-- Quick Actions (Disabled) -->
+<div class="pt-lg border-t border-outline-variant">
+<h3 class="font-h3 text-h3 text-on-surface mb-md">Administrative Actions</h3>
+<div class="flex flex-wrap gap-md">
+<button class="bg-surface text-outline border border-outline-variant font-body-sm text-body-sm px-md py-sm rounded-DEFAULT flex items-center gap-sm cursor-not-allowed opacity-70" disabled="" title="Feature coming in v2.0">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                        Export Report
+                        <span class="ml-sm bg-surface-variant text-on-surface-variant font-label-caps text-label-caps px-xs py-[2px] rounded-sm">Future</span>
+</button>
+<button class="bg-surface text-outline border border-outline-variant font-body-sm text-body-sm px-md py-sm rounded-DEFAULT flex items-center gap-sm cursor-not-allowed opacity-70" disabled="" title="Feature coming in v2.0">
+<span class="material-symbols-outlined text-[18px]">campaign</span>
+                        Broadcast
+                        <span class="ml-sm bg-surface-variant text-on-surface-variant font-label-caps text-label-caps px-xs py-[2px] rounded-sm">Future</span>
+</button>
+</div>
+</div>
+</main>
+</div>
+</body></html>

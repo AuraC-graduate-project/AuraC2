@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CodeMetric Pro - Admin Clarification</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#ffdcc6",
+                        "surface-container": "#1d2027",
+                        "inverse-on-surface": "#2e3038",
+                        "tertiary-fixed-dim": "#ffb786",
+                        "primary": "#adc6ff",
+                        "tertiary": "#ffb786",
+                        "on-primary": "#002e6a",
+                        "surface": "#10131a",
+                        "on-tertiary-fixed-variant": "#723600",
+                        "secondary-container": "#3f465c",
+                        "on-tertiary-container": "#461f00",
+                        "on-secondary": "#283044",
+                        "secondary-fixed-dim": "#bec6e0",
+                        "on-secondary-fixed-variant": "#3f465c",
+                        "primary-fixed": "#d8e2ff",
+                        "on-secondary-fixed": "#131b2e",
+                        "surface-bright": "#363941",
+                        "error": "#ffb4ab",
+                        "on-primary-container": "#00285d",
+                        "on-error-container": "#ffdad6",
+                        "surface-tint": "#adc6ff",
+                        "surface-container-high": "#272a31",
+                        "primary-fixed-dim": "#adc6ff",
+                        "on-tertiary-fixed": "#311400",
+                        "secondary": "#bec6e0",
+                        "outline-variant": "#424754",
+                        "secondary-fixed": "#dae2fd",
+                        "surface-container-low": "#191b23",
+                        "on-secondary-container": "#adb4ce",
+                        "on-primary-fixed-variant": "#004395",
+                        "on-primary-fixed": "#001a42",
+                        "on-tertiary": "#502400",
+                        "surface-variant": "#32353c",
+                        "primary-container": "#4d8eff",
+                        "tertiary-container": "#df7412",
+                        "on-error": "#690005",
+                        "outline": "#8c909f",
+                        "surface-container-lowest": "#0b0e15",
+                        "on-surface": "#e1e2ec",
+                        "on-background": "#e1e2ec",
+                        "surface-dim": "#10131a",
+                        "inverse-surface": "#e1e2ec",
+                        "surface-container-highest": "#32353c",
+                        "background": "#10131a",
+                        "on-surface-variant": "#c2c6d6",
+                        "inverse-primary": "#005ac2",
+                        "error-container": "#93000a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "1rem",
+                        "xxl": "3rem",
+                        "xs": "0.25rem",
+                        "sm": "0.5rem",
+                        "xl": "2rem",
+                        "lg": "1.5rem"
+                    },
+                    "fontFamily": {
+                        "h1": ["Manrope"],
+                        "body-lg": ["Manrope"],
+                        "label-sm": ["Manrope"],
+                        "body-sm": ["Manrope"],
+                        "h3": ["Manrope"],
+                        "label-md": ["Manrope"],
+                        "h2": ["Manrope"],
+                        "body-md": ["Manrope"],
+                        "display": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "h1": ["2.25rem", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "body-lg": ["1.125rem", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "label-sm": ["0.75rem", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "body-sm": ["0.875rem", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "h3": ["1.5rem", { "lineHeight": "1.4", "fontWeight": "600" }],
+                        "label-md": ["0.875rem", { "lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "h2": ["1.875rem", { "lineHeight": "1.3", "fontWeight": "600" }],
+                        "body-md": ["1rem", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "display": ["3.75rem", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-[#0F172A] text-on-surface font-body-md text-body-md overflow-hidden flex h-screen">
+<!-- Shell Layout Background context -->
+<!-- SideNavBar -->
+<nav class="bg-[#0F172A] font-manrope text-sm font-medium docked left-0 h-full w-64 border-r border-[#334155] flex flex-col h-screen py-4 space-y-2 hidden md:flex shrink-0">
+<div class="px-6 pb-6 pt-2 border-b border-[#334155] mb-4 flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-[#1E293B] border border-[#334155] flex items-center justify-center overflow-hidden">
+<span class="material-symbols-outlined text-[#3B82F6]" style="font-variation-settings: 'FILL' 1;">school</span>
+</div>
+<div>
+<h1 class="text-[#F1F5F9] font-bold text-base leading-tight tracking-tight">ACM-ICPC Portal</h1>
+<p class="text-sm font-black uppercase text-[#94A3B8] text-[0.65rem] tracking-wider mt-0.5">Admin Console</p>
+</div>
+</div>
+<div class="px-4 flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span>Overview</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]">code</span>
+<span>Problems</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]">history</span>
+<span>Submissions</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]">groups</span>
+<span>Teams</span>
+</a>
+<!-- Active State -->
+<a class="flex items-center gap-3 px-3 py-2.5 bg-[#334155] text-[#F1F5F9] border-r-4 border-[#3B82F6] rounded-r-sm transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">forum</span>
+<span>Clarifications</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]">terminal</span>
+<span>Logs</span>
+</a>
+</div>
+<div class="px-4 pt-4 border-t border-[#334155] space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]">help</span>
+<span>Documentation</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-[#94A3B8] hover:bg-[#1E293B] hover:text-[#F1F5F9] transition-colors scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]">contact_support</span>
+<span>Support</span>
+</a>
+</div>
+</nav>
+<!-- Main Canvas Area -->
+<main class="flex-1 flex flex-col relative bg-[#0F172A]">
+<!-- TopNavBar -->
+<header class="bg-[#1E293B] font-manrope antialiased tracking-tight docked full-width top-0 z-40 border-b border-[#334155] flex justify-between items-center h-16 px-6 w-full">
+<div class="flex items-center gap-8">
+<span class="text-lg font-bold text-[#F1F5F9] tracking-tighter">CodeMetric Pro</span>
+<nav class="hidden lg:flex items-center gap-6 h-full mt-1">
+<a class="text-[#94A3B8] text-sm font-semibold hover:text-[#F1F5F9] transition-all duration-200 ease-in-out py-5 border-b-2 border-transparent" href="#">Dashboard</a>
+<a class="text-[#94A3B8] text-sm font-semibold hover:text-[#F1F5F9] transition-all duration-200 ease-in-out py-5 border-b-2 border-transparent" href="#">Contests</a>
+<a class="text-[#94A3B8] text-sm font-semibold hover:text-[#F1F5F9] transition-all duration-200 ease-in-out py-5 border-b-2 border-transparent" href="#">Standings</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-[#94A3B8] hover:text-[#F1F5F9] transition-colors w-9 h-9 rounded flex items-center justify-center hover:bg-[#334155]/50">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-[#94A3B8] hover:text-[#F1F5F9] transition-colors w-9 h-9 rounded flex items-center justify-center hover:bg-[#334155]/50">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-[#334155] border border-[#424754] ml-2 overflow-hidden">
+<img alt="User profile avatar" class="w-full h-full object-cover" data-alt="Default admin user profile avatar in dark gray" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-IXg6lZr8m2IrZX0JMQDOTuTpt7O2via6QfduCJ6sSJQmQJMUDwZphQe-SXeUh2kgWEloxY8E578NjX2kZvYUKeO8dPudFzjsBiwbZirqbYF7fF_1y1r8XRTHwfBzCXg42NKCr_BLvt4t68nb4SGRoI8gOE548-k9CxqlC6qZEO-kJeNkUkpB1WyGbfedZPcwNCEkZweN-qYjsRLRAQY_Fc6KBnn49bIiXKz_qb-DdLWPC3ytlS04dBJ6lBBgGrEnF69A6mMI7A8"/>
+</div>
+</div>
+</header>
+<!-- Dummy Content behind Modal -->
+<div class="flex-1 p-8 opacity-40 blur-[2px] pointer-events-none">
+<h2 class="font-h2 text-h2 text-[#F1F5F9] mb-6">Clarification Requests</h2>
+<div class="w-full bg-[#1E293B] border border-[#334155] rounded-xl h-64 mb-4"></div>
+<div class="w-full bg-[#1E293B] border border-[#334155] rounded-xl h-64"></div>
+</div>
+<!-- ========================================== -->
+<!-- MODAL OVERLAY: Reply Clarification Dialog  -->
+<!-- ========================================== -->
+<div aria-labelledby="modal-title" aria-modal="true" class="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/80 backdrop-blur-sm p-4 sm:p-6" role="dialog">
+<div class="w-full max-w-[640px] bg-[#1E293B] border border-[#334155] rounded-xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+<!-- Modal Header -->
+<div class="px-6 py-4 border-b border-[#334155] flex items-center justify-between bg-[#1E293B]">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#3B82F6]">reply</span>
+<h2 class="font-h3 text-h3 text-[#F1F5F9] tracking-tight" id="modal-title">Reply to Clarification</h2>
+</div>
+<button class="text-[#94A3B8] hover:text-[#F1F5F9] transition-colors w-8 h-8 rounded flex items-center justify-center hover:bg-[#334155]/50 focus:outline-none focus:ring-2 focus:ring-[#3B82F6]">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Modal Body -->
+<div class="p-6 flex flex-col gap-xl overflow-y-auto max-h-[716px]">
+<!-- Original Question Context -->
+<div class="bg-[#0F172A] border border-[#334155] rounded-lg p-5 flex flex-col gap-3 relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-[#3B82F6] opacity-50"></div>
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-[#94A3B8]">group</span>
+<span class="font-label-md text-label-md text-[#F1F5F9]">Team Alpha (Univ. of Tech)</span>
+</div>
+<div class="px-2 py-0.5 rounded text-[11px] font-bold tracking-wider bg-[#334155] text-[#94A3B8]">
+                                Problem C
+                            </div>
+</div>
+<p class="font-body-md text-body-md text-[#c2c6d6] leading-relaxed">
+                            "In the sample input for Problem C, the third line contains a negative integer, but the problem description says $N \ge 0$. Is the sample correct, or are negative integers allowed?"
+                        </p>
+<span class="text-[11px] text-[#94A3B8] mt-1">Received 4 mins ago</span>
+</div>
+<!-- Response Form -->
+<div class="flex flex-col gap-lg">
+<!-- Standard Response Dropdown -->
+<div class="flex flex-col gap-sm">
+<label class="font-label-sm text-label-sm text-[#94A3B8] uppercase" for="standard-response">Standard Response</label>
+<div class="relative">
+<select class="w-full bg-[#0F172A] border border-[#334155] text-[#F1F5F9] font-body-sm text-body-sm rounded-md px-4 py-2.5 appearance-none focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] hover:border-[#424754] transition-colors cursor-pointer" id="standard-response">
+<option disabled="" selected="" value="">Select a standard reply...</option>
+<option value="no_comment">No comment.</option>
+<option value="read_carefully">Read the problem description carefully.</option>
+<option value="yes">Yes.</option>
+<option value="no">No.</option>
+<option value="invalid">Invalid question format.</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-[#94A3B8]">
+<span class="material-symbols-outlined text-[20px]">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Custom Reply Textarea -->
+<div class="flex flex-col gap-sm">
+<div class="flex justify-between items-end">
+<label class="font-label-sm text-label-sm text-[#94A3B8] uppercase" for="custom-reply">Custom Reply <span class="normal-case opacity-60 font-normal">(Optional)</span></label>
+<span class="text-[11px] text-[#94A3B8]">Supports Markdown</span>
+</div>
+<textarea class="w-full bg-[#0F172A] border border-[#334155] text-[#F1F5F9] font-body-sm text-body-sm rounded-md px-4 py-3 focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] hover:border-[#424754] transition-colors placeholder:text-[#424754] resize-y" id="custom-reply" placeholder="Add additional details or override the standard response..." rows="4"></textarea>
+</div>
+<!-- Visibility Toggle -->
+<div class="flex flex-col gap-sm pt-2">
+<label class="font-label-sm text-label-sm text-[#94A3B8] uppercase">Response Visibility</label>
+<div class="grid grid-cols-2 gap-3">
+<!-- Private Option -->
+<label class="cursor-pointer">
+<input checked="" class="peer sr-only" name="visibility" type="radio" value="private"/>
+<div class="rounded-lg border border-[#334155] bg-[#0F172A] p-4 hover:bg-[#334155]/30 transition-colors peer-checked:border-[#3B82F6] peer-checked:bg-[#3B82F6]/10 flex gap-3">
+<span class="material-symbols-outlined text-[#94A3B8] peer-checked:text-[#3B82F6] text-[20px] mt-0.5">lock</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-[#F1F5F9] mb-1">Private Reply</span>
+<span class="text-[11px] text-[#94A3B8] leading-tight">Only Team Alpha will see this response.</span>
+</div>
+</div>
+</label>
+<!-- Public Option -->
+<label class="cursor-pointer">
+<input class="peer sr-only" name="visibility" type="radio" value="public"/>
+<div class="rounded-lg border border-[#334155] bg-[#0F172A] p-4 hover:bg-[#334155]/30 transition-colors peer-checked:border-[#10B981] peer-checked:bg-[#10B981]/10 flex gap-3">
+<span class="material-symbols-outlined text-[#94A3B8] peer-checked:text-[#10B981] text-[20px] mt-0.5">campaign</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-[#F1F5F9] mb-1">Broadcast to All</span>
+<span class="text-[11px] text-[#94A3B8] leading-tight">Visible to all teams as a global clarification.</span>
+</div>
+</div>
+</label>
+</div>
+</div>
+</div>
+</div>
+<!-- Modal Footer -->
+<div class="px-6 py-4 border-t border-[#334155] bg-[#0F172A]/80 flex items-center justify-end gap-3">
+<button class="px-5 py-2 rounded font-label-md text-label-md text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#334155] transition-colors focus:outline-none focus:ring-2 focus:ring-[#3B82F6]">
+                        Cancel
+                    </button>
+<button class="px-5 py-2 rounded bg-[#3B82F6] text-[#F1F5F9] font-label-md text-label-md hover:bg-[#3B82F6]/90 transition-colors border border-transparent shadow-sm flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#1E293B] focus:ring-[#3B82F6]">
+<span class="material-symbols-outlined text-[18px]">send</span>
+                        Send Reply
+                    </button>
+</div>
+</div>
+</div>
+</main>
+</body></html>

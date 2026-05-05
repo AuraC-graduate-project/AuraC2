@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AuraC² - Login</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;family=Space+Grotesk:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-low": "#eff4ff",
+                    "error": "#ba1a1a",
+                    "error-container": "#ffdad6",
+                    "primary-fixed-dim": "#adc8f5",
+                    "inverse-surface": "#213145",
+                    "on-tertiary": "#ffffff",
+                    "secondary-fixed": "#dbe1ff",
+                    "surface-container-high": "#dce9ff",
+                    "primary-fixed": "#d5e3ff",
+                    "surface-variant": "#d3e4fe",
+                    "surface-tint": "#455f87",
+                    "surface-container": "#e5eeff",
+                    "on-primary-fixed": "#001c3b",
+                    "secondary-container": "#316bf3",
+                    "surface-bright": "#f8f9ff",
+                    "outline-variant": "#c4c6cf",
+                    "on-tertiary-fixed": "#231b00",
+                    "inverse-primary": "#adc8f5",
+                    "secondary-fixed-dim": "#b4c5ff",
+                    "on-surface": "#0b1c30",
+                    "secondary": "#0051d5",
+                    "on-background": "#0b1c30",
+                    "inverse-on-surface": "#eaf1ff",
+                    "on-surface-variant": "#43474e",
+                    "on-secondary-container": "#fefcff",
+                    "surface": "#f8f9ff",
+                    "on-secondary-fixed": "#00174b",
+                    "background": "#f8f9ff",
+                    "on-secondary-fixed-variant": "#003ea8",
+                    "tertiary-fixed": "#ffe083",
+                    "on-error-container": "#93000a",
+                    "tertiary": "#735c00",
+                    "on-error": "#ffffff",
+                    "surface-dim": "#cbdbf5",
+                    "surface-container-highest": "#d3e4fe",
+                    "on-tertiary-fixed-variant": "#574500",
+                    "tertiary-fixed-dim": "#eec200",
+                    "tertiary-container": "#cea700",
+                    "primary": "#022448",
+                    "on-primary-container": "#8aa4cf",
+                    "on-primary": "#ffffff",
+                    "outline": "#74777f",
+                    "on-tertiary-container": "#4e3e00",
+                    "surface-container-lowest": "#ffffff",
+                    "primary-container": "#1e3a5f",
+                    "on-primary-fixed-variant": "#2d486d",
+                    "on-secondary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "sm": "8px",
+                    "gutter": "20px",
+                    "base": "4px",
+                    "xs": "4px",
+                    "xl": "32px",
+                    "md": "16px",
+                    "lg": "24px",
+                    "container-max": "1440px"
+            },
+            "fontFamily": {
+                    "h1": [
+                            "manrope"
+                    ],
+                    "h2": [
+                            "manrope"
+                    ],
+                    "body-sm": [
+                            "inter"
+                    ],
+                    "body-base": [
+                            "inter"
+                    ],
+                    "table-data": [
+                            "spaceGrotesk"
+                    ],
+                    "label-caps": [
+                            "inter"
+                    ],
+                    "h3": [
+                            "manrope"
+                    ],
+                    "code-block": [
+                            "spaceGrotesk"
+                    ]
+            },
+            "fontSize": {
+                    "h1": [
+                            "30px",
+                            {
+                                    "lineHeight": "38px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "h2": [
+                            "24px",
+                            {
+                                    "lineHeight": "32px",
+                                    "letterSpacing": "-0.01em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "body-sm": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "body-base": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "table-data": [
+                            "13px",
+                            {
+                                    "lineHeight": "18px",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "label-caps": [
+                            "12px",
+                            {
+                                    "lineHeight": "16px",
+                                    "letterSpacing": "0.05em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "h3": [
+                            "20px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "code-block": [
+                            "14px",
+                            {
+                                    "lineHeight": "22px",
+                                    "fontWeight": "400"
+                            }
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+</head>
+<body class="bg-surface-container-low min-h-screen flex items-center justify-center p-md antialiased selection:bg-secondary-fixed selection:text-on-secondary-fixed">
+<main class="w-full max-w-[440px] flex flex-col gap-lg relative z-10">
+<div class="flex flex-col items-center gap-sm text-center mb-sm">
+<div class="w-16 h-16 bg-primary-container rounded-lg flex items-center justify-center shadow-sm mb-sm relative overflow-hidden">
+<span class="material-symbols-outlined text-on-primary text-[32px]" style="font-variation-settings: 'FILL' 1;">
+                    terminal
+                </span>
+<div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/20 pointer-events-none"></div>
+</div>
+<h1 class="font-h2 text-h2 text-on-surface">AuraC²</h1>
+<h2 class="font-body-base text-body-base text-on-surface-variant">Aura Contest Control</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant opacity-80 border-t border-outline-variant/30 pt-sm mt-xs w-2/3 mx-auto">University Programming Contest Platform</p>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-xl shadow-[0_1px_3px_rgba(0,0,0,0.05)] flex flex-col gap-lg">
+<div class="bg-error-container border border-error/20 p-md rounded flex items-start gap-sm">
+<span class="material-symbols-outlined text-error text-[20px] shrink-0 mt-[2px]" style="font-variation-settings: 'FILL' 1;">
+                    error
+                </span>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-error-container font-bold mb-base">Authentication Failed</span>
+<span class="font-body-sm text-body-sm text-on-error-container">Invalid Credentials or Session Expired. Please check your username and password.</span>
+</div>
+</div>
+<form class="flex flex-col gap-lg">
+<div class="flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-on-surface uppercase" for="username">Username</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-outline text-[20px]">
+                            person
+                        </span>
+<input class="w-full pl-[40px] pr-md py-[10px] bg-surface-container-lowest border border-outline-variant rounded font-body-base text-body-base text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary focus:outline-none transition-shadow" id="username" name="username" placeholder="Contestant ID" required="" type="text"/>
+</div>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-on-surface uppercase" for="password">Password</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-outline text-[20px]">
+                            key
+                        </span>
+<input class="w-full pl-[40px] pr-md py-[10px] bg-surface-container-lowest border border-outline-variant rounded font-body-base text-body-base text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary focus:outline-none transition-shadow" id="password" name="password" placeholder="••••••••" required="" type="password"/>
+</div>
+</div>
+<button class="mt-sm w-full bg-secondary hover:bg-secondary/90 active:scale-[0.98] text-on-secondary font-label-caps text-label-caps uppercase tracking-widest py-md rounded transition-all flex items-center justify-center gap-sm shadow-sm group" type="button">
+<span>Sign In</span>
+<span class="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">
+                        arrow_forward
+                    </span>
+</button>
+</form>
+<div class="pt-lg border-t border-surface-container mt-sm text-center">
+<div class="inline-flex items-center gap-sm bg-surface-container-high px-md py-sm rounded">
+<span class="material-symbols-outlined text-outline text-[16px]">
+                        info
+                    </span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Use the credentials provided by the contest administrator.</p>
+</div>
+</div>
+</div>
+</main>
+<div class="fixed bottom-0 left-0 w-full p-md text-center pointer-events-none">
+<p class="font-label-caps text-label-caps text-outline opacity-60">AuraC² v2.4.1 • Secure Gateway</p>
+</div>
+</body></html>

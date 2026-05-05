@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AuraC² - Ask Clarification</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary": "#0051d5",
+                        "surface-container": "#e5eeff",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed": "#dbe1ff",
+                        "outline-variant": "#c4c6cf",
+                        "on-surface-variant": "#43474e",
+                        "inverse-surface": "#213145",
+                        "primary": "#022448",
+                        "secondary-container": "#316bf3",
+                        "on-primary-container": "#8aa4cf",
+                        "surface-container-highest": "#d3e4fe",
+                        "surface-dim": "#cbdbf5",
+                        "on-tertiary": "#ffffff",
+                        "background": "#f8f9ff",
+                        "tertiary-container": "#cea700",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "on-primary-fixed-variant": "#2d486d",
+                        "primary-container": "#1e3a5f",
+                        "outline": "#74777f",
+                        "on-error": "#ffffff",
+                        "inverse-primary": "#adc8f5",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed": "#ffe083",
+                        "surface-container-high": "#dce9ff",
+                        "primary-fixed-dim": "#adc8f5",
+                        "on-surface": "#0b1c30",
+                        "error": "#ba1a1a",
+                        "surface-container-low": "#eff4ff",
+                        "on-primary-fixed": "#001c3b",
+                        "on-tertiary-fixed": "#231b00",
+                        "surface-tint": "#455f87",
+                        "on-tertiary-fixed-variant": "#574500",
+                        "surface-variant": "#d3e4fe",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed": "#d5e3ff",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-tertiary-container": "#4e3e00",
+                        "on-secondary-fixed-variant": "#003ea8",
+                        "surface-bright": "#f8f9ff",
+                        "tertiary": "#735c00",
+                        "on-secondary-container": "#fefcff",
+                        "on-error-container": "#93000a",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed-dim": "#eec200",
+                        "on-secondary-fixed": "#00174b",
+                        "surface": "#f8f9ff",
+                        "on-background": "#0b1c30"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    spacing: {
+                        "sm": "8px",
+                        "md": "16px",
+                        "container-max": "1440px",
+                        "base": "4px",
+                        "gutter": "20px",
+                        "xs": "4px",
+                        "xl": "32px",
+                        "lg": "24px"
+                    },
+                    fontFamily: {
+                        "label-caps": ["inter"],
+                        "table-data": ["spaceGrotesk"],
+                        "body-base": ["inter"],
+                        "h2": ["manrope"],
+                        "h1": ["manrope"],
+                        "code-block": ["spaceGrotesk"],
+                        "h3": ["manrope"],
+                        "body-sm": ["inter"]
+                    },
+                    fontSize: {
+                        "label-caps": ["12px", { lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "600" }],
+                        "table-data": ["13px", { lineHeight: "18px", fontWeight: "500" }],
+                        "body-base": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+                        "h2": ["24px", { lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "600" }],
+                        "h1": ["30px", { lineHeight: "38px", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "code-block": ["14px", { lineHeight: "22px", fontWeight: "400" }],
+                        "h3": ["20px", { lineHeight: "28px", fontWeight: "600" }],
+                        "body-sm": ["14px", { lineHeight: "20px", fontWeight: "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&family=Space+Grotesk:wght@400;500&display=swap');
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-base antialiased h-screen overflow-hidden flex">
+<!-- SideNavBar (Z-50) -->
+<aside class="fixed left-0 top-0 bottom-0 w-64 flex flex-col z-50 bg-[#1E3A5F] dark:bg-slate-950 font-['Manrope'] text-sm font-medium">
+<div class="px-6 py-6 border-b border-white/10">
+<h1 class="text-white font-bold text-xl flex items-center gap-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">terminal</span>
+                AuraC² Admin
+            </h1>
+<p class="text-slate-300 text-xs mt-1">Management Portal</p>
+</div>
+<nav class="flex-1 overflow-y-auto py-4 flex flex-col gap-1">
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Overview
+            </a>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">emoji_events</span>
+                Contests
+            </a>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">groups</span>
+                Teams
+            </a>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">terminal</span>
+                Problems
+            </a>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">list_alt</span>
+                Submissions
+            </a>
+<a class="bg-blue-600/20 text-white border-l-4 border-blue-500 px-4 py-3 flex items-center gap-3 scale-[0.98] transition-transform hover:bg-white/10 duration-200" href="#">
+<span class="material-symbols-outlined">forum</span>
+                Clarifications
+            </a>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">query_stats</span>
+                Future Stats
+            </a>
+</nav>
+</aside>
+<!-- TopAppBar (Z-40) -->
+<header class="fixed top-0 right-0 left-0 h-16 flex items-center justify-between px-6 z-40 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm pl-[280px]">
+<div class="flex items-center gap-4">
+<span class="text-xl font-extrabold text-[#1E3A5F] dark:text-white tracking-tighter">AuraC²</span>
+<div class="h-6 w-px bg-slate-200 mx-2"></div>
+<span class="font-['Manrope'] text-sm tracking-tight text-slate-500 font-medium">Team Dashboard</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="bg-blue-50 text-blue-600 dark:bg-slate-800 dark:text-blue-400 px-3 py-1.5 rounded-full font-['Manrope'] text-sm tracking-tight font-semibold flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">timer</span>
+                02:45:12 Remaining
+            </div>
+<div class="flex items-center gap-4">
+<button class="text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-slate-200 border border-slate-300 overflow-hidden flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-500">person</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas (Background behind modal) -->
+<main class="w-full h-full pt-16 pl-64 overflow-y-auto filter blur-[2px] opacity-60 pointer-events-none">
+<div class="p-xl max-w-container-max mx-auto">
+<div class="flex items-center justify-between mb-lg">
+<h2 class="font-h2 text-h2 text-on-background">Clarifications</h2>
+<button class="bg-secondary text-on-secondary px-4 py-2 rounded-lg font-label-caps text-label-caps">Ask Question</button>
+</div>
+<!-- Dummy Table Structure -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden">
+<div class="grid grid-cols-4 bg-surface-container-low border-b border-outline-variant p-4 font-label-caps text-label-caps text-on-surface-variant">
+<div>Time</div>
+<div>Problem</div>
+<div class="col-span-2">Question</div>
+</div>
+<div class="p-8 text-center font-body-sm text-body-sm text-on-surface-variant">
+                    No clarification requests submitted yet.
+                </div>
+</div>
+</div>
+</main>
+<!-- Ask Clarification Modal Overlay -->
+<div class="fixed inset-0 z-[60] bg-on-background/50 backdrop-blur-sm flex items-center justify-center p-6">
+<div class="bg-surface-container-lowest rounded-xl shadow-2xl w-full max-w-[520px] flex flex-col overflow-hidden animate-[fadeIn_0.2s_ease-out]">
+<!-- Modal Header -->
+<div class="px-6 py-5 border-b border-surface-container flex items-center justify-between bg-surface-container-lowest">
+<h3 class="font-h3 text-h3 text-on-background flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">live_help</span>
+                    Ask Clarification
+                </h3>
+<button class="text-on-surface-variant hover:text-on-background transition-colors p-1 rounded hover:bg-surface-container">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Modal Body -->
+<div class="p-6 flex flex-col gap-lg bg-surface-container-lowest">
+<!-- Problem Selection -->
+<div class="flex flex-col gap-2">
+<label class="font-label-caps text-label-caps text-on-surface uppercase tracking-wider" for="problem-select">Select Problem</label>
+<div class="relative">
+<select class="w-full appearance-none bg-surface-bright border border-outline-variant rounded-lg px-4 py-2.5 font-body-base text-body-base text-on-background focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary cursor-pointer transition-colors" id="problem-select">
+<option value="general">General (Environment/Rules)</option>
+<option value="A">Problem A - Graph Traversal</option>
+<option value="B">Problem B - Dynamic Programming</option>
+<option value="C">Problem C - Geometric Intersection</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">
+                            expand_more
+                        </span>
+</div>
+</div>
+<!-- Question Textarea -->
+<div class="flex flex-col gap-2">
+<label class="font-label-caps text-label-caps text-on-surface uppercase tracking-wider flex items-center justify-between" for="question-text">
+<span>Your Question</span>
+<span class="text-on-surface-variant font-normal normal-case opacity-80">Max 500 chars</span>
+</label>
+<textarea class="w-full bg-surface-bright border border-outline-variant rounded-lg px-4 py-3 font-body-base text-body-base text-on-background focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary resize-none transition-colors" id="question-text" placeholder="Describe the ambiguity or issue clearly..." rows="5"></textarea>
+<div class="flex items-start gap-2 mt-1">
+<span class="material-symbols-outlined text-[16px] text-tertiary">info</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-tight">
+                            Helper text: Ask only if the statement is unclear. Do not ask for hints or debugging assistance.
+                        </p>
+</div>
+</div>
+</div>
+<!-- Modal Footer -->
+<div class="px-6 py-4 border-t border-surface-container bg-surface flex items-center justify-end gap-3">
+<button class="font-label-caps text-label-caps px-5 py-2.5 rounded-lg border border-outline-variant text-on-surface bg-surface-container-lowest hover:bg-surface-container transition-colors focus:ring-2 focus:ring-outline-variant focus:outline-none">
+                    Cancel
+                </button>
+<button class="font-label-caps text-label-caps px-6 py-2.5 rounded-lg bg-secondary text-on-secondary hover:opacity-90 transition-opacity shadow-sm flex items-center gap-2 focus:ring-2 focus:ring-secondary focus:ring-offset-2 focus:ring-offset-surface focus:outline-none">
+<span class="material-symbols-outlined text-[18px]">send</span>
+                    Submit
+                </button>
+</div>
+</div>
+</div>
+</body></html>

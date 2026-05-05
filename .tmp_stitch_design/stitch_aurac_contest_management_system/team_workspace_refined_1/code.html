@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AuraC² - Contest Workspace</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;family=Space+Grotesk:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-low": "#eff4ff",
+                      "error": "#ba1a1a",
+                      "error-container": "#ffdad6",
+                      "primary-fixed-dim": "#adc8f5",
+                      "inverse-surface": "#213145",
+                      "on-tertiary": "#ffffff",
+                      "secondary-fixed": "#dbe1ff",
+                      "surface-container-high": "#dce9ff",
+                      "primary-fixed": "#d5e3ff",
+                      "surface-variant": "#d3e4fe",
+                      "surface-tint": "#455f87",
+                      "surface-container": "#e5eeff",
+                      "on-primary-fixed": "#001c3b",
+                      "secondary-container": "#316bf3",
+                      "surface-bright": "#f8f9ff",
+                      "outline-variant": "#c4c6cf",
+                      "on-tertiary-fixed": "#231b00",
+                      "inverse-primary": "#adc8f5",
+                      "secondary-fixed-dim": "#b4c5ff",
+                      "on-surface": "#0b1c30",
+                      "secondary": "#0051d5",
+                      "on-background": "#0b1c30",
+                      "inverse-on-surface": "#eaf1ff",
+                      "on-surface-variant": "#43474e",
+                      "on-secondary-container": "#fefcff",
+                      "surface": "#f8f9ff",
+                      "on-secondary-fixed": "#00174b",
+                      "background": "#f8f9ff",
+                      "on-secondary-fixed-variant": "#003ea8",
+                      "tertiary-fixed": "#ffe083",
+                      "on-error-container": "#93000a",
+                      "tertiary": "#735c00",
+                      "on-error": "#ffffff",
+                      "surface-dim": "#cbdbf5",
+                      "surface-container-highest": "#d3e4fe",
+                      "on-tertiary-fixed-variant": "#574500",
+                      "tertiary-fixed-dim": "#eec200",
+                      "tertiary-container": "#cea700",
+                      "primary": "#022448",
+                      "on-primary-container": "#8aa4cf",
+                      "on-primary": "#ffffff",
+                      "outline": "#74777f",
+                      "on-tertiary-container": "#4e3e00",
+                      "surface-container-lowest": "#ffffff",
+                      "primary-container": "#1e3a5f",
+                      "on-primary-fixed-variant": "#2d486d",
+                      "on-secondary": "#ffffff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "sm": "8px",
+                      "gutter": "20px",
+                      "base": "4px",
+                      "xs": "4px",
+                      "xl": "32px",
+                      "md": "16px",
+                      "lg": "24px",
+                      "container-max": "1440px"
+              },
+              "fontFamily": {
+                      "h1": ["Manrope", "sans-serif"],
+                      "h2": ["Manrope", "sans-serif"],
+                      "h3": ["Manrope", "sans-serif"],
+                      "body-sm": ["Inter", "sans-serif"],
+                      "body-base": ["Inter", "sans-serif"],
+                      "table-data": ["Space Grotesk", "monospace"],
+                      "label-caps": ["Inter", "sans-serif"],
+                      "code-block": ["Space Grotesk", "monospace"]
+              },
+              "fontSize": {
+                      "h1": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "h2": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "h3": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "body-base": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "table-data": ["13px", {"lineHeight": "18px", "fontWeight": "500"}],
+                      "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "code-block": ["14px", {"lineHeight": "22px", "fontWeight": "400"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c4c6cf;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #74777f;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface h-screen w-full flex flex-col overflow-hidden font-body-base text-body-base">
+<header class="sticky top-0 z-40 w-full bg-surface-container-lowest/90 backdrop-blur-md border-b border-outline-variant shadow-sm shrink-0 flex items-center justify-between px-lg py-sm h-[60px]">
+<div class="flex items-center gap-md">
+<div class="font-h2 text-h2 font-extrabold text-primary-container tracking-tighter">AuraC²</div>
+<div class="h-6 w-px bg-outline-variant"></div>
+<h1 class="font-h3 text-h3 text-on-surface">ACM University Spring Contest</h1>
+</div>
+<div class="flex items-center gap-lg">
+<div class="flex items-center gap-sm bg-error-container text-on-error-container px-sm py-xs rounded border border-error/20">
+<span class="material-symbols-outlined text-[18px]">timer</span>
+<span class="font-code-block text-code-block font-bold tracking-wider">02:14:36</span>
+</div>
+<div class="flex items-center gap-sm">
+<button aria-label="Notifications" class="p-xs text-on-surface-variant hover:bg-surface-container hover:text-on-surface rounded transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-label-caps text-label-caps font-bold ml-sm cursor-pointer border border-outline-variant">
+                    T1
+                </div>
+</div>
+</div>
+</header>
+<main class="flex-1 w-full max-w-container-max mx-auto p-gutter flex gap-gutter overflow-hidden h-[calc(100vh-60px)]">
+<aside class="w-[280px] shrink-0 bg-surface-container-lowest border border-outline-variant rounded-xl flex flex-col overflow-hidden shadow-sm">
+<div class="px-md py-sm border-b border-surface-variant bg-surface-bright flex items-center justify-between">
+<h2 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Problems</h2>
+<span class="font-body-sm text-body-sm text-on-surface-variant">2 / 7</span>
+</div>
+<div class="flex-1 overflow-y-auto py-sm">
+<button class="w-full flex items-center justify-between px-md py-sm hover:bg-surface-container transition-colors border-l-4 border-transparent text-left group">
+<div class="flex items-center gap-sm">
+<span class="font-table-data text-table-data font-bold text-on-surface-variant group-hover:text-primary">A</span>
+<span class="font-body-sm text-body-sm truncate max-w-[160px]">Alien Abduction Algorithm</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-tertiary-fixed-dim" data-weight="fill">check_circle</span>
+</button>
+<button class="w-full flex items-center justify-between px-md py-sm bg-surface-container-low border-l-4 border-secondary-container text-left group">
+<div class="flex items-center gap-sm">
+<span class="font-table-data text-table-data font-bold text-primary">B</span>
+<span class="font-body-sm text-body-sm font-medium text-primary">Binary Tree Balancing Act</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-error" data-weight="fill">cancel</span>
+</button>
+<button class="w-full flex items-center justify-between px-md py-sm hover:bg-surface-container transition-colors border-l-4 border-transparent text-left group">
+<div class="flex items-center gap-sm">
+<span class="font-table-data text-table-data font-bold text-on-surface-variant group-hover:text-primary">C</span>
+<span class="font-body-sm text-body-sm truncate max-w-[160px]">Cosmic Cargo Capacity</span>
+</div>
+</button>
+<button class="w-full flex items-center justify-between px-md py-sm hover:bg-surface-container transition-colors border-l-4 border-transparent text-left group">
+<div class="flex items-center gap-sm">
+<span class="font-table-data text-table-data font-bold text-on-surface-variant group-hover:text-primary">D</span>
+<span class="font-body-sm text-body-sm truncate max-w-[160px]">Dynamic Dijkstra Dilemma</span>
+</div>
+</button>
+</div>
+</aside>
+<section class="flex-1 min-w-0 bg-surface-container-lowest border border-outline-variant rounded-xl flex flex-col overflow-hidden shadow-sm">
+<div class="flex-1 overflow-y-auto">
+<div class="p-xl border-b border-surface-bright">
+<div class="flex items-baseline justify-between mb-md">
+<h2 class="font-h2 text-h2 text-on-surface">B. Binary Tree Balancing Act</h2>
+</div>
+<div class="flex gap-md mb-xl">
+<div class="bg-surface-container text-on-surface-variant px-sm py-xs rounded font-label-caps text-label-caps flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+                            Time Limit: 2.0s
+                        </div>
+<div class="bg-surface-container text-on-surface-variant px-sm py-xs rounded font-label-caps text-label-caps flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]">memory</span>
+                            Memory Limit: 256MB
+                        </div>
+</div>
+<div class="space-y-md font-body-base text-body-base text-on-surface-variant leading-relaxed">
+<p>
+                            You are given a highly unstable binary search tree containing <span class="font-code-block text-code-block text-on-surface bg-surface-container-low px-xs rounded">N</span> nodes. Each node represents a server in a distributed network, and the edges represent communication links. Due to a recent solar flare, the tree has become extremely unbalanced, leading to severe latency in querying.
+                        </p>
+<p>
+                            Your task is to rebalance this tree such that the absolute difference in heights of the left and right subtrees for any given node is at most <span class="font-code-block text-code-block text-on-surface bg-surface-container-low px-xs rounded">K</span>. However, moving a node to a different position incurs a cost proportional to its weight <span class="font-code-block text-code-block text-on-surface bg-surface-container-low px-xs rounded">W_i</span>. Find the minimum total cost to achieve the required balance factor.
+                        </p>
+<h3 class="font-h3 text-h3 text-on-surface mt-xl mb-sm">Input Format</h3>
+<p>
+                            The first line contains two integers <span class="font-code-block text-code-block text-on-surface bg-surface-container-low px-xs rounded">N</span> and <span class="font-code-block text-code-block text-on-surface bg-surface-container-low px-xs rounded">K</span> (1 ≤ N ≤ 10^5, 0 ≤ K ≤ N).<br/>
+                            The following N lines each contain three integers: <span class="font-code-block text-code-block text-on-surface bg-surface-container-low px-xs rounded">V_i</span> (value), <span class="font-code-block text-code-block text-on-surface bg-surface-container-low px-xs rounded">W_i</span> (weight), and <span class="font-code-block text-code-block text-on-surface bg-surface-container-low px-xs rounded">P_i</span> (parent index, 0 if root).
+                        </p>
+<h3 class="font-h3 text-h3 text-on-surface mt-xl mb-sm">Output Format</h3>
+<p>Print a single integer: the minimum cost to balance the tree.</p>
+</div>
+</div>
+<div class="p-xl bg-surface-bright">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider mb-md">Public Sample Test Cases</h3>
+<div class="grid grid-cols-2 gap-md">
+<div class="flex flex-col gap-xs">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Input 1</span>
+<div class="bg-[#F1F5F9] border border-outline-variant rounded-md p-sm font-code-block text-code-block text-on-surface whitespace-pre overflow-x-auto">5 1
+10 5 0
+5 2 1
+15 3 1
+2 1 2
+1 4 4</div>
+</div>
+<div class="flex flex-col gap-xs">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Output 1</span>
+<div class="bg-[#F1F5F9] border border-outline-variant rounded-md p-sm font-code-block text-code-block text-on-surface whitespace-pre overflow-x-auto">4</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="w-[480px] shrink-0 flex flex-col gap-gutter">
+<div class="flex-[3] bg-surface-container-lowest border border-outline-variant rounded-xl flex flex-col overflow-hidden shadow-sm">
+<div class="px-md py-sm border-b border-surface-variant bg-surface-bright flex items-center justify-between">
+<select class="bg-surface-container-lowest border-outline-variant text-on-surface text-sm rounded focus:border-secondary-container focus:ring-1 focus:ring-secondary-container font-body-sm py-1 pl-2 pr-6">
+<option>C++17 (GCC 11)</option>
+<option>Python 3.10</option>
+<option>Java 17</option>
+</select>
+<div class="flex gap-sm">
+<button class="p-xs text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[18px]">settings</span>
+</button>
+<button class="p-xs text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[18px]">fullscreen</span>
+</button>
+</div>
+</div>
+<div class="flex-1 flex overflow-hidden bg-[#F1F5F9]">
+<div class="w-10 shrink-0 bg-[#F1F5F9] border-r border-outline-variant/50 text-right pr-2 py-sm font-code-block text-code-block text-outline select-none flex flex-col opacity-70">
+<span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span>
+</div>
+<textarea class="flex-1 bg-transparent border-none p-sm font-code-block text-code-block text-on-surface resize-none focus:ring-0 whitespace-pre leading-relaxed" spellcheck="false">#include &lt;iostream&gt;
+#include &lt;vector&gt;
+
+using namespace std;
+
+int main() {
+    int n, k;
+    cin &gt;&gt; n &gt;&gt; k;
+    // TODO: implement rebalancing
+    return 0;
+}</textarea>
+</div>
+<div class="p-sm border-t border-surface-variant bg-surface-bright flex justify-end gap-md">
+<button class="px-md py-sm bg-surface-container-lowest border border-outline-variant text-primary-container font-label-caps text-label-caps rounded hover:bg-surface-container-low transition-colors shadow-sm">
+                        Run Custom Tests
+                    </button>
+<button class="px-md py-sm bg-secondary-container text-on-secondary-container font-label-caps text-label-caps rounded hover:opacity-90 transition-opacity shadow-sm flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">send</span>
+                        Submit Solution
+                    </button>
+</div>
+</div>
+<div class="flex-[2] bg-surface-container-lowest border border-outline-variant rounded-xl flex flex-col overflow-hidden shadow-sm">
+<div class="px-md py-sm border-b border-surface-variant bg-surface-bright">
+<h2 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Submission History</h2>
+</div>
+<div class="flex-1 overflow-y-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-low/50 sticky top-0">
+<tr>
+<th class="py-2 px-md font-label-caps text-label-caps text-on-surface-variant border-b border-surface-variant">ID</th>
+<th class="py-2 px-md font-label-caps text-label-caps text-on-surface-variant border-b border-surface-variant">Time</th>
+<th class="py-2 px-md font-label-caps text-label-caps text-on-surface-variant border-b border-surface-variant">Lang</th>
+<th class="py-2 px-md font-label-caps text-label-caps text-on-surface-variant border-b border-surface-variant text-right">Verdict</th>
+</tr>
+</thead>
+<tbody class="font-table-data text-table-data">
+<tr class="hover:bg-surface-bright transition-colors border-b border-surface-container-low">
+<td class="py-2 px-md text-on-surface-variant">#14402</td>
+<td class="py-2 px-md text-on-surface">10:42 AM</td>
+<td class="py-2 px-md text-on-surface-variant">C++17</td>
+<td class="py-2 px-md text-right">
+<span class="inline-flex items-center px-2 py-1 rounded bg-error-container text-on-error-container text-[11px] font-bold tracking-wide">
+                                        Wrong Answer
+                                    </span>
+</td>
+</tr>
+<tr class="hover:bg-surface-bright transition-colors border-b border-surface-container-low">
+<td class="py-2 px-md text-on-surface-variant">#14398</td>
+<td class="py-2 px-md text-on-surface">10:35 AM</td>
+<td class="py-2 px-md text-on-surface-variant">C++17</td>
+<td class="py-2 px-md text-right">
+<span class="inline-flex items-center px-2 py-1 rounded bg-tertiary-fixed-dim text-on-tertiary-fixed-variant text-[11px] font-bold tracking-wide">
+                                        Time Limit
+                                    </span>
+</td>
+</tr>
+<tr class="hover:bg-surface-bright transition-colors border-b border-surface-container-low">
+<td class="py-2 px-md text-on-surface-variant">#13902</td>
+<td class="py-2 px-md text-on-surface">09:15 AM</td>
+<td class="py-2 px-md text-on-surface-variant">C++17</td>
+<td class="py-2 px-md text-right">
+<span class="inline-flex items-center px-2 py-1 rounded bg-primary-fixed text-on-primary-fixed-variant text-[11px] font-bold tracking-wide">
+                                        Accepted
+                                    </span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+</main>
+</body></html>

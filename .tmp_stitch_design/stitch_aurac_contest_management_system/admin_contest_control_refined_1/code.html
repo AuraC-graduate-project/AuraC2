@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AuraC² - Contest Control</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;family=Space+Grotesk:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+            font-variation-settings: 'FILL' 1;
+        }
+        /* Custom scrollbar for data tables to keep it clean */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #c4c6cf;
+            border-radius: 10px;
+        }
+    </style>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-low": "#eff4ff",
+                    "error": "#ba1a1a",
+                    "error-container": "#ffdad6",
+                    "primary-fixed-dim": "#adc8f5",
+                    "inverse-surface": "#213145",
+                    "on-tertiary": "#ffffff",
+                    "secondary-fixed": "#dbe1ff",
+                    "surface-container-high": "#dce9ff",
+                    "primary-fixed": "#d5e3ff",
+                    "surface-variant": "#d3e4fe",
+                    "surface-tint": "#455f87",
+                    "surface-container": "#e5eeff",
+                    "on-primary-fixed": "#001c3b",
+                    "secondary-container": "#316bf3",
+                    "surface-bright": "#f8f9ff",
+                    "outline-variant": "#c4c6cf",
+                    "on-tertiary-fixed": "#231b00",
+                    "inverse-primary": "#adc8f5",
+                    "secondary-fixed-dim": "#b4c5ff",
+                    "on-surface": "#0b1c30",
+                    "secondary": "#0051d5",
+                    "on-background": "#0b1c30",
+                    "inverse-on-surface": "#eaf1ff",
+                    "on-surface-variant": "#43474e",
+                    "on-secondary-container": "#fefcff",
+                    "surface": "#f8f9ff",
+                    "on-secondary-fixed": "#00174b",
+                    "background": "#f8f9ff",
+                    "on-secondary-fixed-variant": "#003ea8",
+                    "tertiary-fixed": "#ffe083",
+                    "on-error-container": "#93000a",
+                    "tertiary": "#735c00",
+                    "on-error": "#ffffff",
+                    "surface-dim": "#cbdbf5",
+                    "surface-container-highest": "#d3e4fe",
+                    "on-tertiary-fixed-variant": "#574500",
+                    "tertiary-fixed-dim": "#eec200",
+                    "tertiary-container": "#cea700",
+                    "primary": "#022448",
+                    "on-primary-container": "#8aa4cf",
+                    "on-primary": "#ffffff",
+                    "outline": "#74777f",
+                    "on-tertiary-container": "#4e3e00",
+                    "surface-container-lowest": "#ffffff",
+                    "primary-container": "#1e3a5f",
+                    "on-primary-fixed-variant": "#2d486d",
+                    "on-secondary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "sm": "8px",
+                    "gutter": "20px",
+                    "base": "4px",
+                    "xs": "4px",
+                    "xl": "32px",
+                    "md": "16px",
+                    "lg": "24px",
+                    "container-max": "1440px"
+            },
+            "fontFamily": {
+                    "h1": ["manrope"],
+                    "h2": ["manrope"],
+                    "body-sm": ["inter"],
+                    "body-base": ["inter"],
+                    "table-data": ["spaceGrotesk"],
+                    "label-caps": ["inter"],
+                    "h3": ["manrope"],
+                    "code-block": ["spaceGrotesk"]
+            },
+            "fontSize": {
+                    "h1": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "h2": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-base": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "table-data": ["13px", {"lineHeight": "18px", "fontWeight": "500"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "h3": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "code-block": ["14px", {"lineHeight": "22px", "fontWeight": "400"}]
+            }
+          }
+        }
+      }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-base antialiased flex h-screen overflow-hidden">
+<!-- Shared Component: SideNavBar -->
+<aside class="fixed left-0 top-0 h-screen w-64 border-r border-slate-200/10 bg-[#1E3A5F] dark:bg-slate-950 flex flex-col h-full overflow-y-auto z-50">
+<!-- Header -->
+<div class="px-6 py-8">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-secondary flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-sm" data-icon="terminal">terminal</span>
+</div>
+<div>
+<h1 class="font-['Manrope'] text-sm font-medium tracking-tight text-2xl font-black text-white tracking-tighter">AuraC²</h1>
+<p class="text-[10px] text-blue-400 font-label-caps uppercase tracking-widest mt-1 opacity-80">Contest Control</p>
+</div>
+</div>
+</div>
+<!-- Create CTA -->
+<div class="px-4 mb-6">
+<button class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-DEFAULT py-2 px-4 flex items-center justify-center gap-2 transition-colors font-label-caps text-label-caps shadow-sm">
+<span class="material-symbols-outlined text-[18px]" data-icon="add">add</span>
+                Create Contest
+            </button>
+</div>
+<!-- Navigation Tabs -->
+<nav class="flex-1 px-2 space-y-1">
+<a class="flex items-center gap-3 text-slate-300 hover:text-white py-3 px-4 transition-colors rounded hover:bg-white/5 duration-200 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-active:scale-95 duration-150" data-icon="dashboard">dashboard</span>
+<span class="font-['Manrope'] text-sm font-medium tracking-tight">Overview</span>
+</a>
+<!-- Active Tab: Contests -->
+<a class="flex items-center gap-3 bg-white/10 text-white border-l-4 border-blue-500 py-3 px-4 rounded-r group" href="#">
+<span class="material-symbols-outlined text-[20px] filled group-active:scale-95 duration-150" data-icon="event_note">event_note</span>
+<span class="font-['Manrope'] text-sm font-medium tracking-tight">Contests</span>
+</a>
+<a class="flex items-center gap-3 text-slate-300 hover:text-white py-3 px-4 transition-colors rounded hover:bg-white/5 duration-200 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-active:scale-95 duration-150" data-icon="groups">groups</span>
+<span class="font-['Manrope'] text-sm font-medium tracking-tight">Teams</span>
+</a>
+<a class="flex items-center gap-3 text-slate-300 hover:text-white py-3 px-4 transition-colors rounded hover:bg-white/5 duration-200 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-active:scale-95 duration-150" data-icon="code">code</span>
+<span class="font-['Manrope'] text-sm font-medium tracking-tight">Problems</span>
+</a>
+<a class="flex items-center gap-3 text-slate-300 hover:text-white py-3 px-4 transition-colors rounded hover:bg-white/5 duration-200 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-active:scale-95 duration-150" data-icon="send">send</span>
+<span class="font-['Manrope'] text-sm font-medium tracking-tight">Submissions</span>
+</a>
+<a class="flex items-center gap-3 text-slate-300 hover:text-white py-3 px-4 transition-colors rounded hover:bg-white/5 duration-200 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-active:scale-95 duration-150" data-icon="forum">forum</span>
+<span class="font-['Manrope'] text-sm font-medium tracking-tight">Clarifications</span>
+</a>
+<a class="flex items-center gap-3 text-slate-300 hover:text-white py-3 px-4 transition-colors rounded hover:bg-white/5 duration-200 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-active:scale-95 duration-150" data-icon="security">security</span>
+<span class="font-['Manrope'] text-sm font-medium tracking-tight">Analytics</span>
+</a>
+</nav>
+<!-- Footer Tabs -->
+<div class="p-2 border-t border-slate-200/10 mt-auto">
+<a class="flex items-center gap-3 text-slate-300 hover:text-white py-3 px-4 transition-colors rounded hover:bg-white/5 duration-200 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-active:scale-95 duration-150" data-icon="settings">settings</span>
+<span class="font-['Manrope'] text-sm font-medium tracking-tight">Settings</span>
+</a>
+<a class="flex items-center gap-3 text-slate-300 hover:text-white py-3 px-4 transition-colors rounded hover:bg-white/5 duration-200 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-active:scale-95 duration-150" data-icon="help">help</span>
+<span class="font-['Manrope'] text-sm font-medium tracking-tight">Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col ml-64 min-w-0">
+<!-- Shared Component: TopNavBar -->
+<nav class="sticky top-0 z-40 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-sm dark:shadow-none flex items-center justify-between px-6 py-3">
+<div class="flex items-center gap-8">
+<!-- Search (Configured for right side based on JSON, so left side is empty except for possible context) -->
+<div class="hidden md:flex space-x-1">
+<a class="px-3 py-1.5 font-['Manrope'] text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md transition-colors" href="#">Dashboard</a>
+<a class="px-3 py-1.5 font-['Manrope'] text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md transition-colors" href="#">Rankings</a>
+<a class="px-3 py-1.5 font-['Manrope'] text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md transition-colors" href="#">Documentation</a>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<!-- Search Bar -->
+<div class="relative group mr-4 focus-within:ring-2 focus-within:ring-blue-500/20 rounded-md">
+<span class="material-symbols-outlined absolute left-2.5 top-2 text-slate-400 text-[18px]" data-icon="search">search</span>
+<input class="pl-9 pr-4 py-1.5 bg-slate-100 dark:bg-slate-800 border-transparent focus:border-blue-500 focus:bg-white rounded-md text-sm w-64 transition-all outline-none" placeholder="Search contests, teams..." type="text"/>
+</div>
+<!-- Trailing Icon Actions -->
+<button class="p-2 text-slate-600 hover:bg-slate-50 rounded-md transition-colors relative">
+<span class="material-symbols-outlined text-[20px]" data-icon="notifications">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full border border-white"></span>
+</button>
+<button class="p-2 text-slate-600 hover:bg-slate-50 rounded-md transition-colors mr-2">
+<span class="material-symbols-outlined text-[20px]" data-icon="dark_mode">dark_mode</span>
+</button>
+<!-- Trailing Primary Action (Profile) -->
+<div class="h-8 border-l border-slate-200 mx-2"></div>
+<button class="flex items-center gap-2 pl-2 pr-1 py-1 hover:bg-slate-50 rounded-md transition-colors">
+<div class="w-7 h-7 rounded-full bg-surface-tint text-white flex items-center justify-center font-bold text-xs overflow-hidden">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="professional headshot of a man with glasses against a neutral background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvfNC7QTqcNVqM6ej-sCXBqm7-3k-o7N_yHK31sZLf7vvW_mZMBQNPxzwP-DlhdwfqBPS-JrkDjCax7LZvuaKMFRuoYgTRdXJ0YP61Dy6uxjnPFdRQ5gW1mKVZL95gN_qwof7h4APLxSYAXlS48RldeurY7GrmNi2sV2EgHB-NwzmSZ6aOOEyzQnK_UIwGdGCZCMYCFyvOUUTTk2pqWgLEGW4EKYk1kGN99e0YqNpwubFBcTNpL8HIm25McwDkAXRIlyuCd57EHkk"/>
+</div>
+</button>
+</div>
+</nav>
+<!-- Main Workspace -->
+<main class="flex-1 overflow-y-auto bg-background p-xl">
+<div class="max-w-[1440px] mx-auto">
+<!-- Page Header -->
+<div class="flex items-end justify-between mb-lg">
+<div>
+<h2 class="font-h1 text-h1 text-on-surface">Contest Control</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Manage lifecycle and execution states for all programming events.</p>
+</div>
+<div class="flex gap-3">
+<button class="bg-surface-container-lowest border border-outline-variant text-on-surface font-label-caps text-label-caps rounded-DEFAULT px-md py-sm hover:bg-surface-bright transition-colors flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px]" data-icon="history">history</span>
+                            Audit Log
+                        </button>
+</div>
+</div>
+<!-- Bento Grid Overview (High-end UI pattern instead of standard list for stats) -->
+<div class="grid grid-cols-12 gap-gutter mb-xl">
+<!-- Status Card -->
+<div class="col-span-4 bg-surface-container-lowest border border-outline-variant rounded-lg p-lg shadow-[0_1px_3px_rgba(0,0,0,0.05)] relative overflow-hidden flex flex-col justify-between">
+<div class="absolute -right-6 -top-6 w-32 h-32 bg-secondary-fixed opacity-50 rounded-full blur-2xl pointer-events-none"></div>
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider mb-2">System Status</p>
+<div class="flex items-center gap-2">
+<span class="relative flex h-3 w-3">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-3 w-3 bg-secondary"></span>
+</span>
+<h3 class="font-h2 text-h2 text-on-surface">All Systems Nominal</h3>
+</div>
+</div>
+<div class="mt-4 flex gap-4">
+<div>
+<span class="font-table-data text-[24px] font-medium text-on-surface block">1</span>
+<span class="font-body-sm text-[12px] text-on-surface-variant">Active</span>
+</div>
+<div>
+<span class="font-table-data text-[24px] font-medium text-on-surface block">3</span>
+<span class="font-body-sm text-[12px] text-on-surface-variant">Upcoming</span>
+</div>
+</div>
+</div>
+<!-- Judge Queue Card -->
+<div class="col-span-4 bg-surface-container-lowest border border-outline-variant rounded-lg p-lg shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider mb-4">Judge Queue Load</p>
+<div class="space-y-4">
+<div>
+<div class="flex justify-between font-body-sm text-body-sm mb-1">
+<span class="text-on-surface font-medium">Cluster Alpha (C++/Java)</span>
+<span class="font-table-data text-on-surface-variant">12 req/s</span>
+</div>
+<div class="w-full bg-surface-container-high rounded-full h-1.5">
+<div class="bg-secondary h-1.5 rounded-full" style="width: 45%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between font-body-sm text-body-sm mb-1">
+<span class="text-on-surface font-medium">Cluster Beta (Python)</span>
+<span class="font-table-data text-on-surface-variant">4 req/s</span>
+</div>
+<div class="w-full bg-surface-container-high rounded-full h-1.5">
+<div class="bg-primary-fixed-dim h-1.5 rounded-full" style="width: 15%"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Actions Card -->
+<div class="col-span-4 bg-surface-container-lowest border border-outline-variant rounded-lg p-lg shadow-[0_1px_3px_rgba(0,0,0,0.05)] flex flex-col justify-center">
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider mb-4">Emergency Controls</p>
+<button class="w-full bg-error-container text-on-error-container hover:bg-error hover:text-white border border-error/20 rounded-DEFAULT py-2 px-4 flex items-center justify-center gap-2 transition-colors font-label-caps text-label-caps">
+<span class="material-symbols-outlined text-[18px]" data-icon="warning">warning</span>
+                            Halt All Active Judgments
+                        </button>
+</div>
+</div>
+<!-- Main Data View -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.05)] overflow-hidden flex flex-col">
+<!-- Tabs Header -->
+<div class="border-b border-surface-container flex items-center px-lg bg-surface-bright/50">
+<button class="py-4 px-1 border-b-2 border-secondary text-secondary font-label-caps text-label-caps font-bold mr-6 transition-colors">
+                            Active &amp; Upcoming
+                        </button>
+<button class="py-4 px-1 border-b-2 border-transparent text-on-surface-variant hover:text-on-surface font-label-caps text-label-caps mr-6 transition-colors">
+                            Paused
+                        </button>
+<button class="py-4 px-1 border-b-2 border-transparent text-on-surface-variant hover:text-on-surface font-label-caps text-label-caps transition-colors">
+                            Ended
+                        </button>
+</div>
+<!-- Data Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse whitespace-nowrap">
+<thead class="bg-surface-bright border-b border-surface-container-high">
+<tr>
+<th class="font-label-caps text-[11px] text-on-surface-variant px-md py-3 font-semibold uppercase tracking-wider w-16">ID</th>
+<th class="font-label-caps text-[11px] text-on-surface-variant px-md py-3 font-semibold uppercase tracking-wider">Contest Name</th>
+<th class="font-label-caps text-[11px] text-on-surface-variant px-md py-3 font-semibold uppercase tracking-wider w-24">Status</th>
+<th class="font-label-caps text-[11px] text-on-surface-variant px-md py-3 font-semibold uppercase tracking-wider w-40">Schedule</th>
+<th class="font-label-caps text-[11px] text-on-surface-variant px-md py-3 font-semibold uppercase tracking-wider w-24 text-right">Teams</th>
+<th class="font-label-caps text-[11px] text-on-surface-variant px-md py-3 font-semibold uppercase tracking-wider w-48 text-right">Controls</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container">
+<!-- Row 1: RUNNING -->
+<tr class="hover:bg-surface-bright/50 transition-colors group">
+<td class="px-md py-4 font-table-data text-table-data text-on-surface-variant">#C-0042</td>
+<td class="px-md py-4">
+<div class="font-body-base font-semibold text-on-surface">ACM Regional Qualifiers 2024</div>
+<div class="font-body-sm text-[12px] text-on-surface-variant mt-0.5">Div 1 &amp; Div 2 • standard ruleset</div>
+</td>
+<td class="px-md py-4">
+<span class="inline-flex items-center justify-center bg-[#d1fae5] text-[#065f46] px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider border border-[#a7f3d0]">
+<span class="w-1.5 h-1.5 bg-[#059669] rounded-full mr-1.5 animate-pulse"></span>
+                                            Running
+                                        </span>
+</td>
+<td class="px-md py-4 font-table-data text-[12px] text-on-surface">
+<div>T-minus 02:14:00</div>
+<div class="text-on-surface-variant mt-0.5">Ends 18:00 UTC</div>
+</td>
+<td class="px-md py-4 font-table-data text-table-data text-on-surface text-right">142</td>
+<td class="px-md py-4 text-right">
+<div class="flex justify-end gap-1 items-center">
+<!-- Disabled Edit with Tooltip -->
+<div class="relative group/btn flex items-center justify-center">
+<button class="p-1.5 text-outline opacity-40 cursor-not-allowed rounded" disabled="">
+<span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span>
+</button>
+<div class="absolute bottom-full mb-2 hidden group-hover/btn:block w-max bg-inverse-surface text-inverse-on-surface font-body-sm text-[11px] px-2 py-1 rounded shadow-lg z-10">
+                                                    Edit only available for upcoming contests
+                                                </div>
+</div>
+<!-- Action: Pause -->
+<button class="p-1.5 text-on-surface-variant hover:text-tertiary hover:bg-tertiary-fixed rounded transition-colors group/tooltip relative">
+<span class="material-symbols-outlined text-[18px]" data-icon="pause">pause</span>
+<div class="absolute bottom-full mb-2 hidden group-hover/tooltip:block w-max bg-inverse-surface text-inverse-on-surface font-body-sm text-[11px] px-2 py-1 rounded shadow-lg z-10 right-0">Pause Contest</div>
+</button>
+<!-- Action: End -->
+<button class="p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container rounded transition-colors ml-2 group/tooltip relative">
+<span class="material-symbols-outlined text-[18px]" data-icon="stop_circle">stop_circle</span>
+<div class="absolute bottom-full mb-2 hidden group-hover/tooltip:block w-max bg-inverse-surface text-inverse-on-surface font-body-sm text-[11px] px-2 py-1 rounded shadow-lg z-10 right-0">End Contest Prematurely</div>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2: UPCOMING -->
+<tr class="hover:bg-surface-bright/50 transition-colors group">
+<td class="px-md py-4 font-table-data text-table-data text-on-surface-variant">#C-0043</td>
+<td class="px-md py-4">
+<div class="font-body-base font-semibold text-on-surface">Weekly Algorithm Sprint #89</div>
+<div class="font-body-sm text-[12px] text-on-surface-variant mt-0.5">Div 2 only</div>
+</td>
+<td class="px-md py-4">
+<span class="inline-flex items-center justify-center bg-surface-container-high text-on-surface px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider border border-outline-variant">
+                                            Upcoming
+                                        </span>
+</td>
+<td class="px-md py-4 font-table-data text-[12px] text-on-surface">
+<div>Tomorrow, 14:00 UTC</div>
+<div class="text-on-surface-variant mt-0.5">Duration: 2h</div>
+</td>
+<td class="px-md py-4 font-table-data text-table-data text-on-surface text-right">89</td>
+<td class="px-md py-4 text-right">
+<div class="flex justify-end gap-1 items-center">
+<!-- Action: Edit (Enabled for upcoming) -->
+<button class="p-1.5 text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed rounded transition-colors group/tooltip relative">
+<span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span>
+<div class="absolute bottom-full mb-2 hidden group-hover/tooltip:block w-max bg-inverse-surface text-inverse-on-surface font-body-sm text-[11px] px-2 py-1 rounded shadow-lg z-10 right-0">Edit Contest Details</div>
+</button>
+<!-- Action: Start Early -->
+<button class="p-1.5 text-on-surface-variant hover:text-[#059669] hover:bg-[#d1fae5] rounded transition-colors group/tooltip relative">
+<span class="material-symbols-outlined text-[18px]" data-icon="play_arrow">play_arrow</span>
+<div class="absolute bottom-full mb-2 hidden group-hover/tooltip:block w-max bg-inverse-surface text-inverse-on-surface font-body-sm text-[11px] px-2 py-1 rounded shadow-lg z-10 right-0">Start Contest Now</div>
+</button>
+<!-- Action: Cancel -->
+<button class="p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container rounded transition-colors ml-2 group/tooltip relative">
+<span class="material-symbols-outlined text-[18px]" data-icon="cancel">cancel</span>
+<div class="absolute bottom-full mb-2 hidden group-hover/tooltip:block w-max bg-inverse-surface text-inverse-on-surface font-body-sm text-[11px] px-2 py-1 rounded shadow-lg z-10 right-0">Cancel Scheduled Contest</div>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3: UPCOMING (Another one to fill data) -->
+<tr class="hover:bg-surface-bright/50 transition-colors group">
+<td class="px-md py-4 font-table-data text-table-data text-on-surface-variant">#C-0044</td>
+<td class="px-md py-4">
+<div class="font-body-base font-semibold text-on-surface">Freshman Training Beta</div>
+<div class="font-body-sm text-[12px] text-on-surface-variant mt-0.5">Internal • unrated</div>
+</td>
+<td class="px-md py-4">
+<span class="inline-flex items-center justify-center bg-surface-container-high text-on-surface px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider border border-outline-variant">
+                                            Upcoming
+                                        </span>
+</td>
+<td class="px-md py-4 font-table-data text-[12px] text-on-surface">
+<div>Oct 24, 09:00 UTC</div>
+<div class="text-on-surface-variant mt-0.5">Duration: 4h</div>
+</td>
+<td class="px-md py-4 font-table-data text-table-data text-on-surface text-right">24</td>
+<td class="px-md py-4 text-right">
+<div class="flex justify-end gap-1 items-center">
+<button class="p-1.5 text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed rounded transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span>
+</button>
+<button class="p-1.5 text-on-surface-variant hover:text-[#059669] hover:bg-[#d1fae5] rounded transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="play_arrow">play_arrow</span>
+</button>
+<button class="p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container rounded transition-colors ml-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="cancel">cancel</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4: DESTRUCTIVE CONFIRMATION STATE (Mocking user clicking 'End' on a running contest) -->
+<tr class="bg-error-container/20 border-l-2 border-error transition-colors">
+<td class="px-md py-4 font-table-data text-table-data text-on-surface-variant pl-[calc(16px-2px)]">#C-0041</td>
+<td class="px-md py-4">
+<div class="font-body-base font-semibold text-on-surface">Global Marathon Challenge</div>
+<div class="font-body-sm text-[12px] text-error font-medium mt-0.5 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="warning">warning</span>
+                                            Pending termination
+                                        </div>
+</td>
+<td class="px-md py-4">
+<span class="inline-flex items-center justify-center bg-[#d1fae5] text-[#065f46] px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider border border-[#a7f3d0] opacity-50">
+                                            Running
+                                        </span>
+</td>
+<td class="px-md py-4 font-table-data text-[12px] text-on-surface-variant">
+<div>T-minus 08:30:00</div>
+</td>
+<td class="px-md py-4 font-table-data text-table-data text-on-surface text-right">512</td>
+<td class="px-md py-4 text-right">
+<!-- Destructive Confirmation UI -->
+<div class="flex justify-end gap-2 items-center">
+<span class="text-[11px] font-label-caps text-on-surface-variant mr-2">Are you sure?</span>
+<button class="font-label-caps text-[11px] text-on-surface hover:bg-surface-container px-3 py-1.5 rounded transition-colors border border-outline-variant">
+                                                Cancel
+                                            </button>
+<button class="font-label-caps text-[11px] bg-error text-white px-3 py-1.5 rounded transition-colors hover:bg-on-error-container shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="delete_forever">delete_forever</span>
+                                                Confirm End
+                                            </button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Footer / Pagination -->
+<div class="border-t border-surface-container px-lg py-3 bg-surface-bright flex items-center justify-between">
+<span class="font-body-sm text-[12px] text-on-surface-variant">Showing 4 of 4 active/upcoming contests</span>
+<div class="flex gap-1">
+<button class="p-1 text-outline-variant cursor-not-allowed" disabled="">
+<span class="material-symbols-outlined text-[20px]" data-icon="chevron_left">chevron_left</span>
+</button>
+<button class="p-1 text-outline-variant cursor-not-allowed" disabled="">
+<span class="material-symbols-outlined text-[20px]" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

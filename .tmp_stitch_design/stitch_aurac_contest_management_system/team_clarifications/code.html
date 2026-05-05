@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AuraC² - Team Clarifications</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;family=Space+Grotesk:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-low": "#eff4ff",
+                      "outline-variant": "#c4c6cf",
+                      "on-secondary-fixed": "#00174b",
+                      "inverse-on-surface": "#eaf1ff",
+                      "on-primary-container": "#8aa4cf",
+                      "tertiary-fixed": "#ffe083",
+                      "primary": "#022448",
+                      "on-primary-fixed-variant": "#2d486d",
+                      "error": "#ba1a1a",
+                      "secondary-fixed-dim": "#b4c5ff",
+                      "tertiary-container": "#cea700",
+                      "on-tertiary-fixed": "#231b00",
+                      "inverse-primary": "#adc8f5",
+                      "surface-container-highest": "#d3e4fe",
+                      "on-tertiary-fixed-variant": "#574500",
+                      "on-secondary-container": "#fefcff",
+                      "on-primary": "#ffffff",
+                      "background": "#f8f9ff",
+                      "on-surface-variant": "#43474e",
+                      "surface-container": "#e5eeff",
+                      "surface-container-high": "#dce9ff",
+                      "on-error": "#ffffff",
+                      "surface-dim": "#cbdbf5",
+                      "surface-tint": "#455f87",
+                      "on-surface": "#0b1c30",
+                      "secondary": "#0051d5",
+                      "on-error-container": "#93000a",
+                      "secondary-container": "#316bf3",
+                      "primary-container": "#1e3a5f",
+                      "inverse-surface": "#213145",
+                      "primary-fixed-dim": "#adc8f5",
+                      "surface-bright": "#f8f9ff",
+                      "on-tertiary": "#ffffff",
+                      "error-container": "#ffdad6",
+                      "secondary-fixed": "#dbe1ff",
+                      "surface-variant": "#d3e4fe",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary-fixed": "#001c3b",
+                      "on-secondary-fixed-variant": "#003ea8",
+                      "tertiary": "#735c00",
+                      "on-background": "#0b1c30",
+                      "on-tertiary-container": "#4e3e00",
+                      "tertiary-fixed-dim": "#eec200",
+                      "outline": "#74777f",
+                      "on-secondary": "#ffffff",
+                      "surface": "#f8f9ff",
+                      "primary-fixed": "#d5e3ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "container-max": "1440px",
+                      "base": "4px",
+                      "gutter": "20px",
+                      "xl": "32px",
+                      "lg": "24px",
+                      "xs": "4px",
+                      "md": "16px",
+                      "sm": "8px"
+              },
+              "fontFamily": {
+                      "h3": [
+                              "manrope"
+                      ],
+                      "h2": [
+                              "manrope"
+                      ],
+                      "table-data": [
+                              "spaceGrotesk"
+                      ],
+                      "body-base": [
+                              "inter"
+                      ],
+                      "h1": [
+                              "manrope"
+                      ],
+                      "body-sm": [
+                              "inter"
+                      ],
+                      "code-block": [
+                              "spaceGrotesk"
+                      ],
+                      "label-caps": [
+                              "inter"
+                      ]
+              },
+              "fontSize": {
+                      "h3": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "h2": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "table-data": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-base": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "h1": [
+                              "30px",
+                              {
+                                      "lineHeight": "38px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "code-block": [
+                              "14px",
+                              {
+                                      "lineHeight": "22px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+      </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen font-body-base text-body-base flex">
+<!-- SideNavBar Component -->
+<nav class="bg-[#1E3A5F] dark:bg-slate-950 text-white font-['Manrope'] text-sm font-medium docked left-0 h-full w-64 no-border flat no shadows fixed left-0 top-0 bottom-0 flex flex-col z-50">
+<div class="p-6">
+<h1 class="text-white font-bold text-h2 font-h2 tracking-tighter mb-1">AuraC² Admin</h1>
+<p class="text-slate-300 text-body-sm font-body-sm">Management Portal</p>
+</div>
+<div class="flex flex-col mt-4 space-y-1">
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Overview</span>
+</a>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">emoji_events</span>
+<span>Contests</span>
+</a>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span>Teams</span>
+</a>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">terminal</span>
+<span>Problems</span>
+</a>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">list_alt</span>
+<span>Submissions</span>
+</a>
+<a class="bg-blue-600/20 text-white border-l-4 border-blue-500 px-4 py-3 flex items-center gap-3 Active: scale-[0.98] transition-transform" href="#">
+<span class="material-symbols-outlined">forum</span>
+<span>Clarifications</span>
+</a>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">query_stats</span>
+<span>Future Stats</span>
+</a>
+</div>
+<div class="mt-auto p-6 flex items-center gap-3 border-t border-white/10">
+<img alt="University Logo" class="w-8 h-8 rounded-full" data-alt="clean minimal geometric university emblem or crest logo design on dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCr6vvXGYqD8Roc9O3uzZu_1qGyzrz8USBUI7kwzlXhEGEFfYbVkDIZoLrARUmjHEKOh9XvDL_9gmb0FLWEqLGS-csXMFIc5QM_UKF-zmen4hjx93glcKpkw-6YeWUPza2TCe_HOqLgPMYAi6kBAG8VYyYVSSx2cJY6_ornCSP4EZPqlpe0-xvlLvEqg_Vu8I_w0YExfX65QehU6MyNvOOmOXvfgOxf56WZeltN-O_N3w7jWjU7Aa3nRo08WBoXbWJmNKRHMVDGEE0"/>
+<span class="text-slate-300 font-body-sm text-body-sm">Admin User</span>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="ml-64 flex-1 flex flex-col min-h-screen">
+<!-- TopAppBar Component -->
+<header class="bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 font-['Manrope'] text-sm tracking-tight docked full-width top-0 border-b border-b border-slate-200 dark:border-slate-800 shadow-sm fixed top-0 right-0 left-0 h-16 flex items-center justify-between px-6 z-40 ml-64">
+<div class="flex items-center">
+<span class="text-xl font-extrabold text-[#1E3A5F] dark:text-white tracking-tighter">AuraC²</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 bg-surface-container-low px-4 py-1.5 rounded-full border border-outline-variant/30">
+<span class="material-symbols-outlined text-sm text-secondary">timer</span>
+<span class="font-h3 text-h3 text-on-surface text-sm">02:45:12 Remaining</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-slate-500 dark:text-slate-400 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors p-2 rounded-full">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-slate-500 dark:text-slate-400 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors p-2 rounded-full">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<img alt="User avatar" class="w-8 h-8 rounded-full ml-2 border border-outline-variant" data-alt="professional headshot portrait of man in crisp lighting against neutral background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7GOQ-dXEpOhcldlCwLwD8QZOGrDUCnHOIy4Mt54F-TcSNA48xFOemAE1m6dHdqHVnWc2oFWqNkWlxmk-ucAEx-wLuyi6mhS9B31TRKWQXX_fIyfLIK8CFS1gcwlDqTqqXWXoABxb_5a3OhDxtMYMC6Gt92Y3QpG7PzjjJ5kKe7M1ZOTEEgFUSP5vz0ZZ5VM01pYqsr-4fC4iI1Z55oxtN7BT_M2NhXyK-v3MbCkJ22WuLDMKp9bBurhkT_PGurCeMKI65_EtY5AU"/>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<div class="pt-24 px-8 pb-12 flex-1 max-w-[1440px] w-full mx-auto">
+<!-- Workspace Header -->
+<div class="flex justify-between items-end mb-xl border-b border-outline-variant/30 pb-lg">
+<div>
+<h2 class="font-h1 text-h1 text-on-surface mb-xs">Team Clarifications</h2>
+<p class="font-body-base text-body-base text-on-surface-variant">Manage and track questions to the jury regarding problem statements.</p>
+</div>
+<button class="bg-[#2563EB] text-white px-md py-sm rounded-DEFAULT font-label-caps text-label-caps flex items-center gap-xs hover:bg-blue-700 transition-colors shadow-sm">
+<span class="material-symbols-outlined" style="font-size: 16px;">add_comment</span>
+                    Ask Clarification
+                </button>
+</div>
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Left Column: My Questions -->
+<div class="col-span-12 lg:col-span-8 flex flex-col gap-lg">
+<div class="flex items-center gap-sm mb-xs">
+<span class="material-symbols-outlined text-primary-container">lock</span>
+<h3 class="font-h2 text-h2 text-primary-container">My Questions</h3>
+</div>
+<!-- Question Card 1 -->
+<div class="bg-surface-container-lowest border border-[#E2E8F0] rounded-lg p-md shadow-[0px_1px_3px_rgba(0,0,0,0.05)]">
+<div class="flex justify-between items-start mb-md">
+<div class="flex gap-sm items-center">
+<span class="bg-surface-container text-on-surface px-2 py-1 rounded-DEFAULT font-code-block text-code-block text-xs border border-outline-variant/20">Prob C</span>
+<span class="bg-error/10 text-error px-2 py-1 rounded-DEFAULT font-label-caps text-label-caps text-xs">Unanswered</span>
+<span class="font-body-sm text-body-sm text-outline">10 mins ago</span>
+</div>
+<span class="bg-surface-container-highest text-on-surface px-2 py-1 rounded-DEFAULT font-label-caps text-label-caps text-xs flex items-center gap-xs">
+<span class="material-symbols-outlined" style="font-size: 14px;">visibility_off</span> Private
+                            </span>
+</div>
+<div class="bg-[#F1F5F9] border border-[#E2E8F0] rounded-DEFAULT p-md font-body-base text-body-base text-on-surface mb-4">
+                            Is the input guaranteed to be sorted in ascending order for the second array in Problem C? The problem statement says "ordered list" but doesn't specify direction.
+                        </div>
+</div>
+<!-- Question Card 2 -->
+<div class="bg-surface-container-lowest border border-[#E2E8F0] rounded-lg p-md shadow-[0px_1px_3px_rgba(0,0,0,0.05)]">
+<div class="flex justify-between items-start mb-md">
+<div class="flex gap-sm items-center">
+<span class="bg-surface-container text-on-surface px-2 py-1 rounded-DEFAULT font-code-block text-code-block text-xs border border-outline-variant/20">Prob A</span>
+<span class="bg-secondary/10 text-secondary px-2 py-1 rounded-DEFAULT font-label-caps text-label-caps text-xs">Answered</span>
+<span class="font-body-sm text-body-sm text-outline">45 mins ago</span>
+</div>
+<span class="bg-surface-container-highest text-on-surface px-2 py-1 rounded-DEFAULT font-label-caps text-label-caps text-xs flex items-center gap-xs">
+<span class="material-symbols-outlined" style="font-size: 14px;">visibility_off</span> Private
+                            </span>
+</div>
+<div class="bg-[#F1F5F9] border border-[#E2E8F0] rounded-DEFAULT p-md font-body-base text-body-base text-on-surface mb-md">
+                            Can N be exactly 0 in the first test case?
+                        </div>
+<div class="border-l-2 border-[#2563EB] pl-md ml-sm">
+<div class="flex items-center gap-xs mb-xs">
+<span class="material-symbols-outlined text-[#2563EB]" style="font-size: 16px;">admin_panel_settings</span>
+<span class="font-h3 text-h3 text-sm text-[#2563EB]">Jury Reply</span>
+<span class="font-body-sm text-body-sm text-outline ml-2">42 mins ago</span>
+</div>
+<p class="font-body-base text-body-base text-on-surface">Please read the constraints section carefully. It states 1 ≤ N ≤ 10^5.</p>
+</div>
+</div>
+</div>
+<!-- Right Column: Public Clarifications -->
+<div class="col-span-12 lg:col-span-4 flex flex-col gap-lg">
+<div class="flex items-center gap-sm mb-xs">
+<span class="material-symbols-outlined text-on-surface">public</span>
+<h3 class="font-h2 text-h2 text-on-surface">Public Clarifications</h3>
+</div>
+<div class="bg-surface-container-lowest border border-[#E2E8F0] rounded-lg p-md shadow-[0px_1px_3px_rgba(0,0,0,0.05)] flex flex-col gap-md">
+<!-- Public Item 1 -->
+<div class="border-b border-[#F1F5F9] pb-md last:border-0 last:pb-0">
+<div class="flex justify-between items-center mb-xs">
+<span class="bg-surface-container text-on-surface px-2 py-1 rounded-DEFAULT font-code-block text-code-block text-xs border border-outline-variant/20">General</span>
+<span class="font-body-sm text-body-sm text-outline text-xs">1 hr ago</span>
+</div>
+<p class="font-body-base text-body-base text-on-surface font-medium mb-xs">Time limits updated</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">The time limit for Java submissions on Problem E has been increased to 3.0 seconds.</p>
+</div>
+<!-- Public Item 2 -->
+<div class="border-b border-[#F1F5F9] pb-md last:border-0 last:pb-0">
+<div class="flex justify-between items-center mb-xs">
+<span class="bg-surface-container text-on-surface px-2 py-1 rounded-DEFAULT font-code-block text-code-block text-xs border border-outline-variant/20">Prob B</span>
+<span class="font-body-sm text-body-sm text-outline text-xs">2 hrs ago</span>
+</div>
+<p class="font-body-base text-body-base text-on-surface font-medium mb-xs">Clarification on sample output</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Read the problem statement carefully. Trailing spaces are not allowed in the output format.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

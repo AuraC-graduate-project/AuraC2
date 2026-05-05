@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AuraC² - Create Problem Modal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;family=Space+Grotesk:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary": "#0051d5",
+                      "surface-container": "#e5eeff",
+                      "on-secondary": "#ffffff",
+                      "secondary-fixed": "#dbe1ff",
+                      "outline-variant": "#c4c6cf",
+                      "on-surface-variant": "#43474e",
+                      "inverse-surface": "#213145",
+                      "primary": "#022448",
+                      "secondary-container": "#316bf3",
+                      "on-primary-container": "#8aa4cf",
+                      "surface-container-highest": "#d3e4fe",
+                      "surface-dim": "#cbdbf5",
+                      "on-tertiary": "#ffffff",
+                      "background": "#f8f9ff",
+                      "tertiary-container": "#cea700",
+                      "secondary-fixed-dim": "#b4c5ff",
+                      "on-primary-fixed-variant": "#2d486d",
+                      "primary-container": "#1e3a5f",
+                      "outline": "#74777f",
+                      "on-error": "#ffffff",
+                      "inverse-primary": "#adc8f5",
+                      "error-container": "#ffdad6",
+                      "tertiary-fixed": "#ffe083",
+                      "surface-container-high": "#dce9ff",
+                      "primary-fixed-dim": "#adc8f5",
+                      "on-surface": "#0b1c30",
+                      "error": "#ba1a1a",
+                      "surface-container-low": "#eff4ff",
+                      "on-primary-fixed": "#001c3b",
+                      "on-tertiary-fixed": "#231b00",
+                      "surface-tint": "#455f87",
+                      "on-tertiary-fixed-variant": "#574500",
+                      "surface-variant": "#d3e4fe",
+                      "surface-container-lowest": "#ffffff",
+                      "primary-fixed": "#d5e3ff",
+                      "inverse-on-surface": "#eaf1ff",
+                      "on-tertiary-container": "#4e3e00",
+                      "on-secondary-fixed-variant": "#003ea8",
+                      "surface-bright": "#f8f9ff",
+                      "tertiary": "#735c00",
+                      "on-secondary-container": "#fefcff",
+                      "on-error-container": "#93000a",
+                      "on-primary": "#ffffff",
+                      "tertiary-fixed-dim": "#eec200",
+                      "on-secondary-fixed": "#00174b",
+                      "surface": "#f8f9ff",
+                      "on-background": "#0b1c30"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "sm": "8px",
+                      "md": "16px",
+                      "container-max": "1440px",
+                      "base": "4px",
+                      "gutter": "20px",
+                      "xs": "4px",
+                      "xl": "32px",
+                      "lg": "24px"
+              },
+              "fontFamily": {
+                      "label-caps": [
+                              "inter"
+                      ],
+                      "table-data": [
+                              "spaceGrotesk"
+                      ],
+                      "body-base": [
+                              "inter"
+                      ],
+                      "h2": [
+                              "manrope"
+                      ],
+                      "h1": [
+                              "manrope"
+                      ],
+                      "code-block": [
+                              "spaceGrotesk"
+                      ],
+                      "h3": [
+                              "manrope"
+                      ],
+                      "body-sm": [
+                              "inter"
+                      ]
+              },
+              "fontSize": {
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "table-data": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-base": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "h2": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "h1": [
+                              "30px",
+                              {
+                                      "lineHeight": "38px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "code-block": [
+                              "14px",
+                              {
+                                      "lineHeight": "22px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "h3": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+</head>
+<body class="bg-background font-body-base text-body-base text-on-background h-screen w-screen overflow-hidden relative">
+<!-- Simulated background dashboard context -->
+<div class="absolute inset-0 p-lg flex flex-col gap-lg opacity-30 pointer-events-none">
+<div class="h-16 bg-surface-container-lowest rounded-xl border border-outline-variant/30 w-full"></div>
+<div class="flex gap-lg h-full">
+<div class="w-64 bg-surface-container-lowest rounded-xl border border-outline-variant/30 h-full hidden md:block"></div>
+<div class="flex-1 bg-surface-container-lowest rounded-xl border border-outline-variant/30 h-full p-lg flex flex-col gap-md">
+<div class="h-8 bg-surface-variant rounded w-1/4"></div>
+<div class="h-64 bg-surface-variant rounded w-full"></div>
+</div>
+</div>
+</div>
+<!-- Modal Overlay Backdrop -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/40 backdrop-blur-sm p-4 md:p-6 lg:p-xl">
+<!-- Modal Container Level 2 Surface -->
+<div class="w-full max-w-[800px] bg-surface-container-lowest rounded-xl shadow-[0_10px_25px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden max-h-full border border-outline-variant/50">
+<!-- Header -->
+<div class="flex items-center justify-between px-lg py-md border-b border-surface-container-high bg-surface-bright">
+<div class="flex items-center gap-sm text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">terminal</span>
+<h2 class="font-h3 text-h3 text-on-surface m-0">Create Problem</h2>
+</div>
+<button aria-label="Close modal" class="text-outline hover:text-on-surface transition-colors p-xs rounded hover:bg-surface-container" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Body Canvas -->
+<div class="flex-1 overflow-y-auto p-lg flex flex-col gap-lg bg-surface-container-lowest">
+<!-- Form Field: Title -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider" for="problem-title">Title</label>
+<input class="w-full rounded border border-outline-variant bg-surface-container-lowest px-md py-sm font-body-base text-body-base text-on-surface placeholder:text-outline focus:border-secondary focus:ring-1 focus:ring-secondary focus:outline-none transition-colors shadow-sm" id="problem-title" name="problem-title" placeholder="e.g., Two Sum Optimization" type="text"/>
+</div>
+<!-- Form Field: Problem Statement -->
+<div class="flex flex-col gap-xs flex-1">
+<div class="flex items-end justify-between">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider" for="problem-statement">Problem Statement</label>
+<span class="font-body-sm text-body-sm text-outline">Markdown supported</span>
+</div>
+<textarea class="w-full rounded border border-outline-variant bg-surface-container-lowest px-md py-sm font-body-base text-body-base text-on-surface placeholder:text-outline focus:border-secondary focus:ring-1 focus:ring-secondary focus:outline-none transition-colors shadow-sm resize-y font-code-block text-code-block" id="problem-statement" name="problem-statement" placeholder="Describe the algorithmic challenge clearly..." rows="8"></textarea>
+</div>
+<!-- Constraints Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md bg-surface-container-low p-md rounded border border-surface-container-high">
+<!-- Form Field: Difficulty -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider" for="difficulty">Difficulty</label>
+<div class="relative">
+<select class="w-full appearance-none rounded border border-outline-variant bg-surface-container-lowest px-md py-sm pr-10 font-body-base text-body-base text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary focus:outline-none transition-colors shadow-sm" id="difficulty" name="difficulty">
+<option disabled="" selected="" value="">Select level</option>
+<option value="easy">Easy</option>
+<option value="medium">Medium</option>
+<option value="hard">Hard</option>
+</select>
+<span class="material-symbols-outlined absolute right-sm top-1/2 -translate-y-1/2 text-outline pointer-events-none">expand_more</span>
+</div>
+</div>
+<!-- Form Field: Time Limit -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider" for="time-limit">Time Limit (ms)</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-outline text-[18px]">timer</span>
+<input class="w-full rounded border border-outline-variant bg-surface-container-lowest pl-10 pr-md py-sm font-table-data text-table-data text-on-surface placeholder:text-outline focus:border-secondary focus:ring-1 focus:ring-secondary focus:outline-none transition-colors shadow-sm" id="time-limit" max="10000" min="100" name="time-limit" placeholder="1000" step="100" type="number"/>
+</div>
+</div>
+<!-- Form Field: Memory Limit -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider" for="memory-limit">Memory Limit (MB)</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-outline text-[18px]">memory</span>
+<input class="w-full rounded border border-outline-variant bg-surface-container-lowest pl-10 pr-md py-sm font-table-data text-table-data text-on-surface placeholder:text-outline focus:border-secondary focus:ring-1 focus:ring-secondary focus:outline-none transition-colors shadow-sm" id="memory-limit" max="2048" min="16" name="memory-limit" placeholder="256" step="16" type="number"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="flex items-center justify-end px-lg py-md border-t border-surface-container-high bg-surface gap-md">
+<button class="px-md py-sm rounded border border-outline-variant bg-surface-container-lowest text-primary font-body-base text-body-base font-medium hover:bg-surface-container-low focus:ring-2 focus:ring-primary/20 transition-colors shadow-sm" type="button">
+                    Cancel
+                </button>
+<button class="px-md py-sm rounded bg-secondary text-on-secondary font-body-base text-body-base font-medium hover:bg-secondary-container hover:text-on-secondary shadow-sm focus:ring-2 focus:ring-secondary/40 transition-colors flex items-center gap-sm" type="button">
+<span class="material-symbols-outlined text-[18px]">add_task</span>
+                    Create Problem
+                </button>
+</div>
+</div>
+</div>
+</body></html>

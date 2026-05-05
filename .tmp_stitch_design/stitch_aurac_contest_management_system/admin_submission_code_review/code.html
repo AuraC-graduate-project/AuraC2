@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AuraC² - Admin Submission Details Drawer</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700&amp;family=Space+Grotesk:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Theme Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary": "#0051d5",
+                    "surface-container": "#e5eeff",
+                    "on-secondary": "#ffffff",
+                    "secondary-fixed": "#dbe1ff",
+                    "outline-variant": "#c4c6cf",
+                    "on-surface-variant": "#43474e",
+                    "inverse-surface": "#213145",
+                    "primary": "#022448",
+                    "secondary-container": "#316bf3",
+                    "on-primary-container": "#8aa4cf",
+                    "surface-container-highest": "#d3e4fe",
+                    "surface-dim": "#cbdbf5",
+                    "on-tertiary": "#ffffff",
+                    "background": "#f8f9ff",
+                    "tertiary-container": "#cea700",
+                    "secondary-fixed-dim": "#b4c5ff",
+                    "on-primary-fixed-variant": "#2d486d",
+                    "primary-container": "#1e3a5f",
+                    "outline": "#74777f",
+                    "on-error": "#ffffff",
+                    "inverse-primary": "#adc8f5",
+                    "error-container": "#ffdad6",
+                    "tertiary-fixed": "#ffe083",
+                    "surface-container-high": "#dce9ff",
+                    "primary-fixed-dim": "#adc8f5",
+                    "on-surface": "#0b1c30",
+                    "error": "#ba1a1a",
+                    "surface-container-low": "#eff4ff",
+                    "on-primary-fixed": "#001c3b",
+                    "on-tertiary-fixed": "#231b00",
+                    "surface-tint": "#455f87",
+                    "on-tertiary-fixed-variant": "#574500",
+                    "surface-variant": "#d3e4fe",
+                    "surface-container-lowest": "#ffffff",
+                    "primary-fixed": "#d5e3ff",
+                    "inverse-on-surface": "#eaf1ff",
+                    "on-tertiary-container": "#4e3e00",
+                    "on-secondary-fixed-variant": "#003ea8",
+                    "surface-bright": "#f8f9ff",
+                    "tertiary": "#735c00",
+                    "on-secondary-container": "#fefcff",
+                    "on-error-container": "#93000a",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed-dim": "#eec200",
+                    "on-secondary-fixed": "#00174b",
+                    "surface": "#f8f9ff",
+                    "on-background": "#0b1c30"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "sm": "8px",
+                    "md": "16px",
+                    "container-max": "1440px",
+                    "base": "4px",
+                    "gutter": "20px",
+                    "xs": "4px",
+                    "xl": "32px",
+                    "lg": "24px"
+            },
+            "fontFamily": {
+                    "label-caps": ["inter"],
+                    "table-data": ["spaceGrotesk"],
+                    "body-base": ["inter"],
+                    "h2": ["manrope"],
+                    "h1": ["manrope"],
+                    "code-block": ["spaceGrotesk"],
+                    "h3": ["manrope"],
+                    "body-sm": ["inter"]
+            },
+            "fontSize": {
+                    "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                    "table-data": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                    "body-base": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                    "h2": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                    "h1": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                    "code-block": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+                    "h3": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                    "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-base antialiased">
+<!-- Screen Backdrop (Contextual Wrapper) -->
+<div class="fixed inset-0 bg-on-surface/40 z-50 flex justify-end">
+<!-- Drawer Container -->
+<aside class="w-full max-w-4xl bg-surface-container-lowest h-full shadow-[0px_10px_15px_rgba(0,0,0,0.1)] flex flex-col border-l border-outline-variant animate-[slideIn_0.3s_ease-out]">
+<!-- Drawer Header -->
+<header class="px-lg py-md border-b border-surface-container-highest flex justify-between items-center bg-surface">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-primary text-xl">terminal</span>
+<h2 class="font-h2 text-h2 text-on-surface">Submission Details</h2>
+</div>
+<button aria-label="Close" class="p-sm hover:bg-surface-container rounded-full text-on-surface-variant transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined">close</span>
+</button>
+</header>
+<!-- Scrollable Content -->
+<div class="flex-1 overflow-y-auto">
+<!-- Metadata Bento Grid -->
+<section class="p-lg bg-surface">
+<div class="grid grid-cols-2 md:grid-cols-4 gap-md">
+<!-- ID -->
+<div class="bg-surface-container-low p-md border border-outline-variant rounded-DEFAULT flex flex-col gap-xs">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Submission ID</span>
+<span class="font-table-data text-table-data text-on-surface">#101</span>
+</div>
+<!-- Team -->
+<div class="bg-surface-container-low p-md border border-outline-variant rounded-DEFAULT flex flex-col gap-xs">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Team</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">team-alpha</span>
+</div>
+<!-- Problem -->
+<div class="bg-surface-container-low p-md border border-outline-variant rounded-DEFAULT flex flex-col gap-xs">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Problem</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">A. Array Balance</span>
+</div>
+<!-- Language -->
+<div class="bg-surface-container-low p-md border border-outline-variant rounded-DEFAULT flex flex-col gap-xs">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Language</span>
+<span class="font-table-data text-table-data text-on-surface">C++17</span>
+</div>
+</div>
+<!-- Verdict Banner -->
+<div class="mt-md p-md bg-surface-container-lowest border border-outline-variant rounded-DEFAULT flex justify-between items-center">
+<span class="font-h3 text-h3 text-on-surface">Verdict</span>
+<!-- Status Badge (Accepted) -->
+<div class="bg-primary-fixed text-on-primary-fixed px-md py-sm rounded-DEFAULT flex items-center gap-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">ACCEPTED</span>
+</div>
+</div>
+</section>
+<!-- Code Section -->
+<section class="p-lg pt-0 flex flex-col gap-md">
+<h3 class="font-h3 text-h3 text-on-surface border-b border-surface-container-highest pb-sm">Source Code</h3>
+<div class="relative bg-surface-container rounded-DEFAULT border border-outline-variant overflow-hidden">
+<!-- Code Actions Bar -->
+<div class="flex justify-end items-center px-md py-sm bg-surface-container-highest border-b border-outline-variant">
+<button class="flex items-center gap-xs text-on-surface-variant hover:text-primary transition-colors font-label-caps text-label-caps">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+                                COPY
+                            </button>
+</div>
+<!-- Monospace Code Block -->
+<pre class="p-md overflow-x-auto"><code class="font-code-block text-code-block text-on-surface">#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;numeric&gt;
+#include &lt;cmath&gt;
+
+using namespace std;
+
+void solve() {
+    int n;
+    cin &gt;&gt; n;
+    vector&lt;long long&gt; a(n);
+    long long sum = 0;
+    
+    for (int i = 0; i &lt; n; ++i) {
+        cin &gt;&gt; a[i];
+        sum += a[i];
+    }
+    
+    long long current_sum = 0;
+    long long min_diff = -1;
+    
+    for (int i = 0; i &lt; n - 1; ++i) {
+        current_sum += a[i];
+        long long right_sum = sum - current_sum;
+        long long diff = abs(current_sum - right_sum);
+        
+        if (min_diff == -1 || diff &lt; min_diff) {
+            min_diff = diff;
+        }
+    }
+    
+    cout &lt;&lt; min_diff &lt;&lt; "\n";
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    int t;
+    cin &gt;&gt; t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}</code></pre>
+</div>
+</section>
+</div>
+<!-- Drawer Footer (Actions) -->
+<footer class="p-md border-t border-surface-container-highest bg-surface-bright flex justify-end gap-md">
+<button class="px-lg py-sm bg-surface-container-lowest text-primary border border-outline-variant rounded-DEFAULT font-label-caps text-label-caps hover:bg-surface-container transition-colors">
+                    DOWNLOAD SOURCE
+                </button>
+<button class="px-lg py-sm bg-secondary text-on-secondary rounded-DEFAULT font-label-caps text-label-caps hover:bg-secondary-container transition-colors shadow-sm">
+                    REJUDGE SUBMISSION
+                </button>
+</footer>
+</aside>
+</div>
+</body></html>

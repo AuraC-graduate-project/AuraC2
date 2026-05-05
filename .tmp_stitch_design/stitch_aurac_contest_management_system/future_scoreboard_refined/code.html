@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AuraC² - Scoreboard (Future Feature)</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@500;600;700;900&amp;family=Space+Grotesk:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Theme Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline": "#74777f",
+                    "error": "#ba1a1a",
+                    "on-tertiary-fixed-variant": "#574500",
+                    "on-secondary": "#ffffff",
+                    "on-surface-variant": "#43474e",
+                    "primary-container": "#1e3a5f",
+                    "on-primary": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "primary-fixed": "#d5e3ff",
+                    "on-secondary-fixed-variant": "#003ea8",
+                    "on-tertiary-fixed": "#231b00",
+                    "on-error": "#ffffff",
+                    "surface-bright": "#f8f9ff",
+                    "tertiary": "#735c00",
+                    "on-secondary-container": "#fefcff",
+                    "error-container": "#ffdad6",
+                    "on-error-container": "#93000a",
+                    "on-background": "#0b1c30",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-variant": "#d3e4fe",
+                    "surface-container-low": "#eff4ff",
+                    "on-surface": "#0b1c30",
+                    "background": "#f8f9ff",
+                    "surface-container": "#e5eeff",
+                    "on-secondary-fixed": "#00174b",
+                    "secondary-container": "#316bf3",
+                    "inverse-surface": "#213145",
+                    "surface-tint": "#455f87",
+                    "secondary": "#0051d5",
+                    "secondary-fixed-dim": "#b4c5ff",
+                    "surface-dim": "#cbdbf5",
+                    "outline-variant": "#c4c6cf",
+                    "inverse-on-surface": "#eaf1ff",
+                    "surface-container-highest": "#d3e4fe",
+                    "on-primary-fixed": "#001c3b",
+                    "primary-fixed-dim": "#adc8f5",
+                    "inverse-primary": "#adc8f5",
+                    "secondary-fixed": "#dbe1ff",
+                    "tertiary-fixed-dim": "#eec200",
+                    "tertiary-container": "#cea700",
+                    "primary": "#022448",
+                    "on-tertiary-container": "#4e3e00",
+                    "surface-container-high": "#dce9ff",
+                    "surface": "#f8f9ff",
+                    "on-primary-fixed-variant": "#2d486d",
+                    "tertiary-fixed": "#ffe083",
+                    "on-primary-container": "#8aa4cf"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "xs": "4px",
+                    "md": "16px",
+                    "xl": "32px",
+                    "lg": "24px",
+                    "container-max": "1440px",
+                    "sm": "8px",
+                    "gutter": "20px",
+                    "base": "4px"
+            },
+            "fontFamily": {
+                    "h1": ["manrope"],
+                    "code-block": ["spaceGrotesk"],
+                    "body-base": ["inter"],
+                    "h2": ["manrope"],
+                    "table-data": ["spaceGrotesk"],
+                    "body-sm": ["inter"],
+                    "h3": ["manrope"],
+                    "label-caps": ["inter"]
+            },
+            "fontSize": {
+                    "h1": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "code-block": ["14px", {"lineHeight": "22px", "fontWeight": "400"}],
+                    "body-base": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "h2": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "table-data": ["13px", {"lineHeight": "18px", "fontWeight": "500"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "h3": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<!-- Shared Component: SideNavBar -->
+<nav class="h-full w-64 fixed left-0 top-0 z-40 bg-[#1E3A5F] border-r border-slate-200 flex flex-col py-6">
+<!-- Brand Header -->
+<div class="px-lg mb-xl flex items-center gap-sm">
+<div class="w-8 h-8 rounded bg-primary-fixed flex items-center justify-center text-primary font-bold">A</div>
+<div>
+<div class="text-2xl font-bold tracking-tight text-white">AuraC²</div>
+<div class="font-['Manrope'] text-sm font-medium tracking-wide text-slate-300">Academic Console</div>
+</div>
+</div>
+<!-- Navigation Links -->
+<ul class="flex flex-col gap-xs flex-1 px-sm">
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-['Manrope'] text-sm font-medium tracking-wide" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                    Overview
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-['Manrope'] text-sm font-medium tracking-wide" href="#">
+<span class="material-symbols-outlined">emoji_events</span>
+                    Contests
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-['Manrope'] text-sm font-medium tracking-wide" href="#">
+<span class="material-symbols-outlined">groups</span>
+                    Teams
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-['Manrope'] text-sm font-medium tracking-wide" href="#">
+<span class="material-symbols-outlined">description</span>
+                    Problems
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-['Manrope'] text-sm font-medium tracking-wide" href="#">
+<span class="material-symbols-outlined">terminal</span>
+                    Submissions
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-['Manrope'] text-sm font-medium tracking-wide" href="#">
+<span class="material-symbols-outlined">forum</span>
+                    Clarifications
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded-lg border-l-4 border-blue-500 bg-white/10 text-white font-bold font-['Manrope'] text-sm tracking-wide translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined">analytics</span>
+                    Statistics
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-['Manrope'] text-sm font-medium tracking-wide" href="#">
+<span class="material-symbols-outlined">security</span>
+                    Security
+                </a>
+</li>
+</ul>
+</nav>
+<!-- Shared Component: TopAppBar -->
+<header class="fixed top-0 right-0 left-64 h-16 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm flex justify-between items-center px-8">
+<div class="flex items-center gap-md">
+<!-- Brand Logo Space (Optional since sidebar has it, keeping per component spec) -->
+<span class="text-slate-900 font-black text-xl hidden">AuraC²</span>
+</div>
+<div class="flex items-center gap-lg">
+<!-- Search Bar -->
+<div class="relative flex items-center focus-within:ring-2 focus-within:ring-blue-500/20 rounded-md bg-surface-container-low px-md py-xs border border-outline-variant">
+<span class="material-symbols-outlined text-outline-variant text-sm mr-xs">search</span>
+<input class="bg-transparent border-none outline-none text-on-surface text-sm font-body-sm w-48 focus:ring-0 p-0" placeholder="Search..." type="text"/>
+</div>
+<!-- Actions -->
+<div class="flex items-center gap-md">
+<button class="text-slate-500 hover:text-blue-500 transition-colors p-xs rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-slate-500 hover:text-blue-500 transition-colors p-xs rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<!-- Primary Action -->
+<button class="bg-primary hover:bg-on-primary-fixed-variant text-on-primary font-['Manrope'] text-sm uppercase tracking-wider font-semibold px-md py-sm rounded transition-colors">
+                Create Contest
+            </button>
+<!-- Profile -->
+<div class="w-8 h-8 rounded-full bg-tertiary-container flex items-center justify-center text-on-tertiary-container overflow-hidden border border-outline-variant cursor-pointer">
+<span class="material-symbols-outlined text-sm">person</span>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-16 min-h-screen">
+<div class="max-w-container-max mx-auto p-xl">
+<!-- Page Header -->
+<div class="flex flex-col gap-md mb-xl">
+<div class="flex items-center gap-lg">
+<h1 class="font-h1 text-h1 text-on-surface">Scoreboard</h1>
+<div class="bg-tertiary-container text-on-tertiary-container font-label-caps text-label-caps px-md py-[6px] rounded-full border border-tertiary-fixed flex items-center gap-xs shadow-sm">
+<span class="material-symbols-outlined" style="font-size: 16px;">construction</span>
+                        Future Feature / Not Implemented Yet
+                    </div>
+</div>
+<p class="font-body-base text-body-base text-on-surface-variant max-w-2xl">
+                    This module is currently under active development. The table below represents a structural preview of the high-density academic ranking system. Live scoring data is disconnected.
+                </p>
+</div>
+<!-- Structural Preview Container (Glassmorphism/Card Pattern) -->
+<div class="relative bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden flex flex-col">
+<!-- Mock Controls Bar -->
+<div class="h-14 border-b border-surface-container-high bg-surface-bright flex items-center justify-between px-lg opacity-60 pointer-events-none">
+<div class="flex gap-md">
+<div class="w-32 h-8 bg-surface-container rounded border border-outline-variant/50"></div>
+<div class="w-24 h-8 bg-surface-container rounded border border-outline-variant/50"></div>
+</div>
+<div class="flex gap-sm">
+<div class="w-8 h-8 bg-surface-container rounded-full border border-outline-variant/50"></div>
+<div class="w-8 h-8 bg-surface-container rounded-full border border-outline-variant/50"></div>
+</div>
+</div>
+<!-- Data Table Structure (Grayscale/Muted to indicate inactive) -->
+<div class="w-full overflow-x-auto relative">
+<!-- Overlay for "Not Implemented" State -->
+<div class="absolute inset-0 z-10 bg-surface-container-lowest/40 backdrop-blur-[2px] flex items-center justify-center pointer-events-none">
+<div class="bg-surface-container-lowest border border-outline-variant shadow-lg rounded-xl p-lg flex flex-col items-center text-center max-w-sm">
+<span class="material-symbols-outlined text-outline-variant mb-md" style="font-size: 48px;">table_chart_view</span>
+<h3 class="font-h3 text-h3 text-on-surface mb-xs">Data Visualization Pending</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">The telemetry pipeline required to populate live scoreboard metrics is scheduled for the upcoming release cycle.</p>
+</div>
+</div>
+<table class="w-full text-left border-collapse opacity-40 select-none">
+<thead class="bg-surface-bright border-b border-surface-container-high">
+<tr>
+<th class="py-md px-lg font-label-caps text-label-caps text-on-surface-variant w-24">Rank</th>
+<th class="py-md px-lg font-label-caps text-label-caps text-on-surface-variant">Team</th>
+<th class="py-md px-lg font-label-caps text-label-caps text-on-surface-variant text-center w-32">Solved</th>
+<th class="py-md px-lg font-label-caps text-label-caps text-on-surface-variant text-right w-32">Penalty</th>
+</tr>
+</thead>
+<tbody class="font-table-data text-table-data text-on-surface">
+<!-- Placeholder Row 1 -->
+<tr class="border-b border-surface-container-high">
+<td class="py-sm px-lg text-outline">01</td>
+<td class="py-sm px-lg">
+<div class="flex items-center gap-md">
+<div class="w-6 h-6 rounded bg-surface-container-highest"></div>
+<span class="font-body-sm font-medium">Placeholder Alpha</span>
+</div>
+</td>
+<td class="py-sm px-lg text-center font-bold text-primary">12</td>
+<td class="py-sm px-lg text-right text-outline">1405</td>
+</tr>
+<!-- Placeholder Row 2 -->
+<tr class="border-b border-surface-container-high bg-surface-bright">
+<td class="py-sm px-lg text-outline">02</td>
+<td class="py-sm px-lg">
+<div class="flex items-center gap-md">
+<div class="w-6 h-6 rounded bg-surface-container-highest"></div>
+<span class="font-body-sm font-medium">Placeholder Beta</span>
+</div>
+</td>
+<td class="py-sm px-lg text-center font-bold text-primary">11</td>
+<td class="py-sm px-lg text-right text-outline">1250</td>
+</tr>
+<!-- Placeholder Row 3 -->
+<tr class="border-b border-surface-container-high">
+<td class="py-sm px-lg text-outline">03</td>
+<td class="py-sm px-lg">
+<div class="flex items-center gap-md">
+<div class="w-6 h-6 rounded bg-surface-container-highest"></div>
+<span class="font-body-sm font-medium">Placeholder Gamma</span>
+</div>
+</td>
+<td class="py-sm px-lg text-center font-bold text-primary">11</td>
+<td class="py-sm px-lg text-right text-outline">1320</td>
+</tr>
+<!-- Placeholder Row 4 -->
+<tr class="border-b border-surface-container-high bg-surface-bright">
+<td class="py-sm px-lg text-outline">04</td>
+<td class="py-sm px-lg">
+<div class="flex items-center gap-md">
+<div class="w-6 h-6 rounded bg-surface-container-highest"></div>
+<span class="font-body-sm font-medium">Placeholder Delta</span>
+</div>
+</td>
+<td class="py-sm px-lg text-center font-bold text-primary">09</td>
+<td class="py-sm px-lg text-right text-outline">980</td>
+</tr>
+<!-- Placeholder Row 5 -->
+<tr>
+<td class="py-sm px-lg text-outline">05</td>
+<td class="py-sm px-lg">
+<div class="flex items-center gap-md">
+<div class="w-6 h-6 rounded bg-surface-container-highest"></div>
+<span class="font-body-sm font-medium">Placeholder Epsilon</span>
+</div>
+</td>
+<td class="py-sm px-lg text-center font-bold text-primary">08</td>
+<td class="py-sm px-lg text-right text-outline">1100</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+</body></html>

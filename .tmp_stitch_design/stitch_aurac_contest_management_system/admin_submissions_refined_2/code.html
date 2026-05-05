@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AuraC² - Submissions</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@500;600;700;800;900&amp;family=Space+Grotesk:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#74777f",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed-variant": "#574500",
+                        "on-secondary": "#ffffff",
+                        "on-surface-variant": "#43474e",
+                        "primary-container": "#1e3a5f",
+                        "on-primary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#d5e3ff",
+                        "on-secondary-fixed-variant": "#003ea8",
+                        "on-tertiary-fixed": "#231b00",
+                        "on-error": "#ffffff",
+                        "surface-bright": "#f8f9ff",
+                        "tertiary": "#735c00",
+                        "on-secondary-container": "#fefcff",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                        "on-background": "#0b1c30",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-variant": "#d3e4fe",
+                        "surface-container-low": "#eff4ff",
+                        "on-surface": "#0b1c30",
+                        "background": "#f8f9ff",
+                        "surface-container": "#e5eeff",
+                        "on-secondary-fixed": "#00174b",
+                        "secondary-container": "#316bf3",
+                        "inverse-surface": "#213145",
+                        "surface-tint": "#455f87",
+                        "secondary": "#0051d5",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "surface-dim": "#cbdbf5",
+                        "outline-variant": "#c4c6cf",
+                        "inverse-on-surface": "#eaf1ff",
+                        "surface-container-highest": "#d3e4fe",
+                        "on-primary-fixed": "#001c3b",
+                        "primary-fixed-dim": "#adc8f5",
+                        "inverse-primary": "#adc8f5",
+                        "secondary-fixed": "#dbe1ff",
+                        "tertiary-fixed-dim": "#eec200",
+                        "tertiary-container": "#cea700",
+                        "primary": "#022448",
+                        "on-tertiary-container": "#4e3e00",
+                        "surface-container-high": "#dce9ff",
+                        "surface": "#f8f9ff",
+                        "on-primary-fixed-variant": "#2d486d",
+                        "tertiary-fixed": "#ffe083",
+                        "on-primary-container": "#8aa4cf"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "md": "16px",
+                        "xl": "32px",
+                        "lg": "24px",
+                        "container-max": "1440px",
+                        "sm": "8px",
+                        "gutter": "20px",
+                        "base": "4px"
+                    },
+                    "fontFamily": {
+                        "h1": ["manrope"],
+                        "code-block": ["spaceGrotesk"],
+                        "body-base": ["inter"],
+                        "h2": ["manrope"],
+                        "table-data": ["spaceGrotesk"],
+                        "body-sm": ["inter"],
+                        "h3": ["manrope"],
+                        "label-caps": ["inter"]
+                    },
+                    "fontSize": {
+                        "h1": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "code-block": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+                        "body-base": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "h2": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "table-data": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "h3": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background min-h-screen font-body-base">
+<!-- SideNavBar -->
+<nav class="bg-[#1E3A5F] dark:bg-slate-950 h-full w-64 fixed left-0 top-0 z-40 border-r border-slate-200 dark:border-slate-800 flat no shadows flex flex-col py-6 hidden md:flex">
+<div class="px-6 mb-8 flex items-center gap-4">
+<img alt="University Logo" class="w-10 h-10 rounded-full object-cover" data-alt="University Logo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhEiW8Gj0sKF2MsJITEbQp8LntYQBAhnihSAMyeZGx80yjHrWQyp36CmP0J5oCch91COuuQphtV7497jfV-C29nLuczLIpd__0YPJP_kVVHtHw5wcgeOkzr56w1vlyG2BzJoaawJcgRkY3azuGkn42N0qkJCBoDSg5NMUL48Fxgu8NqWCkNz1NqOJtevw2eMPfzdbFSYpYF76T236rdF2evH-QAidHkS3apUXAVD5QmuJQDkQg2nZSn0mDNFQ-XibNKBtiXNl_TIU"/>
+<div>
+<h1 class="text-2xl font-bold tracking-tight text-white font-h2">AuraC²</h1>
+<p class="font-['Manrope'] text-sm font-medium tracking-wide text-blue-600 dark:text-blue-400">Academic Console</p>
+</div>
+</div>
+<ul class="flex flex-col gap-1 px-4 flex-1">
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-DEFAULT text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-['Manrope'] text-sm font-medium tracking-wide hover:bg-white/10 transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">dashboard</span>
+<span>Overview</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-DEFAULT text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-['Manrope'] text-sm font-medium tracking-wide hover:bg-white/10 transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">emoji_events</span>
+<span>Contests</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-DEFAULT text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-['Manrope'] text-sm font-medium tracking-wide hover:bg-white/10 transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">groups</span>
+<span>Teams</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-DEFAULT text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-['Manrope'] text-sm font-medium tracking-wide hover:bg-white/10 transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">description</span>
+<span>Problems</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-DEFAULT border-l-4 border-blue-500 bg-white/10 text-white font-bold font-['Manrope'] text-sm font-medium tracking-wide hover:bg-white/10 transition-all Active: translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">terminal</span>
+<span>Submissions</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-DEFAULT text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-['Manrope'] text-sm font-medium tracking-wide hover:bg-white/10 transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">forum</span>
+<span>Clarifications</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-DEFAULT text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-['Manrope'] text-sm font-medium tracking-wide hover:bg-white/10 transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">analytics</span>
+<span>Statistics</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-DEFAULT text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-['Manrope'] text-sm font-medium tracking-wide hover:bg-white/10 transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">security</span>
+<span>Security</span>
+</a>
+</li>
+</ul>
+</nav>
+<!-- TopAppBar -->
+<header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md fixed top-0 right-0 left-64 h-16 z-30 border-b border-slate-200 dark:border-slate-800 shadow-sm flex justify-between items-center px-8 w-full h-full hidden md:flex">
+<div class="flex items-center gap-4">
+<h2 class="text-slate-900 dark:text-white font-black text-xl font-h2">AuraC²</h2>
+</div>
+<div class="flex-1 max-w-xl mx-8 relative flex items-center focus-within:ring-2 focus-within:ring-blue-500/20">
+<span class="material-symbols-outlined absolute right-3 text-slate-400" style="font-variation-settings: 'FILL' 0;">search</span>
+<input class="w-full pl-4 pr-10 py-2 bg-surface-container border border-outline-variant rounded-full text-on-surface text-body-sm font-body-sm focus:outline-none focus:border-secondary" placeholder="Search..." type="text"/>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4">
+<button class="text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+</button>
+<button class="text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+</button>
+</div>
+<button class="bg-[#2563EB] text-white px-4 py-2 rounded-lg font-['Manrope'] text-sm uppercase tracking-wider font-semibold hover:bg-blue-700 transition-colors">
+                Create Contest
+            </button>
+<img alt="User Profile" class="w-8 h-8 rounded-full object-cover border border-outline-variant" data-alt="User Profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3xem6z0XF_xLWtySHPi9nmqJewivxHpHvQK5YYTPD1hpICq8tZJk3wMawVUPJqL6vHf_LUgObkw6eOwTSearNSGfPSw5JH5dP1aeXJ6gPgf-_cb_j0cBq5HALiw8e4iTr9KiQDaWG-GaMBtKZJ2NnLUAje_L3cx8t1JluO1W_d6IkJc7CYjDLqSAMG_rME5_XR-cdeP9i6-U68JZ0n6K_WhIWZK9lX-dxbpIQRKGBtgu22La98X3R0EJQmEf4ajr0mlxp8lDDbmI"/>
+</div>
+</header>
+<!-- Main Content -->
+<main class="md:ml-64 pt-16 min-h-screen flex flex-col bg-[#F8FAFC]">
+<div class="flex-1 max-w-[1440px] w-full mx-auto p-xl">
+<!-- Page Header -->
+<div class="flex justify-between items-center mb-xl">
+<div>
+<h2 class="font-h1 text-h1 text-on-background mb-xs">Submissions</h2>
+<p class="font-body-base text-body-base text-on-surface-variant">Manage and review all incoming code submissions across active contests.</p>
+</div>
+<div class="flex gap-md">
+<button class="flex items-center gap-xs px-4 py-2 bg-surface border border-outline-variant rounded-DEFAULT text-primary-container font-label-caps text-label-caps hover:bg-surface-container-lowest transition-colors">
+<span class="material-symbols-outlined text-[18px]">filter_list</span>
+                        FILTER
+                    </button>
+<button class="flex items-center gap-xs px-4 py-2 bg-surface border border-outline-variant rounded-DEFAULT text-primary-container font-label-caps text-label-caps hover:bg-surface-container-lowest transition-colors">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                        EXPORT
+                    </button>
+</div>
+</div>
+<!-- Submissions Table Card -->
+<div class="bg-[#FFFFFF] border border-[#E2E8F0] rounded-lg shadow-[0px_1px_3px_rgba(0,0,0,0.05)] overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-[#F1F5F9] bg-[#FFFFFF]">
+<th class="py-md px-lg font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">ID</th>
+<th class="py-md px-lg font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Team</th>
+<th class="py-md px-lg font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Problem</th>
+<th class="py-md px-lg font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Language</th>
+<th class="py-md px-lg font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Verdict</th>
+<th class="py-md px-lg font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider text-right">Time</th>
+<th class="py-md px-lg font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider text-right">Memory</th>
+<th class="py-md px-lg font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Submitted At</th>
+<th class="py-md px-lg font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="font-table-data text-table-data text-on-background divide-y divide-[#F1F5F9]">
+<tr class="hover:bg-[#F8FAFC] transition-colors group">
+<td class="py-sm px-lg text-primary-container">#10492</td>
+<td class="py-sm px-lg">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center text-[10px] font-bold text-primary-container">U01</div>
+<span>Team Alpha</span>
+</div>
+</td>
+<td class="py-sm px-lg">A - Graph Traversal</td>
+<td class="py-sm px-lg">C++17</td>
+<td class="py-sm px-lg">
+<span class="inline-flex items-center px-2 py-1 rounded-DEFAULT bg-[#dcfce7] text-[#166534] text-xs font-semibold">
+                                        ACCEPTED
+                                    </span>
+</td>
+<td class="py-sm px-lg text-right">15 ms</td>
+<td class="py-sm px-lg text-right">4.2 MB</td>
+<td class="py-sm px-lg text-on-surface-variant">10:42:05</td>
+<td class="py-sm px-lg text-right">
+<button class="text-[#2563EB] hover:text-[#1E3A5F] font-body-sm text-body-sm transition-colors">View Code / Details</button>
+</td>
+</tr>
+<tr class="hover:bg-[#F8FAFC] transition-colors group">
+<td class="py-sm px-lg text-primary-container">#10491</td>
+<td class="py-sm px-lg">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center text-[10px] font-bold text-primary-container">U12</div>
+<span>Beta Coders</span>
+</div>
+</td>
+<td class="py-sm px-lg">B - Dynamic Programming</td>
+<td class="py-sm px-lg">Python 3</td>
+<td class="py-sm px-lg">
+<span class="inline-flex items-center px-2 py-1 rounded-DEFAULT bg-[#fee2e2] text-[#991b1b] text-xs font-semibold">
+                                        WRONG_ANSWER
+                                    </span>
+</td>
+<td class="py-sm px-lg text-right">240 ms</td>
+<td class="py-sm px-lg text-right">12.8 MB</td>
+<td class="py-sm px-lg text-on-surface-variant">10:41:30</td>
+<td class="py-sm px-lg text-right">
+<button class="text-[#2563EB] hover:text-[#1E3A5F] font-body-sm text-body-sm transition-colors">View Code / Details</button>
+</td>
+</tr>
+<tr class="hover:bg-[#F8FAFC] transition-colors group">
+<td class="py-sm px-lg text-primary-container">#10490</td>
+<td class="py-sm px-lg">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center text-[10px] font-bold text-primary-container">U05</div>
+<span>Gamma Rays</span>
+</div>
+</td>
+<td class="py-sm px-lg">C - Geometry</td>
+<td class="py-sm px-lg">Java 11</td>
+<td class="py-sm px-lg">
+<span class="inline-flex items-center px-2 py-1 rounded-DEFAULT bg-[#fef3c7] text-[#92400e] text-xs font-semibold">
+                                        PENDING
+                                    </span>
+</td>
+<td class="py-sm px-lg text-right">-</td>
+<td class="py-sm px-lg text-right">-</td>
+<td class="py-sm px-lg text-on-surface-variant">10:41:15</td>
+<td class="py-sm px-lg text-right">
+<button class="text-[#2563EB] hover:text-[#1E3A5F] font-body-sm text-body-sm transition-colors">View Code / Details</button>
+</td>
+</tr>
+<tr class="hover:bg-[#F8FAFC] transition-colors group">
+<td class="py-sm px-lg text-primary-container">#10489</td>
+<td class="py-sm px-lg">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center text-[10px] font-bold text-primary-container">U08</div>
+<span>Delta Force</span>
+</div>
+</td>
+<td class="py-sm px-lg">A - Graph Traversal</td>
+<td class="py-sm px-lg">C++17</td>
+<td class="py-sm px-lg">
+<span class="inline-flex items-center px-2 py-1 rounded-DEFAULT bg-[#e0f2fe] text-[#075985] text-xs font-semibold">
+                                        RUNNING
+                                    </span>
+</td>
+<td class="py-sm px-lg text-right">-</td>
+<td class="py-sm px-lg text-right">-</td>
+<td class="py-sm px-lg text-on-surface-variant">10:40:55</td>
+<td class="py-sm px-lg text-right">
+<button class="text-[#2563EB] hover:text-[#1E3A5F] font-body-sm text-body-sm transition-colors">View Code / Details</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-lg py-md border-t border-[#F1F5F9] flex items-center justify-between bg-[#FFFFFF]">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Showing 1 to 10 of 1,240 entries</span>
+<div class="flex items-center gap-sm">
+<button class="p-1 rounded-DEFAULT border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-colors disabled:opacity-50">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<div class="flex gap-1 font-body-sm text-body-sm">
+<button class="w-8 h-8 rounded-DEFAULT bg-primary-container text-white flex items-center justify-center">1</button>
+<button class="w-8 h-8 rounded-DEFAULT hover:bg-surface-container text-on-surface flex items-center justify-center transition-colors">2</button>
+<button class="w-8 h-8 rounded-DEFAULT hover:bg-surface-container text-on-surface flex items-center justify-center transition-colors">3</button>
+<span class="w-8 h-8 flex items-center justify-center">...</span>
+</div>
+<button class="p-1 rounded-DEFAULT border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

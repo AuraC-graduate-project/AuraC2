@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Login - AuraC²</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;family=Space+Grotesk:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "outline": "#74777f",
+                      "error": "#ba1a1a",
+                      "on-tertiary-fixed-variant": "#574500",
+                      "on-secondary": "#ffffff",
+                      "on-surface-variant": "#43474e",
+                      "primary-container": "#1e3a5f",
+                      "on-primary": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "primary-fixed": "#d5e3ff",
+                      "on-secondary-fixed-variant": "#003ea8",
+                      "on-tertiary-fixed": "#231b00",
+                      "on-error": "#ffffff",
+                      "surface-bright": "#f8f9ff",
+                      "tertiary": "#735c00",
+                      "on-secondary-container": "#fefcff",
+                      "error-container": "#ffdad6",
+                      "on-error-container": "#93000a",
+                      "on-background": "#0b1c30",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-variant": "#d3e4fe",
+                      "surface-container-low": "#eff4ff",
+                      "on-surface": "#0b1c30",
+                      "background": "#f8f9ff",
+                      "surface-container": "#e5eeff",
+                      "on-secondary-fixed": "#00174b",
+                      "secondary-container": "#316bf3",
+                      "inverse-surface": "#213145",
+                      "surface-tint": "#455f87",
+                      "secondary": "#0051d5",
+                      "secondary-fixed-dim": "#b4c5ff",
+                      "surface-dim": "#cbdbf5",
+                      "outline-variant": "#c4c6cf",
+                      "inverse-on-surface": "#eaf1ff",
+                      "surface-container-highest": "#d3e4fe",
+                      "on-primary-fixed": "#001c3b",
+                      "primary-fixed-dim": "#adc8f5",
+                      "inverse-primary": "#adc8f5",
+                      "secondary-fixed": "#dbe1ff",
+                      "tertiary-fixed-dim": "#eec200",
+                      "tertiary-container": "#cea700",
+                      "primary": "#022448",
+                      "on-tertiary-container": "#4e3e00",
+                      "surface-container-high": "#dce9ff",
+                      "surface": "#f8f9ff",
+                      "on-primary-fixed-variant": "#2d486d",
+                      "tertiary-fixed": "#ffe083",
+                      "on-primary-container": "#8aa4cf"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "xs": "4px",
+                      "md": "16px",
+                      "xl": "32px",
+                      "lg": "24px",
+                      "container-max": "1440px",
+                      "sm": "8px",
+                      "gutter": "20px",
+                      "base": "4px"
+              },
+              "fontFamily": {
+                      "h1": [
+                              "Manrope", "sans-serif"
+                      ],
+                      "code-block": [
+                              "Space Grotesk", "monospace"
+                      ],
+                      "body-base": [
+                              "Inter", "sans-serif"
+                      ],
+                      "h2": [
+                              "Manrope", "sans-serif"
+                      ],
+                      "table-data": [
+                              "Space Grotesk", "sans-serif"
+                      ],
+                      "body-sm": [
+                              "Inter", "sans-serif"
+                      ],
+                      "h3": [
+                              "Manrope", "sans-serif"
+                      ],
+                      "label-caps": [
+                              "Inter", "sans-serif"
+                      ]
+              },
+              "fontSize": {
+                      "h1": [
+                              "30px",
+                              {
+                                      "lineHeight": "38px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "code-block": [
+                              "14px",
+                              {
+                                      "lineHeight": "22px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-base": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "h2": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "table-data": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "h3": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background min-h-screen flex items-center justify-center p-lg font-body-base text-on-surface">
+<!-- Transactional Page: Navigation Shell is Intentionally Suppressed -->
+<main class="w-full max-w-[420px]">
+<!-- Login Card Container - Level 1 Elevation -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden">
+<!-- Header Section -->
+<div class="px-xl py-xl flex flex-col items-center justify-center border-b border-surface-container-low bg-surface">
+<!-- Academic/Authoritative Brand Anchor -->
+<div class="h-16 w-16 bg-primary-container rounded-lg flex items-center justify-center mb-md border border-primary-fixed-dim/20">
+<span class="material-symbols-outlined text-on-primary text-[32px]" style="font-variation-settings: 'FILL' 1;">terminal</span>
+</div>
+<h1 class="font-h1 text-h1 text-on-background">AuraC²</h1>
+<p class="font-body-base text-body-base text-on-surface-variant mt-xs">Aura Contest Control</p>
+</div>
+<div class="p-xl flex flex-col gap-lg">
+<!-- State Demonstrations -->
+<!-- Error State: Invalid Credentials -->
+<div class="bg-error-container border border-error/20 rounded-lg p-md flex items-start gap-sm">
+<span class="material-symbols-outlined text-on-error-container mt-[2px]" style="font-variation-settings: 'FILL' 1; font-size: 20px;">error</span>
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm text-on-error-container font-semibold">Authentication Failed</span>
+<span class="font-body-sm text-body-sm text-on-error-container opacity-90 mt-xs">Invalid credentials provided. Please verify your username and password.</span>
+</div>
+</div>
+<!-- Info State: Session Expired (Commented out visually to maintain focus, but structured here to show capability) -->
+<!--
+                <div class="bg-surface-container-high border border-outline-variant rounded-lg p-md flex items-start gap-sm">
+                    <span class="material-symbols-outlined text-on-surface-variant mt-[2px]" style="font-variation-settings: 'FILL' 1; font-size: 20px;">history_toggle_off</span>
+                    <span class="font-body-sm text-body-sm text-on-surface-variant">Your session has expired due to inactivity. Please sign in again.</span>
+                </div>
+                -->
+<!-- Authentication Form -->
+<form action="#" class="flex flex-col gap-lg" method="POST">
+<!-- Username Field -->
+<div class="flex flex-col gap-sm">
+<label class="font-body-sm text-body-sm font-medium text-on-surface" for="username">Username</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline group-focus-within:text-secondary transition-colors" style="font-size: 20px;">person</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg py-[10px] pl-[44px] pr-md font-body-base text-body-base text-on-surface placeholder:text-outline-variant focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all" id="username" name="username" placeholder="Enter system ID" required="" type="text"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="flex flex-col gap-sm">
+<label class="font-body-sm text-body-sm font-medium text-on-surface" for="password">Password</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline group-focus-within:text-secondary transition-colors" style="font-size: 20px;">key</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg py-[10px] pl-[44px] pr-md font-body-base text-body-base text-on-surface placeholder:text-outline-variant focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all" id="password" name="password" placeholder="Enter secure token" required="" type="password"/>
+</div>
+</div>
+<!-- Actions -->
+<div class="pt-sm">
+<button class="w-full bg-secondary text-on-secondary rounded-lg py-md flex items-center justify-center gap-sm hover:bg-secondary/90 transition-colors border border-transparent" type="submit">
+<span class="font-body-base text-body-base font-semibold">Sign In</span>
+<span class="material-symbols-outlined" style="font-size: 20px;">login</span>
+</button>
+</div>
+</form>
+<!-- Footer Metadata / Legal (Academic context) -->
+<div class="mt-md text-center">
+<p class="font-label-caps text-label-caps text-outline uppercase">Authorized Access Only</p>
+</div>
+</div>
+</div>
+</main>
+</body></html>

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Clarifications - AuraC² Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;family=Space+Grotesk:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#eff4ff",
+                        "error": "#ba1a1a",
+                        "error-container": "#ffdad6",
+                        "primary-fixed-dim": "#adc8f5",
+                        "inverse-surface": "#213145",
+                        "on-tertiary": "#ffffff",
+                        "secondary-fixed": "#dbe1ff",
+                        "surface-container-high": "#dce9ff",
+                        "primary-fixed": "#d5e3ff",
+                        "surface-variant": "#d3e4fe",
+                        "surface-tint": "#455f87",
+                        "surface-container": "#e5eeff",
+                        "on-primary-fixed": "#001c3b",
+                        "secondary-container": "#316bf3",
+                        "surface-bright": "#f8f9ff",
+                        "outline-variant": "#c4c6cf",
+                        "on-tertiary-fixed": "#231b00",
+                        "inverse-primary": "#adc8f5",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "on-surface": "#0b1c30",
+                        "secondary": "#0051d5",
+                        "on-background": "#0b1c30",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-surface-variant": "#43474e",
+                        "on-secondary-container": "#fefcff",
+                        "surface": "#f8f9ff",
+                        "on-secondary-fixed": "#00174b",
+                        "background": "#f8f9ff",
+                        "on-secondary-fixed-variant": "#003ea8",
+                        "tertiary-fixed": "#ffe083",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#735c00",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#cbdbf5",
+                        "surface-container-highest": "#d3e4fe",
+                        "on-tertiary-fixed-variant": "#574500",
+                        "tertiary-fixed-dim": "#eec200",
+                        "tertiary-container": "#cea700",
+                        "primary": "#022448",
+                        "on-primary-container": "#8aa4cf",
+                        "on-primary": "#ffffff",
+                        "outline": "#74777f",
+                        "on-tertiary-container": "#4e3e00",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#1e3a5f",
+                        "on-primary-fixed-variant": "#2d486d",
+                        "on-secondary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "sm": "8px",
+                        "gutter": "20px",
+                        "base": "4px",
+                        "xs": "4px",
+                        "xl": "32px",
+                        "md": "16px",
+                        "lg": "24px",
+                        "container-max": "1440px"
+                    },
+                    "fontFamily": {
+                        "h1": ["manrope"],
+                        "h2": ["manrope"],
+                        "body-sm": ["inter"],
+                        "body-base": ["inter"],
+                        "table-data": ["spaceGrotesk"],
+                        "label-caps": ["inter"],
+                        "h3": ["manrope"],
+                        "code-block": ["spaceGrotesk"]
+                    },
+                    "fontSize": {
+                        "h1": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "h2": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-base": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "table-data": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "h3": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "code-block": ["14px", { "lineHeight": "22px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex overflow-hidden selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- SideNavBar (Shared Component) -->
+<nav class="bg-[#1E3A5F] dark:bg-slate-950 fixed left-0 top-0 h-screen w-64 border-r border-slate-200/10 flex flex-col h-full overflow-y-auto z-40">
+<!-- Header -->
+<div class="px-6 py-8 flex flex-col gap-2 border-b border-slate-200/10 tonal-contrast">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-white/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">terminal</span>
+</div>
+<span class="text-2xl font-black text-white tracking-tighter">AuraC²</span>
+</div>
+<span class="font-['Manrope'] text-sm font-medium tracking-tight text-blue-600 dark:text-blue-400">Contest Control</span>
+</div>
+<!-- Create CTA -->
+<div class="px-4 py-6">
+<button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-['Manrope'] text-sm font-medium tracking-tight py-2 px-4 rounded transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span>
+                Create Contest
+            </button>
+</div>
+<!-- Main Navigation -->
+<div class="flex-1 flex flex-col px-2 gap-1 mt-2">
+<a class="flex items-center gap-3 text-slate-300 hover:text-white py-3 px-4 transition-colors font-['Manrope'] text-sm font-medium tracking-tight hover:bg-white/5 transition-all duration-200 rounded" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Overview
+            </a>
+<a class="flex items-center gap-3 text-slate-300 hover:text-white py-3 px-4 transition-colors font-['Manrope'] text-sm font-medium tracking-tight hover:bg-white/5 transition-all duration-200 rounded" href="#">
+<span class="material-symbols-outlined">event_note</span>
+                Contests
+            </a>
+<a class="flex items-center gap-3 text-slate-300 hover:text-white py-3 px-4 transition-colors font-['Manrope'] text-sm font-medium tracking-tight hover:bg-white/5 transition-all duration-200 rounded" href="#">
+<span class="material-symbols-outlined">groups</span>
+                Teams
+            </a>
+<a class="flex items-center gap-3 text-slate-300 hover:text-white py-3 px-4 transition-colors font-['Manrope'] text-sm font-medium tracking-tight hover:bg-white/5 transition-all duration-200 rounded" href="#">
+<span class="material-symbols-outlined">code</span>
+                Problems
+            </a>
+<a class="flex items-center gap-3 text-slate-300 hover:text-white py-3 px-4 transition-colors font-['Manrope'] text-sm font-medium tracking-tight hover:bg-white/5 transition-all duration-200 rounded" href="#">
+<span class="material-symbols-outlined">send</span>
+                Submissions
+            </a>
+<!-- Active Navigation Item -->
+<a class="flex items-center gap-3 bg-white/10 text-white border-l-4 border-blue-500 py-3 px-4 font-['Manrope'] text-sm font-medium tracking-tight rounded-r" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">forum</span>
+                Clarifications
+            </a>
+<a class="flex items-center gap-3 text-slate-300 hover:text-white py-3 px-4 transition-colors font-['Manrope'] text-sm font-medium tracking-tight hover:bg-white/5 transition-all duration-200 rounded" href="#">
+<span class="material-symbols-outlined">security</span>
+                Analytics
+            </a>
+</div>
+<!-- Footer Navigation -->
+<div class="px-2 py-4 border-t border-slate-200/10 mt-auto flex flex-col gap-1">
+<a class="flex items-center gap-3 text-slate-300 hover:text-white py-3 px-4 transition-colors font-['Manrope'] text-sm font-medium tracking-tight hover:bg-white/5 transition-all duration-200 rounded" href="#">
+<span class="material-symbols-outlined">settings</span>
+                Settings
+            </a>
+<a class="flex items-center gap-3 text-slate-300 hover:text-white py-3 px-4 transition-colors font-['Manrope'] text-sm font-medium tracking-tight hover:bg-white/5 transition-all duration-200 rounded" href="#">
+<span class="material-symbols-outlined">help</span>
+                Support
+            </a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 ml-64 flex flex-col h-screen overflow-hidden bg-background">
+<!-- Header Area -->
+<header class="px-xl py-lg flex justify-between items-end border-b border-outline-variant bg-surface-container-lowest">
+<div>
+<h1 class="font-h1 text-h1 text-on-surface">Clarifications</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Manage and triage team questions during the contest.</p>
+</div>
+<!-- Filter Bar -->
+<div class="flex gap-sm">
+<button class="font-label-caps text-label-caps px-md py-sm rounded-full bg-secondary-container text-on-secondary-container border border-secondary-container transition-colors">
+                    Pending (3)
+                </button>
+<button class="font-label-caps text-label-caps px-md py-sm rounded-full bg-surface-container text-on-surface hover:bg-surface-variant border border-outline-variant transition-colors">
+                    Answered
+                </button>
+<button class="font-label-caps text-label-caps px-md py-sm rounded-full bg-surface-container text-on-surface hover:bg-surface-variant border border-outline-variant transition-colors flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]">public</span>
+                    Public
+                </button>
+<button class="font-label-caps text-label-caps px-md py-sm rounded-full bg-surface-container text-on-surface hover:bg-surface-variant border border-outline-variant transition-colors flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]">visibility_off</span>
+                    Private
+                </button>
+</div>
+</header>
+<!-- Content Area -->
+<div class="flex-1 overflow-y-auto p-xl">
+<div class="max-w-[1440px] mx-auto">
+<!-- Data Table Card -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-[0px_1px_3px_rgba(0,0,0,0.05)] overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-low border-b border-outline-variant">
+<tr>
+<th class="font-label-caps text-label-caps text-on-surface-variant p-md w-24">ID</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant p-md w-48">Team</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant p-md w-48">Problem / General</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant p-md">Question</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant p-md w-32">Status</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant p-md w-32">Visibility</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant p-md w-24 text-right">Action</th>
+</tr>
+</thead>
+<tbody class="font-table-data text-table-data text-on-surface divide-y divide-outline-variant">
+<!-- Row 1 (Pending) -->
+<tr class="hover:bg-surface-container transition-colors group bg-surface-bright">
+<td class="p-md text-on-surface-variant">#C-1042</td>
+<td class="p-md font-body-sm text-body-sm text-on-surface">Team Alpha (T-01)</td>
+<td class="p-md"><span class="font-code-block text-code-block text-secondary">A. Sort Algorithms</span></td>
+<td class="p-md max-w-md truncate font-body-sm text-body-sm">Is N guaranteed to be distinct in all test cases? The problem description is slightly ambiguous about duplicate values.</td>
+<td class="p-md">
+<span class="inline-flex items-center px-2 py-1 rounded bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-caps text-label-caps tracking-widest uppercase">
+                                        Pending
+                                    </span>
+</td>
+<td class="p-md">
+<span class="inline-flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">visibility_off</span>
+                                        Private
+                                    </span>
+</td>
+<td class="p-md text-right">
+<button class="font-label-caps text-label-caps text-secondary hover:text-secondary-container px-3 py-1.5 border border-secondary rounded bg-secondary/5 hover:bg-secondary/10 transition-colors">
+                                        Reply
+                                    </button>
+</td>
+</tr>
+<!-- Row 2 (Pending) -->
+<tr class="hover:bg-surface-container transition-colors group bg-surface-bright">
+<td class="p-md text-on-surface-variant">#C-1041</td>
+<td class="p-md font-body-sm text-body-sm text-on-surface">Bit Wizards (T-44)</td>
+<td class="p-md"><span class="font-code-block text-code-block text-on-surface-variant">General</span></td>
+<td class="p-md max-w-md truncate font-body-sm text-body-sm">We are having issues connecting to the printing service. It says 'Connection Refused'.</td>
+<td class="p-md">
+<span class="inline-flex items-center px-2 py-1 rounded bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-caps text-label-caps tracking-widest uppercase">
+                                        Pending
+                                    </span>
+</td>
+<td class="p-md">
+<span class="inline-flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">visibility_off</span>
+                                        Private
+                                    </span>
+</td>
+<td class="p-md text-right">
+<button class="font-label-caps text-label-caps text-secondary hover:text-secondary-container px-3 py-1.5 border border-secondary rounded bg-secondary/5 hover:bg-secondary/10 transition-colors">
+                                        Reply
+                                    </button>
+</td>
+</tr>
+<!-- Row 3 (Answered) -->
+<tr class="hover:bg-surface-container transition-colors group">
+<td class="p-md text-on-surface-variant">#C-1038</td>
+<td class="p-md font-body-sm text-body-sm text-on-surface">Null Pointers (T-12)</td>
+<td class="p-md"><span class="font-code-block text-code-block text-secondary">D. Graph Query</span></td>
+<td class="p-md max-w-md truncate font-body-sm text-body-sm text-on-surface-variant">Can the graph contain self-loops?</td>
+<td class="p-md">
+<span class="inline-flex items-center px-2 py-1 rounded bg-surface-variant text-on-surface-variant font-label-caps text-label-caps tracking-widest uppercase">
+                                        Answered
+                                    </span>
+</td>
+<td class="p-md">
+<span class="inline-flex items-center gap-1 text-primary-container font-medium">
+<span class="material-symbols-outlined text-[16px]">public</span>
+                                        Public
+                                    </span>
+</td>
+<td class="p-md text-right">
+<button class="font-label-caps text-label-caps text-on-surface-variant hover:text-on-surface px-3 py-1.5 transition-colors">
+                                        View
+                                    </button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+<!-- Reply Dialog Modal Overlay -->
+<div class="fixed inset-0 bg-on-surface/40 z-50 flex items-center justify-center p-xl backdrop-blur-sm">
+<!-- Dialog Surface (Level 2) -->
+<div class="bg-surface-container-lowest w-full max-w-3xl rounded-xl shadow-[0px_10px_15px_rgba(0,0,0,0.1)] border border-outline-variant flex flex-col max-h-[921px]">
+<!-- Modal Header -->
+<div class="px-lg py-md border-b border-surface-container-highest flex justify-between items-center bg-surface-bright rounded-t-xl">
+<div>
+<h2 class="font-h3 text-h3 text-on-surface">Reply to Clarification</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">#C-1042 • Team Alpha</p>
+</div>
+<button class="text-on-surface-variant hover:text-on-surface p-1 rounded hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Modal Body -->
+<div class="p-lg overflow-y-auto flex flex-col gap-lg bg-surface-container-lowest">
+<!-- Original Question Block -->
+<div class="bg-surface border border-outline-variant rounded-lg p-md">
+<div class="flex items-center gap-2 mb-2 pb-2 border-b border-outline-variant">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Problem:</span>
+<span class="font-code-block text-code-block text-secondary bg-secondary-fixed/50 px-2 py-0.5 rounded">A. Sort Algorithms</span>
+</div>
+<p class="font-body-base text-body-base text-on-surface leading-relaxed">
+                        "Is N guaranteed to be distinct in all test cases? The problem description is slightly ambiguous about duplicate values. We are getting WA on test 3 and suspect it might be due to duplicates."
+                    </p>
+</div>
+<!-- Reply Input Area -->
+<div class="flex flex-col gap-md">
+<!-- Standard Reply Dropdown -->
+<div class="flex flex-col gap-sm">
+<label class="font-label-caps text-label-caps text-on-surface" for="standard-reply">Standard Reply</label>
+<div class="relative">
+<select class="w-full appearance-none bg-surface-container-lowest border border-outline-variant rounded-lg px-md py-sm font-body-sm text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary transition-all" id="standard-reply">
+<option value="">Select a standard response...</option>
+<option value="read-problem">Read the problem description carefully.</option>
+<option value="no-comment">No comment.</option>
+<option value="yes">Yes.</option>
+<option value="no">No.</option>
+</select>
+<span class="material-symbols-outlined absolute right-md top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
+</div>
+</div>
+<!-- Custom Reply Textarea -->
+<div class="flex flex-col gap-sm">
+<label class="font-label-caps text-label-caps text-on-surface" for="custom-reply">Custom Reply</label>
+<textarea class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg p-md font-body-sm text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary transition-all resize-y" id="custom-reply" placeholder="Type your response here..." rows="4"></textarea>
+</div>
+</div>
+<!-- Visibility Toggle (Triage Flow) -->
+<div class="bg-surface-container rounded-lg p-md border border-outline-variant">
+<p class="font-label-caps text-label-caps text-on-surface mb-3">Visibility</p>
+<div class="flex gap-md">
+<label class="flex-1 flex items-center gap-3 p-3 rounded-lg border border-outline-variant bg-surface-container-lowest cursor-pointer hover:bg-surface-variant transition-colors relative overflow-hidden group">
+<input checked="" class="peer sr-only" name="visibility" type="radio" value="private"/>
+<div class="w-4 h-4 rounded-full border-2 border-outline-variant peer-checked:border-secondary peer-checked:border-4 transition-all"></div>
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Private Reply</span>
+<span class="font-body-sm text-[12px] text-on-surface-variant">Only Team Alpha will see this.</span>
+</div>
+<div class="absolute inset-0 border-2 border-transparent peer-checked:border-secondary rounded-lg pointer-events-none"></div>
+</label>
+<label class="flex-1 flex items-center gap-3 p-3 rounded-lg border border-outline-variant bg-surface-container-lowest cursor-pointer hover:bg-surface-variant transition-colors relative overflow-hidden group">
+<input class="peer sr-only" name="visibility" type="radio" value="public"/>
+<div class="w-4 h-4 rounded-full border-2 border-outline-variant peer-checked:border-secondary peer-checked:border-4 transition-all"></div>
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-primary">public</span>
+                                    Broadcast to All
+                                </span>
+<span class="font-body-sm text-[12px] text-on-surface-variant">All teams will see this clarification.</span>
+</div>
+<div class="absolute inset-0 border-2 border-transparent peer-checked:border-secondary rounded-lg pointer-events-none"></div>
+</label>
+</div>
+</div>
+</div>
+<!-- Modal Footer / Actions -->
+<div class="px-lg py-md border-t border-surface-container-highest bg-surface flex justify-end gap-md rounded-b-xl">
+<button class="font-label-caps text-label-caps px-lg py-2 rounded bg-surface-container-lowest border border-outline-variant text-on-surface hover:bg-surface-container transition-colors">
+                    Cancel
+                </button>
+<button class="font-label-caps text-label-caps px-lg py-2 rounded bg-secondary text-on-secondary hover:bg-on-secondary-fixed-variant transition-colors flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">send</span>
+                    Send Reply
+                </button>
+</div>
+</div>
+</div>
+</body></html>

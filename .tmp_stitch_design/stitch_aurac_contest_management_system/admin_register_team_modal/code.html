@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Register Team - AuraC²</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@500;600;700;800&amp;family=Space+Grotesk:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#022448",
+                        "tertiary-container": "#cea700",
+                        "background": "#f8f9ff",
+                        "on-error": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "secondary-fixed": "#dbe1ff",
+                        "on-error-container": "#93000a",
+                        "surface-bright": "#f8f9ff",
+                        "on-secondary-fixed-variant": "#003ea8",
+                        "on-tertiary-container": "#4e3e00",
+                        "surface-tint": "#455f87",
+                        "primary-container": "#1e3a5f",
+                        "on-primary": "#ffffff",
+                        "surface-container-high": "#dce9ff",
+                        "on-secondary-container": "#fefcff",
+                        "error": "#ba1a1a",
+                        "secondary-container": "#316bf3",
+                        "tertiary-fixed-dim": "#eec200",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "on-tertiary-fixed-variant": "#574500",
+                        "on-secondary-fixed": "#00174b",
+                        "on-primary-container": "#8aa4cf",
+                        "surface-variant": "#d3e4fe",
+                        "secondary": "#0051d5",
+                        "primary-fixed": "#d5e3ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed": "#231b00",
+                        "surface-container": "#e5eeff",
+                        "surface-container-highest": "#d3e4fe",
+                        "surface-container-low": "#eff4ff",
+                        "on-surface": "#0b1c30",
+                        "surface": "#f8f9ff",
+                        "on-surface-variant": "#43474e",
+                        "inverse-on-surface": "#eaf1ff",
+                        "inverse-surface": "#213145",
+                        "tertiary-fixed": "#ffe083",
+                        "on-background": "#0b1c30",
+                        "outline": "#74777f",
+                        "on-primary-fixed-variant": "#2d486d",
+                        "primary-fixed-dim": "#adc8f5",
+                        "inverse-primary": "#adc8f5",
+                        "on-secondary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#001c3b",
+                        "surface-dim": "#cbdbf5",
+                        "outline-variant": "#c4c6cf",
+                        "tertiary": "#735c00"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "xl": "32px",
+                        "md": "16px",
+                        "sm": "8px",
+                        "base": "4px",
+                        "xs": "4px",
+                        "lg": "24px",
+                        "gutter": "20px",
+                        "container-max": "1440px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["inter"],
+                        "body-sm": ["inter"],
+                        "table-data": ["spaceGrotesk"],
+                        "h3": ["manrope"],
+                        "h2": ["manrope"],
+                        "h1": ["manrope"],
+                        "code-block": ["spaceGrotesk"],
+                        "body-base": ["inter"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "table-data": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "h3": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "h2": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "h1": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "code-block": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+                        "body-base": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background min-h-screen text-on-background font-body-base flex">
+<!-- SideNavBar (from JSON) -->
+<aside class="bg-[#1E3A5F] dark:bg-slate-950 text-white h-screen w-64 fixed left-0 top-0 border-r border-slate-800 flex flex-col h-full py-4 z-40">
+<div class="px-6 mb-8">
+<h1 class="font-manrope text-sm text-xl font-extrabold text-white tracking-tight">Global Admin</h1>
+<p class="font-manrope text-sm opacity-70 mt-1">Contest Management</p>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Dashboard -->
+<a class="text-slate-300 flex items-center px-4 py-3 opacity-70 hover:bg-white/5 hover:opacity-100 transition-all font-manrope text-sm" href="#">
+<span class="material-symbols-outlined mr-3 text-lg">dashboard</span>
+                Dashboard
+            </a>
+<!-- Contests -->
+<a class="text-slate-300 flex items-center px-4 py-3 opacity-70 hover:bg-white/5 hover:opacity-100 transition-all font-manrope text-sm" href="#">
+<span class="material-symbols-outlined mr-3 text-lg">code</span>
+                Contests
+            </a>
+<!-- Teams (ACTIVE) -->
+<a class="bg-white/10 text-white border-l-4 border-blue-500 flex items-center px-4 py-3 hover:bg-white/5 hover:opacity-100 transition-all font-manrope text-sm" href="#">
+<span class="material-symbols-outlined mr-3 text-lg" style="font-variation-settings: 'FILL' 1;">group</span>
+                Teams
+            </a>
+<!-- Test Cases -->
+<a class="text-slate-300 flex items-center px-4 py-3 opacity-70 hover:bg-white/5 hover:opacity-100 transition-all font-manrope text-sm" href="#">
+<span class="material-symbols-outlined mr-3 text-lg">storage</span>
+                Test Cases
+            </a>
+<!-- Clarifications -->
+<a class="text-slate-300 flex items-center px-4 py-3 opacity-70 hover:bg-white/5 hover:opacity-100 transition-all font-manrope text-sm" href="#">
+<span class="material-symbols-outlined mr-3 text-lg">question_answer</span>
+                Clarifications
+            </a>
+</nav>
+<div class="mt-auto border-t border-slate-800/50 pt-4 space-y-1">
+<a class="text-slate-300 flex items-center px-4 py-3 opacity-70 hover:bg-white/5 hover:opacity-100 transition-all font-manrope text-sm" href="#">
+<span class="material-symbols-outlined mr-3 text-lg">terminal</span>
+                System Logs
+            </a>
+<a class="text-slate-300 flex items-center px-4 py-3 opacity-70 hover:bg-white/5 hover:opacity-100 transition-all font-manrope text-sm" href="#">
+<span class="material-symbols-outlined mr-3 text-lg">contact_support</span>
+                Support
+            </a>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<div class="ml-64 w-full min-h-screen flex flex-col relative">
+<!-- TopNavBar (from JSON) -->
+<header class="bg-white dark:bg-slate-950 font-manrope text-sm font-medium docked full-width top-0 border-b border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none flex justify-between items-center w-full px-6 h-16 z-30 sticky">
+<div class="flex items-center">
+<span class="text-lg font-bold text-slate-900 dark:text-slate-100">ICPC Admin</span>
+</div>
+<div class="flex items-center space-x-4">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined text-slate-400 absolute left-3">search</span>
+<input class="pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border-none rounded-full text-sm focus:ring-2 focus:ring-blue-600 outline-none w-64 text-slate-500 dark:text-slate-400" placeholder="Search..." type="text"/>
+</div>
+<div class="flex items-center space-x-2 text-slate-500 dark:text-slate-400">
+<button class="p-2 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<button class="p-2 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<div class="h-8 w-8 rounded-full bg-slate-200 overflow-hidden ml-2 border border-slate-300">
+<img alt="Administrator Profile" class="w-full h-full object-cover" data-alt="Administrator profile avatar with dark blue background and white initials" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGc_emNs_wfre14BesKoquHk8zuhv4rXo1234r_UzFMA7vsFVWG5UM-ruTARsqZrXyMCHBWh5-xyyTFJLgrnntZGUcuOnpYDQzVmrSIrO1krxiy0UO26X-Jixa2WGrZr0u9OGMImVb17YxlsT8FDEhFjGImug3hmAAMbenSdxSYk0FfNiVyu8lh7JM8pK7_DkezQ2phZYXeffDCTQA8_Mq5g7l1mC-zVFBj9ogeOxQFeX3OrzebP67vGaUyoPbQvmfH1N8AepcunY"/>
+</div>
+</div>
+</header>
+<!-- Main Canvas (Background Content - Blurred/Dimmed by Modal) -->
+<main class="flex-1 p-8 blur-[2px] opacity-60 transition-all pointer-events-none">
+<div class="max-w-container-max mx-auto">
+<div class="flex justify-between items-center mb-xl">
+<h2 class="font-h2 text-h2 text-on-surface">Team Management</h2>
+<button class="bg-secondary text-on-secondary px-md py-sm rounded-lg font-body-sm text-body-sm font-medium flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                        Register Team
+                    </button>
+</div>
+<!-- Dummy Grid Content -->
+<div class="grid grid-cols-3 gap-gutter">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl h-48"></div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl h-48"></div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl h-48"></div>
+</div>
+</div>
+</main>
+<!-- MODAL OVERLAY -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/40 backdrop-blur-sm p-4">
+<!-- Modal Container (Level 2 Surface) -->
+<div class="bg-surface-container-lowest w-full max-w-[480px] rounded-xl shadow-[0px_10px_15px_rgba(0,0,0,0.1)] border border-outline-variant flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+<!-- Header -->
+<div class="px-lg py-md border-b border-surface-variant flex items-center justify-between bg-surface-container-lowest">
+<h2 class="font-h3 text-h3 text-on-surface">Register Team</h2>
+<button aria-label="Close modal" class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container p-sm rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Body / Form -->
+<form class="flex-1 overflow-y-auto p-lg">
+<!-- Admin Notice -->
+<div class="bg-surface-container-low border border-surface-variant rounded-lg p-md mb-lg flex items-start gap-sm">
+<span class="material-symbols-outlined text-secondary text-[20px] mt-0.5" style="font-variation-settings: 'FILL' 1;">info</span>
+<div>
+<h4 class="font-table-data text-table-data text-on-surface mb-1">Administrative Action</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Team accounts are created by administrators only. Credentials must be securely distributed to team captains.</p>
+</div>
+</div>
+<div class="space-y-md">
+<!-- Role (Locked) -->
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-xs" for="role">Assigned Role</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">badge</span>
+<input class="w-full pl-10 pr-md py-2.5 bg-surface-variant/30 border border-outline-variant rounded-lg font-code-block text-code-block text-on-surface-variant cursor-not-allowed focus:outline-none" id="role" name="role" readonly="" type="text" value="TEAM"/>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">lock</span>
+</div>
+</div>
+<!-- Username -->
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-xs" for="username">Team Username <span class="text-error">*</span></label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">person</span>
+<input class="w-full pl-10 pr-md py-2.5 bg-surface-container-lowest border border-outline-variant rounded-lg font-body-sm text-body-sm text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow placeholder:text-outline" id="username" name="username" placeholder="e.g., team_aurac2_01" required="" type="text"/>
+</div>
+</div>
+<!-- Password -->
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-xs" for="password">Initial Password <span class="text-error">*</span></label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">key</span>
+<input class="w-full pl-10 pr-10 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-lg font-body-sm text-body-sm text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow placeholder:text-outline" id="password" name="password" placeholder="••••••••" required="" type="password"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface transition-colors flex items-center justify-center" type="button">
+<span class="material-symbols-outlined text-[18px]">visibility_off</span>
+</button>
+</div>
+</div>
+<!-- Confirm Password -->
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-xs" for="confirm_password">Confirm Password <span class="text-error">*</span></label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">key</span>
+<input class="w-full pl-10 pr-10 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-lg font-body-sm text-body-sm text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow placeholder:text-outline" id="confirm_password" name="confirm_password" placeholder="••••••••" required="" type="password"/>
+</div>
+</div>
+</div>
+</form>
+<!-- Footer Actions -->
+<div class="px-lg py-md border-t border-surface-variant bg-surface flex justify-end gap-sm">
+<button class="px-md py-2 bg-surface-container-lowest border border-outline-variant rounded-lg font-table-data text-table-data text-primary-container hover:bg-surface-container-low transition-colors" type="button">
+                        Cancel
+                    </button>
+<button class="px-md py-2 bg-secondary border border-secondary rounded-lg font-table-data text-table-data text-on-secondary hover:bg-secondary/90 transition-colors shadow-sm" type="submit">
+                        Register Team
+                    </button>
+</div>
+</div>
+</div>
+</div>
+</body></html>

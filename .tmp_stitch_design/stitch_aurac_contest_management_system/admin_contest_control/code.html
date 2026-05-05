@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AuraC² Admin - Contest Overview</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-low": "#eff4ff",
+                      "outline-variant": "#c4c6cf",
+                      "on-secondary-fixed": "#00174b",
+                      "inverse-on-surface": "#eaf1ff",
+                      "on-primary-container": "#8aa4cf",
+                      "tertiary-fixed": "#ffe083",
+                      "primary": "#022448",
+                      "on-primary-fixed-variant": "#2d486d",
+                      "error": "#ba1a1a",
+                      "secondary-fixed-dim": "#b4c5ff",
+                      "tertiary-container": "#cea700",
+                      "on-tertiary-fixed": "#231b00",
+                      "inverse-primary": "#adc8f5",
+                      "surface-container-highest": "#d3e4fe",
+                      "on-tertiary-fixed-variant": "#574500",
+                      "on-secondary-container": "#fefcff",
+                      "on-primary": "#ffffff",
+                      "background": "#f8f9ff",
+                      "on-surface-variant": "#43474e",
+                      "surface-container": "#e5eeff",
+                      "surface-container-high": "#dce9ff",
+                      "on-error": "#ffffff",
+                      "surface-dim": "#cbdbf5",
+                      "surface-tint": "#455f87",
+                      "on-surface": "#0b1c30",
+                      "secondary": "#0051d5",
+                      "on-error-container": "#93000a",
+                      "secondary-container": "#316bf3",
+                      "primary-container": "#1e3a5f",
+                      "inverse-surface": "#213145",
+                      "primary-fixed-dim": "#adc8f5",
+                      "surface-bright": "#f8f9ff",
+                      "on-tertiary": "#ffffff",
+                      "error-container": "#ffdad6",
+                      "secondary-fixed": "#dbe1ff",
+                      "surface-variant": "#d3e4fe",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary-fixed": "#001c3b",
+                      "on-secondary-fixed-variant": "#003ea8",
+                      "tertiary": "#735c00",
+                      "on-background": "#0b1c30",
+                      "on-tertiary-container": "#4e3e00",
+                      "tertiary-fixed-dim": "#eec200",
+                      "outline": "#74777f",
+                      "on-secondary": "#ffffff",
+                      "surface": "#f8f9ff",
+                      "primary-fixed": "#d5e3ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "container-max": "1440px",
+                      "base": "4px",
+                      "gutter": "20px",
+                      "xl": "32px",
+                      "lg": "24px",
+                      "xs": "4px",
+                      "md": "16px",
+                      "sm": "8px"
+              },
+              "fontFamily": {
+                      "h3": [
+                              "manrope"
+                      ],
+                      "h2": [
+                              "manrope"
+                      ],
+                      "table-data": [
+                              "spaceGrotesk"
+                      ],
+                      "body-base": [
+                              "inter"
+                      ],
+                      "h1": [
+                              "manrope"
+                      ],
+                      "body-sm": [
+                              "inter"
+                      ],
+                      "code-block": [
+                              "spaceGrotesk"
+                      ],
+                      "label-caps": [
+                              "inter"
+                      ]
+              },
+              "fontSize": {
+                      "h3": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "h2": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "table-data": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-base": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "h1": [
+                              "30px",
+                              {
+                                      "lineHeight": "38px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "code-block": [
+                              "14px",
+                              {
+                                      "lineHeight": "22px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+</head>
+<body class="bg-background text-on-background font-body-base antialiased">
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 left-0 h-16 flex items-center justify-between px-6 z-40 bg-white dark:bg-slate-900 font-['Manrope'] text-sm tracking-tight border-b border-slate-200 dark:border-slate-800 shadow-sm ml-64">
+<div class="flex items-center gap-4">
+<span class="text-xl font-extrabold text-[#1E3A5F] dark:text-white tracking-tighter">AuraC²</span>
+<div class="hidden md:flex items-center gap-2 px-3 py-1 bg-surface-container-low rounded-lg text-secondary">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">play_circle</span>
+<span class="font-table-data text-table-data font-semibold">02:45:12 Remaining</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<img alt="User avatar" class="w-8 h-8 rounded-full border border-slate-200" data-alt="Close up portrait of a young professional man smiling slightly, looking directly at the camera, soft lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8Q5-YesaG8B_uD0KE4rkGk7_QGQqvG6WjCiYihRvvB0Lx6mZmnndwVtCPkBEw2Btbd1uRa5nOs3gS8b7jVFMcDJojZbtTV8s7Och6dzva_3mps52faNPPVa6y1E8FO1IArXHFny1qlcsNCfnbJJ1n-giGobVcB4FfvWmavwLcNJG7PtPklGYcu6bKCEGIBku602HGdqBqvaXBdqPzriTezebD7eZCsaGH0S01wkYbU-OA6aIuU204rjXOh7R5NXqoL98YrAeWZWs"/>
+</div>
+</header>
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-0 bottom-0 w-64 flex flex-col z-50 bg-[#1E3A5F] dark:bg-slate-950 font-['Manrope'] text-sm font-medium">
+<div class="p-6 border-b border-white/10">
+<div class="flex items-center gap-3 mb-2">
+<div class="w-8 h-8 bg-white/10 rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">school</span>
+</div>
+<div>
+<h2 class="text-white font-bold leading-tight">AuraC² Admin</h2>
+<p class="text-slate-300 text-xs">Management Portal</p>
+</div>
+</div>
+</div>
+<div class="flex-1 py-4 overflow-y-auto">
+<ul class="space-y-1">
+<li>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                        Overview
+                    </a>
+</li>
+<li>
+<a class="bg-blue-600/20 text-white border-l-4 border-blue-500 px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200 opacity-80 transition-opacity" href="#">
+<span class="material-symbols-outlined">emoji_events</span>
+                        Contests
+                    </a>
+</li>
+<li>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">groups</span>
+                        Teams
+                    </a>
+</li>
+<li>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">terminal</span>
+                        Problems
+                    </a>
+</li>
+<li>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">list_alt</span>
+                        Submissions
+                    </a>
+</li>
+<li>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">forum</span>
+                        Clarifications
+                    </a>
+</li>
+<li>
+<a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">query_stats</span>
+                        Future Stats
+                    </a>
+</li>
+</ul>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="ml-64 mt-16 p-lg max-w-container-max mx-auto">
+<!-- Header Section -->
+<div class="mb-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+<div>
+<h1 class="font-h1 text-h1 text-on-surface mb-xs">ACM University Spring Contest</h1>
+<p class="font-body-base text-body-base text-on-surface-variant">Contest lifecycle is manually controlled by the administrator.</p>
+</div>
+<div class="flex items-center gap-md">
+<div class="bg-surface-container-high px-3 py-1.5 rounded-lg flex items-center gap-2 border border-outline-variant">
+<div class="w-2 h-2 rounded-full bg-secondary animate-pulse"></div>
+<span class="font-label-caps text-label-caps text-on-surface">RUNNING</span>
+</div>
+<div class="font-table-data text-table-data text-secondary-container bg-surface-container px-3 py-1.5 rounded-lg border border-secondary-fixed-dim">
+                    Timer: 02:14:36
+                </div>
+</div>
+</div>
+<!-- Dashboard Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter mb-xl">
+<!-- Active Contest Card (Span 8) -->
+<div class="lg:col-span-8 bg-on-primary rounded-xl border border-outline-variant p-lg shadow-sm flex flex-col justify-between relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+<span class="material-symbols-outlined text-9xl">emoji_events</span>
+</div>
+<div>
+<div class="flex items-center justify-between mb-md border-b border-surface-container-low pb-sm">
+<h2 class="font-h2 text-h2 text-on-surface">Active Contest Control</h2>
+<span class="material-symbols-outlined text-on-surface-variant">tune</span>
+</div>
+<p class="font-body-base text-body-base text-on-surface-variant mb-lg max-w-2xl">
+                        Manage the current state of the ACM University Spring Contest. Pause to halt all submissions and time progression, or end the contest to lock the scoreboard and prevent further entries.
+                    </p>
+</div>
+<div class="flex gap-md mt-auto">
+<button class="bg-[#2563EB] text-white px-6 py-2.5 rounded-lg font-body-base text-body-base font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined">pause</span>
+                        Pause Contest
+                    </button>
+<button class="bg-white text-[#1E3A5F] border border-[#E2E8F0] px-6 py-2.5 rounded-lg font-body-base text-body-base font-semibold hover:bg-slate-50 transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined">play_arrow</span>
+                        Resume
+                    </button>
+<button class="ml-auto bg-error-container text-on-error-container px-6 py-2.5 rounded-lg font-body-base text-body-base font-semibold hover:bg-[#ffb4ab] transition-colors flex items-center gap-2 border border-[#ffb4ab]">
+<span class="material-symbols-outlined">stop</span>
+                        End Contest
+                    </button>
+</div>
+</div>
+<!-- Stats Summary Bento (Span 4) -->
+<div class="lg:col-span-4 flex flex-col gap-gutter">
+<div class="bg-on-primary rounded-xl border border-outline-variant p-md shadow-sm flex items-center gap-md">
+<div class="w-12 h-12 bg-surface-container flex items-center justify-center rounded-lg text-secondary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">terminal</span>
+</div>
+<div>
+<div class="font-h1 text-h1 text-on-surface leading-none">3</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mt-1">PROBLEMS</div>
+</div>
+</div>
+<div class="bg-on-primary rounded-xl border border-outline-variant p-md shadow-sm flex items-center gap-md">
+<div class="w-12 h-12 bg-surface-container flex items-center justify-center rounded-lg text-secondary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">groups</span>
+</div>
+<div>
+<div class="font-h1 text-h1 text-on-surface leading-none">42</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mt-1">TEAMS</div>
+</div>
+</div>
+<div class="bg-on-primary rounded-xl border border-outline-variant p-md shadow-sm flex items-center gap-md">
+<div class="w-12 h-12 bg-surface-container flex items-center justify-center rounded-lg text-secondary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">list_alt</span>
+</div>
+<div>
+<div class="font-h1 text-h1 text-on-surface leading-none">156</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mt-1">SUBMISSIONS</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Contest List Section -->
+<div class="bg-on-primary rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+<!-- Tabs -->
+<div class="flex border-b border-outline-variant bg-surface-container-lowest px-md pt-md">
+<button class="px-md py-sm font-body-base text-body-base font-semibold text-secondary border-b-2 border-secondary">Running</button>
+<button class="px-md py-sm font-body-base text-body-base font-medium text-on-surface-variant hover:text-on-surface">Upcoming</button>
+<button class="px-md py-sm font-body-base text-body-base font-medium text-on-surface-variant hover:text-on-surface">Ended</button>
+</div>
+<!-- Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-surface-container-low bg-surface-bright">
+<th class="px-md py-sm font-label-caps text-label-caps text-on-surface-variant">ID</th>
+<th class="px-md py-sm font-label-caps text-label-caps text-on-surface-variant">CONTEST NAME</th>
+<th class="px-md py-sm font-label-caps text-label-caps text-on-surface-variant">START TIME</th>
+<th class="px-md py-sm font-label-caps text-label-caps text-on-surface-variant">DURATION</th>
+<th class="px-md py-sm font-label-caps text-label-caps text-on-surface-variant">STATUS</th>
+<th class="px-md py-sm font-label-caps text-label-caps text-on-surface-variant text-right">ACTIONS</th>
+</tr>
+</thead>
+<tbody class="font-table-data text-table-data">
+<tr class="border-b border-surface-container-low hover:bg-surface transition-colors">
+<td class="px-md py-md text-on-surface-variant">C-2024-01</td>
+<td class="px-md py-md font-semibold text-on-surface">ACM University Spring Contest</td>
+<td class="px-md py-md text-on-surface-variant">Oct 24, 09:00 AM</td>
+<td class="px-md py-md text-on-surface-variant">05:00:00</td>
+<td class="px-md py-md">
+<span class="inline-flex items-center px-2 py-1 rounded bg-[#dbe1ff] text-[#00174b] text-xs font-semibold">
+                                    RUNNING
+                                </span>
+</td>
+<td class="px-md py-md text-right">
+<button class="text-secondary hover:text-primary transition-colors p-1">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+</td>
+</tr>
+<tr class="border-b border-surface-container-low hover:bg-surface transition-colors">
+<td class="px-md py-md text-on-surface-variant">C-2024-02</td>
+<td class="px-md py-md font-semibold text-on-surface">Freshman Programming Challenge</td>
+<td class="px-md py-md text-on-surface-variant">Nov 15, 10:00 AM</td>
+<td class="px-md py-md text-on-surface-variant">03:00:00</td>
+<td class="px-md py-md">
+<span class="inline-flex items-center px-2 py-1 rounded bg-surface-container-high text-on-surface-variant text-xs font-semibold">
+                                    UPCOMING
+                                </span>
+</td>
+<td class="px-md py-md text-right">
+<button class="text-secondary hover:text-primary transition-colors p-1">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-surface transition-colors">
+<td class="px-md py-md text-on-surface-variant">C-2023-09</td>
+<td class="px-md py-md font-semibold text-on-surface">Winter Codeathon 2023</td>
+<td class="px-md py-md text-on-surface-variant">Dec 01, 08:00 AM</td>
+<td class="px-md py-md text-on-surface-variant">24:00:00</td>
+<td class="px-md py-md">
+<span class="inline-flex items-center px-2 py-1 rounded bg-surface-container text-on-surface text-xs font-semibold">
+                                    ENDED
+                                </span>
+</td>
+<td class="px-md py-md text-right">
+<button class="text-secondary hover:text-primary transition-colors p-1">
+<span class="material-symbols-outlined text-sm">visibility</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+</body></html>

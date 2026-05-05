@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AuraC² Scoreboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;family=Space+Grotesk:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary": "#0051d5",
+                        "surface-container": "#e5eeff",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed": "#dbe1ff",
+                        "outline-variant": "#c4c6cf",
+                        "on-surface-variant": "#43474e",
+                        "inverse-surface": "#213145",
+                        "primary": "#022448",
+                        "secondary-container": "#316bf3",
+                        "on-primary-container": "#8aa4cf",
+                        "surface-container-highest": "#d3e4fe",
+                        "surface-dim": "#cbdbf5",
+                        "on-tertiary": "#ffffff",
+                        "background": "#f8f9ff",
+                        "tertiary-container": "#cea700",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "on-primary-fixed-variant": "#2d486d",
+                        "primary-container": "#1e3a5f",
+                        "outline": "#74777f",
+                        "on-error": "#ffffff",
+                        "inverse-primary": "#adc8f5",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed": "#ffe083",
+                        "surface-container-high": "#dce9ff",
+                        "primary-fixed-dim": "#adc8f5",
+                        "on-surface": "#0b1c30",
+                        "error": "#ba1a1a",
+                        "surface-container-low": "#eff4ff",
+                        "on-primary-fixed": "#001c3b",
+                        "on-tertiary-fixed": "#231b00",
+                        "surface-tint": "#455f87",
+                        "on-tertiary-fixed-variant": "#574500",
+                        "surface-variant": "#d3e4fe",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed": "#d5e3ff",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-tertiary-container": "#4e3e00",
+                        "on-secondary-fixed-variant": "#003ea8",
+                        "surface-bright": "#f8f9ff",
+                        "tertiary": "#735c00",
+                        "on-secondary-container": "#fefcff",
+                        "on-error-container": "#93000a",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed-dim": "#eec200",
+                        "on-secondary-fixed": "#00174b",
+                        "surface": "#f8f9ff",
+                        "on-background": "#0b1c30"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "sm": "8px",
+                        "md": "16px",
+                        "container-max": "1440px",
+                        "base": "4px",
+                        "gutter": "20px",
+                        "xs": "4px",
+                        "xl": "32px",
+                        "lg": "24px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter", "sans-serif"],
+                        "table-data": ["Space Grotesk", "sans-serif"],
+                        "body-base": ["Inter", "sans-serif"],
+                        "h2": ["Manrope", "sans-serif"],
+                        "h1": ["Manrope", "sans-serif"],
+                        "code-block": ["Space Grotesk", "sans-serif"],
+                        "h3": ["Manrope", "sans-serif"],
+                        "body-sm": ["Inter", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "table-data": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "body-base": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "h2": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "h1": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "code-block": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+                        "h3": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-base min-h-screen flex">
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-0 bottom-0 w-64 flex flex-col z-50 bg-[#1E3A5F] dark:bg-slate-950 text-white font-['Manrope'] text-sm font-medium border-none shadow-none">
+<div class="p-6 flex flex-col items-center border-b border-white/10">
+<div class="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mb-4 overflow-hidden">
+<img alt="University Logo" class="w-full h-full object-cover" data-alt="minimalist abstract geometric logo in navy and white" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJyl6JlEeZiVtUKJ3pW5I3lDQG15E6vR7lNLzAywKMFBuZw-DVaZC7JWrADxxBNDCZD5-hljiYmOGnNcN83AOTbZQ0qICN-Vio6iiJZtada8EOmAVHCRTE9sjvZhhazEQD3Ki0TyP1_IlHFkSq92ZQ66zjSPsVECyTrhdYfRovrmB6gpnSsMFJP8bKcBX-dIvGCfF00K3d1hYvKHmabMQX2DhAO2vTabyYwx74s2PKlIVcf6m6PIkf5oJQ3LKABr4cCY7R04Tr6J4"/>
+</div>
+<h1 class="text-white font-bold font-h2 text-h2 tracking-tighter">AuraC² Admin</h1>
+<p class="text-slate-300 font-body-sm text-body-sm mt-1">Management Portal</p>
+</div>
+<div class="flex-1 overflow-y-auto py-4">
+<ul class="space-y-1">
+<li><a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200" href="#"><span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>Overview</a></li>
+<li><a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200" href="#"><span class="material-symbols-outlined" data-icon="emoji_events">emoji_events</span>Contests</a></li>
+<li><a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200" href="#"><span class="material-symbols-outlined" data-icon="groups">groups</span>Teams</a></li>
+<li><a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200" href="#"><span class="material-symbols-outlined" data-icon="terminal">terminal</span>Problems</a></li>
+<li><a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200" href="#"><span class="material-symbols-outlined" data-icon="list_alt">list_alt</span>Submissions</a></li>
+<li><a class="text-slate-300 hover:text-white px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200" href="#"><span class="material-symbols-outlined" data-icon="forum">forum</span>Clarifications</a></li>
+<li><a class="bg-blue-600/20 text-white border-l-4 border-blue-500 px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-all duration-200" href="#"><span class="material-symbols-outlined" data-icon="query_stats" data-weight="fill" style="font-variation-settings: 'FILL' 1;">query_stats</span>Future Stats</a></li>
+</ul>
+</div>
+</nav>
+<!-- Main Content -->
+<div class="flex-1 ml-64 flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 left-64 h-16 flex items-center justify-between px-6 z-40 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm font-['Manrope'] text-sm tracking-tight">
+<div class="flex items-center gap-4">
+<span class="text-xl font-extrabold text-[#1E3A5F] dark:text-white tracking-tighter">AuraC²</span>
+</div>
+<div class="flex items-center gap-6">
+<span class="text-slate-500 dark:text-slate-400 font-medium">02:45:12 Remaining</span>
+<div class="flex items-center gap-3">
+<button class="text-slate-500 dark:text-slate-400 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors p-2 rounded-full"><span class="material-symbols-outlined" data-icon="notifications">notifications</span></button>
+<button class="text-slate-500 dark:text-slate-400 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors p-2 rounded-full"><span class="material-symbols-outlined" data-icon="help_outline">help_outline</span></button>
+<div class="w-8 h-8 rounded-full bg-slate-200 overflow-hidden ml-2 border border-slate-300">
+<img alt="User avatar" class="w-full h-full object-cover" data-alt="portrait of a young professional wearing glasses on a neutral background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFdD3NLW4ByvzLyr54gVp6gRoBh-l6Ijfq6unOMjJSASTcmFwaiepGpCGiG6TUHMhMnFOtSSNuhzFp6S_0MRr5ApqgEXM9ZDxr9dvPFVNTnhUXwv6K4YrPccG15Hn07nKUatDiDWgK_qWuKnrLWRXSpV48ORBHmK5NuTlCqpbq3MinChFVT3yJXz2-72tdQrGaHd9IcmWCPI2xy-XL7oa8lUD7C4YFEoHtOxRvWC-6vh1MaRvmlae621vVoHbrK5fS8AawI350vkk"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<main class="flex-1 pt-16 p-lg max-w-[1440px] mx-auto w-full">
+<div class="mb-xl">
+<div class="flex items-center gap-3 mb-2">
+<span class="material-symbols-outlined text-tertiary">rocket_launch</span>
+<span class="font-label-caps text-label-caps text-tertiary bg-tertiary-container/20 px-2 py-1 rounded">Planned Feature</span>
+</div>
+<h1 class="font-h1 text-h1 text-on-background">Future Scoreboard</h1>
+<p class="font-body-base text-body-base text-on-surface-variant mt-2 max-w-2xl">This is a preview of the upcoming live scoreboard interface. Data shown here is a placeholder representation of the final layout.</p>
+</div>
+<!-- Empty State / Placeholder Layout -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden">
+<div class="p-lg border-b border-surface-container-high bg-surface-bright flex justify-between items-center">
+<h2 class="font-h3 text-h3 text-on-surface">Live Standings</h2>
+<div class="flex gap-2">
+<div class="h-8 w-32 bg-surface-container-high rounded animate-pulse"></div>
+<div class="h-8 w-24 bg-surface-container-high rounded animate-pulse"></div>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant">
+<th class="p-md font-label-caps text-label-caps text-on-surface-variant w-16 text-center">Rank</th>
+<th class="p-md font-label-caps text-label-caps text-on-surface-variant">Team</th>
+<th class="p-md font-label-caps text-label-caps text-on-surface-variant w-24 text-center">Solved</th>
+<th class="p-md font-label-caps text-label-caps text-on-surface-variant w-24 text-center">Penalty</th>
+<th class="p-md font-label-caps text-label-caps text-on-surface-variant w-24 text-center border-l border-outline-variant/50">Prob A</th>
+<th class="p-md font-label-caps text-label-caps text-on-surface-variant w-24 text-center">Prob B</th>
+<th class="p-md font-label-caps text-label-caps text-on-surface-variant w-24 text-center">Prob C</th>
+</tr>
+</thead>
+<tbody class="font-table-data text-table-data text-on-surface">
+<!-- Placeholder Row 1 -->
+<tr class="border-b border-surface-container-high hover:bg-surface transition-colors opacity-50">
+<td class="p-md text-center"><div class="h-5 w-5 bg-outline-variant/30 rounded mx-auto"></div></td>
+<td class="p-md"><div class="h-5 w-48 bg-outline-variant/30 rounded"></div></td>
+<td class="p-md text-center"><div class="h-5 w-8 bg-outline-variant/30 rounded mx-auto"></div></td>
+<td class="p-md text-center"><div class="h-5 w-12 bg-outline-variant/30 rounded mx-auto"></div></td>
+<td class="p-md text-center border-l border-outline-variant/50"><div class="h-8 w-12 bg-surface-container-high rounded mx-auto"></div></td>
+<td class="p-md text-center"><div class="h-8 w-12 bg-surface-container-high rounded mx-auto"></div></td>
+<td class="p-md text-center"><div class="h-8 w-12 bg-surface-container-high rounded mx-auto"></div></td>
+</tr>
+<!-- Placeholder Row 2 -->
+<tr class="border-b border-surface-container-high hover:bg-surface transition-colors opacity-40">
+<td class="p-md text-center"><div class="h-5 w-5 bg-outline-variant/30 rounded mx-auto"></div></td>
+<td class="p-md"><div class="h-5 w-32 bg-outline-variant/30 rounded"></div></td>
+<td class="p-md text-center"><div class="h-5 w-8 bg-outline-variant/30 rounded mx-auto"></div></td>
+<td class="p-md text-center"><div class="h-5 w-12 bg-outline-variant/30 rounded mx-auto"></div></td>
+<td class="p-md text-center border-l border-outline-variant/50"><div class="h-8 w-12 bg-surface-container-high rounded mx-auto"></div></td>
+<td class="p-md text-center"><div class="h-8 w-12 bg-surface-container-high rounded mx-auto"></div></td>
+<td class="p-md text-center"><div class="h-8 w-12 bg-surface-container-high rounded mx-auto"></div></td>
+</tr>
+<!-- Placeholder Row 3 -->
+<tr class="hover:bg-surface transition-colors opacity-30">
+<td class="p-md text-center"><div class="h-5 w-5 bg-outline-variant/30 rounded mx-auto"></div></td>
+<td class="p-md"><div class="h-5 w-40 bg-outline-variant/30 rounded"></div></td>
+<td class="p-md text-center"><div class="h-5 w-8 bg-outline-variant/30 rounded mx-auto"></div></td>
+<td class="p-md text-center"><div class="h-5 w-12 bg-outline-variant/30 rounded mx-auto"></div></td>
+<td class="p-md text-center border-l border-outline-variant/50"><div class="h-8 w-12 bg-surface-container-high rounded mx-auto"></div></td>
+<td class="p-md text-center"><div class="h-8 w-12 bg-surface-container-high rounded mx-auto"></div></td>
+<td class="p-md text-center"><div class="h-8 w-12 bg-surface-container-high rounded mx-auto"></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-lg bg-surface-container-low text-center border-t border-outline-variant">
+<p class="font-body-sm text-body-sm text-on-surface-variant flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">construction</span>
+                        Scoreboard module is currently under development.
+                    </p>
+</div>
+</div>
+</main>
+</div>
+</body></html>

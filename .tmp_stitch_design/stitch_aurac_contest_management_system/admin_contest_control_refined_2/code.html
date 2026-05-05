@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AuraC² - Contests</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@500;600;700;900&amp;family=Space+Grotesk:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "outline": "#74777f",
+                      "error": "#ba1a1a",
+                      "on-tertiary-fixed-variant": "#574500",
+                      "on-secondary": "#ffffff",
+                      "on-surface-variant": "#43474e",
+                      "primary-container": "#1e3a5f",
+                      "on-primary": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "primary-fixed": "#d5e3ff",
+                      "on-secondary-fixed-variant": "#003ea8",
+                      "on-tertiary-fixed": "#231b00",
+                      "on-error": "#ffffff",
+                      "surface-bright": "#f8f9ff",
+                      "tertiary": "#735c00",
+                      "on-secondary-container": "#fefcff",
+                      "error-container": "#ffdad6",
+                      "on-error-container": "#93000a",
+                      "on-background": "#0b1c30",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-variant": "#d3e4fe",
+                      "surface-container-low": "#eff4ff",
+                      "on-surface": "#0b1c30",
+                      "background": "#f8f9ff",
+                      "surface-container": "#e5eeff",
+                      "on-secondary-fixed": "#00174b",
+                      "secondary-container": "#316bf3",
+                      "inverse-surface": "#213145",
+                      "surface-tint": "#455f87",
+                      "secondary": "#0051d5",
+                      "secondary-fixed-dim": "#b4c5ff",
+                      "surface-dim": "#cbdbf5",
+                      "outline-variant": "#c4c6cf",
+                      "inverse-on-surface": "#eaf1ff",
+                      "surface-container-highest": "#d3e4fe",
+                      "on-primary-fixed": "#001c3b",
+                      "primary-fixed-dim": "#adc8f5",
+                      "inverse-primary": "#adc8f5",
+                      "secondary-fixed": "#dbe1ff",
+                      "tertiary-fixed-dim": "#eec200",
+                      "tertiary-container": "#cea700",
+                      "primary": "#022448",
+                      "on-tertiary-container": "#4e3e00",
+                      "surface-container-high": "#dce9ff",
+                      "surface": "#f8f9ff",
+                      "on-primary-fixed-variant": "#2d486d",
+                      "tertiary-fixed": "#ffe083",
+                      "on-primary-container": "#8aa4cf"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "xs": "4px",
+                      "md": "16px",
+                      "xl": "32px",
+                      "lg": "24px",
+                      "container-max": "1440px",
+                      "sm": "8px",
+                      "gutter": "20px",
+                      "base": "4px"
+              },
+              "fontFamily": {
+                      "h1": [
+                              "manrope"
+                      ],
+                      "code-block": [
+                              "spaceGrotesk"
+                      ],
+                      "body-base": [
+                              "inter"
+                      ],
+                      "h2": [
+                              "manrope"
+                      ],
+                      "table-data": [
+                              "spaceGrotesk"
+                      ],
+                      "body-sm": [
+                              "inter"
+                      ],
+                      "h3": [
+                              "manrope"
+                      ],
+                      "label-caps": [
+                              "inter"
+                      ]
+              },
+              "fontSize": {
+                      "h1": [
+                              "30px",
+                              {
+                                      "lineHeight": "38px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "code-block": [
+                              "14px",
+                              {
+                                      "lineHeight": "22px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-base": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "h2": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "table-data": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "h3": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+</head>
+<body class="bg-background text-on-surface font-body-base antialiased selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- SideNavBar -->
+<nav class="bg-[#1E3A5F] dark:bg-slate-950 text-blue-600 dark:text-blue-400 font-['Manrope'] text-sm font-medium tracking-wide h-full w-64 fixed left-0 top-0 z-40 border-r border-slate-200 dark:border-slate-800 flat no shadows flex flex-col h-full py-6">
+<div class="px-6 mb-8">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-white/10 flex items-center justify-center shrink-0">
+<img alt="University Logo" class="w-6 h-6 object-contain" data-alt="Minimalist abstract logo of a university crest in white outline on dark blue background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0h8Oi-Evj5QNObjNHC8EgfX3RXiuRolWrWrT8xoxsSnYjY5WzboeINlrYNYHZbZh8DBaHIgWv5Wwhjvx7vIPS1Y3g1_bL_jAmWamJ_Y5ke7fOZvFiTagTJbNFMH0gB8qZwCEOpsHVsX048iKwbv_l0QcOofoNQgz79fHIlfpuvVR3PA9Yd3QcSLvCva2hKPejh29Fw3MJJLMvSrAC5XZnVnMYE5PDFcYiQ59YIgD57zqjDhnAuHA9DXQ2LwlJ5ruj3mlMVHncGXY"/>
+</div>
+<div>
+<div class="text-2xl font-bold tracking-tight text-white font-h2 text-h2">AuraC²</div>
+<div class="text-slate-300 text-xs mt-1">Academic Console</div>
+</div>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto px-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-DEFAULT text-slate-300 hover:text-white hover:bg-white/5 transition-colors hover:bg-white/10 transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="dashboard">dashboard</span>
+                Overview
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-DEFAULT border-l-4 border-blue-500 bg-white/10 text-white font-bold hover:bg-white/10 transition-all Active: translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="emoji_events">emoji_events</span>
+                Contests
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-DEFAULT text-slate-300 hover:text-white hover:bg-white/5 transition-colors hover:bg-white/10 transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="groups">groups</span>
+                Teams
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-DEFAULT text-slate-300 hover:text-white hover:bg-white/5 transition-colors hover:bg-white/10 transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="description">description</span>
+                Problems
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-DEFAULT text-slate-300 hover:text-white hover:bg-white/5 transition-colors hover:bg-white/10 transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="terminal">terminal</span>
+                Submissions
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-DEFAULT text-slate-300 hover:text-white hover:bg-white/5 transition-colors hover:bg-white/10 transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="forum">forum</span>
+                Clarifications
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-DEFAULT text-slate-300 hover:text-white hover:bg-white/5 transition-colors hover:bg-white/10 transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="analytics">analytics</span>
+                Statistics
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-DEFAULT text-slate-300 hover:text-white hover:bg-white/5 transition-colors hover:bg-white/10 transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="security">security</span>
+                Security
+            </a>
+</div>
+</nav>
+<!-- TopAppBar -->
+<header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md text-blue-600 dark:text-blue-400 font-['Manrope'] text-sm uppercase tracking-wider font-semibold fixed top-0 right-0 left-64 h-16 z-30 border-b border-slate-200 dark:border-slate-800 shadow-sm flex justify-between items-center px-8 w-full h-full focus-within:ring-2 focus-within:ring-blue-500/20">
+<div class="flex items-center flex-1">
+<h1 class="text-slate-900 dark:text-white font-black text-xl mr-8 font-h3 text-h3 capitalize tracking-normal">Contest Control</h1>
+</div>
+<div class="flex items-center gap-6">
+<!-- Search placed on right per JSON -->
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+<input class="w-full bg-slate-100 border-none rounded-DEFAULT pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 transition-all font-body-sm text-body-sm text-slate-900 placeholder-slate-500" placeholder="Search contests..." type="text"/>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="h-6 w-px bg-slate-200 mx-2"></div>
+<img alt="User Profile" class="w-8 h-8 rounded-DEFAULT object-cover cursor-pointer" data-alt="Professional headshot of a university administrator in a brightly lit academic setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEzgrWkJgCgXjj_lADT3RqHVqI-A_Hwhysy95aUik9uzfWTy3kHw4eq1gFDWrjeBqtNBbcDrE7Aovp02B34HCXgtJz5lihlcuk10mo4TnwarpK6Yk1hdA7cF4zeXBe_Inw5mTdPbK4IfqZz9R6UQ0Ey0cwDuPpNO-hAnPVWWeeNKXogpesWuScEjXSSxHyJ4V8iKMDv5IHpzCaIE3OpjB7FOvnO4tV3XEHXO0qG35rZbkpHD9dv9e0T28WRciTM4VF-os7-Hz7FHY"/>
+<button class="bg-[#2563EB] text-white px-4 py-2 rounded-DEFAULT text-sm font-semibold hover:bg-blue-700 transition-colors ml-4 whitespace-nowrap shadow-sm">
+                    Create Contest
+                </button>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="ml-64 pt-24 px-8 pb-12 max-w-[1440px] mx-auto min-h-screen">
+<!-- Active Highlight Contest (RUNNING) -->
+<section class="mb-xl">
+<div class="bg-surface-container-lowest border border-[#E2E8F0] rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.05)] overflow-hidden flex flex-col relative">
+<!-- Decorative Top Bar indicating active state -->
+<div class="h-1 w-full bg-[#2563EB]"></div>
+<div class="p-lg flex flex-col lg:flex-row gap-lg justify-between items-start lg:items-center">
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-2">
+<span class="bg-secondary/10 text-secondary px-2 py-1 rounded-sm font-label-caps text-label-caps flex items-center gap-1 border border-secondary/20">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+                                RUNNING
+                            </span>
+<span class="text-outline font-table-data text-table-data">ID: CT-2024-SP</span>
+</div>
+<h2 class="font-h2 text-h2 text-on-surface mb-xs">ACM University Spring Contest</h2>
+<div class="flex flex-wrap items-center gap-md text-on-surface-variant font-body-sm text-body-sm">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+                                Ends in 02:45:10
+                            </div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">groups</span>
+                                42 Teams
+                            </div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">terminal</span>
+                                1,204 Submissions
+                            </div>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex items-center gap-3 flex-wrap lg:justify-end">
+<button class="bg-surface-container-lowest border border-[#E2E8F0] text-primary-container px-4 py-2 rounded-DEFAULT font-body-sm text-body-sm font-medium hover:bg-surface-container-low transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">pause</span>
+                            Pause
+                        </button>
+<button class="bg-error/10 text-error border border-error/20 px-4 py-2 rounded-DEFAULT font-body-sm text-body-sm font-medium hover:bg-error/20 transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">stop_circle</span>
+                            End Contest
+                        </button>
+<div class="h-8 w-px bg-outline-variant mx-2"></div>
+<button class="bg-surface-container-lowest border border-[#E2E8F0] text-outline px-4 py-2 rounded-DEFAULT font-body-sm text-body-sm font-medium cursor-not-allowed opacity-50 flex items-center gap-2" disabled="" title="Cannot edit a running contest">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+                            Edit
+                        </button>
+</div>
+</div>
+<!-- Progress Bar -->
+<div class="w-full bg-surface-container h-1">
+<div class="bg-[#2563EB] h-1" style="width: 65%;"></div>
+</div>
+</div>
+</section>
+<!-- Contests List -->
+<section>
+<div class="flex items-center justify-between mb-lg border-b border-[#F1F5F9] pb-4">
+<h3 class="font-h3 text-h3 text-on-surface">All Contests</h3>
+<div class="flex items-center gap-2">
+<button class="p-2 text-outline hover:text-on-surface hover:bg-surface-container-low rounded-DEFAULT transition-colors">
+<span class="material-symbols-outlined text-[20px]">filter_list</span>
+</button>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-[#E2E8F0] rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.05)] overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface border-b border-[#F1F5F9]">
+<th class="py-3 px-4 font-label-caps text-label-caps text-outline font-semibold">Status</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-outline font-semibold">ID</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-outline font-semibold">Contest Name</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-outline font-semibold">Schedule</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-outline font-semibold text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="font-table-data text-table-data text-on-surface divide-y divide-[#F1F5F9]">
+<!-- UPCOMING Contest -->
+<tr class="hover:bg-surface transition-colors group">
+<td class="py-3 px-4">
+<span class="bg-[#1E3A5F]/10 text-[#1E3A5F] px-2 py-1 rounded-sm font-label-caps text-label-caps border border-[#1E3A5F]/20">UPCOMING</span>
+</td>
+<td class="py-3 px-4 text-outline">CT-2024-SU</td>
+<td class="py-3 px-4 font-body-base text-body-base font-medium">Summer Code Challenge</td>
+<td class="py-3 px-4 text-on-surface-variant">Jun 15, 2024 • 09:00 AM</td>
+<td class="py-3 px-4 text-right">
+<div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-secondary hover:bg-secondary/10 rounded-DEFAULT transition-colors" title="Start">
+<span class="material-symbols-outlined text-[18px]">play_circle</span>
+</button>
+<button class="p-1.5 text-primary-container hover:bg-primary-container/10 rounded-DEFAULT transition-colors" title="Edit">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- PAUSED Contest -->
+<tr class="hover:bg-surface transition-colors group">
+<td class="py-3 px-4">
+<span class="bg-tertiary-container/10 text-tertiary px-2 py-1 rounded-sm font-label-caps text-label-caps border border-tertiary-container/30">PAUSED</span>
+</td>
+<td class="py-3 px-4 text-outline">CT-2024-IT</td>
+<td class="py-3 px-4 font-body-base text-body-base font-medium">Internal Training Scrimmage</td>
+<td class="py-3 px-4 text-on-surface-variant">Started: May 10 • Paused at 01:15:00</td>
+<td class="py-3 px-4 text-right">
+<div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-secondary hover:bg-secondary/10 rounded-DEFAULT transition-colors" title="Resume">
+<span class="material-symbols-outlined text-[18px]">play_arrow</span>
+</button>
+<button class="p-1.5 text-error hover:bg-error/10 rounded-DEFAULT transition-colors" title="End">
+<span class="material-symbols-outlined text-[18px]">stop_circle</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- ENDED Contest -->
+<tr class="hover:bg-surface transition-colors group">
+<td class="py-3 px-4">
+<span class="bg-outline/10 text-outline px-2 py-1 rounded-sm font-label-caps text-label-caps border border-outline/20">ENDED</span>
+</td>
+<td class="py-3 px-4 text-outline">CT-2023-FA</td>
+<td class="py-3 px-4 font-body-base text-body-base font-medium text-on-surface-variant">Fall Semester Regionals</td>
+<td class="py-3 px-4 text-on-surface-variant">Dec 01, 2023 • 5 Hours</td>
+<td class="py-3 px-4 text-right">
+<div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-outline hover:bg-surface-container-low rounded-DEFAULT transition-colors" title="View Results">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- ENDED Contest 2 -->
+<tr class="hover:bg-surface transition-colors group">
+<td class="py-3 px-4">
+<span class="bg-outline/10 text-outline px-2 py-1 rounded-sm font-label-caps text-label-caps border border-outline/20">ENDED</span>
+</td>
+<td class="py-3 px-4 text-outline">CT-2023-PR</td>
+<td class="py-3 px-4 font-body-base text-body-base font-medium text-on-surface-variant">Practice Round Alpha</td>
+<td class="py-3 px-4 text-on-surface-variant">Nov 15, 2023 • 2 Hours</td>
+<td class="py-3 px-4 text-right">
+<div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-outline hover:bg-surface-container-low rounded-DEFAULT transition-colors" title="View Results">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</main>
+</body></html>
