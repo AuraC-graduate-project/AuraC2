@@ -27,11 +27,16 @@ public class Judge0Service {
                 languageId,
                 tc.getInputData(),
                 tc.getExpectedOutput(),
-                callbackUrl + "/" + submission.getId() + "/" + testCaseNumber
+                callbackUrl + "/" + submission.getId() + "/" + submission.getJudgeRunId() + "/" + testCaseNumber
         );
 
         new RestTemplate().postForObject(judge0Url, dto, Object.class);
 
-        log.info("Sent Test Case {} → submission {}", testCaseNumber, submission.getId());
+        log.info(
+                "Sent test case to Judge0. submissionId={} judgeRunId={} testCaseNumber={}",
+                submission.getId(),
+                submission.getJudgeRunId(),
+                testCaseNumber
+        );
     }
 }

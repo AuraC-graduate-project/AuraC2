@@ -61,7 +61,7 @@ Handles:
 | RabbitMQ submission dispatch | Implemented |
 | Judge0 submission sending | Implemented |
 | Judge0 callback handling | Implemented |
-| Per-test-case final aggregated tracking | Partial |
+| Per-test-case final aggregated tracking | Implemented for judge runs |
 | Scoreboard / ranking | Not implemented yet |
 | Clarifications / announcements | Not implemented yet |
 | Real-time contest updates | Not implemented yet |
@@ -329,15 +329,16 @@ For each test case, the backend sends:
 Judge0 then calls back:
 
 ```text
-/api/callback/judge0/{submissionId}/{testCaseNumber}
+/api/callback/judge0/{submissionId}/{judgeRunId}/{testCaseNumber}
 ```
 
 The callback handler:
 - resolves the submission
 - maps Judge0 status to internal verdict
 - stores execution time and memory usage
-- marks the submission as failed immediately on the first failing test case
-- marks it as accepted when the final test case passes
+- stores one result per submission, judge run, and test case
+- waits until all test case callbacks for the current judge run are received
+- calculates the final verdict from the completed run, so out-of-order callbacks cannot mark a submission accepted early
 
 ### Important note
 The current implementation is functional but still early-stage.  
@@ -518,6 +519,32 @@ DELETE /api/admin/users/{userId}
 #### Get all submissions
 ```http
 GET /api/admin/users/submissions
+```
+
+### Admin Rejudge Endpoints
+
+All rejudge endpoints require the `ADMIN` role. Rejudge reuses the normal RabbitMQ submission queue and Judge0 callback flow.
+
+#### Rejudge selected submissions
+```http
+POST /api/admin/rejudge/submissions
+```
+
+Example body:
+```json
+{
+  "submissionIds": [1, 2, 3]
+}
+```
+
+#### Rejudge all submissions for a problem
+```http
+POST /api/admin/rejudge/problem/{problemId}
+```
+
+#### Rejudge all submissions in a contest
+```http
+POST /api/admin/rejudge/contests/{contestId}
 ```
 
 ---
