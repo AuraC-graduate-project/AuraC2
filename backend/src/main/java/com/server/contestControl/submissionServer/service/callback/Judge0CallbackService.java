@@ -194,10 +194,8 @@ public class Judge0CallbackService {
     private boolean isStaleCallback(Submission submission, Long callbackJudgeRunId) {
         Long currentJudgeRunId = submission.getJudgeRunId();
 
-        if (callbackJudgeRunId == null) {
-            return currentJudgeRunId != null && currentJudgeRunId > 0;
-        }
-
-        return currentJudgeRunId == null || !callbackJudgeRunId.equals(currentJudgeRunId);
+        return currentJudgeRunId == null
+                || callbackJudgeRunId == null
+                || !callbackJudgeRunId.equals(currentJudgeRunId);
     }
 }

@@ -7,6 +7,8 @@ import java.time.Duration;
 
 public final class CookieUtil {
 
+    private static final String REFRESH_COOKIE_PATH = "/auth";
+
     private CookieUtil() {}
 
     public static void addRefreshToCookie(
@@ -16,9 +18,9 @@ public final class CookieUtil {
     ) {
         ResponseCookie cookie = ResponseCookie.from("refresh_token", refreshToken)
                 .httpOnly(true)
-                .secure(false) // 🔥 TRUE in prod, FALSE locally
+                .secure(isProd)
                 .sameSite(isProd ? "Strict" : "Lax")
-                .path("/auth/refresh") // 🔥 CRITICAL FIX
+                .path(REFRESH_COOKIE_PATH)
                 .maxAge(Duration.ofDays(7))
                 .build();
 
@@ -31,9 +33,9 @@ public final class CookieUtil {
     ) {
         ResponseCookie cookie = ResponseCookie.from("refresh_token", "")
                 .httpOnly(true)
-                .secure(false)
+                .secure(isProd)
                 .sameSite(isProd ? "Strict" : "Lax")
-                .path("/auth/refresh")
+                .path(REFRESH_COOKIE_PATH)
                 .maxAge(0)
                 .build();
 

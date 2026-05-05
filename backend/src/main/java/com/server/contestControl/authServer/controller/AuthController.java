@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,6 +22,7 @@ public class AuthController {
     private final AuthFacade authFacade;
 
     @PostMapping("/register")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<RegisterResponse> register(@RequestBody RegisterRequest request) {
         authFacade.registerTeam(request.getUsername(), request.getPassword());
         return ResponseEntity.ok(new RegisterResponse("Registration successful!"));
