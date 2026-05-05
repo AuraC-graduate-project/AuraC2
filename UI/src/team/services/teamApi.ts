@@ -95,6 +95,18 @@ export function getActiveContest(): Promise<ContestResponse> {
     return apiFetch("/api/contest/active");
 }
 
+export function getUpcomingContest(): Promise<ContestResponse> {
+    return apiFetch("/api/contest/upcoming");
+}
+
+export function getPausedContest(): Promise<ContestResponse> {
+    return apiFetch("/api/contest/paused");
+}
+
+export function getEndedContests(): Promise<ContestResponse[]> {
+    return apiFetch("/api/contest/ended");
+}
+
 export function getProblemsByContest(
     contestId: number
 ): Promise<ProblemResponse[]> {

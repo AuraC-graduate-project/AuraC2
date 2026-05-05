@@ -1,12 +1,46 @@
 // DTOs matching backend exactly
 
-export interface ContestResponse {
+export type ContestLifecycleState = 'RUNNING' | 'PAUSED' | 'ENDED' | 'UPCOMING';
+
+export interface  ContestResponse {
   id: number;
   title: string;
   description: string;
-  startTime: string; // ISO 8601
+  startTime: string; // Scheduled start (ISO 8601 UTC) — planning/display only
+  actualStartTime: string | null; // Set when admin manually starts the contest
+  pausedAt: string | null; // Set while PAUSED
+  totalPauseMillis: number; // Accumulated pause duration across all pause/resume cycles
+  remainingMillis: number; // Pause-aware countdown value
+  endTime: string | null; // Scheduled end: startTime + durationMinutes
+  effectiveEndTime: string | null; // Live pause-aware end; null when UPCOMING or PAUSED
   durationMinutes: number;
-  status: 'RUNNING' | 'PAUSED' | 'ENDED' | 'UPCOMING';
+  status: ContestLifecycleState;
+  effectiveState: ContestLifecycleState;
+  scoreboardFreezeMinutes: number | null;
+  scoreboardFreezeTime: string | null;
+  penaltyMinutes: number;
+  scoreboardFrozen: boolean;
+}
+
+export type ContestUpdateReason =
+  | 'CREATED'
+  | 'MANUAL_START'
+  | 'MANUAL_PAUSE'
+  | 'MANUAL_RESUME'
+  | 'MANUAL_END'
+  | 'AUTO_START'
+  | 'AUTO_END';
+
+export interface ContestStreamSnapshot {
+  active: ContestResponse | null;
+  upcoming: ContestResponse | null;
+  paused: ContestResponse | null;
+  ended: ContestResponse[];
+}
+
+export interface ContestStreamUpdate {
+  reason: ContestUpdateReason;
+  snapshot: ContestResponse;
 }
 
 export interface ContestRequest {
@@ -14,6 +48,8 @@ export interface ContestRequest {
   description: string;
   startTime: string; // ISO 8601
   durationMinutes: number;
+  scoreboardFreezeMinutes?: number | null;
+  penaltyMinutes?: number;
 }
 
 export interface ContestUpdateRequest {

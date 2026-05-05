@@ -24,7 +24,6 @@ public class ContestController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ContestResponse> createContest(
             @Valid @RequestBody ContestRequest request) {
-
         return ResponseEntity.ok(contestService.createContest(request));
     }
 
@@ -43,6 +42,15 @@ public class ContestController {
         return ResponseEntity.ok(contestService.updateStatus(id, ContestStatus.RUNNING));
     }
 
+    /**
+     * Resume a paused contest. Semantically distinct from start.
+     */
+    @PutMapping("/{id}/resume")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ContestResponse> resumeContest(@PathVariable Long id) {
+        return ResponseEntity.ok(contestService.updateStatus(id, ContestStatus.RUNNING));
+    }
+
     @PutMapping("/{id}/pause")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ContestResponse> pauseContest(@PathVariable Long id) {
@@ -51,8 +59,10 @@ public class ContestController {
 
     @PutMapping("/{id}/end")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ContestResponse> endContest(@PathVariable Long id) {
-        return ResponseEntity.ok(contestService.updateStatus(id, ContestStatus.ENDED));
+    public ResponseEntity<ContestResponse> endContest(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "false") boolean juryOverride) {
+        return ResponseEntity.ok(contestService.updateStatus(id, ContestStatus.ENDED, juryOverride));
     }
 
     @GetMapping("/active")
@@ -74,7 +84,5 @@ public class ContestController {
     public ResponseEntity<List<ContestResponse>> getEnded() {
         return ResponseEntity.ok(contestService.getEndedContests());
     }
-
-
 }
 

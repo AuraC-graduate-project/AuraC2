@@ -8,7 +8,10 @@ export type ContestResponse = {
   description: string;
   durationMinutes: number;
   status: string;
+  effectiveState: string;
   startTime: string;
+  endTime?: string | null;
+  effectiveEndTime?: string | null;
 };
 
 export type ContestRequest = {

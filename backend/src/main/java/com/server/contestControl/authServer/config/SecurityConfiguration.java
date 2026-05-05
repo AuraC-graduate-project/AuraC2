@@ -39,6 +39,8 @@ public class SecurityConfiguration {
                                 "/assets/**",
                                 "/favicon.ico",
 
+                                "/error",
+
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
@@ -58,7 +60,9 @@ public class SecurityConfiguration {
                                 "/api/contest/active",
                                 "/api/contest/upcoming",
                                 "/api/contest/paused",
-                                "/api/contest/ended"
+                                "/api/contest/ended",
+                                "/api/contest/stream",
+                                "/api/team/stream"
                         ).permitAll()
 
                         .requestMatchers("/api/contest/**").hasRole("ADMIN")

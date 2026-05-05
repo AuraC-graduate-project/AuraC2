@@ -94,7 +94,10 @@ async function refreshAccessToken(): Promise<string | null> {
   return null;
 }
 
-async function ensureRefreshedOnce(): Promise<string | null> {
+// Exported so the SSE hook can share the same coalesced refresh promise
+// (refreshInFlight) as apiFetch — preventing a stream 401 and a REST 401
+// from racing two concurrent /auth/refresh requests.
+export async function ensureRefreshedOnce(): Promise<string | null> {
   if (!refreshInFlight) {
     refreshInFlight = refreshAccessToken().finally(() => {
       refreshInFlight = null;
@@ -180,10 +183,11 @@ async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise
 // Contest endpoints
 // -----------------------------
 
+//This is used when the UI wants to display the contest that is currently running.
 export async function getActiveContest(): Promise<ContestResponse> {
   return apiFetch<ContestResponse>("/api/contest/active");
 }
-
+//Fetches the next contest that has not started yet, Used in the UI when the user selects the Upcoming tab.
 export async function getUpcomingContest(): Promise<ContestResponse> {
   return apiFetch<ContestResponse>("/api/contest/upcoming");
 }
@@ -207,16 +211,21 @@ export async function updateContestDetails(
   });
 }
 
-export async function startContest(id: number): Promise<void> {
-  await apiFetch<void>(`/api/contest/${id}/start`, { method: "PUT" });
+export async function startContest(id: number): Promise<ContestResponse> {
+  return apiFetch<ContestResponse>(`/api/contest/${id}/start`, { method: "PUT" });
 }
 
-export async function pauseContest(id: number): Promise<void> {
-  await apiFetch<void>(`/api/contest/${id}/pause`, { method: "PUT" });
+export async function resumeContest(id: number): Promise<ContestResponse> {
+  return apiFetch<ContestResponse>(`/api/contest/${id}/resume`, { method: "PUT" });
 }
 
-export async function endContest(id: number): Promise<void> {
-  await apiFetch<void>(`/api/contest/${id}/end`, { method: "PUT" });
+export async function pauseContest(id: number): Promise<ContestResponse> {
+  return apiFetch<ContestResponse>(`/api/contest/${id}/pause`, { method: "PUT" });
+}
+
+export async function endContest(id: number, juryOverride = false): Promise<void> {
+  const params = juryOverride ? "?juryOverride=true" : "";
+  await apiFetch<void>(`/api/contest/${id}/end${params}`, { method: "PUT" });
 }
 
 
