@@ -9,10 +9,15 @@ import com.server.contestControl.contestServer.enums.Difficulty;
 import com.server.contestControl.contestServer.exceptions.ContestNotFoundException;
 import com.server.contestControl.contestServer.exceptions.InvalidDifficultyException;
 import com.server.contestControl.contestServer.exceptions.ProblemNotFoundException;
+import com.server.contestControl.contestServer.repository.ClarificationRepository;
 import com.server.contestControl.contestServer.repository.ContestRepository;
 import com.server.contestControl.contestServer.repository.ProblemRepository;
+import com.server.contestControl.submissionServer.entity.Submission;
+import com.server.contestControl.submissionServer.repository.SubmissionJudgeResultRepository;
+import com.server.contestControl.submissionServer.repository.SubmissionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -22,6 +27,9 @@ public class ProblemService {
 
     private final ProblemRepository problemRepository;
     private final ContestRepository contestRepository;
+    private final ClarificationRepository clarificationRepository;
+    private final SubmissionRepository submissionRepository;
+    private final SubmissionJudgeResultRepository submissionJudgeResultRepository;
 
     public ProblemResponse createProblem(ProblemRequest request) {
 
@@ -83,6 +91,24 @@ public class ProblemService {
         return problemRepository.findAllByContest_id(contestId).stream()
                 .map(ProblemResponse::from)
                 .toList();
+    }
+
+    @Transactional
+    public void deleteProblem(Long id) {
+        Problem problem = problemRepository.findById(id)
+                .orElseThrow(() -> new ProblemNotFoundException(id));
+
+        List<Long> submissionIds = submissionRepository.findAllByProblem_Id(id).stream()
+                .map(Submission::getId)
+                .toList();
+
+        if (!submissionIds.isEmpty()) {
+            submissionJudgeResultRepository.deleteAllBySubmissionIds(submissionIds);
+            submissionRepository.deleteAllByIdInBatch(submissionIds);
+        }
+
+        clarificationRepository.deleteAllByProblem_Id(id);
+        problemRepository.delete(problem);
     }
 
     private Difficulty parseDifficulty(String value) {

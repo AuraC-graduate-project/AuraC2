@@ -386,17 +386,17 @@ html.dark .hover\:shadow-md:hover {
 /* AuraC2 calm academic theme layer.
    This final layer intentionally avoids neon, glow, saturated gradients, and duplicate dark pages. */
 html {
-  --aura-bg: #f6f8fb;
+  --aura-bg: #f7f9fc;
   --aura-surface: #ffffff;
-  --aura-surface-muted: #eef2f6;
+  --aura-surface-muted: #f0f4f8;
   --aura-surface-soft: #f8fafc;
-  --aura-border: #d9e1ea;
-  --aura-border-strong: #c5d0dc;
+  --aura-border: #dfe6ef;
+  --aura-border-strong: #cbd5e1;
   --aura-text: #102033;
   --aura-text-muted: #5f6f82;
   --aura-text-soft: #8290a3;
-  --aura-primary: #3d638d;
-  --aura-primary-hover: #35587d;
+  --aura-primary: #315f8f;
+  --aura-primary-hover: #294f78;
   --aura-primary-soft: #e8eef5;
   --aura-sidebar: #203a56;
   --aura-gold: #b79a4f;
@@ -405,18 +405,18 @@ html {
 }
 
 html.dark {
-  --aura-bg: #10151d;
-  --aura-surface: #151d27;
-  --aura-surface-muted: #1b2430;
-  --aura-surface-soft: #131a23;
-  --aura-border: #2e3948;
-  --aura-border-strong: #3a4656;
-  --aura-text: #d9e0ea;
-  --aura-text-muted: #a8b3c1;
-  --aura-text-soft: #7f8b9c;
-  --aura-primary: #425d78;
-  --aura-primary-hover: #4b6884;
-  --aura-primary-soft: #1a2634;
+  --aura-bg: #111827;
+  --aura-surface: #17212d;
+  --aura-surface-muted: #1e2937;
+  --aura-surface-soft: #141e2a;
+  --aura-border: #334155;
+  --aura-border-strong: #435369;
+  --aura-text: #e2e8f0;
+  --aura-text-muted: #b6c2d1;
+  --aura-text-soft: #8b98aa;
+  --aura-primary: #4f78a3;
+  --aura-primary-hover: #5b86b4;
+  --aura-primary-soft: #1c2b3b;
   --aura-sidebar: #182231;
   --aura-gold: #b8a36e;
   --aura-gold-soft: #282318;
@@ -673,6 +673,10 @@ html.dark .aura-main {
   backdrop-filter: blur(14px) saturate(1.05);
 }
 
+.aura-team-header {
+  min-height: 64px;
+}
+
 .aura-sidebar {
   background:
     linear-gradient(180deg, var(--aura-sidebar), color-mix(in srgb, var(--aura-sidebar) 82%, #0f1722 18%)) !important;
@@ -751,17 +755,51 @@ html.dark .aura-main {
 
 .aura-brand-panel {
   background:
+    radial-gradient(circle at 20% 18%, rgba(213, 191, 125, 0.16), transparent 28%),
     linear-gradient(145deg, color-mix(in srgb, var(--aura-sidebar) 92%, #415f81 8%), var(--aura-sidebar)) !important;
 }
 
-.aura-login-proof {
-  transform: translateZ(0);
-  transition: transform 220ms var(--aura-ease), background-color 220ms var(--aura-ease);
+.aura-brand-panel-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.075) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.075) 1px, transparent 1px),
+    linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.08) 48%, transparent 49%);
+  background-size: 44px 44px, 44px 44px, 180px 180px;
+  mask-image: linear-gradient(90deg, transparent, black 18%, black 82%, transparent);
+  opacity: 0.7;
 }
 
-.aura-login-proof:hover {
-  transform: translateX(4px);
-  background-color: rgba(255, 255, 255, 0.08);
+.aura-tech-background {
+  color: color-mix(in srgb, var(--aura-primary) 44%, transparent);
+  background:
+    radial-gradient(ellipse at top, rgba(61, 99, 141, 0.16), transparent 42%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(232, 238, 245, 0.62) 42%, rgba(244, 238, 223, 0.35));
+}
+
+html.dark .aura-tech-background {
+  color: rgba(174, 190, 208, 0.16);
+  background:
+    radial-gradient(ellipse at top, rgba(66, 93, 120, 0.22), transparent 42%),
+    linear-gradient(135deg, rgba(16, 21, 29, 0.95), rgba(24, 34, 49, 0.82) 52%, rgba(40, 35, 24, 0.28));
+}
+
+.aura-login-grid-layer {
+  color: rgba(61, 99, 141, 0.12);
+}
+
+.aura-login-circuit-layer {
+  color: rgba(183, 154, 79, 0.16);
+}
+
+.aura-login-network-line {
+  stroke: rgba(61, 99, 141, 0.18);
+  stroke-width: 1.1;
+}
+
+.aura-login-network-line-soft {
+  stroke: rgba(183, 154, 79, 0.16);
 }
 
 .aura-theme-toggle {
@@ -783,18 +821,54 @@ html.dark .aura-main {
 }
 
 .aura-problem-rail {
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--aura-surface) 96%, var(--aura-primary-soft) 4%), var(--aura-surface)) !important;
+  background: var(--aura-surface) !important;
+  border-color: color-mix(in srgb, var(--aura-border) 72%, transparent) !important;
+}
+
+.aura-problem-rail .aura-problem-card {
+  box-shadow: none !important;
+}
+
+.aura-problem-rail .aura-problem-card[aria-current="true"] {
+  box-shadow: inset 3px 0 0 var(--aura-primary), 0 1px 2px rgba(16, 32, 51, 0.04) !important;
+}
+
+.aura-problem-rail .aura-problem-card[data-status="solved"] {
+  box-shadow: inset 3px 0 0 #16a34a !important;
+}
+
+.aura-problem-rail .aura-problem-card[data-status="solved"][aria-current="true"] {
+  box-shadow: inset 3px 0 0 #16a34a, 0 0 0 1px color-mix(in srgb, var(--aura-primary) 18%, transparent) !important;
+}
+
+html.dark .aura-problem-rail .aura-problem-card[data-status="solved"] {
+  background: color-mix(in srgb, var(--aura-surface) 92%, #16a34a 8%) !important;
+  border-color: color-mix(in srgb, var(--aura-border) 78%, #16a34a 22%) !important;
+}
+
+html.dark .aura-problem-rail .aura-problem-card[data-status="solved"][aria-current="true"] {
+  background: color-mix(in srgb, var(--aura-primary-soft) 86%, #16a34a 14%) !important;
+  border-color: color-mix(in srgb, var(--aura-primary) 62%, #16a34a 38%) !important;
+}
+
+html.dark .aura-problem-rail .aura-problem-card[data-status="solved"] p {
+  color: var(--aura-text) !important;
 }
 
 .aura-code-card,
 .aura-statement-card {
-  min-height: 100%;
+  min-height: 0;
+}
+
+.aura-statement-flush {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
 }
 
 .aura-code-shell {
   background:
-    linear-gradient(180deg, #111827, #0f172a) !important;
+    linear-gradient(180deg, #132033, #101827) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
@@ -802,26 +876,157 @@ html.dark .aura-main {
   caret-color: #d6c285;
 }
 
-.aura-workspace-grid {
-  transition: grid-template-columns 420ms var(--aura-ease-soft);
+.aura-workspace-toolbar {
+  background: var(--aura-surface) !important;
+  backdrop-filter: none;
 }
 
-@media (min-width: 1280px) {
-  .aura-workspace-grid {
-    grid-template-columns: minmax(360px, 0.86fr) minmax(560px, 1.14fr);
-  }
+.aura-workspace-main {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--aura-bg) 96%, white 4%), var(--aura-bg)) !important;
+}
 
-  .aura-workspace-grid-wide {
-    grid-template-columns: minmax(320px, 0.58fr) minmax(680px, 1.42fr);
-  }
+html.dark .aura-workspace-main {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--aura-bg) 92%, #202b3a 8%), var(--aura-bg)) !important;
+}
+
+.aura-subtle-resize-handle {
+  opacity: 0.72;
+  transition: background-color 160ms var(--aura-ease), width 160ms var(--aura-ease) !important;
+}
+
+.aura-subtle-resize-handle:hover,
+.aura-subtle-resize-handle:focus-visible {
+  opacity: 1;
+  background-color: color-mix(in srgb, var(--aura-primary) 28%, var(--aura-border)) !important;
+}
+
+.aura-submissions-panel {
+  border-color: color-mix(in srgb, var(--aura-border) 74%, transparent) !important;
+}
+
+.aura-activity-tabs {
+  box-shadow: 0 -1px 0 rgba(16, 32, 51, 0.02);
+}
+
+.aura-activity-tabs section.rounded-lg.border {
+  border-radius: 0 !important;
+  border-width: 0 !important;
+  box-shadow: none !important;
 }
 
 .aura-panel-switch {
   animation: aura-panel-in 260ms var(--aura-ease-soft) both;
 }
 
-.aura-code-card-expanded {
-  transform: translateY(-1px);
+.aura-rich-text-editor {
+  border-color: var(--aura-border) !important;
+  background: var(--aura-surface) !important;
+}
+
+.aura-rich-text-input {
+  background:
+    linear-gradient(180deg, var(--aura-surface), color-mix(in srgb, var(--aura-surface) 94%, var(--aura-surface-soft) 6%)) !important;
+  color: var(--aura-text) !important;
+}
+
+.aura-rich-text-input:empty::before {
+  content: "Write the problem statement here...";
+  color: var(--aura-text-soft);
+}
+
+.aura-rich-text-input h2,
+.aura-rich-text-input h3,
+.aura-rich-text-input h4,
+.aura-prose h2,
+.aura-prose h3,
+.aura-prose h4 {
+  margin: 1rem 0 0.5rem;
+  color: var(--aura-text);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.aura-rich-text-input h2,
+.aura-prose h2 {
+  font-size: 1.35rem;
+}
+
+.aura-rich-text-input h3,
+.aura-prose h3 {
+  font-size: 1.1rem;
+}
+
+.aura-rich-text-input p,
+.aura-prose p {
+  margin: 0.65rem 0;
+  color: var(--aura-text-muted);
+  line-height: 1.75;
+}
+
+.aura-rich-text-input ul,
+.aura-rich-text-input ol,
+.aura-prose ul,
+.aura-prose ol {
+  margin: 0.75rem 0;
+  padding-left: 1.35rem;
+  color: var(--aura-text-muted);
+}
+
+.aura-rich-text-input ul,
+.aura-prose ul {
+  list-style: disc;
+}
+
+.aura-rich-text-input ol,
+.aura-prose ol {
+  list-style: decimal;
+}
+
+.aura-rich-text-input li,
+.aura-prose li {
+  margin: 0.35rem 0;
+  line-height: 1.7;
+}
+
+.aura-rich-text-input code,
+.aura-prose code {
+  border-radius: 0.35rem;
+  background: color-mix(in srgb, var(--aura-primary-soft) 72%, var(--aura-surface-muted));
+  color: var(--aura-text);
+  padding: 0.1rem 0.35rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.88em;
+}
+
+.aura-rich-text-input pre,
+.aura-prose pre {
+  margin: 0.85rem 0;
+  overflow-x: auto;
+  border-radius: 0.5rem;
+  border: 1px solid #1f2a38;
+  background: #101827;
+  padding: 0.9rem 1rem;
+  color: #d8dee9;
+}
+
+.aura-rich-text-input pre code,
+.aura-prose pre code {
+  display: block;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  white-space: pre;
+}
+
+.aura-rich-text-input blockquote,
+.aura-prose blockquote {
+  margin: 0.85rem 0;
+  border-left: 3px solid var(--aura-primary);
+  background: color-mix(in srgb, var(--aura-primary-soft) 55%, transparent);
+  padding: 0.75rem 1rem;
+  color: var(--aura-text-muted);
 }
 
 .aura-code-shell,
@@ -831,15 +1036,9 @@ html.dark .aura-main {
   transition: min-height 420ms var(--aura-ease-soft), height 420ms var(--aura-ease-soft);
 }
 
-.aura-code-card-expanded .aura-code-shell,
-.aura-code-card-expanded .aura-code-editor-layer,
-.aura-code-card-expanded .aura-code-input,
-.aura-code-card-expanded .aura-code-highlight {
-  min-height: 680px !important;
-}
-
 html .aura-code-input {
-  min-height: 520px;
+  min-height: 0;
+  height: 100%;
   overflow: auto;
   background: transparent !important;
   color: transparent !important;
@@ -869,7 +1068,7 @@ html .aura-code-input::selection {
 }
 
 html .aura-code-highlight {
-  min-height: 520px;
+  min-height: 0;
   color: #d8dee9;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   tab-size: 4;
@@ -909,6 +1108,15 @@ html .aura-code-highlight {
 
 html:not(.dark) .aura-code-highlight {
   color: #d8dee9;
+}
+
+@media (max-width: 767px) {
+  .aura-code-shell,
+  .aura-code-editor-layer,
+  html .aura-code-input,
+  html .aura-code-highlight {
+    min-height: 420px;
+  }
 }
 
 button,

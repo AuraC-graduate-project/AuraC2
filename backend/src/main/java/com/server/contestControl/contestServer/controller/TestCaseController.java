@@ -37,6 +37,13 @@ public class TestCaseController {
         return ResponseEntity.ok(testCaseService.updateTestCase(id, request));
     }
 
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteTestCase(@PathVariable Long id) {
+        testCaseService.deleteTestCase(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/problem/{problemId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEAM')")
     public ResponseEntity<List<TestCaseResponse>> getTestCases(

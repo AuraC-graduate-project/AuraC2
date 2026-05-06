@@ -54,7 +54,7 @@ export function RegisterModal({ open, onOpenChange }: RegisterModalProps) {
       
       await registerUser(data);
       
-      toast.success('User registered successfully');
+      toast.success('Team account created');
       
       // Reset form
       setUsername('');
@@ -82,7 +82,7 @@ export function RegisterModal({ open, onOpenChange }: RegisterModalProps) {
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="text-xl text-slate-950">Register Team</DialogTitle>
+          <DialogTitle className="text-xl text-slate-950">Create Team Account</DialogTitle>
           <DialogDescription>
             Create a student team account. Role is fixed as TEAM.
           </DialogDescription>
@@ -90,7 +90,7 @@ export function RegisterModal({ open, onOpenChange }: RegisterModalProps) {
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
-              Admin creation is not available from this screen.
+              This creates a TEAM login for contest participants.
             </div>
             <div className="grid gap-2">
               <Label htmlFor="username">Username</Label>
@@ -139,7 +139,7 @@ export function RegisterModal({ open, onOpenChange }: RegisterModalProps) {
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting} className="bg-blue-700 hover:bg-blue-800">
-              {isSubmitting ? 'Registering...' : 'Register'}
+              {isSubmitting ? 'Creating...' : 'Create Team'}
             </Button>
           </DialogFooter>
         </form>

@@ -1,17 +1,30 @@
 import { useEffect, useState } from "react";
-import { BookOpen, Database, FileText, FlaskConical, Timer } from "lucide-react";
+import { BookOpen, Copy, Database, FileText, FlaskConical, Timer } from "lucide-react";
 import { ProblemResponse, TestCaseResponse } from "../../admin/types/api";
 import { StatusBadge } from "../../components/StatusBadge";
+import { RichTextContent } from "../../components/RichTextContent";
 import { getPublicTestCasesForProblem } from "../services/teamApi";
 
 type ProblemStatementPanelProps = {
   problem: ProblemResponse | null;
+  className?: string;
 };
 
-export function ProblemStatementPanel({ problem }: ProblemStatementPanelProps) {
+export function ProblemStatementPanel({
+  problem,
+  className = "",
+}: ProblemStatementPanelProps) {
   const [samples, setSamples] = useState<TestCaseResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeSection, setActiveSection] = useState<"statement" | "samples">("statement");
+
+  const copyText = async (value: string) => {
+    try {
+      await navigator.clipboard?.writeText(value);
+    } catch {
+      // Clipboard access can be blocked by the browser; selection still works.
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -40,7 +53,7 @@ export function ProblemStatementPanel({ problem }: ProblemStatementPanelProps) {
 
   if (!problem) {
     return (
-      <section className="rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm">
+      <section className={`rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm ${className}`}>
         <BookOpen className="mx-auto mb-3 h-8 w-8 text-slate-400" />
         <p className="font-medium text-slate-800">Select a problem to view the statement.</p>
         <p className="mt-1 text-sm text-slate-500">Problem statements load from the contest problem API.</p>
@@ -49,8 +62,8 @@ export function ProblemStatementPanel({ problem }: ProblemStatementPanelProps) {
   }
 
   return (
-    <section className="aura-statement-card rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="border-b border-slate-200 bg-slate-50 p-5">
+    <section className={`aura-statement-card flex h-full min-h-0 flex-col rounded-lg border border-slate-200 bg-white shadow-sm ${className}`}>
+      <div className="shrink-0 border-b border-slate-200 bg-slate-50 p-5">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <StatusBadge kind="difficulty" value={problem.difficulty} />
           <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">
@@ -62,12 +75,12 @@ export function ProblemStatementPanel({ problem }: ProblemStatementPanelProps) {
             {problem.memoryLimit} MB
           </span>
         </div>
-        <h2 className="text-2xl font-semibold text-slate-950">{problem.title}</h2>
-        <div className="mt-5 inline-flex rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
+        <h2 className="text-2xl font-semibold leading-tight text-slate-950">{problem.title}</h2>
+        <div className="mt-5 grid w-full grid-cols-2 rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
           <button
             type="button"
             onClick={() => setActiveSection("statement")}
-            className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold ${
+            className={`inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold ${
               activeSection === "statement"
                 ? "bg-blue-700 text-white"
                 : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
@@ -79,7 +92,7 @@ export function ProblemStatementPanel({ problem }: ProblemStatementPanelProps) {
           <button
             type="button"
             onClick={() => setActiveSection("samples")}
-            className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold ${
+            className={`inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold ${
               activeSection === "samples"
                 ? "bg-blue-700 text-white"
                 : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
@@ -91,13 +104,11 @@ export function ProblemStatementPanel({ problem }: ProblemStatementPanelProps) {
         </div>
       </div>
 
-      <div className="aura-panel-switch space-y-6 p-5" key={activeSection}>
+      <div className="aura-panel-switch min-h-0 flex-1 space-y-6 overflow-y-auto p-5" key={activeSection}>
         {activeSection === "statement" ? (
           <div>
             <h3 className="mb-2 font-semibold text-slate-900">Question Statement</h3>
-            <p className="whitespace-pre-wrap text-sm leading-7 text-slate-700">
-              {problem.description || "No problem statement provided."}
-            </p>
+            <RichTextContent content={problem.description} className="max-w-[78ch]" />
           </div>
         ) : (
           <div>
@@ -121,11 +132,31 @@ export function ProblemStatementPanel({ problem }: ProblemStatementPanelProps) {
                     <h4 className="mb-3 text-sm font-semibold text-slate-800">Sample #{index + 1}</h4>
                     <div className="grid gap-3">
                       <div>
-                        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Input</p>
+                        <div className="mb-1 flex items-center justify-between gap-2">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Input</p>
+                          <button
+                            type="button"
+                            onClick={() => copyText(sample.inputData)}
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-800"
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                            Copy
+                          </button>
+                        </div>
                         <pre className="overflow-x-auto rounded-md bg-slate-950 p-3 text-xs text-slate-100">{sample.inputData}</pre>
                       </div>
                       <div>
-                        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Expected Output</p>
+                        <div className="mb-1 flex items-center justify-between gap-2">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Expected Output</p>
+                          <button
+                            type="button"
+                            onClick={() => copyText(sample.expectedOutput)}
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-800"
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                            Copy
+                          </button>
+                        </div>
                         <pre className="overflow-x-auto rounded-md border border-slate-200 bg-white p-3 text-xs text-slate-800">
                           {sample.expectedOutput}
                         </pre>

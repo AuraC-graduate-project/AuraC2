@@ -49,8 +49,8 @@ export function Header({
   }, [contestEndTime]);
 
   return (
-    <header className="aura-topbar aura-team-header border-b border-slate-200 bg-white px-5 py-4 shadow-sm">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+    <header className="aura-topbar aura-team-header border-b border-slate-200 bg-white px-5 py-3 shadow-sm">
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex items-center gap-4">
           <div className="aura-mark flex h-11 w-11 items-center justify-center rounded-lg bg-[#1E3A5F] text-lg font-semibold text-white">
             A

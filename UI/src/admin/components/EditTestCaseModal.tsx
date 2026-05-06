@@ -64,7 +64,7 @@ export function EditTestCaseModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="text-xl text-slate-950">Edit Test Case</DialogTitle>
           <DialogDescription>Update input, expected output, and public/private visibility.</DialogDescription>

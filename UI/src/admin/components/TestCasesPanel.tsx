@@ -1,10 +1,20 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { Plus, Pencil, Eye, EyeOff } from 'lucide-react';
+import { Plus, Pencil, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { AddTestCaseModal } from './AddTestCaseModal';
 import { EditTestCaseModal } from './EditTestCaseModal';
-import { getTestCasesForProblem } from '../services/api';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
+import { deleteTestCase, getTestCasesForProblem } from '../services/api';
 import { TestCaseResponse } from '../types/api';
 import { toast } from 'sonner';
 import { StatusBadge } from '../../components/StatusBadge';
@@ -20,6 +30,8 @@ export function TestCasesPanel({ problemId, problemTitle }: TestCasesPanelProps)
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingTestCase, setEditingTestCase] = useState<TestCaseResponse | null>(null);
+  const [testCaseToDelete, setTestCaseToDelete] = useState<TestCaseResponse | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadTestCases = async () => {
     setIsLoading(true);
@@ -38,6 +50,22 @@ export function TestCasesPanel({ problemId, problemTitle }: TestCasesPanelProps)
   useEffect(() => {
     loadTestCases();
   }, [problemId]);
+
+  const handleDeleteTestCase = async () => {
+    if (!testCaseToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteTestCase(testCaseToDelete.id);
+      toast.success('Test case deleted successfully');
+      setTestCaseToDelete(null);
+      await loadTestCases();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to delete test case');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <>
@@ -100,6 +128,14 @@ export function TestCasesPanel({ problemId, problemTitle }: TestCasesPanelProps)
                        >
                          <Pencil className="w-3.5 h-3.5" />
                        </Button>
+                       <Button
+                         size="sm"
+                         variant="outline"
+                         className="h-7 px-2 border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
+                         onClick={() => setTestCaseToDelete(testCase)}
+                       >
+                         <Trash2 className="w-3.5 h-3.5" />
+                       </Button>
                      </div>
                    </div>
                   
@@ -140,6 +176,35 @@ export function TestCasesPanel({ problemId, problemTitle }: TestCasesPanelProps)
           onSuccess={loadTestCases}
         />
       )}
+
+      <AlertDialog
+        open={Boolean(testCaseToDelete)}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) setTestCaseToDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete test case?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the selected test case from "{problemTitle}". This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-rose-600 text-white hover:bg-rose-700"
+              disabled={isDeleting}
+              onClick={(event) => {
+                event.preventDefault();
+                handleDeleteTestCase();
+              }}
+            >
+              {isDeleting ? 'Deleting...' : 'Delete Test Case'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

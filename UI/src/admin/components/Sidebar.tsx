@@ -4,13 +4,10 @@ import {
   FileCode, 
   Send, 
   MessageSquare, 
-  Shield,
   Trophy,
-  BarChart3,
   Medal,
   RotateCcw,
   LogOut,
-  UserPlus
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -22,13 +19,10 @@ interface SidebarProps {
 const menuItems = [
   { icon: LayoutDashboard, label: 'Overview' },
   { icon: Trophy, label: 'Contests' },
-  { icon: UserPlus, label: 'Team Accounts' },
   { icon: Users, label: 'Teams' },
   { icon: FileCode, label: 'Problems' },
   { icon: Send, label: 'Submissions' },
   { icon: MessageSquare, label: 'Clarifications' },
-  { icon: BarChart3, label: 'Statistics (Future)' },
-  { icon: Shield, label: 'Security Monitor (Future)' },
   { icon: Medal, label: 'Scoreboard (Future)' },
   { icon: RotateCcw, label: 'Rejudge (Future)' },
 ];

@@ -43,7 +43,8 @@ export function useCodeDraft(
     userId: string,
     contestId: string,
     problemId: string,
-    language: string
+    language: string,
+    initialCode = ""
 ) {
     const [code, setCodeState] = useState<string>("");
 
@@ -55,6 +56,8 @@ export function useCodeDraft(
     // Keep latest code/key in refs so event listeners never go stale
     const codeRef = useRef<string>("");
     const currentKeyRef = useRef<string>("");
+    const initialCodeRef = useRef<string>(initialCode);
+    initialCodeRef.current = initialCode;
 
     // Keep previous problemId + language to save BEFORE switching
     const prevProblemIdRef = useRef<string>(problemId);
@@ -76,6 +79,8 @@ export function useCodeDraft(
      * Uses refs so it never has stale values.
      */
     const saveNow = useCallback((key: string, value: string) => {
+        if (!key) return;
+
         try {
             localStorage.setItem(key, value);
         } catch {
@@ -85,13 +90,13 @@ export function useCodeDraft(
 
     /**
      * Safely loads a draft from localStorage.
-     * Returns empty string if not found or on any error.
+     * Returns null only when no saved draft exists or storage is unavailable.
      */
-    const loadDraft = useCallback((key: string): string => {
+    const loadDraft = useCallback((key: string): string | null => {
         try {
-            return localStorage.getItem(key) ?? "";
+            return localStorage.getItem(key);
         } catch {
-            return "";
+            return null;
         }
     }, []);
 
@@ -138,10 +143,11 @@ export function useCodeDraft(
         prevLanguageRef.current = language;
         prevContestIdRef.current = contestId;
 
-        // Load the draft for the new problem/language
+        // Load the draft for the new problem/language.
+        // If the key exists, even as an empty string, keep it instead of applying starter code.
         const newKey = getDraftKey(userId, contestId, problemId, language);
         const loaded = loadDraft(newKey);
-        setCodeState(loaded); // empty string if no draft exists
+        setCodeState(loaded ?? initialCodeRef.current);
 
         isInitialMountRef.current = false;
     }, [userId, contestId, problemId, language, loadDraft, saveNow]);
@@ -205,11 +211,26 @@ export function useCodeDraft(
         };
     }, [saveNow]);
 
+    /* ============================================================
+       TRIGGER 5 - Save on component unmount
+       Protects pending debounced edits if a layout or tab accidentally remounts the editor.
+    ============================================================ */
+    useEffect(() => {
+        return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+
+            saveNow(currentKeyRef.current, codeRef.current);
+        };
+    }, [saveNow]);
+
     /**
      * Updates the code state.
      * Actual localStorage save is debounced (Trigger 2).
      */
     const setCode = useCallback((newCode: string) => {
+        codeRef.current = newCode;
         setCodeState(newCode);
     }, []);
 

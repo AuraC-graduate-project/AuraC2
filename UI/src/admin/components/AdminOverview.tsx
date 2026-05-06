@@ -33,9 +33,9 @@ const quickLinks = [
     icon: Trophy,
   },
   {
-    title: "Team Accounts",
-    view: "Team Accounts",
-    description: "Create student team login accounts from an admin-only page.",
+    title: "Teams",
+    view: "Teams",
+    description: "Register teams, update credentials, and remove non-admin accounts.",
     icon: Users,
   },
   {
@@ -141,18 +141,13 @@ export function AdminOverview({ onNavigate }: AdminOverviewProps) {
 
           <div className="grid gap-4">
             {[
-              ["Statistics", "Data unavailable", "Backend analytics are not implemented yet."],
-              ["Reports", "Future feature", "PDF/CSV export is intentionally not wired."],
-              ["Live updates", "Future feature", "SSE/WebSocket UI is not connected to backend yet."],
-            ].map(([title, status, detail]) => (
+              ["Contest control", "Manage lifecycle from the Contests page using current API state."],
+              ["Team management", "Create and maintain student logins in one place."],
+              ["Review queues", "Use Submissions and Clarifications for contest operations."],
+            ].map(([title, detail]) => (
               <div key={title} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-slate-900">{title}</span>
-                  <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">
-                    {status}
-                  </span>
-                </div>
-                <p className="mt-2 text-sm text-slate-600">{detail}</p>
+                <span className="font-semibold text-slate-900">{title}</span>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{detail}</p>
               </div>
             ))}
           </div>
@@ -183,9 +178,9 @@ export function AdminOverview({ onNavigate }: AdminOverviewProps) {
         <div className="flex items-start gap-3">
           <CalendarDays className="mt-0.5 h-5 w-5 text-blue-700" />
           <div>
-            <h2 className="font-semibold text-slate-950">Presentation-safe scope</h2>
+            <h2 className="font-semibold text-slate-950">Operational scope</h2>
             <p className="mt-1 text-sm leading-6 text-slate-600">
-              Scoreboard, rejudge, security monitor, reports, analytics, broadcast messages, and live update dashboards are shown as future work only.
+              The main navigation now keeps working contest, team, problem, submission, and clarification workflows prominent.
             </p>
           </div>
         </div>

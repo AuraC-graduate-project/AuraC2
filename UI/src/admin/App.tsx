@@ -5,10 +5,9 @@ import { AdminOverview } from "./components/AdminOverview";
 import { ContestOverview } from "./components/ContestOverview";
 import { ProblemsView } from "./components/ProblemsView";
 import { TeamsView } from "./components/TeamsView";
-import { TeamAccountsPage } from "./components/TeamAccountsPage";
 import { SubmissionsView } from "./components/SubmissionsView";
 import { ClarificationsView } from "./components/ClarificationsView";
-import { getActiveContest, getUpcomingContest } from "./services/api";
+import { getActiveContest, getPausedContest, getUpcomingContest } from "./services/api";
 import { ContestResponse } from "./types/api";
 import { Toaster } from "./components/ui/sonner";
 import { UnderDevelopmentPage } from "../components/UnderDevelopmentPage";
@@ -30,7 +29,12 @@ export default function AdminApp({ onLogout }: { onLogout: () => void }) {
           const upcoming = await getUpcomingContest();
           setCurrentContest(upcoming);
         } catch {
-          setCurrentContest(null);
+          try {
+            const paused = await getPausedContest();
+            setCurrentContest(paused);
+          } catch {
+            setCurrentContest(null);
+          }
         }
       }
     })();
@@ -50,44 +54,11 @@ export default function AdminApp({ onLogout }: { onLogout: () => void }) {
       case "Teams":
         return <TeamsView />;
 
-      case "Team Accounts":
-        return <TeamAccountsPage />;
-
       case "Submissions":
         return <SubmissionsView />;
 
       case "Clarifications":
         return <ClarificationsView />;
-
-      case "Statistics (Future)":
-        return (
-          <UnderDevelopmentPage
-            title="Statistics and Analytics"
-            subtitle="Future contest analytics"
-            relatedCurrentFeature="Submissions review"
-            plannedItems={[
-              "Contest-level solve counts and verdict distribution",
-              "Problem difficulty and acceptance trends",
-              "Team activity timelines without fake data",
-            ]}
-            onBack={() => setActiveView("Overview")}
-          />
-        );
-
-      case "Security Monitor (Future)":
-        return (
-          <UnderDevelopmentPage
-            title="Security Monitor"
-            subtitle="Future operational monitoring"
-            relatedCurrentFeature="Teams and submissions management"
-            plannedItems={[
-              "Session and suspicious activity review",
-              "System logs once backend endpoints exist",
-              "Clear admin alerts without using fabricated health metrics",
-            ]}
-            onBack={() => setActiveView("Teams")}
-          />
-        );
 
       case "Scoreboard (Future)":
         return (

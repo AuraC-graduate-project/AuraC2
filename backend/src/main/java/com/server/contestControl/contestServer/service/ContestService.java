@@ -332,7 +332,7 @@ public class ContestService {
         long remainingMillis = contestLifecycleService.resolveRemainingMillis(contest, now);
         long totalPauseMillis = contest.getTotalPauseMillis() != null ? contest.getTotalPauseMillis() : 0L;
 
-        log.info(
+        log.debug(
                 "toResponse | contestId={} | persistedStatus={} | effectiveState={} | startTime={} | actualStartTime={} | endTime={} | effectiveEndTime={}",
                 contest.getId(),
                 contest.getStatus(),

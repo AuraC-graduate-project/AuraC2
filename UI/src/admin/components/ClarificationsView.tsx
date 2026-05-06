@@ -216,7 +216,7 @@ export function ClarificationsView() {
       </Card>
 
       <Dialog open={replyDialogOpen} onOpenChange={setReplyDialogOpen}>
-        <DialogContent className="sm:max-w-[560px]">
+        <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-[560px]">
           <DialogHeader>
             <DialogTitle>Reply to Clarification</DialogTitle>
           </DialogHeader>

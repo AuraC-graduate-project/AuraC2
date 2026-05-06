@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type UIEvent } from "react";
-import { CheckCircle2, Maximize2, Minimize2, Save, Send, Terminal, XCircle } from "lucide-react";
+import { CheckCircle2, Save, Send, Terminal, XCircle } from "lucide-react";
 import { Button } from "./ui/button";
 import {
   Select,
@@ -100,8 +100,6 @@ type Props = {
   contestId?: number | null;
   problem: { id: number; title: string } | null;
   onSubmitted?: () => void;
-  isExpanded?: boolean;
-  onToggleExpanded?: () => void;
 };
 
 function getUserId(): string {
@@ -172,24 +170,28 @@ function highlightCode(source: string, language: string): string {
   return result || " ";
 }
 
-export function CodeEditor({ contestId, problem, onSubmitted, isExpanded = false, onToggleExpanded }: Props) {
+export function CodeEditor({ contestId, problem, onSubmitted }: Props) {
   const [language, setLanguage] = useState("cpp");
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const highlightRef = useRef<HTMLPreElement | null>(null);
   const lineNumbersRef = useRef<HTMLPreElement | null>(null);
-  const starterAppliedKeyRef = useRef<string | null>(null);
 
   const userId = useMemo(getUserId, []);
   const contestKey = contestId ? String(contestId) : "0";
   const problemKey = problem?.id ? String(problem.id) : "0";
+  const starterCode = useMemo(() => {
+    if (!problem) return "";
+    return (STARTER_CODE[language] ?? STARTER_CODE.cpp)(problem.title);
+  }, [language, problem?.id, problem?.title]);
 
   const { code, setCode, setOnSavedCallback } = useCodeDraft(
     userId,
     contestKey,
     problemKey,
-    language
+    language,
+    starterCode
   );
 
   useEffect(() => {
@@ -198,16 +200,6 @@ export function CodeEditor({ contestId, problem, onSubmitted, isExpanded = false
     });
     return () => setOnSavedCallback(null);
   }, [setOnSavedCallback]);
-
-  useEffect(() => {
-    if (!problem) return;
-    const key = `draft_${userId}_${contestKey}_${problem.id}_${language}`;
-    const existingDraft = localStorage.getItem(key);
-    if (!existingDraft && !code.trim() && starterAppliedKeyRef.current !== key) {
-      starterAppliedKeyRef.current = key;
-      setCode(STARTER_CODE[language](problem.title));
-    }
-  }, [code, problem?.id, problem?.title, userId, contestKey, language, setCode]);
 
   const handleLanguageChange = useCallback((newLanguage: string) => {
     setLanguage(newLanguage);
@@ -277,53 +269,42 @@ export function CodeEditor({ contestId, problem, onSubmitted, isExpanded = false
   }
 
   return (
-    <section className={`aura-code-card rounded-lg border border-slate-200 bg-white shadow-sm ${isExpanded ? "aura-code-card-expanded" : ""}`}>
-      <div className="flex flex-col gap-4 border-b border-slate-200 bg-slate-50 p-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Code</p>
-          <h2 className="text-lg font-semibold text-slate-950">{problem.title}</h2>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
-            <Save className="h-4 w-4 text-blue-700" />
-            {savedAt ? `Draft saved ${savedAt}` : "Draft autosaves"}
+    <section className="aura-code-card flex min-h-0 flex-1 flex-col overflow-hidden rounded-none border-0 bg-white shadow-none">
+      <div className="shrink-0 border-b border-slate-200 bg-slate-50 p-4">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Code</p>
+            <h2 className="text-lg font-semibold text-slate-950">{problem.title}</h2>
           </div>
 
-          {onToggleExpanded && (
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+              <Save className="h-4 w-4 text-blue-700" />
+              {savedAt ? `Draft saved ${savedAt}` : "Draft autosaves"}
+            </div>
+
+            <Select value={language} onValueChange={handleLanguageChange}>
+              <SelectTrigger className="w-40 bg-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {languageOptions.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Button
-              type="button"
-              variant="outline"
-              aria-pressed={isExpanded}
-              onClick={onToggleExpanded}
-              className="gap-2 bg-white"
+              onClick={handleSubmit}
+              disabled={submitting || !contestId}
+              className="gap-2 bg-blue-700 hover:bg-blue-800"
             >
-              {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-              {isExpanded ? "Balanced" : "Wide Code"}
+              <Send className="h-4 w-4" />
+              {submitting ? "Submitting..." : "Submit"}
             </Button>
-          )}
-
-          <Select value={language} onValueChange={handleLanguageChange}>
-            <SelectTrigger className="w-44 bg-white">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {languageOptions.map((item) => (
-                <SelectItem key={item.value} value={item.value}>
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Button
-            onClick={handleSubmit}
-            disabled={submitting || !contestId}
-            className="gap-2 bg-blue-700 hover:bg-blue-800"
-          >
-            <Send className="h-4 w-4" />
-            {submitting ? "Submitting..." : "Submit"}
-          </Button>
+          </div>
         </div>
       </div>
 
@@ -340,14 +321,14 @@ export function CodeEditor({ contestId, problem, onSubmitted, isExpanded = false
         </div>
       )}
 
-      <div className="aura-code-shell grid min-h-[520px] grid-cols-[3.25rem_1fr] overflow-hidden rounded-b-lg bg-slate-950">
+      <div className="aura-code-shell grid min-h-0 flex-1 grid-cols-[3.25rem_1fr] overflow-hidden rounded-b-lg bg-slate-950">
         <pre
           ref={lineNumbersRef}
           className="select-none overflow-hidden border-r border-slate-800 bg-slate-900 px-3 py-4 text-right font-mono text-xs leading-6 text-slate-500"
         >
           {lineNumbers}
         </pre>
-        <div className="aura-code-editor-layer relative min-h-[520px] overflow-hidden">
+        <div className="aura-code-editor-layer relative min-h-0 overflow-hidden">
           <pre
             ref={highlightRef}
             aria-hidden="true"
@@ -358,7 +339,7 @@ export function CodeEditor({ contestId, problem, onSubmitted, isExpanded = false
             value={code}
             onChange={(e) => setCode(e.target.value)}
             onScroll={handleEditorScroll}
-            className="aura-code-input relative z-10 min-h-[520px] w-full resize-none border-0 bg-transparent px-4 py-4 font-mono text-sm leading-6 shadow-none outline-none"
+            className="aura-code-input relative z-10 h-full min-h-0 w-full resize-none border-0 bg-transparent px-4 py-4 font-mono text-sm leading-6 shadow-none outline-none"
             placeholder="Write your solution here..."
             spellCheck={false}
             wrap="off"
