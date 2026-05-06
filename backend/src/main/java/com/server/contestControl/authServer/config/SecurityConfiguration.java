@@ -70,6 +70,8 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/submissions/**").hasAnyRole("TEAM", "ADMIN")
 
                         .requestMatchers("/api/clarifications/public/**").permitAll()
+                        .requestMatchers("/api/clarifications/my/stream/**").hasRole("TEAM")
+                        .requestMatchers("/api/clarifications/admin/stream/**").hasRole("ADMIN")
                         .requestMatchers("/api/clarifications/my/**").hasRole("TEAM")
                         .requestMatchers("/api/clarifications/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/clarifications").hasRole("TEAM")

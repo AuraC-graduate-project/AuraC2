@@ -11,6 +11,8 @@ import com.server.contestControl.contestServer.enums.ClarificationStatus;
 import com.server.contestControl.contestServer.enums.ClarificationType;
 import com.server.contestControl.contestServer.enums.ContestStatus;
 import com.server.contestControl.contestServer.enums.StandardReply;
+import com.server.contestControl.contestServer.event.ClarificationCreatedEvent;
+import com.server.contestControl.contestServer.event.ClarificationRepliedEvent;
 import com.server.contestControl.contestServer.exceptions.ClarificationAlreadyClosedException;
 import com.server.contestControl.contestServer.exceptions.ClarificationNotFoundException;
 import com.server.contestControl.contestServer.exceptions.ContestNotFoundException;
@@ -22,6 +24,7 @@ import com.server.contestControl.contestServer.repository.ClarificationRepositor
 import com.server.contestControl.contestServer.repository.ContestRepository;
 import com.server.contestControl.contestServer.repository.ProblemRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +41,7 @@ public class ClarificationService {
     private final ClarificationRepository clarificationRepository;
     private final ContestRepository contestRepository;
     private final ProblemRepository problemRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * Method 1: Team submits a clarification
@@ -74,6 +78,10 @@ public class ClarificationService {
 
         // Save and return response
         Clarification saved = clarificationRepository.save(clarification);
+        
+        // Publish SSE event after transaction commits
+        eventPublisher.publishEvent(new ClarificationCreatedEvent(saved.getId()));
+        
         return ClarificationResponse.fromEntity(saved);
     }
 
@@ -125,6 +133,10 @@ public class ClarificationService {
 
         // Save and return response
         Clarification updated = clarificationRepository.save(clarification);
+        
+        // Publish SSE event after transaction commits
+        eventPublisher.publishEvent(new ClarificationRepliedEvent(updated.getId()));
+        
         return ClarificationResponse.fromEntity(updated);
     }
 
