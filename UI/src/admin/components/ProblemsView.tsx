@@ -2,14 +2,25 @@ import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { Plus, ChevronRight, Pencil, Search, Timer, Database } from 'lucide-react';
+import { Plus, ChevronRight, Pencil, Search, Timer, Database, Trash2 } from 'lucide-react';
 import { CreateProblemModal } from './CreateProblemModal';
 import { TestCasesPanel } from './TestCasesPanel';
 import { EditProblemModal } from './EditProblemModal';
-import { getProblem, getProblemsByContest } from '../services/api';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
+import { deleteProblem, getProblem, getProblemsByContest } from '../services/api';
 import { ProblemResponse } from '../types/api';
 import { toast } from 'sonner';
 import { StatusBadge } from '../../components/StatusBadge';
+import { RichTextContent } from '../../components/RichTextContent';
 
 interface ProblemsViewProps {
   contestId: number | null;
@@ -22,6 +33,8 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
   const [isLoadingProblem, setIsLoadingProblem] = useState(false);
   const [isLoadingList, setIsLoadingList] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [problemToDelete, setProblemToDelete] = useState<ProblemResponse | null>(null);
+  const [isDeletingProblem, setIsDeletingProblem] = useState(false);
   const [query, setQuery] = useState('');
 
   const loadProblems = useCallback(async () => {
@@ -72,6 +85,25 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
   const handleProblemUpdated = async (updatedProblem: ProblemResponse) => {
     setSelectedProblem(updatedProblem);
     await loadProblems();
+  };
+
+  const handleDeleteProblem = async () => {
+    if (!problemToDelete) return;
+
+    setIsDeletingProblem(true);
+    try {
+      await deleteProblem(problemToDelete.id);
+      toast.success('Problem deleted successfully');
+      if (selectedProblem?.id === problemToDelete.id) {
+        setSelectedProblem(null);
+      }
+      setProblemToDelete(null);
+      await loadProblems();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to delete problem');
+    } finally {
+      setIsDeletingProblem(false);
+    }
   };
 
   if (!contestId) {
@@ -201,15 +233,26 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
                 <div>
                   <div className="flex items-center justify-between gap-3 mb-2">
                     <h3 className="text-2xl font-semibold text-slate-950">{selectedProblem.title}</h3>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-2"
-                      onClick={() => setEditModalOpen(true)}
-                    >
-                      <Pencil className="w-4 h-4" />
-                      Edit Problem
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-2"
+                        onClick={() => setEditModalOpen(true)}
+                      >
+                        <Pencil className="w-4 h-4" />
+                        Edit Problem
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-2 border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
+                        onClick={() => setProblemToDelete(selectedProblem)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete
+                      </Button>
+                    </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 mb-4">
                     <StatusBadge kind="difficulty" value={selectedProblem.difficulty} />
@@ -227,9 +270,7 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
                 <div>
                   <h4 className="font-semibold text-slate-800 mb-2">Problem Statement</h4>
                   <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
-                    <p className="text-sm leading-6 text-slate-700 whitespace-pre-wrap">
-                      {selectedProblem.description}
-                    </p>
+                    <RichTextContent content={selectedProblem.description} />
                   </div>
                 </div>
               </div>
@@ -261,6 +302,36 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
         contestId={contestId}
         onSuccess={handleProblemCreated}
       />
+
+      <AlertDialog
+        open={Boolean(problemToDelete)}
+        onOpenChange={(open) => {
+          if (!open && !isDeletingProblem) setProblemToDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete problem?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes "{problemToDelete?.title}" and its test cases. Related submissions and
+              clarifications for this problem will also be removed so the contest data stays consistent.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingProblem}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-rose-600 text-white hover:bg-rose-700"
+              disabled={isDeletingProblem}
+              onClick={(event) => {
+                event.preventDefault();
+                handleDeleteProblem();
+              }}
+            >
+              {isDeletingProblem ? 'Deleting...' : 'Delete Problem'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

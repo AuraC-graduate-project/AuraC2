@@ -3,8 +3,9 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { Textarea } from "./ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { RichTextEditor } from "./RichTextEditor";
+import { richTextToPlainText, sanitizeRichText } from "../../components/richText";
 import { updateProblem } from "../services/api";
 import { ProblemResponse, ProblemUpdateRequest } from "../types/api";
 import { toast } from "sonner";
@@ -45,7 +46,9 @@ export function EditProblemModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.title.trim() || !formData.description.trim()) {
+    const sanitizedDescription = sanitizeRichText(formData.description);
+
+    if (!formData.title.trim() || !richTextToPlainText(sanitizedDescription)) {
       toast.error("Title and description are required");
       return;
     }
@@ -60,7 +63,7 @@ export function EditProblemModal({
       const updated = await updateProblem(problem.id, {
         ...formData,
         title: formData.title.trim(),
-        description: formData.description.trim(),
+        description: sanitizedDescription,
       });
       toast.success("Problem updated successfully");
       onSuccess(updated);
@@ -74,7 +77,7 @@ export function EditProblemModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-[760px]">
         <DialogHeader>
           <DialogTitle className="text-xl text-slate-950">Edit Problem</DialogTitle>
         </DialogHeader>
@@ -94,14 +97,11 @@ export function EditProblemModal({
 
             <div className="space-y-2">
               <Label htmlFor="edit-problem-description">Description</Label>
-              <Textarea
+              <RichTextEditor
                 id="edit-problem-description"
                 value={formData.description}
-                onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-                rows={6}
-                className="resize-y"
+                onChange={(description) => setFormData((prev) => ({ ...prev, description }))}
                 disabled={isSubmitting}
-                required
               />
             </div>
 

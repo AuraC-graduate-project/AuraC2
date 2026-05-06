@@ -24,6 +24,15 @@ interface FormData {
   penaltyMinutes: number;
 }
 
+function toDatetimeLocalInputValue(date: Date): string {
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+}
+
+function minimumStartTime(): string {
+  return toDatetimeLocalInputValue(new Date(Date.now() + 60_000));
+}
+
 export function CreateContestModal({ open, onOpenChange, onSuccess }: CreateContestModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<FormData>({
@@ -64,6 +73,10 @@ export function CreateContestModal({ open, onOpenChange, onSuccess }: CreateCont
       if (isNaN(localDate.getTime())) {
         throw new Error('Invalid start time');
       }
+      if (localDate.getTime() <= Date.now()) {
+        toast.error('Start time must be in the future');
+        return;
+      }
 
       const payload: ContestRequest = {
         title: formData.title.trim(),
@@ -95,7 +108,7 @@ export function CreateContestModal({ open, onOpenChange, onSuccess }: CreateCont
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="text-xl text-slate-950">Create Contest</DialogTitle>
         </DialogHeader>
@@ -134,6 +147,7 @@ export function CreateContestModal({ open, onOpenChange, onSuccess }: CreateCont
               <Input
                 id="startTime"
                 type="datetime-local"
+                min={minimumStartTime()}
                 value={formData.startTime}
                 onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
                 className="h-10"
@@ -183,6 +197,7 @@ export function CreateContestModal({ open, onOpenChange, onSuccess }: CreateCont
                 id="scoreboardFreezeMinutes"
                 type="number"
                 min="0"
+                max={formData.durationMinutes > 0 ? formData.durationMinutes - 1 : undefined}
                 placeholder="e.g., 60 (leave empty for no freeze)"
                 value={formData.scoreboardFreezeMinutes ?? ''}
                 onChange={(e) => {

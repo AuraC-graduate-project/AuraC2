@@ -457,33 +457,15 @@ export function ContestOverview() {// Every render, React runs this function aga
   return (
     <>
       <Card className="border border-gray-200 shadow-sm">
-        <CardHeader className="bg-[#1E293B] text-white py-4">
-          <div className="flex items-center justify-between min-h-[48px]">
-            <div className="flex items-center gap-4">
-              <CardTitle className="leading-none">Contest Overview</CardTitle>
+        <CardHeader className="bg-[#1E293B] py-4 text-white">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Contest lifecycle</p>
+                <CardTitle className="mt-1 leading-none">Contest Overview</CardTitle>
+              </div>
 
-              <ToggleGroup
-                type="single"
-                value={contestType}
-                onValueChange={(v) => v && setContestType(v as ContestTab)}
-                className="bg-slate-700 rounded-lg h-9 px-1 flex items-center"
-              >
-                {(['active', 'upcoming', 'paused', 'ended'] as const).map((t) => (
-                  <ToggleGroupItem
-                    key={t}
-                    value={t}
-                    className="
-                      capitalize h-7 px-3 text-sm text-slate-200
-                      data-[state=on]:bg-white data-[state=on]:text-slate-900 data-[state=on]:shadow
-                    "
-                  >
-                    {t}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
-            </div>
-
-            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
               <span
                 title={`Stream ${connectionState}`}
                 className="flex items-center gap-1.5 text-xs text-slate-200"
@@ -504,7 +486,29 @@ export function ContestOverview() {// Every render, React runs this function aga
                   {lifecycleState ?? contest.status}
                 </Badge>
               )}
+              </div>
             </div>
+
+            <ToggleGroup
+              type="single"
+              value={contestType}
+              onValueChange={(v) => v && setContestType(v as ContestTab)}
+              className="grid h-auto w-full grid-cols-4 rounded-lg bg-slate-700 p-1"
+            >
+              {(['active', 'upcoming', 'paused', 'ended'] as const).map((t) => (
+                <ToggleGroupItem
+                  key={t}
+                  value={t}
+                  className="
+                    h-9 w-full justify-center rounded-md px-2 text-sm capitalize text-slate-200
+                    data-[state=on]:bg-white data-[state=on]:text-slate-900 data-[state=on]:shadow-sm
+                    focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60
+                  "
+                >
+                  {t}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
           </div>
         </CardHeader>
 

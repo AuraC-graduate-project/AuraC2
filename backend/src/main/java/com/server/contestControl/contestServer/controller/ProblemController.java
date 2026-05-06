@@ -34,6 +34,13 @@ public class ProblemController {
         return ResponseEntity.ok(problemService.updateProblem(id, request));
     }
 
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteProblem(@PathVariable Long id) {
+        problemService.deleteProblem(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEAM')")
     public ResponseEntity<ProblemResponse> getProblem(@PathVariable Long id) {

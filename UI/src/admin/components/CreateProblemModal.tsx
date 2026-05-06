@@ -3,8 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { RichTextEditor } from './RichTextEditor';
+import { richTextToPlainText, sanitizeRichText } from '../../components/richText';
 import { createProblem } from '../services/api';
 import { ProblemRequest, ProblemResponse } from '../types/api';
 import { toast } from 'sonner';
@@ -30,7 +31,9 @@ export function CreateProblemModal({ open, onOpenChange, contestId, onSuccess }:
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.title.trim() || !formData.description.trim()) {
+    const sanitizedDescription = sanitizeRichText(formData.description);
+
+    if (!formData.title.trim() || !richTextToPlainText(sanitizedDescription)) {
       toast.error('Title and problem statement are required');
       return;
     }
@@ -46,7 +49,7 @@ export function CreateProblemModal({ open, onOpenChange, contestId, onSuccess }:
         ...formData,
         contestId,
         title: formData.title.trim(),
-        description: formData.description.trim(),
+        description: sanitizedDescription,
       });
       toast.success('Problem created successfully');
       onOpenChange(false);
@@ -69,7 +72,7 @@ export function CreateProblemModal({ open, onOpenChange, contestId, onSuccess }:
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-[760px]">
         <DialogHeader>
           <DialogTitle className="text-xl text-slate-950">Create Problem</DialogTitle>
         </DialogHeader>
@@ -88,13 +91,11 @@ export function CreateProblemModal({ open, onOpenChange, contestId, onSuccess }:
             
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
-              <Textarea
+              <RichTextEditor
                 id="description"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={6}
-                className="resize-y"
-                required
+                onChange={(description) => setFormData((prev) => ({ ...prev, description }))}
+                disabled={isSubmitting}
               />
             </div>
             

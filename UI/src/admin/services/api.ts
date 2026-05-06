@@ -268,6 +268,10 @@ export async function updateProblem(
   });
 }
 
+export async function deleteProblem(id: number): Promise<void> {
+  await apiFetch<void>(`/api/problems/${id}`, { method: "DELETE" });
+}
+
 // -----------------------------
 // Admin / Users
 // -----------------------------
@@ -342,6 +346,10 @@ export async function updateTestCase(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
+}
+
+export async function deleteTestCase(id: number): Promise<void> {
+  await apiFetch<void>(`/api/testcases/${id}`, { method: "DELETE" });
 }
 
 // -----------------------------

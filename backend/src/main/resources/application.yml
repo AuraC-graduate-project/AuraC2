@@ -18,7 +18,7 @@ spring:
     # is safe here.
     open-in-view: false
     hibernate:
-      ddl-auto: ${SPRING_JPA_DDL_AUTO:update}
+      ddl-auto: ${SPRING_JPA_DDL_AUTO:create-drop}
     show-sql: false
     properties:
       hibernate:
@@ -66,6 +66,7 @@ bootstrap:
   admin:
     username: ${BOOTSTRAP_ADMIN_USERNAME:admin}
     credentials-file: ${BOOTSTRAP_ADMIN_CREDENTIALS_FILE:admin-account.txt}
+    reset-existing-password: ${BOOTSTRAP_ADMIN_RESET_EXISTING_PASSWORD:false}
 
 springdoc:
   swagger-ui:

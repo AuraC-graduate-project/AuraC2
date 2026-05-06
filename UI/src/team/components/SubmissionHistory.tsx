@@ -36,6 +36,9 @@ export interface Submission {
 type Props = {
   submissions: Submission[];
   title?: string;
+  isLoading?: boolean;
+  compact?: boolean;
+  className?: string;
 };
 
 function getUserId(): string {
@@ -44,7 +47,13 @@ function getUserId(): string {
   return decodeJwtSubject(token) ?? "unknown";
 }
 
-export function SubmissionHistory({ submissions, title = "Submission History" }: Props) {
+export function SubmissionHistory({
+  submissions,
+  title = "Submission History",
+  isLoading = false,
+  compact = false,
+  className = "",
+}: Props) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Submission | null>(null);
   const userId = getUserId();
@@ -66,70 +75,88 @@ export function SubmissionHistory({ submissions, title = "Submission History" }:
 
   return (
     <>
-      <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 p-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Submissions</p>
-            <h2 className="text-lg font-semibold text-slate-950">{title}</h2>
+      <section
+        className={`flex min-h-0 flex-col bg-white ${
+          compact ? "rounded-none border-0 shadow-none" : "rounded-lg border border-slate-200 shadow-sm"
+        } ${className}`}
+      >
+        <div className={`shrink-0 border-b border-slate-200 bg-slate-50 ${compact ? "p-3" : "p-4"}`}>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Submissions</p>
+              <h2 className={`${compact ? "text-sm" : "text-lg"} font-semibold text-slate-950`}>{title}</h2>
+            </div>
+            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">
+              {submissions.length} total
+            </span>
           </div>
-          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">
-            {submissions.length} total
-          </span>
         </div>
 
-        <div className="overflow-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[90px]">ID</TableHead>
-                <TableHead>Problem</TableHead>
-                <TableHead>Language</TableHead>
-                <TableHead>Verdict</TableHead>
-                <TableHead>Execution</TableHead>
-                <TableHead>Memory</TableHead>
-                <TableHead>Submitted</TableHead>
-                <TableHead className="text-right">Code</TableHead>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {submissions.length === 0 ? (
+        <div className="min-h-0 flex-1 overflow-auto">
+          {compact && !isLoading && submissions.length === 0 ? (
+            <div className="px-3 py-3 text-sm text-slate-500">
+              No submissions yet.
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={8} className="py-8 text-center text-slate-500">
-                    No submissions yet.
-                  </TableCell>
+                  <TableHead className="w-[90px]">ID</TableHead>
+                  <TableHead>Problem</TableHead>
+                  <TableHead>Language</TableHead>
+                  <TableHead>Verdict</TableHead>
+                  {!compact && <TableHead>Execution</TableHead>}
+                  {!compact && <TableHead>Memory</TableHead>}
+                  {!compact && <TableHead>Submitted</TableHead>}
+                  <TableHead className="text-right">Code</TableHead>
                 </TableRow>
-              ) : (
-                submissions.map((submission) => (
-                  <TableRow key={submission.id}>
-                    <TableCell className="font-mono text-sm">{submission.id}</TableCell>
-                    <TableCell className="font-medium text-slate-900">{submission.problem}</TableCell>
-                    <TableCell className="font-mono text-sm">{submission.language}</TableCell>
-                    <TableCell>
-                      <StatusBadge kind="verdict" value={submission.verdict} />
-                    </TableCell>
-                    <TableCell className="text-sm">{submission.executionTime}</TableCell>
-                    <TableCell className="text-sm">{submission.memoryUsage}</TableCell>
-                    <TableCell className="text-sm text-slate-600">{submission.time}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="gap-2"
-                        onClick={() => {
-                          setSelected(submission);
-                          setOpen(true);
-                        }}
-                      >
-                        <Eye className="h-4 w-4" />
-                        View
-                      </Button>
+              </TableHeader>
+
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={compact ? 5 : 8} className={`${compact ? "py-4" : "py-8"} text-center text-slate-500`}>
+                      Loading submissions...
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : submissions.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={compact ? 5 : 8} className={`${compact ? "py-4" : "py-8"} text-center text-slate-500`}>
+                      No submissions yet.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  submissions.map((submission) => (
+                    <TableRow key={submission.id}>
+                      <TableCell className="font-mono text-sm">{submission.id}</TableCell>
+                      <TableCell className="font-medium text-slate-900">{submission.problem}</TableCell>
+                      <TableCell className="font-mono text-sm">{submission.language}</TableCell>
+                      <TableCell>
+                        <StatusBadge kind="verdict" value={submission.verdict} />
+                      </TableCell>
+                      {!compact && <TableCell className="text-sm">{submission.executionTime}</TableCell>}
+                      {!compact && <TableCell className="text-sm">{submission.memoryUsage}</TableCell>}
+                      {!compact && <TableCell className="text-sm text-slate-600">{submission.time}</TableCell>}
+                      <TableCell className="text-right">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-2"
+                          onClick={() => {
+                            setSelected(submission);
+                            setOpen(true);
+                          }}
+                        >
+                          <Eye className="h-4 w-4" />
+                          View
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          )}
         </div>
       </section>
 

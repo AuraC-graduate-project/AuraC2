@@ -166,8 +166,8 @@ export function TeamsView() {
         <CardHeader className="border-b border-slate-200 bg-slate-50">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <CardTitle className="text-2xl text-slate-950">Teams Management</CardTitle>
-              <p className="mt-1 text-sm text-slate-600">Register teams and manage non-admin accounts.</p>
+              <CardTitle className="text-2xl text-slate-950">Teams & Accounts</CardTitle>
+              <p className="mt-1 text-sm text-slate-600">Create team logins and maintain contest user access from one place.</p>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -185,7 +185,7 @@ export function TeamsView() {
                 onClick={() => setRegisterModalOpen(true)}
               >
                 <UserPlus className="w-4 h-4" />
-                Register Team
+                Create Team Account
               </Button>
             </div>
           </div>
@@ -208,11 +208,18 @@ export function TeamsView() {
           </div>
 
           {loading ? (
-            <p className="text-slate-600 py-8 text-center">Loading users...</p>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 py-10 text-center text-sm text-slate-600">
+              Loading team and user accounts...
+            </div>
           ) : users.length === 0 ? (
-            <p className="text-slate-600 py-8 text-center">No users found.</p>
+            <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
+              <p className="font-medium text-slate-800">No user accounts found.</p>
+              <p className="mt-1 text-sm text-slate-500">Create the first team account to start contest access setup.</p>
+            </div>
           ) : filteredUsers.length === 0 ? (
-            <p className="text-slate-600 py-8 text-center">No teams match your search.</p>
+            <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-sm text-slate-500">
+              No accounts match your search.
+            </div>
           ) : (
             <div className="border border-gray-200 rounded-lg overflow-hidden">
               <Table>

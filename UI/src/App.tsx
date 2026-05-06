@@ -27,6 +27,8 @@ export default function App() {
             setToken(r.accessToken);
           }
         }
+      } catch {
+        clearToken();
       } finally {
         setBooting(false);
       }

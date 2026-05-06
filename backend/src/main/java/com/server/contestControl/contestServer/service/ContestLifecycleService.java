@@ -62,7 +62,7 @@ public class ContestLifecycleService {
         Instant actualStart = contest.getActualStartTime();
         Integer durationMinutes = contest.getDurationMinutes();
 
-        log.info(
+        log.debug(
                 "resolveEffectiveEndTime | contestId={} | persistedStatus={} | startTime={} | actualStartTime={} | totalPauseMillis={} | durationMinutes={} | now={}",
                 contest.getId(),
                 contest.getStatus(),
@@ -74,7 +74,7 @@ public class ContestLifecycleService {
         );
 
         if (actualStart == null || durationMinutes == null) {
-            log.info(
+            log.debug(
                     "resolveEffectiveEndTime -> null | contestId={} | reason=actualStartTime_or_duration_is_null | startTime={} | actualStartTime={}",
                     contest.getId(),
                     contest.getStartTime(),
@@ -84,7 +84,7 @@ public class ContestLifecycleService {
         }
 
         if (contest.getStatus() == ContestStatus.PAUSED) {
-            log.info(
+            log.debug(
                     "resolveEffectiveEndTime -> null | contestId={} | reason=paused | startTime={} | actualStartTime={}",
                     contest.getId(),
                     contest.getStartTime(),
@@ -96,7 +96,7 @@ public class ContestLifecycleService {
         long totalPause = contest.getTotalPauseMillis() != null ? contest.getTotalPauseMillis() : 0L;
         Instant effectiveEndTime = actualStart.plusMillis(durationMinutes * 60_000L + totalPause);
 
-        log.info(
+        log.debug(
                 "resolveEffectiveEndTime -> computed | contestId={} | startTime={} | actualStartTime={} | effectiveEndTime={}",
                 contest.getId(),
                 contest.getStartTime(),

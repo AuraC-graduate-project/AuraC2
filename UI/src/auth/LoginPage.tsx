@@ -5,6 +5,7 @@ import { Button } from "./loginui/components/ui/button";
 import { AlertCircle, Lock, ShieldCheck, User } from "lucide-react";
 import { loginApi } from "../services/authApi";
 import { ThemeToggle } from "../components/ThemeToggle";
+import { TechBackground } from "./loginui/components/TechBackground";
 
 export function LoginPage({
   onLoginSuccess,
@@ -34,32 +35,21 @@ export function LoginPage({
   };
 
   return (
-    <main className="aura-login-screen min-h-screen bg-[#f6f8fc] px-4 py-10 text-slate-900">
-      <div className="absolute right-4 top-4">
+    <main className="aura-login-screen relative min-h-screen overflow-hidden bg-[#f6f8fc] px-4 py-10 text-slate-900">
+      <TechBackground />
+      <div className="absolute right-4 top-4 z-20">
         <ThemeToggle />
       </div>
-      <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-6xl items-center justify-center">
-        <section className="aura-login-card grid w-full max-w-5xl overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl md:grid-cols-[0.9fr_1.1fr]">
-          <div className="aura-brand-panel hidden border-r border-slate-200 bg-[#1E3A5F] p-10 text-white md:flex md:flex-col md:justify-between">
-            <div>
-              <div className="mb-8 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-white/10 ring-1 ring-white/20">
+      <div className="relative z-10 mx-auto flex min-h-[calc(100vh-5rem)] max-w-6xl items-center justify-center">
+        <section className="aura-login-card grid w-full max-w-5xl overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl md:grid-cols-[1fr_1.05fr]">
+          <div className="aura-brand-panel relative hidden min-h-[560px] overflow-hidden border-r border-slate-200 bg-[#1E3A5F] p-10 text-white md:flex md:flex-col md:justify-center">
+            <div className="aura-brand-panel-grid" aria-hidden="true" />
+            <div className="relative">
+              <div className="mb-8 inline-flex h-14 w-14 items-center justify-center rounded-lg bg-white/10 ring-1 ring-white/20">
                 <ShieldCheck className="h-6 w-6 text-[#FACC15]" />
               </div>
-              <h1 className="text-4xl font-semibold tracking-normal">AuraC²</h1>
-              <p className="mt-2 text-lg text-blue-100">Aura Contest Control</p>
-              <p className="mt-6 max-w-sm text-sm leading-6 text-slate-200">
-                Secure university programming contest management for contest managers and student teams.
-              </p>
-              <div className="mt-8 grid gap-3">
-                {["Contest lifecycle control", "Admin-issued team accounts", "Judged code submissions"].map((item) => (
-                  <div key={item} className="aura-login-proof rounded-md border border-white/10 bg-white/5 px-4 py-3 text-sm text-blue-50">
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="rounded-lg border border-white/10 bg-white/5 p-4 text-xs uppercase tracking-wide text-blue-100">
-              Authorized access only
+              <h1 className="text-5xl font-semibold tracking-normal">AuraC²</h1>
+              <p className="mt-3 text-xl font-medium text-blue-100">Aura Contest Control</p>
             </div>
           </div>
 
@@ -134,9 +124,6 @@ export function LoginPage({
               </Button>
             </form>
 
-            <div className="mt-8 rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs leading-5 text-slate-500">
-              AuraC² does not provide public registration. Team accounts are issued by the contest administrator.
-            </div>
           </div>
         </section>
       </div>

@@ -33,7 +33,7 @@ public class AdminBootstrapRunner implements ApplicationRunner {
         }
 
         if (adminCount == 1) {
-            rotateExistingAdminPassword();
+            handleExistingAdmin();
             return;
         }
 
@@ -53,7 +53,15 @@ public class AdminBootstrapRunner implements ApplicationRunner {
                 username, getCredentialsPath().toAbsolutePath());
     }
 
-    private void rotateExistingAdminPassword() {
+    private void handleExistingAdmin() {
+        if (!properties.resetExistingPasswordOrDefault()) {
+            User admin = userRepository.findFirstByRole(Role.ADMIN)
+                    .orElseThrow(() -> new IllegalStateException("Admin account lookup failed"));
+            log.info("Bootstrap admin account '{}' already exists; password was not changed.",
+                    admin.getUsername());
+            return;
+        }
+
         User admin = userRepository.findFirstByRole(Role.ADMIN)
                 .orElseThrow(() -> new IllegalStateException("Admin account lookup failed"));
         String rawPassword = UUID.randomUUID().toString();

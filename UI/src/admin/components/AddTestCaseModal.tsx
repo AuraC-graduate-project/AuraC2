@@ -79,7 +79,7 @@ export function AddTestCaseModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="text-xl text-slate-950">Add Test Case</DialogTitle>
           <DialogDescription>
@@ -116,7 +116,7 @@ export function AddTestCaseModal({
               <Checkbox 
                 id="isPublic"
                 checked={isPublic}
-                onCheckedChange={(checked) => setIsPublic(checked as boolean)}
+                onCheckedChange={(checked) => setIsPublic(checked === true)}
                 disabled={isSubmitting}
               />
               <Label 
