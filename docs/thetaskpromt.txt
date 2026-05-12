@@ -1,0 +1,222 @@
+You are working on my AuraC2 project.
+
+Project context:
+AuraC2 is a Spring Boot + React competitive programming contest platform.
+The backend uses:
+- Java 21
+- Spring Boot
+- Spring Security / JWT
+- Spring Data JPA
+- PostgreSQL
+- RabbitMQ
+- Judge0 callbacks
+- Server-Sent Events using SseEmitter
+
+Important existing systems:
+- Submissions are judged asynchronously:
+  SubmissionService -> RabbitMQ -> SubmissionConsumer -> Judge0Service -> Judge0 callbacks -> Judge0CallbackService.
+- Rejudge and force rejudge already exist.
+- Force rejudge safety depends on judgeRunId.
+- Do NOT break judgeRunId behavior.
+- Do NOT break RabbitMQ judging.
+- Do NOT break normal rejudge or force rejudge.
+- Existing SSE is used for contests and clarifications, but not submissions yet.
+
+Your task has 2 phases.
+
+==================================================
+PHASE 1 — Fix invalid submission problem ownership
+==================================================
+
+Current issue:
+When a user submits code, the backend gets the active contest and also loads the problem by request.problemId, but it does not verify that the problem belongs to the active contest.
+
+This means a user could theoretically submit to the active contest while using a problemId from an old or different contest.
+
+Required behavior:
+A submission should only be accepted if:
+1. There is an active contest.
+2. The requested problem exists.
+3. The requested problem belongs to the active contest.
+4. If SubmissionRequest.contestId is present, it should either match the active contest ID or be rejected.
+   - My system is designed to have only one active contest, so the active contest remains the source of truth.
+   - But do not silently accept a mismatched contestId if the client sends one.
+
+Expected backend rule:
+
+if activeContest.id != problem.contest.id:
+    reject the submission with a clear 400 BAD_REQUEST style error.
+
+Also if request.contestId != null and request.contestId != activeContest.id:
+    reject the submission with a clear 400 BAD_REQUEST style error.
+
+Implementation guidance:
+- Start by inspecting SubmissionService.submitCode.
+- Inspect SubmissionRequest.
+- Inspect Problem entity and Contest entity relationships.
+- Add the validation as early as possible before saving the Submission.
+- Use an existing custom ApiException style if available.
+- If no suitable exception exists, create a clean typed exception for invalid submission request instead of throwing generic RuntimeException.
+- Make sure the error response is clear, for example:
+  "Problem does not belong to the active contest"
+  or
+  "Submission contestId does not match the active contest"
+
+Tests required:
+Add or update backend tests to cover:
+1. Valid submission where problem belongs to active contest -> accepted.
+2. Submission where problem belongs to another contest -> rejected.
+3. Submission where request contestId does not match active contest -> rejected.
+4. Existing normal submission flow still works.
+5. RabbitMQ publish still happens only for valid submissions.
+
+Do not change unrelated behavior.
+
+==================================================
+PHASE 2 — Add SSE for submission status updates
+==================================================
+
+Goal:
+Make submission status updates live using the existing SSE architecture.
+
+Currently SSE exists for:
+- contest stream
+- team stream
+- clarification stream
+
+But not for:
+- submission verdict updates
+- submission running/finalized updates
+- rejudge result updates
+
+Required behavior:
+Add SSE so the frontend can receive live submission updates when:
+1. A submission is created as PENDING.
+2. A submission moves to RUNNING.
+3. A submission receives final verdict:
+   ACCEPTED, WRONG_ANSWER, TLE, COMPILATION_ERROR, RUNTIME_ERROR, INTERNAL_ERROR.
+4. A submission is queued for normal rejudge or force rejudge as PENDING_REJUDGE.
+5. A rejudged submission later moves to RUNNING and then final verdict.
+
+Important:
+Do not create a separate "rejudge progress system" yet.
+Just emit normal submission status updates. Since rejudge changes submission verdict too, the same SSE system should cover it.
+
+Suggested backend design:
+Create a submission SSE feature similar to the existing clarification/contest SSE style.
+
+Possible files/classes:
+- SubmissionStreamController
+- SubmissionSseAdapter or SubmissionSsePublisher
+- SubmissionStreamEvent DTO
+- Reuse shared.sse.SseEmitterRegistry and SsePublisher if appropriate.
+
+Suggested endpoints:
+For teams:
+GET /api/submissions/stream
+
+This should stream updates only for the authenticated team’s submissions.
+
+For admins:
+GET /api/admin/submissions/stream
+
+This should stream all submission updates for admin dashboard.
+
+Access rules:
+- Team stream requires TEAM role.
+- Admin stream requires ADMIN role.
+- Use @PreAuthorize.
+- Follow existing security style.
+
+Suggested event name:
+submission-update
+
+Suggested payload fields:
+{
+  "eventType": "CREATED" | "RUNNING" | "FINALIZED" | "REJUDGE_QUEUED",
+  "submissionId": 123,
+  "contestId": 5,
+  "problemId": 10,
+  "userId": 7,
+  "username": "team1",
+  "verdict": "RUNNING",
+  "judgeRunId": 2,
+  "executionTime": null,
+  "memoryUsage": null,
+  "createdAt": "...",
+  "updatedAt": "..."
+}
+
+If updatedAt does not exist on Submission, either omit it or use the event creation time. Do not add unnecessary database fields unless needed.
+
+Where to publish events:
+1. In SubmissionService after a valid submission is saved as PENDING.
+2. In SubmissionConsumer after the submission is changed to RUNNING and saved.
+3. In Judge0CallbackService after final verdict is saved.
+4. In RejudgeService after submissions are marked PENDING_REJUDGE.
+   - Prefer publishing after DB commit where appropriate, especially for rejudge.
+   - Do not publish before the DB state is committed if that can cause frontend to read stale data.
+
+Very important:
+- Keep judgeRunId behavior exactly correct.
+- For PENDING_REJUDGE, SubmissionConsumer must NOT double increment judgeRunId.
+- Old Judge0 callbacks must still be ignored.
+- Do not change force rejudge safety logic.
+- Do not physically cancel Judge0 jobs.
+
+Frontend requirements:
+Add or update React hooks/services to consume submission SSE.
+
+Suggested hook:
+UI/src/hooks/useSubmissionStream.ts
+
+Behavior:
+- Connect to team submission stream for team views.
+- Connect to admin submission stream for admin views.
+- Use the same fetch-event-source style already used by contest/clarification streams if the project already uses it.
+- On submission-update event, update/refetch submission list or patch the matching submission in state.
+- Keep it simple and consistent with existing frontend patterns.
+
+Integrate in:
+- Team submission/problem page where team sees their submissions.
+- Admin submissions view where admin sees all submissions.
+- Rejudge-related admin views if they already reload submissions.
+
+If direct state patching is too risky, use the SSE event to trigger a safe refetch of submissions.
+
+Tests required:
+Backend tests:
+1. Team can open submission stream.
+2. Admin can open admin submission stream.
+3. Unauthorized user cannot open protected streams.
+4. Submission creation publishes a CREATED/PENDING event.
+5. SubmissionConsumer publishes RUNNING event.
+6. Judge0CallbackService publishes FINALIZED event only when all test cases are complete.
+7. RejudgeService publishes REJUDGE_QUEUED/PENDING_REJUDGE event.
+8. Force rejudge still ignores stale callbacks after this change.
+
+Frontend checks:
+1. npm run build.
+2. No TypeScript errors.
+3. Existing contest/clarification SSE still works.
+4. Submission updates appear live or trigger refetch.
+
+Final required commands:
+Run:
+- cd backend && mvn test
+- cd UI && npm run build
+
+If some tests fail because of existing unrelated project problems, report them clearly and explain whether your change caused them.
+
+Deliverables:
+1. Short summary of changed files.
+2. Explanation of the validation fix.
+3. Explanation of the submission SSE flow.
+4. Any limitations left.
+5. Exact test/build results.
+
+Do not over-engineer.
+Do not rewrite unrelated architecture.
+Do not remove existing SSE.
+Do not break rejudge.
+Do not break force rejudge.

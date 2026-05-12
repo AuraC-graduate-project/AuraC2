@@ -1,4 +1,4 @@
-# Rejudge Feature Technical Documentation
+    # Rejudge Feature Technical Documentation
 
 This document describes the rejudge feature added to the backend, including every rejudge-related file created or edited, the request flow, database changes, concurrency protections, callback aggregation, tests, known limitations, and manual testing steps.
 
@@ -33,8 +33,8 @@ The main additions are:
 7. Updated submissions are saved in a transaction.
 8. Submission IDs are republished to RabbitMQ after the database transaction commits.
 9. `SubmissionConsumer` receives each submission ID from RabbitMQ.
-10. `SubmissionConsumer` ignores any message for submissions that are no longer pending.
-11. `SubmissionConsumer` increments `submission.judgeRunId`.
+10. `SubmissionConsumer` ignores any message for submissions that are not `PENDING` or `PENDING_REJUDGE`.
+11. If verdict is `PENDING`, `SubmissionConsumer` increments `submission.judgeRunId`; if verdict is `PENDING_REJUDGE`, it keeps the already-reserved run ID.
 12. `SubmissionConsumer` marks the submission `RUNNING`.
 13. `SubmissionConsumer` fetches all test cases for the problem.
 14. `Judge0Service` sends one Judge0 request per test case.
@@ -1543,6 +1543,182 @@ Expected:
 
 - Submission remains `RUNNING` until all results are recorded.
 - Final verdict is saved only after `receivedCount == expectedTestCaseCount`.
+
+## Force Rejudge
+
+### Overview
+
+Force rejudge is an extension of the normal rejudge system that allows administrators to rejudge submissions even when they are in an active state (PENDING, PENDING_REJUDGE, or RUNNING).
+
+### Difference Between Normal Rejudge and Force Rejudge
+
+Normal rejudge skips submissions that are currently PENDING, PENDING_REJUDGE, or RUNNING. It only requeues submissions that have already reached a final verdict (ACCEPTED, WRONG_ANSWER, TLE, etc.).
+
+Force rejudge includes all submissions regardless of their current state. When a submission is RUNNING, force rejudge logically cancels the old judging attempt immediately by advancing the `judgeRunId` in the database before re-queuing.
+
+### How Force Rejudge Is Safe
+
+Force rejudge does not physically stop Judge0 execution. The external Judge0 process will continue running and eventually call back, but the callback will be discarded because:
+
+1. When force rejudge is called, `RejudgeService` immediately sets `judgeRunId = currentJudgeRunId + 1` on the submission entity.
+2. The old Judge0 process will call back with the old `judgeRunId`.
+3. `Judge0CallbackService.isStaleCallback()` compares the callback's `judgeRunId` with the submission's current `judgeRunId`.
+4. Since they no longer match, the old callback is logged and ignored.
+5. The newly queued run will use the advanced `judgeRunId`, and its callbacks will match.
+
+Example scenario:
+
+- Submission is RUNNING with `judgeRunId = 5`.
+- Admin calls force rejudge.
+- `RejudgeService` sets `judgeRunId = 6`, verdict = PENDING_REJUDGE, clears execution metrics.
+- Old Judge0 callback arrives with `judgeRunId = 5` — rejected as stale.
+- `SubmissionConsumer` picks up the re-queued submission, sees PENDING_REJUDGE, does NOT increment `judgeRunId` again (it was already reserved), sets verdict = RUNNING.
+- New Judge0 callbacks arrive with `judgeRunId = 6` — accepted and processed normally.
+
+### Force Rejudge and SubmissionConsumer Behavior
+
+The `SubmissionConsumer` distinguishes between normal and rejudge submissions:
+
+- If verdict is **PENDING**: this is a normal new submission. The consumer increments `judgeRunId` before dispatching to Judge0.
+- If verdict is **PENDING_REJUDGE**: this is a rejudge submission. The consumer does NOT increment `judgeRunId` (it was already reserved by `RejudgeService`). It only sets verdict to RUNNING and dispatches.
+
+This prevents a double-increment that would cause the consumer's Judge0 callbacks to use a different `judgeRunId` than the one reserved by `RejudgeService`.
+
+### Per-Test-Case Aggregation
+
+Force rejudge still uses the same per-test-case callback aggregation. The submission stays RUNNING until all expected test-case callbacks for the current `judgeRunId` arrive. Out-of-order callbacks are safe.
+
+### API Endpoints
+
+All force rejudge endpoints require the `ADMIN` role and live under:
+
+```text
+/api/admin/rejudge/force
+```
+
+#### POST /api/admin/rejudge/force/submissions
+
+Purpose: force rejudge a specific list of submissions, including active ones.
+
+Request body:
+
+```json
+{
+  "submissionIds": [1, 2, 3]
+}
+```
+
+Example cURL:
+
+```bash
+curl -X POST "http://localhost:8080/api/admin/rejudge/force/submissions" \
+  -H "Authorization: Bearer <admin-access-token>" \
+  -H "Content-Type: application/json" \
+  -d "{\"submissionIds\":[1,2,3]}"
+```
+
+Example response:
+
+```json
+{
+  "scope": "FORCE_SUBMISSIONS",
+  "scopeId": null,
+  "requestedCount": 3,
+  "foundCount": 3,
+  "queuedCount": 3,
+  "skippedCount": 0,
+  "queuedSubmissionIds": [1, 2, 3],
+  "skippedSubmissionIds": [],
+  "missingSubmissionIds": []
+}
+```
+
+Validation rules (same as normal selected rejudge):
+
+- `submissionIds` must not be null.
+- The normalized list must contain at least one positive ID.
+- Null, zero, and negative IDs are ignored during normalization.
+- Duplicate IDs are de-duplicated while preserving first-seen order.
+- Missing IDs are returned in `missingSubmissionIds`.
+
+#### POST /api/admin/rejudge/force/problem/{problemId}
+
+Purpose: force rejudge all submissions for one problem, including active ones.
+
+Example cURL:
+
+```bash
+curl -X POST "http://localhost:8080/api/admin/rejudge/force/problem/10" \
+  -H "Authorization: Bearer <admin-access-token>"
+```
+
+Example response:
+
+```json
+{
+  "scope": "FORCE_PROBLEM",
+  "scopeId": 10,
+  "requestedCount": 42,
+  "foundCount": 42,
+  "queuedCount": 42,
+  "skippedCount": 0,
+  "queuedSubmissionIds": [101, 102, 103],
+  "skippedSubmissionIds": [],
+  "missingSubmissionIds": []
+}
+```
+
+#### POST /api/admin/rejudge/force/contests/{contestId}
+
+Purpose: force rejudge all submissions in a contest, including active ones.
+
+Example cURL:
+
+```bash
+curl -X POST "http://localhost:8080/api/admin/rejudge/force/contests/5" \
+  -H "Authorization: Bearer <admin-access-token>"
+```
+
+Example response:
+
+```json
+{
+  "scope": "FORCE_CONTEST",
+  "scopeId": 5,
+  "requestedCount": 250,
+  "foundCount": 250,
+  "queuedCount": 250,
+  "skippedCount": 0,
+  "queuedSubmissionIds": [201, 202, 203],
+  "skippedSubmissionIds": [],
+  "missingSubmissionIds": []
+}
+```
+
+### Frontend Integration
+
+The admin UI has been updated:
+
+- **Submissions view**: Checkboxes on each row allow selecting submissions. Two action buttons appear when selections exist: "Rejudge" (normal) and "Force Rejudge" (with destructive styling). Force rejudge requires a confirmation dialog.
+- **Rejudge view** (sidebar): A dedicated admin view allows rejudging by problem ID or contest ID, with both normal and force variants. Force rejudge uses confirmation dialogs with clear explanations.
+
+### Known Limitations
+
+- Force rejudge does not cancel external Judge0 jobs physically. It only invalidates their callbacks logically via `judgeRunId` advancement.
+- RabbitMQ publish failure after DB commit is still a limitation unless a durable rejudge job table is added.
+- Old `submission_judge_results` rows from previous runs are not cleaned up. This is future work.
+- Scoreboard recalculation may still be future work if scoreboard is not implemented.
+- No batch pagination for very large force rejudge operations.
+
+### Tests Added
+
+- `normalRejudgeStillSkipsActiveSubmissions` — Verifies normal rejudge skips PENDING/RUNNING/PENDING_REJUDGE.
+- `forceRejudgeQueuesActiveAndFinalSubmissions` — Verifies force rejudge includes all submissions.
+- `forceRejudgeAdvancesJudgeRunIdImmediately` — Verifies `judgeRunId` is incremented during force rejudge.
+- `consumerDoesNotDoubleIncrementPendingRejudge` — Verifies consumer preserves reserved `judgeRunId`.
+- `consumerStillIncrementsNormalPendingSubmission` — Verifies consumer still increments for new submissions.
+- `staleCallbackAfterForceRejudgeIsIgnored` — Verifies old callbacks are discarded.
+- `currentCallbackAfterForceRejudgeIsAccepted` — Verifies new callbacks are processed normally.
 
 ## Verification Commands
 
