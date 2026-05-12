@@ -24,7 +24,7 @@ const menuItems = [
   { icon: Send, label: 'Submissions' },
   { icon: MessageSquare, label: 'Clarifications' },
   { icon: Medal, label: 'Scoreboard (Future)' },
-  { icon: RotateCcw, label: 'Rejudge (Future)' },
+  { icon: RotateCcw, label: 'Rejudge' },
 ];
 
 export function Sidebar({ activeView, setActiveView, onLogout }: SidebarProps) {

@@ -14,8 +14,14 @@ import com.server.contestControl.submissionServer.dto.SubmissionRequest;
 import com.server.contestControl.submissionServer.dto.SubmissionResponse;
 import com.server.contestControl.submissionServer.entity.Submission;
 import com.server.contestControl.submissionServer.enums.Verdict;
+import com.server.contestControl.submissionServer.exceptions.InvalidSubmissionRequestException;
 import com.server.contestControl.submissionServer.queue.submission.SubmissionProducer;
 import com.server.contestControl.submissionServer.repository.SubmissionRepository;
+import com.server.contestControl.submissionServer.sse.SubmissionSsePublisher;
+import com.server.contestControl.submissionServer.sse.SubmissionStreamEvent;
+import com.server.contestControl.submissionServer.sse.SubmissionStreamEventType;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +43,7 @@ public class SubmissionService {
     private final ContestService contestService;
     private final ProblemService problemService;
     private final UserRepository userRepository;
+    private final SubmissionSsePublisher submissionSsePublisher;
 
     @Transactional
     public SubmissionResponse submitCode(SubmissionRequest request) {
@@ -48,6 +55,22 @@ public class SubmissionService {
         Contest contest = contestService.getContestEntity();
         Problem problem = problemService.getProblemEntity(request.problemId());
 
+        // Validate that the request contestId (if provided) matches the active contest.
+        if (request.contestId() != null && !request.contestId().equals(contest.getId())) {
+            throw new InvalidSubmissionRequestException(
+                    "Submission contestId does not match the active contest. " +
+                    "Active contest id=" + contest.getId() + ", requested contestId=" + request.contestId()
+            );
+        }
+
+        // Validate that the problem belongs to the active contest.
+        if (!problem.getContest().getId().equals(contest.getId())) {
+            throw new InvalidSubmissionRequestException(
+                    "Problem does not belong to the active contest. " +
+                    "Problem id=" + problem.getId() + " belongs to contest id=" + problem.getContest().getId() +
+                    ", active contest id=" + contest.getId()
+            );
+        }
 
         Submission submission = Submission.builder()
                 .contest(contest)
@@ -61,6 +84,12 @@ public class SubmissionService {
         submissionRepository.save(submission);
 
         submissionProducer.sendSubmission(submission.getId());
+
+        // Capture event data while the entity is fully loaded inside this transaction,
+        // then publish after commit so the frontend reads the committed state.
+        SubmissionStreamEvent createdEvent =
+                submissionSsePublisher.buildEvent(SubmissionStreamEventType.CREATED, submission);
+        publishAfterCommit(() -> submissionSsePublisher.dispatch(createdEvent));
 
         return SubmissionResponse.fromEntity(submission);
     }
@@ -134,6 +163,19 @@ public class SubmissionService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return auth != null && auth.getAuthorities().stream()
                 .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+    }
+
+    private void publishAfterCommit(Runnable task) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            task.run();
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                task.run();
+            }
+        });
     }
 }
 

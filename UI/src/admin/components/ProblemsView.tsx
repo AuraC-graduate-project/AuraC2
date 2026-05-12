@@ -114,7 +114,7 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
         </CardHeader>
         <CardContent className="p-6">
           <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
-            <p className="text-sm font-medium text-slate-800">No active or upcoming contest found.</p>
+            <p className="text-sm font-medium text-slate-800">No active, paused, or upcoming contest found.</p>
             <p className="mt-1 text-sm text-slate-500">Create or select a contest before adding problems.</p>
           </div>
         </CardContent>

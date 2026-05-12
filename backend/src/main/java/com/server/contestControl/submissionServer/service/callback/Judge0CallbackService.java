@@ -7,11 +7,16 @@ import com.server.contestControl.submissionServer.entity.SubmissionJudgeResult;
 import com.server.contestControl.submissionServer.enums.Verdict;
 import com.server.contestControl.submissionServer.repository.SubmissionJudgeResultRepository;
 import com.server.contestControl.submissionServer.repository.SubmissionRepository;
+import com.server.contestControl.submissionServer.sse.SubmissionSsePublisher;
+import com.server.contestControl.submissionServer.sse.SubmissionStreamEvent;
+import com.server.contestControl.submissionServer.sse.SubmissionStreamEventType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.Comparator;
 import java.util.List;
@@ -24,6 +29,7 @@ public class Judge0CallbackService {
     private final SubmissionRepository submissionRepository;
     private final TestCaseRepository testCaseRepository;
     private final SubmissionJudgeResultRepository judgeResultRepository;
+    private final SubmissionSsePublisher submissionSsePublisher;
 
     @Transactional
     public ResponseEntity<?> handleJudge0Callback(
@@ -117,6 +123,12 @@ public class Judge0CallbackService {
                 expectedTestCaseCount
         );
 
+        // Capture event while still in the transaction so lazy fields are accessible,
+        // then dispatch after commit so the frontend reads the committed verdict.
+        SubmissionStreamEvent finalizedEvent =
+                submissionSsePublisher.buildEvent(SubmissionStreamEventType.FINALIZED, submission);
+        publishAfterCommit(() -> submissionSsePublisher.dispatch(finalizedEvent));
+
         return ResponseEntity.ok("Judging completed -> Verdict = " + finalVerdict);
     }
 
@@ -188,14 +200,34 @@ public class Judge0CallbackService {
             return callbackJudgeRunId;
         }
 
-        return submission.getJudgeRunId() == null ? 0L : submission.getJudgeRunId();
+        return normalizeJudgeRunId(submission.getJudgeRunId());
     }
 
     private boolean isStaleCallback(Submission submission, Long callbackJudgeRunId) {
-        Long currentJudgeRunId = submission.getJudgeRunId();
+        Long currentJudgeRunId = normalizeJudgeRunId(submission.getJudgeRunId());
 
-        return currentJudgeRunId == null
-                || callbackJudgeRunId == null
-                || !callbackJudgeRunId.equals(currentJudgeRunId);
+        if (callbackJudgeRunId == null) {
+            // Legacy callback route (without run id) is accepted only for legacy submissions
+            return currentJudgeRunId != 0L;
+        }
+
+        return !callbackJudgeRunId.equals(currentJudgeRunId);
+    }
+
+    private Long normalizeJudgeRunId(Long judgeRunId) {
+        return judgeRunId == null ? 0L : judgeRunId;
+    }
+
+    private void publishAfterCommit(Runnable task) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            task.run();
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                task.run();
+            }
+        });
     }
 }

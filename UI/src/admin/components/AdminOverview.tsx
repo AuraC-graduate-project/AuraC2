@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { CalendarDays, FileCode2, Inbox, MessageSquare, RefreshCw, Trophy, Users } from "lucide-react";
 import { Button } from "./ui/button";
-import { getActiveContest, getUpcomingContest } from "../services/api";
+import { getActiveContest, getPausedContest, getUpcomingContest } from "../services/api";
 import { ContestResponse } from "../types/api";
 import { StatusBadge } from "../../components/StatusBadge";
 
@@ -72,7 +72,12 @@ export function AdminOverview({ onNavigate }: AdminOverviewProps) {
         const upcoming = await getUpcomingContest();
         setContest(upcoming);
       } catch {
-        setContest(null);
+        try {
+          const paused = await getPausedContest();
+          setContest(paused);
+        } catch {
+          setContest(null);
+        }
       }
     } finally {
       setLoading(false);
@@ -114,7 +119,7 @@ export function AdminOverview({ onNavigate }: AdminOverviewProps) {
               <p className="py-10 text-center text-sm text-slate-500">Loading contest...</p>
             ) : !contest ? (
               <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-                <p className="text-sm font-medium text-slate-800">No active or upcoming contest found.</p>
+                <p className="text-sm font-medium text-slate-800">No active, paused, or upcoming contest found.</p>
                 <p className="mt-1 text-sm text-slate-500">Create a contest from the contest control page.</p>
                 <Button className="mt-5 bg-blue-700 hover:bg-blue-800" onClick={() => onNavigate("Contests")}>
                   Open Contest Control

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
@@ -6,11 +6,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Textarea } from "./ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
-import { getAllClarifications, replyClarification } from "../services/api";
+import { getAllClarifications, getContestClarifications, replyClarification } from "../services/api";
 import { ClarificationResponse, ClarificationType, ReplyRequest, StandardReply } from "../types/api";
 import { MessageSquareReply, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { StatusBadge } from "../../components/StatusBadge";
+import { useClarificationStream } from "../../hooks/useClarificationStream";
 
 type ClarificationFilter = "ALL" | "PENDING" | "ANSWERED" | "PUBLIC" | "PRIVATE";
 
@@ -46,7 +47,7 @@ function getReplyText(item: ClarificationResponse): string {
   return "";
 }
 
-export function ClarificationsView() {
+export function ClarificationsView({ contestId }: { contestId: number | null }) {
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [clarifications, setClarifications] = useState<ClarificationResponse[]>([]);
@@ -57,10 +58,12 @@ export function ClarificationsView() {
   const [standardReply, setStandardReply] = useState<StandardReply>("NO_COMMENT");
   const [customReply, setCustomReply] = useState("");
 
-  const loadClarifications = async () => {
+  const loadClarifications = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getAllClarifications();
+      const data = contestId == null
+        ? await getAllClarifications()
+        : await getContestClarifications(contestId);
       setClarifications(data);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to load clarifications");
@@ -68,11 +71,21 @@ export function ClarificationsView() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [contestId]);
 
   useEffect(() => {
-    loadClarifications();
-  }, []);
+    void loadClarifications();
+  }, [loadClarifications]);
+
+  useClarificationStream({
+    contestId,
+    role: "ADMIN",
+    enabled: contestId != null,
+    onEvent: (event) => {
+      if (event.contestId !== contestId) return;
+      void loadClarifications();
+    },
+  });
 
   const filteredClarifications = useMemo(() => {
     if (statusFilter === "ALL") return clarifications;

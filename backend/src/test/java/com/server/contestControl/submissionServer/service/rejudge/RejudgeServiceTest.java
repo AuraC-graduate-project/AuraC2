@@ -8,6 +8,7 @@ import com.server.contestControl.submissionServer.enums.Verdict;
 import com.server.contestControl.submissionServer.exceptions.InvalidRejudgeRequestException;
 import com.server.contestControl.submissionServer.queue.submission.SubmissionProducer;
 import com.server.contestControl.submissionServer.repository.SubmissionRepository;
+import com.server.contestControl.submissionServer.sse.SubmissionSsePublisher;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -36,6 +37,9 @@ class RejudgeServiceTest {
 
     @Mock
     private SubmissionProducer submissionProducer;
+
+    @Mock
+    private SubmissionSsePublisher submissionSsePublisher;
 
     @InjectMocks
     private RejudgeService rejudgeService;
@@ -104,6 +108,88 @@ class RejudgeServiceTest {
         assertThat(response.queuedSubmissionIds()).containsExactly(21L);
 
         verify(submissionProducer).sendSubmission(21L);
+    }
+
+    // ─── Test 1: Normal rejudge still skips active submissions ─────────────────
+
+    @Test
+    void normalRejudgeStillSkipsActiveSubmissions() {
+        Submission pending = submission(1L, Verdict.PENDING);
+        Submission pendingRejudge = submission(2L, Verdict.PENDING_REJUDGE);
+        Submission running = submission(3L, Verdict.RUNNING);
+        Submission accepted = submission(4L, Verdict.ACCEPTED);
+        Submission wrongAnswer = submission(5L, Verdict.WRONG_ANSWER);
+
+        when(submissionRepository.findAllById(List.of(1L, 2L, 3L, 4L, 5L)))
+                .thenReturn(List.of(pending, pendingRejudge, running, accepted, wrongAnswer));
+
+        RejudgeResponse response = rejudgeService.rejudgeSelectedSubmissions(
+                List.of(1L, 2L, 3L, 4L, 5L)
+        );
+
+        assertThat(response.queuedSubmissionIds()).containsExactly(4L, 5L);
+        assertThat(response.skippedSubmissionIds()).containsExactly(1L, 2L, 3L);
+
+        verify(submissionProducer).sendSubmission(4L);
+        verify(submissionProducer).sendSubmission(5L);
+        verify(submissionProducer, never()).sendSubmission(1L);
+        verify(submissionProducer, never()).sendSubmission(2L);
+        verify(submissionProducer, never()).sendSubmission(3L);
+    }
+
+    // ─── Test 2: Force rejudge queues active AND final submissions ───────────
+
+    @Test
+    void forceRejudgeQueuesActiveAndFinalSubmissions() {
+        Submission pending = submission(1L, Verdict.PENDING);
+        Submission pendingRejudge = submission(2L, Verdict.PENDING_REJUDGE);
+        Submission running = submission(3L, Verdict.RUNNING);
+        Submission accepted = submission(4L, Verdict.ACCEPTED);
+
+        when(submissionRepository.findAllById(List.of(1L, 2L, 3L, 4L)))
+                .thenReturn(List.of(pending, pendingRejudge, running, accepted));
+
+        RejudgeResponse response = rejudgeService.forceRejudgeSelectedSubmissions(
+                List.of(1L, 2L, 3L, 4L)
+        );
+
+        assertThat(response.queuedSubmissionIds()).containsExactly(1L, 2L, 3L, 4L);
+        assertThat(response.skippedSubmissionIds()).isEmpty();
+        assertThat(response.scope()).isEqualTo("FORCE_SUBMISSIONS");
+
+        // All should be marked PENDING_REJUDGE
+        assertThat(pending.getVerdict()).isEqualTo(Verdict.PENDING_REJUDGE);
+        assertThat(pendingRejudge.getVerdict()).isEqualTo(Verdict.PENDING_REJUDGE);
+        assertThat(running.getVerdict()).isEqualTo(Verdict.PENDING_REJUDGE);
+        assertThat(accepted.getVerdict()).isEqualTo(Verdict.PENDING_REJUDGE);
+
+        verify(submissionProducer).sendSubmission(1L);
+        verify(submissionProducer).sendSubmission(2L);
+        verify(submissionProducer).sendSubmission(3L);
+        verify(submissionProducer).sendSubmission(4L);
+    }
+
+    // ─── Test 3: Force rejudge advances judgeRunId immediately ───────────────
+
+    @Test
+    void forceRejudgeAdvancesJudgeRunIdImmediately() {
+        Submission running = Submission.builder()
+                .id(10L)
+                .verdict(Verdict.RUNNING)
+                .executionTime(200)
+                .memoryUsage(512)
+                .judgeRunId(5L)
+                .build();
+
+        when(submissionRepository.findAllById(List.of(10L)))
+                .thenReturn(List.of(running));
+
+        rejudgeService.forceRejudgeSelectedSubmissions(List.of(10L));
+
+        assertThat(running.getVerdict()).isEqualTo(Verdict.PENDING_REJUDGE);
+        assertThat(running.getJudgeRunId()).isEqualTo(6L);
+        assertThat(running.getExecutionTime()).isNull();
+        assertThat(running.getMemoryUsage()).isNull();
     }
 
     private Submission submission(Long id, Verdict verdict) {

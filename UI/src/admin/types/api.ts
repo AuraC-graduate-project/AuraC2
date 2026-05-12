@@ -142,6 +142,22 @@ export interface ClarificationResponse {
   username: string;
 }
 
+export type ClarificationStreamEventType =
+  | 'CLARIFICATION_CREATED'
+  | 'CLARIFICATION_REPLIED'
+  | 'CLARIFICATION_PUBLIC_ANSWERED';
+
+export interface ClarificationStreamEvent {
+  type: ClarificationStreamEventType;
+  contestId: number;
+  clarificationId: number;
+  problemId: number | null;
+  teamUserId: number;
+  status: ClarificationStatus;
+  replyType: ClarificationType | null;
+  occurredAt: string;
+}
+
 export interface RegisterRequest {
   username: string;
   password: string;
@@ -183,6 +199,7 @@ export type Verdict =
   | 'COMPILATION_ERROR'
   | 'INTERNAL_ERROR'
   | 'PENDING'
+  | 'PENDING_REJUDGE'
   | 'RUNNING';
 
 export interface SubmissionResponse {
@@ -196,4 +213,45 @@ export interface SubmissionResponse {
   createdAt: string; // ISO
   executionTime: number | null;
   memoryUsage: number | null;
+}
+
+// -----------------------------
+// Submission SSE
+// -----------------------------
+
+export type SubmissionStreamEventType =
+  | 'CREATED'
+  | 'RUNNING'
+  | 'FINALIZED'
+  | 'REJUDGE_QUEUED';
+
+export interface SubmissionStreamEvent {
+  eventType: SubmissionStreamEventType;
+  submissionId: number;
+  contestId: number;
+  problemId: number;
+  userId: number;
+  username: string;
+  verdict: Verdict | string;
+  judgeRunId: number;
+  executionTime: number | null;
+  memoryUsage: number | null;
+  createdAt: string;
+  occurredAt: string;
+}
+
+// -----------------------------
+// Rejudge
+// -----------------------------
+
+export interface RejudgeResponse {
+  scope: string;
+  scopeId: number | null;
+  requestedCount: number;
+  foundCount: number;
+  queuedCount: number;
+  skippedCount: number;
+  queuedSubmissionIds: number[];
+  skippedSubmissionIds: number[];
+  missingSubmissionIds: number[];
 }

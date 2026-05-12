@@ -2,7 +2,7 @@ package com.server.contestControl.contestServer.controller;
 
 import com.server.contestControl.authServer.entity.User;
 import com.server.contestControl.contestServer.sse.clarification.ClarificationSseRegistry;
-import com.server.contestControl.contestServer.sse.team.TeamSseRegistry;
+import com.server.contestControl.contestServer.sse.clarification.ClarificationTeamSseRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -23,7 +23,7 @@ public class ClarificationStreamController {
     private static final long STREAM_TIMEOUT_MILLIS = 30L * 60_000L;
 
     private final ClarificationSseRegistry clarificationSseRegistry;
-    private final TeamSseRegistry teamSseRegistry;
+    private final ClarificationTeamSseRegistry clarificationTeamSseRegistry;
 
     @PreAuthorize("hasRole('TEAM')")
     @GetMapping(value = "/my/stream/{contestId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -34,9 +34,7 @@ public class ClarificationStreamController {
         Long teamId = user.getId();
         SseEmitter emitter = new SseEmitter(STREAM_TIMEOUT_MILLIS);
 
-        // Register team for this contest (use composite key if needed)
-        String registrationKey = "clarif_team_" + contestId + "_" + teamId;
-        teamSseRegistry.register(teamId, emitter);
+        clarificationTeamSseRegistry.register(contestId, teamId, emitter);
 
         log.debug("[ClarificationStreamController] Team {} connected to clarification stream for contest {}", 
                   teamId, contestId);

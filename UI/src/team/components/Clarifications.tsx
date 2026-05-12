@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
@@ -10,6 +10,7 @@ import { ClarificationResponse, StandardReply } from "../../admin/types/api";
 import { StatusBadge } from "../../components/StatusBadge";
 import { getStoredToken } from "../../auth/tokenStore";
 import { decodeJwtSubject } from "../../auth/jwt";
+import { useClarificationStream } from "../../hooks/useClarificationStream";
 
 interface ClarificationsProps {
   contestId: number | null;
@@ -137,7 +138,7 @@ export function Clarifications({ contestId, problems }: ClarificationsProps) {
     [clarifications]
   );
 
-  const loadClarifications = async () => {
+  const loadClarifications = useCallback(async () => {
     if (!contestId) {
       setClarifications([]);
       return;
@@ -154,11 +155,21 @@ export function Clarifications({ contestId, problems }: ClarificationsProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [contestId]);
 
   useEffect(() => {
-    loadClarifications();
-  }, [contestId]);
+    void loadClarifications();
+  }, [loadClarifications]);
+
+  useClarificationStream({
+    contestId,
+    role: "TEAM",
+    enabled: contestId != null,
+    onEvent: (event) => {
+      if (event.contestId !== contestId) return;
+      void loadClarifications();
+    },
+  });
 
   const handleSubmit = async () => {
     if (!contestId) return;

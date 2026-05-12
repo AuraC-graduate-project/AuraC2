@@ -10,6 +10,9 @@ import com.server.contestControl.submissionServer.enums.Verdict;
 import com.server.contestControl.submissionServer.exceptions.InvalidRejudgeRequestException;
 import com.server.contestControl.submissionServer.queue.submission.SubmissionProducer;
 import com.server.contestControl.submissionServer.repository.SubmissionRepository;
+import com.server.contestControl.submissionServer.sse.SubmissionSsePublisher;
+import com.server.contestControl.submissionServer.sse.SubmissionStreamEvent;
+import com.server.contestControl.submissionServer.sse.SubmissionStreamEventType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -38,6 +41,7 @@ public class RejudgeService {
     private final ProblemRepository problemRepository;
     private final ContestRepository contestRepository;
     private final SubmissionProducer submissionProducer;
+    private final SubmissionSsePublisher submissionSsePublisher;
 
     @Transactional
     public RejudgeResponse rejudgeSelectedSubmissions(List<Long> submissionIds) {
@@ -104,22 +108,105 @@ public class RejudgeService {
         return response;
     }
 
+    // ─── Force Rejudge Public Methods ───────────────────────────────────────────
+
+    @Transactional
+    public RejudgeResponse forceRejudgeSelectedSubmissions(List<Long> submissionIds) {
+        List<Long> requestedIds = normalizeSubmissionIds(submissionIds);
+        log.info("Starting FORCE selected submission rejudge. requestedCount={}", requestedIds.size());
+
+        List<Submission> submissions = submissionRepository.findAllById(requestedIds);
+        RejudgeResponse response = rejudgeSubmissions("FORCE_SUBMISSIONS", null, requestedIds, submissions, true);
+
+        log.info(
+                "FORCE selected submission rejudge prepared. requestedCount={} foundCount={} queuedCount={} skippedCount={} missingCount={}",
+                response.requestedCount(),
+                response.foundCount(),
+                response.queuedCount(),
+                response.skippedCount(),
+                response.missingSubmissionIds().size()
+        );
+        return response;
+    }
+
+    @Transactional
+    public RejudgeResponse forceRejudgeProblem(Long problemId) {
+        if (!problemRepository.existsById(problemId)) {
+            throw new ProblemNotFoundException(problemId);
+        }
+
+        log.info("Starting FORCE problem rejudge. problemId={}", problemId);
+        List<Submission> submissions = submissionRepository.findAllByProblem_Id(problemId);
+        List<Long> requestedIds = submissions.stream()
+                .map(Submission::getId)
+                .toList();
+
+        RejudgeResponse response = rejudgeSubmissions("FORCE_PROBLEM", problemId, requestedIds, submissions, true);
+        log.info(
+                "FORCE problem rejudge prepared. problemId={} foundCount={} queuedCount={} skippedCount={}",
+                problemId,
+                response.foundCount(),
+                response.queuedCount(),
+                response.skippedCount()
+        );
+        return response;
+    }
+
+    @Transactional
+    public RejudgeResponse forceRejudgeContest(Long contestId) {
+        if (!contestRepository.existsById(contestId)) {
+            throw new ContestNotFoundException(contestId);
+        }
+
+        log.info("Starting FORCE contest-wide rejudge. contestId={}", contestId);
+        List<Submission> submissions = submissionRepository.findAllByContest_Id(contestId);
+        List<Long> requestedIds = submissions.stream()
+                .map(Submission::getId)
+                .toList();
+
+        RejudgeResponse response = rejudgeSubmissions("FORCE_CONTEST", contestId, requestedIds, submissions, true);
+        log.info(
+                "FORCE contest rejudge prepared. contestId={} foundCount={} queuedCount={} skippedCount={}",
+                contestId,
+                response.foundCount(),
+                response.queuedCount(),
+                response.skippedCount()
+        );
+        return response;
+    }
+
+    // ─── Core Rejudge Logic ──────────────────────────────────────────────────────
+
     private RejudgeResponse rejudgeSubmissions(
             String scope,
             Long scopeId,
             List<Long> requestedIds,
             List<Submission> submissions
     ) {
+        return rejudgeSubmissions(scope, scopeId, requestedIds, submissions, false);
+    }
+
+    private RejudgeResponse rejudgeSubmissions(
+            String scope,
+            Long scopeId,
+            List<Long> requestedIds,
+            List<Submission> submissions,
+            boolean force
+    ) {
         List<Submission> submissionsToQueue = new ArrayList<>();
         List<Long> queuedIds = new ArrayList<>();
         List<Long> skippedIds = new ArrayList<>();
 
         for (Submission submission : submissions) {
-            if (ACTIVE_VERDICTS.contains(submission.getVerdict())) {
+            if (!force && ACTIVE_VERDICTS.contains(submission.getVerdict())) {
                 skippedIds.add(submission.getId());
                 continue;
             }
 
+            // Reserve the next judgeRunId immediately so old callbacks become stale
+            Long currentRunId = submission.getJudgeRunId();
+            Long nextJudgeRunId = (currentRunId == null) ? 1L : currentRunId + 1;
+            submission.setJudgeRunId(nextJudgeRunId);
             submission.setVerdict(Verdict.PENDING_REJUDGE);
             submission.setExecutionTime(null);
             submission.setMemoryUsage(null);
@@ -128,8 +215,16 @@ public class RejudgeService {
         }
 
         if (!submissionsToQueue.isEmpty()) {
+            // Capture SSE event data while entities are loaded (still in transaction).
+            List<SubmissionStreamEvent> sseEvents = submissionsToQueue.stream()
+                    .map(s -> submissionSsePublisher.buildEvent(SubmissionStreamEventType.REJUDGE_QUEUED, s))
+                    .toList();
+
             submissionRepository.saveAll(submissionsToQueue);
             publishAfterCommit(queuedIds);
+
+            // Dispatch SSE events after the DB commit so frontend reads committed state.
+            registerAfterCommit(() -> sseEvents.forEach(submissionSsePublisher::dispatch));
         }
 
         return new RejudgeResponse(
@@ -179,17 +274,19 @@ public class RejudgeService {
     }
 
     private void publishAfterCommit(List<Long> submissionIds) {
-        Runnable publisher = () -> publishSubmissions(submissionIds);
+        registerAfterCommit(() -> publishSubmissions(submissionIds));
+    }
 
+    private void registerAfterCommit(Runnable task) {
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            publisher.run();
+            task.run();
             return;
         }
 
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                publisher.run();
+                task.run();
             }
         });
     }

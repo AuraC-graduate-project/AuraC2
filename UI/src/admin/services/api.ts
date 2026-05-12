@@ -5,6 +5,7 @@ import {
   ProblemRequest,
   ProblemUpdateRequest,
   ProblemResponse,
+  RejudgeResponse,
   SubmissionResponse,
   UpdatePasswordRequest,
   UpdateUserNameRequest,
@@ -316,6 +317,50 @@ export async function deleteUser(userId: number): Promise<void> {
 
 export async function getAllSubmissions(): Promise<SubmissionResponse[]> {
   return apiFetch<SubmissionResponse[]>(`/api/admin/users/submissions`);
+}
+
+// -----------------------------
+// Rejudge endpoints
+// -----------------------------
+
+export async function rejudgeSubmissions(submissionIds: number[]): Promise<RejudgeResponse> {
+  return apiFetch<RejudgeResponse>("/api/admin/rejudge/submissions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ submissionIds }),
+  });
+}
+
+export async function rejudgeProblem(problemId: number): Promise<RejudgeResponse> {
+  return apiFetch<RejudgeResponse>(`/api/admin/rejudge/problem/${problemId}`, {
+    method: "POST",
+  });
+}
+
+export async function rejudgeContest(contestId: number): Promise<RejudgeResponse> {
+  return apiFetch<RejudgeResponse>(`/api/admin/rejudge/contests/${contestId}`, {
+    method: "POST",
+  });
+}
+
+export async function forceRejudgeSubmissions(submissionIds: number[]): Promise<RejudgeResponse> {
+  return apiFetch<RejudgeResponse>("/api/admin/rejudge/force/submissions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ submissionIds }),
+  });
+}
+
+export async function forceRejudgeProblem(problemId: number): Promise<RejudgeResponse> {
+  return apiFetch<RejudgeResponse>(`/api/admin/rejudge/force/problem/${problemId}`, {
+    method: "POST",
+  });
+}
+
+export async function forceRejudgeContest(contestId: number): Promise<RejudgeResponse> {
+  return apiFetch<RejudgeResponse>(`/api/admin/rejudge/force/contests/${contestId}`, {
+    method: "POST",
+  });
 }
 
 // -----------------------------

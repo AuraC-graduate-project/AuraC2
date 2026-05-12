@@ -1,13 +1,24 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { Checkbox } from './ui/checkbox';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from './ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
 import {
   Table,
   TableBody,
@@ -16,11 +27,18 @@ import {
   TableHeader,
   TableRow,
 } from './ui/table';
-import { getAllSubmissions, getAllUsers, getProblemsByContest } from '../services/api';
-import { ProblemResponse, SubmissionResponse, UserResponse } from '../types/api';
-import { RefreshCw, Eye, Search } from 'lucide-react';
+import {
+  getAllSubmissions,
+  getAllUsers,
+  getProblemsByContest,
+  rejudgeSubmissions,
+  forceRejudgeSubmissions,
+} from '../services/api';
+import { ProblemResponse, RejudgeResponse, SubmissionResponse, UserResponse } from '../types/api';
+import { RefreshCw, Eye, Search, RotateCcw, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { StatusBadge, formatStatusText, normalizeVerdict } from '../../components/StatusBadge';
+import { useSubmissionStream } from '../../hooks/useSubmissionStream';
 
 function formatDateTime(iso: string): string {
   if (!iso) return '-';
@@ -32,6 +50,7 @@ function formatDateTime(iso: string): string {
 export function SubmissionsView() {
   const [loading, setLoading] = useState(true);
   const [submissions, setSubmissions] = useState<SubmissionResponse[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const [users, setUsers] = useState<UserResponse[]>([]);
   const [problemMapByContest, setProblemMapByContest] = useState<Record<number, Record<number, ProblemResponse>>>({});
@@ -41,6 +60,20 @@ export function SubmissionsView() {
 
   const [codeOpen, setCodeOpen] = useState(false);
   const [codeItem, setCodeItem] = useState<SubmissionResponse | null>(null);
+
+  // Selection & rejudge state
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [rejudging, setRejudging] = useState(false);
+  const [forceDialogOpen, setForceDialogOpen] = useState(false);
+
+  // Live submission updates via SSE — any verdict change triggers a safe refetch.
+  useSubmissionStream({
+    role: "ADMIN",
+    enabled: true,
+    onEvent: () => {
+      setRefreshKey((k) => k + 1);
+    },
+  });
 
   const userMap = useMemo(() => {
     const map: Record<number, UserResponse> = {};
@@ -87,7 +120,8 @@ export function SubmissionsView() {
 
   useEffect(() => {
     load();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshKey]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -128,6 +162,64 @@ export function SubmissionsView() {
     setCodeOpen(true);
   };
 
+  // ─── Selection helpers ───────────────────────────────────────────────────────
+
+  const toggleSelect = useCallback((id: number) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback(() => {
+    if (selected.size === filtered.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(filtered.map(s => s.id)));
+    }
+  }, [filtered, selected.size]);
+
+  const showRejudgeResult = (res: RejudgeResponse, force: boolean) => {
+    const label = force ? 'Force rejudge' : 'Rejudge';
+    toast.success(
+      `${label}: ${res.queuedCount} queued, ${res.skippedCount} skipped` +
+        (res.missingSubmissionIds.length > 0
+          ? `, ${res.missingSubmissionIds.length} missing`
+          : '')
+    );
+    setSelected(new Set());
+    load();
+  };
+
+  const handleRejudge = async () => {
+    if (selected.size === 0) return;
+    setRejudging(true);
+    try {
+      const res = await rejudgeSubmissions(Array.from(selected));
+      showRejudgeResult(res, false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Rejudge failed');
+    } finally {
+      setRejudging(false);
+    }
+  };
+
+  const handleForceRejudge = async () => {
+    if (selected.size === 0) return;
+    setRejudging(true);
+    setForceDialogOpen(false);
+    try {
+      const res = await forceRejudgeSubmissions(Array.from(selected));
+      showRejudgeResult(res, true);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Force rejudge failed');
+    } finally {
+      setRejudging(false);
+    }
+  };
+
   return (
     <>
       <Card className="border border-gray-200 shadow-sm">
@@ -137,15 +229,41 @@ export function SubmissionsView() {
               <CardTitle className="text-2xl text-slate-950">Submissions</CardTitle>
               <p className="mt-1 text-sm text-slate-600">Review aggregate verdicts and submitted source code.</p>
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-2 bg-white"
-              onClick={load}
-            >
-              <RefreshCw className="w-4 h-4" />
-              Refresh
-            </Button>
+            <div className="flex items-center gap-2">
+              {selected.size > 0 && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-2 bg-white"
+                    disabled={rejudging}
+                    onClick={handleRejudge}
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    {rejudging ? 'Rejudging...' : `Rejudge (${selected.size})`}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="gap-2"
+                    disabled={rejudging}
+                    onClick={() => setForceDialogOpen(true)}
+                  >
+                    <Zap className="w-4 h-4" />
+                    {rejudging ? 'Rejudging...' : `Force Rejudge (${selected.size})`}
+                  </Button>
+                </>
+              )}
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-2 bg-white"
+                onClick={load}
+              >
+                <RefreshCw className="w-4 h-4" />
+                Refresh
+              </Button>
+            </div>
           </div>
         </CardHeader>
 
@@ -189,6 +307,12 @@ export function SubmissionsView() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-[50px]">
+                      <Checkbox
+                        checked={filtered.length > 0 && selected.size === filtered.length}
+                        onCheckedChange={toggleSelectAll}
+                      />
+                    </TableHead>
                     <TableHead className="w-[90px]">ID</TableHead>
                     <TableHead className="w-[110px]">Contest</TableHead>
                     <TableHead>Problem</TableHead>
@@ -207,6 +331,12 @@ export function SubmissionsView() {
                     const p = problemMapByContest[s.contestId]?.[s.problemId];
                     return (
                       <TableRow key={s.id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selected.has(s.id)}
+                            onCheckedChange={() => toggleSelect(s.id)}
+                          />
+                        </TableCell>
                         <TableCell className="font-mono text-sm">{s.id}</TableCell>
                         <TableCell className="font-mono text-sm">{s.contestId}</TableCell>
                         <TableCell>
@@ -256,6 +386,33 @@ export function SubmissionsView() {
           )}
         </CardContent>
       </Card>
+
+      {/* Force Rejudge Confirmation Dialog */}
+      <AlertDialog open={forceDialogOpen} onOpenChange={setForceDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Force Rejudge {selected.size} submission{selected.size !== 1 ? 's' : ''}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Force rejudge includes submissions that are currently pending, running, or awaiting rejudge.
+              It logically cancels any in-progress judging by advancing the run ID — old Judge0 callbacks
+              will be discarded. External Judge0 jobs are not physically stopped. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={rejudging}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-rose-600 text-white hover:bg-rose-700"
+              disabled={rejudging}
+              onClick={(e) => {
+                e.preventDefault();
+                handleForceRejudge();
+              }}
+            >
+              {rejudging ? 'Force Rejudging...' : 'Force Rejudge'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={codeOpen} onOpenChange={setCodeOpen}>
         <DialogContent className="max-w-4xl">

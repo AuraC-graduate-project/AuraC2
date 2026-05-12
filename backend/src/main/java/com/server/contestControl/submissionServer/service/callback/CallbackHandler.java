@@ -26,4 +26,13 @@ public class CallbackHandler {
     ) {
         return callbackService.handleJudge0Callback(submissionId, judgeRunId, testCaseNumber, response);
     }
+
+    @PutMapping("/{submissionId}/{testCaseNumber}")
+    public ResponseEntity<?> handleLegacyJudge0Callback(
+            @PathVariable Long submissionId,
+            @PathVariable int testCaseNumber,
+            @RequestBody Judge0Response response
+    ) {
+        return callbackService.handleJudge0Callback(submissionId, null, testCaseNumber, response);
+    }
 }

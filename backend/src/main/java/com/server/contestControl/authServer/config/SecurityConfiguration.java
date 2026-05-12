@@ -74,7 +74,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/clarifications/admin/stream/**").hasRole("ADMIN")
                         .requestMatchers("/api/clarifications/my/**").hasRole("TEAM")
                         .requestMatchers("/api/clarifications/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/clarifications").hasRole("TEAM")
+                        .requestMatchers(HttpMethod.POST, "/api/clarifications").hasRole("TEAM")
 
                         .anyRequest().authenticated()
                 )

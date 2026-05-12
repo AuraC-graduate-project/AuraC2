@@ -27,6 +27,7 @@ import {
   getMySubmissions,
   getMyAllSubmissions,
 } from "./services/teamApi";
+import { useSubmissionStream } from "../hooks/useSubmissionStream";
 
 type WorkspaceMode = "balanced" | "problem" | "code";
 
@@ -96,6 +97,15 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [submissionRefreshKey, setSubmissionRefreshKey] = useState(0);
+
+  // Live submission updates via SSE — any verdict change triggers a safe refetch.
+  useSubmissionStream({
+    role: "TEAM",
+    enabled: true,
+    onEvent: () => {
+      setSubmissionRefreshKey((k) => k + 1);
+    },
+  });
 
   const loadProblems = useCallback(async () => {
     setLoadingProblems(true);

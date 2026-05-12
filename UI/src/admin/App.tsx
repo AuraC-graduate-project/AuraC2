@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Sidebar } from "./components/Sidebar";
 import { TopNav } from "./components/TopNav";
 import { AdminOverview } from "./components/AdminOverview";
@@ -8,36 +8,66 @@ import { TeamsView } from "./components/TeamsView";
 import { SubmissionsView } from "./components/SubmissionsView";
 import { ClarificationsView } from "./components/ClarificationsView";
 import { getActiveContest, getPausedContest, getUpcomingContest } from "./services/api";
-import { ContestResponse } from "./types/api";
+import { ContestResponse, ContestStreamSnapshot, ContestStreamUpdate } from "./types/api";
 import { Toaster } from "./components/ui/sonner";
 import { UnderDevelopmentPage } from "../components/UnderDevelopmentPage";
+import { RejudgeView } from "./components/RejudgeView";
+import { useContestStream } from "../hooks/useContestStream";
+
+function selectAdminContest(snapshot: ContestStreamSnapshot): ContestResponse | null {
+  return snapshot.active ?? snapshot.paused ?? snapshot.upcoming ?? null;
+}
 
 export default function AdminApp({ onLogout }: { onLogout: () => void }) {
   const [activeView, setActiveView] = useState("Overview");
   const [currentContest, setCurrentContest] =
     useState<ContestResponse | null>(null);
 
+  const handleContestSnapshot = useCallback((snapshot: ContestStreamSnapshot) => {
+    setCurrentContest(selectAdminContest(snapshot));
+  }, []);
+
+  const handleContestUpdate = useCallback((update: ContestStreamUpdate) => {
+    setCurrentContest((prev) => {
+      if (!prev || prev.id === update.snapshot.id) {
+        return update.snapshot;
+      }
+      return prev;
+    });
+  }, []);
+
+  useContestStream({
+    onSnapshot: handleContestSnapshot,
+    onContestUpdate: handleContestUpdate,
+  });
+
   useEffect(() => {
     if (activeView === "Overview") return;
+
+    let mounted = true;
 
     (async () => {
       try {
         const active = await getActiveContest();
-        setCurrentContest(active);
+        if (mounted) setCurrentContest(active);
       } catch {
         try {
-          const upcoming = await getUpcomingContest();
-          setCurrentContest(upcoming);
+          const paused = await getPausedContest();
+          if (mounted) setCurrentContest(paused);
         } catch {
           try {
-            const paused = await getPausedContest();
-            setCurrentContest(paused);
+            const upcoming = await getUpcomingContest();
+            if (mounted) setCurrentContest(upcoming);
           } catch {
-            setCurrentContest(null);
+            if (mounted) setCurrentContest(null);
           }
         }
       }
     })();
+
+    return () => {
+      mounted = false;
+    };
   }, [activeView]);
 
   const renderView = () => {
@@ -58,7 +88,7 @@ export default function AdminApp({ onLogout }: { onLogout: () => void }) {
         return <SubmissionsView />;
 
       case "Clarifications":
-        return <ClarificationsView />;
+        return <ClarificationsView contestId={currentContest?.id ?? null} />;
 
       case "Scoreboard (Future)":
         return (
@@ -75,20 +105,8 @@ export default function AdminApp({ onLogout }: { onLogout: () => void }) {
           />
         );
 
-      case "Rejudge (Future)":
-        return (
-          <UnderDevelopmentPage
-            title="Rejudge"
-            subtitle="Future judging operations"
-            relatedCurrentFeature="Submissions review"
-            plannedItems={[
-              "Rejudge a single submission",
-              "Rejudge all submissions for one problem",
-              "Rejudge a whole contest with audit trail",
-            ]}
-            onBack={() => setActiveView("Submissions")}
-          />
-        );
+      case "Rejudge":
+        return <RejudgeView initialContestId={currentContest?.id ?? null} />;
 
       default:
         return null;

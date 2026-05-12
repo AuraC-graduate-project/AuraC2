@@ -40,4 +40,27 @@ public class RejudgeController {
     public ResponseEntity<RejudgeResponse> rejudgeContest(@PathVariable Long contestId) {
         return ResponseEntity.ok(rejudgeService.rejudgeContest(contestId));
     }
+
+    // ─── Force Rejudge Endpoints ─────────────────────────────────────────────────
+
+    @PostMapping("/force/submissions")
+    public ResponseEntity<RejudgeResponse> forceRejudgeSubmissions(
+            @RequestBody RejudgeSubmissionsRequest request
+    ) {
+        return ResponseEntity.ok(
+                rejudgeService.forceRejudgeSelectedSubmissions(
+                        request == null ? null : request.submissionIds()
+                )
+        );
+    }
+
+    @PostMapping("/force/problem/{problemId}")
+    public ResponseEntity<RejudgeResponse> forceRejudgeProblem(@PathVariable Long problemId) {
+        return ResponseEntity.ok(rejudgeService.forceRejudgeProblem(problemId));
+    }
+
+    @PostMapping("/force/contests/{contestId}")
+    public ResponseEntity<RejudgeResponse> forceRejudgeContest(@PathVariable Long contestId) {
+        return ResponseEntity.ok(rejudgeService.forceRejudgeContest(contestId));
+    }
 }
