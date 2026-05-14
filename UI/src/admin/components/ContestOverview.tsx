@@ -289,6 +289,13 @@ export function ContestOverview() {// Every render, React runs this function aga
       : null;
 
   /**
+   * The platform holds at most one live contest at a time. A new contest can
+   * only be created when no contest occupies the UPCOMING, ACTIVE, or PAUSED
+   * buckets — otherwise the "Create Contest" button must not be offered.
+   */
+  const hasLiveContest = !!activeContest || !!upcomingContest || !!pausedContest;
+
+  /**
    * These are normal async functions,
    * These handlers do not directly change all the UI state.
    * Instead, they call the backend API to perform an action (like starting or pausing the contest).
@@ -560,14 +567,20 @@ export function ContestOverview() {// Every render, React runs this function aga
             )
           ) : !contest ? (
             <div className="flex flex-col items-center py-12">
-              <p className="text-slate-600 mb-6">No contest found</p>
-              <Button
-                className="bg-[#1E293B] hover:bg-[#334155] gap-2"
-                onClick={() => setCreateModalOpen(true)}
-              >
-                <Plus className="w-4 h-4" />
-                Create Contest
-              </Button>
+              <p className="text-slate-600 mb-6">
+                {hasLiveContest
+                  ? `No ${contestType} contest`
+                  : 'No contest found'}
+              </p>
+              {!hasLiveContest && (
+                <Button
+                  className="bg-[#1E293B] hover:bg-[#334155] gap-2"
+                  onClick={() => setCreateModalOpen(true)}
+                >
+                  <Plus className="w-4 h-4" />
+                  Create Contest
+                </Button>
+              )}
             </div>
           ) : (
             <>
