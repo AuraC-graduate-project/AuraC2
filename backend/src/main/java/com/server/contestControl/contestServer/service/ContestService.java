@@ -88,6 +88,7 @@ public class ContestService {
 
     @Transactional
     public ContestResponse updateContestDetails(Long id, ContestUpdateRequest request) {
+        Instant now = Instant.now();
         Contest contest = contestRepository.findById(id)
                 .orElseThrow(() -> new ContestNotFoundException(id));
 
@@ -97,12 +98,39 @@ public class ContestService {
             );
         }
 
+        if (request.startTime() == null || request.startTime().isBefore(now)) {
+            throw new ContestValidationException("Start time must be in the future.");
+        }
+
+        if (request.durationMinutes() == null || request.durationMinutes() < 1) {
+            throw new ContestValidationException("Duration must be at least 1 minute.");
+        }
+
+        if (request.scoreboardFreezeMinutes() != null && request.scoreboardFreezeMinutes() < 0) {
+            throw new ContestValidationException("Scoreboard freeze time cannot be negative.");
+        }
+
+        if (request.scoreboardFreezeMinutes() != null
+                && request.scoreboardFreezeMinutes() >= request.durationMinutes()) {
+            throw new ContestValidationException(
+                    "Scoreboard freeze time must be less than contest duration.");
+        }
+
+        if (request.penaltyMinutes() == null || request.penaltyMinutes() < 0) {
+            throw new ContestValidationException("Penalty minutes cannot be negative.");
+        }
+
         contest.setTitle(request.title());
         contest.setStartTime(request.startTime());
         contest.setDurationMinutes(request.durationMinutes());
+        contest.setScoreboardFreezeMinutes(request.scoreboardFreezeMinutes());
+        contest.setPenaltyMinutes(request.penaltyMinutes());
         contestRepository.save(contest);
 
-        return toResponse(contest);
+        ContestResponse response = toResponse(contest);
+        eventPublisher.publishEvent(new ContestUpdatedEvent(ContestUpdatedEvent.Reason.UPDATED, response));
+
+        return response;
     }
 
     @Transactional

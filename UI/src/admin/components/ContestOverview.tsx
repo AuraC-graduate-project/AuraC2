@@ -52,15 +52,27 @@ type ContestTab = 'active' | 'upcoming' | 'paused' | 'ended';
 
 const FALLBACK_DELAY_MS = 3000;
 
+/**
+ * UI-only wrapper around ContestResponse. `receivedAtMs` records the wall-clock
+ * time the snapshot entered UI state, so the countdown can be anchored to real
+ * elapsed time instead of rewinding to the stale server value on every tab switch.
+ */
+type TimedContest = ContestResponse & { receivedAtMs: number };
+
+const stamp = (c: ContestResponse): TimedContest => ({ ...c, receivedAtMs: Date.now() });
+const stampList = (list: ContestResponse[]): TimedContest[] => list.map(stamp);
+const stampOrNull = (c: ContestResponse | null): TimedContest | null =>
+  c ? stamp(c) : null;
+
 
 export function ContestOverview() {// Every render, React runs this function again.
   const [contestType, setContestType] = useState<ContestTab>('active');// This stores which tab is currently selected. It can be 'active', 'upcoming', 'paused', or 'ended'. The default is 'active'.
 
   // This means UI stores all contest buckets separately. Whenever a new update comes in, we can place the contest in the right bucket based on its effective state. This also allows us to show ended contests as a list, since there can be multiple.
-  const [activeContest, setActiveContest] = useState<ContestResponse | null>(null);
-  const [upcomingContest, setUpcomingContest] = useState<ContestResponse | null>(null);
-  const [pausedContest, setPausedContest] = useState<ContestResponse | null>(null);
-  const [endedContests, setEndedContests] = useState<ContestResponse[]>([]);
+  const [activeContest, setActiveContest] = useState<TimedContest | null>(null);
+  const [upcomingContest, setUpcomingContest] = useState<TimedContest | null>(null);
+  const [pausedContest, setPausedContest] = useState<TimedContest | null>(null);
+  const [endedContests, setEndedContests] = useState<TimedContest[]>([]);
 
   /** Hydrated here means "we've received at least one snapshot from the stream,
    *  or we've done the fallback REST hydration".
@@ -83,10 +95,10 @@ export function ContestOverview() {// Every render, React runs this function aga
    * So snapshot = full refresh.
    */
   const applySnapshot = useCallback((snap: ContestStreamSnapshot) => {// useCallback does not execute the function, it just tells React to reuse the same function object
-    setActiveContest(snap.active);
-    setUpcomingContest(snap.upcoming);
-    setPausedContest(snap.paused);
-    setEndedContests(snap.ended);
+    setActiveContest(stampOrNull(snap.active));
+    setUpcomingContest(stampOrNull(snap.upcoming));
+    setPausedContest(stampOrNull(snap.paused));
+    setEndedContests(stampList(snap.ended));
     setHydrated(true);
   }, []);
 
@@ -97,6 +109,7 @@ export function ContestOverview() {// Every render, React runs this function aga
    * For example, if a contest moves from UPCOMING to RUNNING, we remove it from the upcomingContest state and set it as the activeContest.
    */
   const placeContest = useCallback((snap: ContestResponse) => {
+    const timed = stamp(snap);
 
     /** First remove this contest from all buckets,
      *  in case it's moving.
@@ -105,7 +118,7 @@ export function ContestOverview() {// Every render, React runs this function aga
      *  we remove it (set to null or filter out).
      *  This ensures that we don't have duplicates when we add it to the correct bucket later.
     **/
-     const removeSingle = (c: ContestResponse | null) =>
+     const removeSingle = (c: TimedContest | null) =>
       c && c.id === snap.id ? null : c;
     setActiveContest((prev) => removeSingle(prev));
     setUpcomingContest((prev) => removeSingle(prev));
@@ -125,16 +138,16 @@ export function ContestOverview() {// Every render, React runs this function aga
     // Then it puts the contest in the correct place
     switch (state) {
       case 'RUNNING':
-        setActiveContest(snap);
+        setActiveContest(timed);
         break;
       case 'UPCOMING':
-        setUpcomingContest(snap);
+        setUpcomingContest(timed);
         break;
       case 'PAUSED':
-        setPausedContest(snap);
+        setPausedContest(timed);
         break;
       case 'ENDED':
-        setEndedContests((prev) => [snap, ...prev]);
+        setEndedContests((prev) => [timed, ...prev]);
         break;
     }
   }, []);
@@ -152,6 +165,7 @@ export function ContestOverview() {// Every render, React runs this function aga
   const switchTabForReason = useCallback((reason: ContestUpdateReason) => {
     switch (reason) {
       case 'CREATED':
+      case 'UPDATED':
         setContestType('upcoming');
         break;
       case 'MANUAL_START':
@@ -220,10 +234,10 @@ export function ContestOverview() {// Every render, React runs this function aga
           getEndedContests()
         ]);
         // If API succeeded, use its value. If it failed, ignore and keep null/empty.
-        setActiveContest(active.status === 'fulfilled' ? active.value : null);
-        setUpcomingContest(upcoming.status === 'fulfilled' ? upcoming.value : null);
-        setPausedContest(paused.status === 'fulfilled' ? paused.value : null);
-        setEndedContests(ended.status === 'fulfilled' ? ended.value : []);
+        setActiveContest(active.status === 'fulfilled' ? stampOrNull(active.value) : null);
+        setUpcomingContest(upcoming.status === 'fulfilled' ? stampOrNull(upcoming.value) : null);
+        setPausedContest(paused.status === 'fulfilled' ? stampOrNull(paused.value) : null);
+        setEndedContests(ended.status === 'fulfilled' ? stampList(ended.value) : []);
       } finally {
         setHydrated(true);// Even if some requests failed, the UI stops showing loading.
       }
@@ -244,10 +258,10 @@ export function ContestOverview() {// Every render, React runs this function aga
         const [active, upcoming, paused, ended] = await Promise.allSettled([
           getActiveContest(), getUpcomingContest(), getPausedContest(), getEndedContests()
         ]);
-        setActiveContest(active.status === 'fulfilled' ? active.value : null);
-        setUpcomingContest(upcoming.status === 'fulfilled' ? upcoming.value : null);
-        setPausedContest(paused.status === 'fulfilled' ? paused.value : null);
-        setEndedContests(ended.status === 'fulfilled' ? ended.value : []);
+        setActiveContest(active.status === 'fulfilled' ? stampOrNull(active.value) : null);
+        setUpcomingContest(upcoming.status === 'fulfilled' ? stampOrNull(upcoming.value) : null);
+        setPausedContest(paused.status === 'fulfilled' ? stampOrNull(paused.value) : null);
+        setEndedContests(ended.status === 'fulfilled' ? stampList(ended.value) : []);
       } catch {
         // silently ignore — we'll retry on next interval
       }
@@ -273,6 +287,13 @@ export function ContestOverview() {// Every render, React runs this function aga
       : contestType === 'paused'
       ? pausedContest
       : null;
+
+  /**
+   * The platform holds at most one live contest at a time. A new contest can
+   * only be created when no contest occupies the UPCOMING, ACTIVE, or PAUSED
+   * buckets — otherwise the "Create Contest" button must not be offered.
+   */
+  const hasLiveContest = !!activeContest || !!upcomingContest || !!pausedContest;
 
   /**
    * These are normal async functions,
@@ -399,16 +420,24 @@ export function ContestOverview() {// Every render, React runs this function aga
    **/
   const [remainingMs, setRemainingMs] = useState<number | null>(null);
   useEffect(() => {
-
     if (!contest) {
       setRemainingMs(null);
       return;
     }
-    setRemainingMs(contest.remainingMillis ?? 0);
-    if (lifecycleState !== 'RUNNING') return;
-    const id = setInterval(() => {
-      setRemainingMs((prev) => (prev == null ? prev : Math.max(0, prev - 1000)));
-    }, 1000);
+    const base = contest.remainingMillis ?? 0;
+
+    // PAUSED / UPCOMING: the countdown is static — show the server value as-is.
+    if (lifecycleState !== 'RUNNING') {
+      setRemainingMs(base);
+      return;
+    }
+
+    // RUNNING: anchor to wall-clock time. Recomputing from receivedAtMs (instead
+    // of decrementing prev - 1000) keeps the countdown accurate across tab
+    // switches and effect re-runs, so it never rewinds to the stale snapshot.
+    const compute = () => Math.max(0, base - (Date.now() - contest.receivedAtMs));
+    setRemainingMs(compute());
+    const id = setInterval(() => setRemainingMs(compute()), 1000);
     return () => clearInterval(id);
   }, [contest, lifecycleState]);
 
@@ -538,14 +567,20 @@ export function ContestOverview() {// Every render, React runs this function aga
             )
           ) : !contest ? (
             <div className="flex flex-col items-center py-12">
-              <p className="text-slate-600 mb-6">No contest found</p>
-              <Button
-                className="bg-[#1E293B] hover:bg-[#334155] gap-2"
-                onClick={() => setCreateModalOpen(true)}
-              >
-                <Plus className="w-4 h-4" />
-                Create Contest
-              </Button>
+              <p className="text-slate-600 mb-6">
+                {hasLiveContest
+                  ? `No ${contestType} contest`
+                  : 'No contest found'}
+              </p>
+              {!hasLiveContest && (
+                <Button
+                  className="bg-[#1E293B] hover:bg-[#334155] gap-2"
+                  onClick={() => setCreateModalOpen(true)}
+                >
+                  <Plus className="w-4 h-4" />
+                  Create Contest
+                </Button>
+              )}
             </div>
           ) : (
             <>

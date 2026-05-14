@@ -90,6 +90,7 @@ function updateToState(update: ContestStreamUpdate): ResolvedState {
     case "AUTO_END":
       return { lifecycle: "ENDED", contest: c };
     case "CREATED":
+    case "UPDATED":
       return { lifecycle: "UPCOMING", contest: c };
   }
 }

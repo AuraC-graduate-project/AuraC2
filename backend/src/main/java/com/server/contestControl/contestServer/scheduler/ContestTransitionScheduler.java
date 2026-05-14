@@ -120,7 +120,7 @@ public class ContestTransitionScheduler {
         Long contestId = event.snapshot().getId();
 
         switch (event.reason()) {
-            case CREATED, MANUAL_START, MANUAL_RESUME, AUTO_START ->
+            case CREATED, UPDATED, MANUAL_START, MANUAL_RESUME, AUTO_START ->
                     contestRepository.findById(contestId).ifPresent(this::reschedule);
 
             case MANUAL_PAUSE, MANUAL_END, AUTO_END ->
