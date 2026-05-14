@@ -24,6 +24,7 @@ export interface  ContestResponse {
 
 export type ContestUpdateReason =
   | 'CREATED'
+  | 'UPDATED'
   | 'MANUAL_START'
   | 'MANUAL_PAUSE'
   | 'MANUAL_RESUME'
@@ -56,6 +57,8 @@ export interface ContestUpdateRequest {
   title: string;
   startTime: string; // ISO 8601
   durationMinutes: number;
+  scoreboardFreezeMinutes?: number | null;
+  penaltyMinutes: number;
 }
 
 export interface ProblemRequest {

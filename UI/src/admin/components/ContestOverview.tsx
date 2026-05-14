@@ -152,6 +152,7 @@ export function ContestOverview() {// Every render, React runs this function aga
   const switchTabForReason = useCallback((reason: ContestUpdateReason) => {
     switch (reason) {
       case 'CREATED':
+      case 'UPDATED':
         setContestType('upcoming');
         break;
       case 'MANUAL_START':

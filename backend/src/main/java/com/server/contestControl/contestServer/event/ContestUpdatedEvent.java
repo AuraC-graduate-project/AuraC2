@@ -10,6 +10,7 @@ public record ContestUpdatedEvent(Reason reason, ContestResponse snapshot) {
         MANUAL_PAUSE,
         MANUAL_RESUME,
         MANUAL_END,
+        UPDATED,
         AUTO_START,
         AUTO_END
     }
