@@ -52,27 +52,15 @@ type ContestTab = 'active' | 'upcoming' | 'paused' | 'ended';
 
 const FALLBACK_DELAY_MS = 3000;
 
-/**
- * UI-only wrapper around ContestResponse. `receivedAtMs` records the wall-clock
- * time the snapshot entered UI state, so the countdown can be anchored to real
- * elapsed time instead of rewinding to the stale server value on every tab switch.
- */
-type TimedContest = ContestResponse & { receivedAtMs: number };
-
-const stamp = (c: ContestResponse): TimedContest => ({ ...c, receivedAtMs: Date.now() });
-const stampList = (list: ContestResponse[]): TimedContest[] => list.map(stamp);
-const stampOrNull = (c: ContestResponse | null): TimedContest | null =>
-  c ? stamp(c) : null;
-
 
 export function ContestOverview() {// Every render, React runs this function again.
   const [contestType, setContestType] = useState<ContestTab>('active');// This stores which tab is currently selected. It can be 'active', 'upcoming', 'paused', or 'ended'. The default is 'active'.
 
   // This means UI stores all contest buckets separately. Whenever a new update comes in, we can place the contest in the right bucket based on its effective state. This also allows us to show ended contests as a list, since there can be multiple.
-  const [activeContest, setActiveContest] = useState<TimedContest | null>(null);
-  const [upcomingContest, setUpcomingContest] = useState<TimedContest | null>(null);
-  const [pausedContest, setPausedContest] = useState<TimedContest | null>(null);
-  const [endedContests, setEndedContests] = useState<TimedContest[]>([]);
+  const [activeContest, setActiveContest] = useState<ContestResponse | null>(null);
+  const [upcomingContest, setUpcomingContest] = useState<ContestResponse | null>(null);
+  const [pausedContest, setPausedContest] = useState<ContestResponse | null>(null);
+  const [endedContests, setEndedContests] = useState<ContestResponse[]>([]);
 
   /** Hydrated here means "we've received at least one snapshot from the stream,
    *  or we've done the fallback REST hydration".
@@ -95,10 +83,10 @@ export function ContestOverview() {// Every render, React runs this function aga
    * So snapshot = full refresh.
    */
   const applySnapshot = useCallback((snap: ContestStreamSnapshot) => {// useCallback does not execute the function, it just tells React to reuse the same function object
-    setActiveContest(stampOrNull(snap.active));
-    setUpcomingContest(stampOrNull(snap.upcoming));
-    setPausedContest(stampOrNull(snap.paused));
-    setEndedContests(stampList(snap.ended));
+    setActiveContest(snap.active);
+    setUpcomingContest(snap.upcoming);
+    setPausedContest(snap.paused);
+    setEndedContests(snap.ended);
     setHydrated(true);
   }, []);
 
@@ -109,7 +97,6 @@ export function ContestOverview() {// Every render, React runs this function aga
    * For example, if a contest moves from UPCOMING to RUNNING, we remove it from the upcomingContest state and set it as the activeContest.
    */
   const placeContest = useCallback((snap: ContestResponse) => {
-    const timed = stamp(snap);
 
     /** First remove this contest from all buckets,
      *  in case it's moving.
@@ -118,7 +105,7 @@ export function ContestOverview() {// Every render, React runs this function aga
      *  we remove it (set to null or filter out).
      *  This ensures that we don't have duplicates when we add it to the correct bucket later.
     **/
-     const removeSingle = (c: TimedContest | null) =>
+     const removeSingle = (c: ContestResponse | null) =>
       c && c.id === snap.id ? null : c;
     setActiveContest((prev) => removeSingle(prev));
     setUpcomingContest((prev) => removeSingle(prev));
@@ -138,16 +125,16 @@ export function ContestOverview() {// Every render, React runs this function aga
     // Then it puts the contest in the correct place
     switch (state) {
       case 'RUNNING':
-        setActiveContest(timed);
+        setActiveContest(snap);
         break;
       case 'UPCOMING':
-        setUpcomingContest(timed);
+        setUpcomingContest(snap);
         break;
       case 'PAUSED':
-        setPausedContest(timed);
+        setPausedContest(snap);
         break;
       case 'ENDED':
-        setEndedContests((prev) => [timed, ...prev]);
+        setEndedContests((prev) => [snap, ...prev]);
         break;
     }
   }, []);
@@ -165,7 +152,6 @@ export function ContestOverview() {// Every render, React runs this function aga
   const switchTabForReason = useCallback((reason: ContestUpdateReason) => {
     switch (reason) {
       case 'CREATED':
-      case 'UPDATED':
         setContestType('upcoming');
         break;
       case 'MANUAL_START':
@@ -234,10 +220,10 @@ export function ContestOverview() {// Every render, React runs this function aga
           getEndedContests()
         ]);
         // If API succeeded, use its value. If it failed, ignore and keep null/empty.
-        setActiveContest(active.status === 'fulfilled' ? stampOrNull(active.value) : null);
-        setUpcomingContest(upcoming.status === 'fulfilled' ? stampOrNull(upcoming.value) : null);
-        setPausedContest(paused.status === 'fulfilled' ? stampOrNull(paused.value) : null);
-        setEndedContests(ended.status === 'fulfilled' ? stampList(ended.value) : []);
+        setActiveContest(active.status === 'fulfilled' ? active.value : null);
+        setUpcomingContest(upcoming.status === 'fulfilled' ? upcoming.value : null);
+        setPausedContest(paused.status === 'fulfilled' ? paused.value : null);
+        setEndedContests(ended.status === 'fulfilled' ? ended.value : []);
       } finally {
         setHydrated(true);// Even if some requests failed, the UI stops showing loading.
       }
@@ -258,10 +244,10 @@ export function ContestOverview() {// Every render, React runs this function aga
         const [active, upcoming, paused, ended] = await Promise.allSettled([
           getActiveContest(), getUpcomingContest(), getPausedContest(), getEndedContests()
         ]);
-        setActiveContest(active.status === 'fulfilled' ? stampOrNull(active.value) : null);
-        setUpcomingContest(upcoming.status === 'fulfilled' ? stampOrNull(upcoming.value) : null);
-        setPausedContest(paused.status === 'fulfilled' ? stampOrNull(paused.value) : null);
-        setEndedContests(ended.status === 'fulfilled' ? stampList(ended.value) : []);
+        setActiveContest(active.status === 'fulfilled' ? active.value : null);
+        setUpcomingContest(upcoming.status === 'fulfilled' ? upcoming.value : null);
+        setPausedContest(paused.status === 'fulfilled' ? paused.value : null);
+        setEndedContests(ended.status === 'fulfilled' ? ended.value : []);
       } catch {
         // silently ignore — we'll retry on next interval
       }
@@ -287,13 +273,6 @@ export function ContestOverview() {// Every render, React runs this function aga
       : contestType === 'paused'
       ? pausedContest
       : null;
-
-  /**
-   * The platform holds at most one live contest at a time. A new contest can
-   * only be created when no contest occupies the UPCOMING, ACTIVE, or PAUSED
-   * buckets — otherwise the "Create Contest" button must not be offered.
-   */
-  const hasLiveContest = !!activeContest || !!upcomingContest || !!pausedContest;
 
   /**
    * These are normal async functions,
@@ -420,24 +399,16 @@ export function ContestOverview() {// Every render, React runs this function aga
    **/
   const [remainingMs, setRemainingMs] = useState<number | null>(null);
   useEffect(() => {
+
     if (!contest) {
       setRemainingMs(null);
       return;
     }
-    const base = contest.remainingMillis ?? 0;
-
-    // PAUSED / UPCOMING: the countdown is static — show the server value as-is.
-    if (lifecycleState !== 'RUNNING') {
-      setRemainingMs(base);
-      return;
-    }
-
-    // RUNNING: anchor to wall-clock time. Recomputing from receivedAtMs (instead
-    // of decrementing prev - 1000) keeps the countdown accurate across tab
-    // switches and effect re-runs, so it never rewinds to the stale snapshot.
-    const compute = () => Math.max(0, base - (Date.now() - contest.receivedAtMs));
-    setRemainingMs(compute());
-    const id = setInterval(() => setRemainingMs(compute()), 1000);
+    setRemainingMs(contest.remainingMillis ?? 0);
+    if (lifecycleState !== 'RUNNING') return;
+    const id = setInterval(() => {
+      setRemainingMs((prev) => (prev == null ? prev : Math.max(0, prev - 1000)));
+    }, 1000);
     return () => clearInterval(id);
   }, [contest, lifecycleState]);
 
@@ -485,19 +456,19 @@ export function ContestOverview() {// Every render, React runs this function aga
 
   return (
     <>
-      <Card>
-        <CardHeader className="bg-surface-container-low py-5 rounded-t-xl">
+      <Card className="border border-gray-200 shadow-sm">
+        <CardHeader className="bg-[#1E293B] py-4 text-white">
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-primary">Contest lifecycle</p>
-                <CardTitle className="mt-1 font-display text-2xl font-semibold tracking-tight text-on-surface">Contest Overview</CardTitle>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Contest lifecycle</p>
+                <CardTitle className="mt-1 leading-none">Contest Overview</CardTitle>
               </div>
 
               <div className="flex items-center gap-2">
               <span
                 title={`Stream ${connectionState}`}
-                className="flex items-center gap-1.5 text-xs text-on-surface-variant"
+                className="flex items-center gap-1.5 text-xs text-slate-200"
               >
                 <span
                   className={`inline-block w-2 h-2 rounded-full ${connectionColor}`}
@@ -505,13 +476,13 @@ export function ContestOverview() {// Every render, React runs this function aga
                 {connectionLabel}
               </span>
               {isFrozen && (
-                <Badge className="gap-1">
+                <Badge className="bg-cyan-100 text-cyan-700 border-cyan-200 border gap-1">
                   <Snowflake className="w-3 h-3" />
                   Frozen
                 </Badge>
               )}
               {contest && (
-                <Badge>
+                <Badge className={`${getStatusColor(lifecycleState ?? contest.status)} border`}>
                   {lifecycleState ?? contest.status}
                 </Badge>
               )}
@@ -522,16 +493,16 @@ export function ContestOverview() {// Every render, React runs this function aga
               type="single"
               value={contestType}
               onValueChange={(v) => v && setContestType(v as ContestTab)}
-              className="grid h-auto w-full grid-cols-4 rounded-xl bg-surface-container-high p-1"
+              className="grid h-auto w-full grid-cols-4 rounded-lg bg-slate-700 p-1"
             >
               {(['active', 'upcoming', 'paused', 'ended'] as const).map((t) => (
                 <ToggleGroupItem
                   key={t}
                   value={t}
                   className="
-                    h-9 w-full justify-center rounded-lg px-2 text-sm capitalize text-on-surface-variant
-                    data-[state=on]:bg-surface-container data-[state=on]:text-on-surface
-                    focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60
+                    h-9 w-full justify-center rounded-md px-2 text-sm capitalize text-slate-200
+                    data-[state=on]:bg-white data-[state=on]:text-slate-900 data-[state=on]:shadow-sm
+                    focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60
                   "
                 >
                   {t}
@@ -567,105 +538,99 @@ export function ContestOverview() {// Every render, React runs this function aga
             )
           ) : !contest ? (
             <div className="flex flex-col items-center py-12">
-              <p className="text-slate-600 mb-6">
-                {hasLiveContest
-                  ? `No ${contestType} contest`
-                  : 'No contest found'}
-              </p>
-              {!hasLiveContest && (
-                <Button
-                  className="bg-[#1E293B] hover:bg-[#334155] gap-2"
-                  onClick={() => setCreateModalOpen(true)}
-                >
-                  <Plus className="w-4 h-4" />
-                  Create Contest
-                </Button>
-              )}
+              <p className="text-slate-600 mb-6">No contest found</p>
+              <Button
+                className="bg-[#1E293B] hover:bg-[#334155] gap-2"
+                onClick={() => setCreateModalOpen(true)}
+              >
+                <Plus className="w-4 h-4" />
+                Create Contest
+              </Button>
             </div>
           ) : (
             <>
               {/* DETAILS */}
-              <div className="grid md:grid-cols-2 gap-x-8 gap-y-5 mb-8">
-                <div className="space-y-5">
+              <div className="grid md:grid-cols-2 gap-6 mb-6">
+                <div className="space-y-4">
                   <div>
-                    <label className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-on-surface-soft">
-                      <FileText className="w-3.5 h-3.5 text-primary" />
+                    <label className="text-slate-600 flex items-center gap-2">
+                      <FileText className="w-4 h-4" />
                       Contest Name
                     </label>
-                    <p className="mt-1.5 font-display text-xl font-semibold tracking-tight text-on-surface">{contest.title}</p>
+                    <p className="text-slate-900">{contest.title}</p>
                   </div>
                   <div>
-                    <label className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-on-surface-soft">
-                      <Calendar className="w-3.5 h-3.5 text-primary" />
+                    <label className="text-slate-600 flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
                       Scheduled Start
                     </label>
-                    <p className="mt-1.5 font-mono text-sm text-primary dark:text-secondary tabular-nums">{formatTime(contest.startTime)}</p>
+                    <p className="text-slate-900">{formatTime(contest.startTime)}</p>
                   </div>
                   {contest.actualStartTime && (
                     <div>
-                      <label className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-on-surface-soft">
-                        <Play className="w-3.5 h-3.5 text-tertiary" />
+                      <label className="text-slate-600 flex items-center gap-2">
+                        <Play className="w-4 h-4" />
                         Actual Start
                       </label>
-                      <p className="mt-1.5 font-mono text-sm text-primary dark:text-secondary tabular-nums">{formatTime(contest.actualStartTime)}</p>
+                      <p className="text-slate-900">{formatTime(contest.actualStartTime)}</p>
                     </div>
                   )}
                   <div>
-                    <label className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-on-surface-soft">
-                      <Calendar className="w-3.5 h-3.5 text-primary" />
+                    <label className="text-slate-600 flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
                       End Time
                     </label>
-                    <p className="mt-1.5 font-mono text-sm text-primary dark:text-secondary tabular-nums">
+                    <p className="text-slate-900">
                       {lifecycleState === 'PAUSED'
-                        ? <span className="text-on-surface-soft">— (paused)</span>
+                        ? '— (paused)'
                         : formatTime(contest.effectiveEndTime ?? contest.endTime)}
                     </p>
                   </div>
                   {lifecycleState !== 'ENDED' && (
                     <div>
-                      <label className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-on-surface-soft">
-                        <Clock className="w-3.5 h-3.5 text-primary" />
+                      <label className="text-slate-600 flex items-center gap-2">
+                        <Clock className="w-4 h-4" />
                         Time Remaining
                       </label>
-                      <p className="mt-1.5 font-mono text-2xl font-semibold tabular-nums text-on-surface">
+                      <p className="text-slate-900 font-mono text-lg">
                         {formatCountdown(remainingMs)}
                         {lifecycleState === 'PAUSED' && (
-                          <span className="ml-2 text-sm font-normal text-secondary">(paused)</span>
+                          <span className="ml-2 text-orange-600 text-sm">(paused)</span>
                         )}
                       </p>
                     </div>
                   )}
                 </div>
 
-                <div className="space-y-5">
+                <div className="space-y-4">
                   <div>
-                    <label className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-on-surface-soft">
-                      <Clock className="w-3.5 h-3.5 text-primary" />
+                    <label className="text-slate-600 flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
                       Duration
                     </label>
-                    <p className="mt-1.5 font-mono text-sm text-primary dark:text-secondary tabular-nums">{formatDuration(contest.durationMinutes)}</p>
+                    <p className="text-slate-900">{formatDuration(contest.durationMinutes)}</p>
                   </div>
                   <div>
-                    <label className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-on-surface-soft">
-                      <Snowflake className="w-3.5 h-3.5 text-primary" />
+                    <label className="text-slate-600 flex items-center gap-2">
+                      <Snowflake className="w-4 h-4" />
                       Scoreboard Freeze
                     </label>
-                    <p className="mt-1.5 font-mono text-sm text-primary dark:text-secondary tabular-nums">
+                    <p className="text-slate-900">
                       {contest.scoreboardFreezeMinutes
                         ? `${contest.scoreboardFreezeMinutes} min before end`
-                        : <span className="text-on-surface-soft">Disabled</span>}
+                        : 'Disabled'}
                     </p>
                   </div>
                   <div>
-                    <label className="text-[10px] font-medium uppercase tracking-[0.18em] text-on-surface-soft">Penalty per Wrong Answer</label>
-                    <p className="mt-1.5 font-mono text-sm text-primary dark:text-secondary tabular-nums">{contest.penaltyMinutes} minutes</p>
+                    <label className="text-slate-600">Penalty per Wrong Answer</label>
+                    <p className="text-slate-900">{contest.penaltyMinutes} minutes</p>
                   </div>
                 </div>
               </div>
 
               {/* CONTROLS */}
-              <div className="pt-6">
-                <h3 className="mb-4 text-[10px] font-medium uppercase tracking-[0.18em] text-on-surface-soft">Contest Controls</h3>
+              <div className="border-t pt-6">
+                <h3 className="text-slate-700 mb-4">Contest Controls</h3>
                 <div className="flex flex-wrap gap-3">
                   <Button
                     variant="outline"
@@ -678,8 +643,7 @@ export function ContestOverview() {// Every render, React runs this function aga
                   </Button>
 
                   <Button
-                    variant="success"
-                    className="gap-2"
+                    className="bg-green-600 hover:bg-green-700 gap-2"
                     disabled={!canStart}
                     onClick={handleStart}
                   >
@@ -688,8 +652,7 @@ export function ContestOverview() {// Every render, React runs this function aga
                   </Button>
 
                   <Button
-                    variant="info"
-                    className="gap-2"
+                    className="bg-blue-600 hover:bg-blue-700 gap-2"
                     disabled={!canResume}
                     onClick={handleResume}
                   >
@@ -698,8 +661,7 @@ export function ContestOverview() {// Every render, React runs this function aga
                   </Button>
 
                   <Button
-                    variant="warning"
-                    className="gap-2"
+                    className="bg-orange-600 hover:bg-orange-700 gap-2"
                     disabled={!canPause}
                     onClick={handlePause}
                   >
@@ -708,8 +670,7 @@ export function ContestOverview() {// Every render, React runs this function aga
                   </Button>
 
                   <Button
-                    variant="destructive"
-                    className="gap-2"
+                    className="bg-red-600 hover:bg-red-700 gap-2"
                     disabled={!canEnd}
                     onClick={() => setEndDialogOpen(true)}
                   >

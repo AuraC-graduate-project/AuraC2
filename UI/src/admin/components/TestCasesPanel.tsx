@@ -96,18 +96,18 @@ export function TestCasesPanel({ problemId, problemTitle }: TestCasesPanelProps)
           ) : (
             <div className="grid gap-4 lg:grid-cols-2">
               {testCases.map((testCase, index) => (
-                <div
-                  key={testCase.id}
-                  className="rounded-xl bg-surface-container-low p-4"
+                <div 
+                  key={testCase.id} 
+                  className="border border-slate-200 rounded-lg p-4 bg-white"
                 >
                    <div className="flex items-center justify-between mb-3">
                      <div>
-                       <h4 className="font-display text-base font-semibold tracking-tight text-on-surface">Test Case #{index + 1}</h4>
+                       <h4 className="font-semibold text-slate-900">Test Case #{index + 1}</h4>
                        <div className="mt-1 flex items-center gap-2">
                          {testCase.isPublic ? (
-                           <Eye className="h-4 w-4 text-primary" />
+                           <Eye className="h-4 w-4 text-cyan-700" />
                          ) : (
-                           <EyeOff className="h-4 w-4 text-on-surface-soft" />
+                           <EyeOff className="h-4 w-4 text-slate-500" />
                          )}
                          <StatusBadge
                            kind="testcase"
@@ -119,7 +119,7 @@ export function TestCasesPanel({ problemId, problemTitle }: TestCasesPanelProps)
                      <div className="flex items-center gap-2">
                        <Button
                          size="sm"
-                         variant="ghost"
+                         variant="outline"
                          className="h-7 px-2"
                          onClick={() => {
                            setEditingTestCase(testCase);
@@ -130,26 +130,26 @@ export function TestCasesPanel({ problemId, problemTitle }: TestCasesPanelProps)
                        </Button>
                        <Button
                          size="sm"
-                         variant="destructive"
-                         className="h-7 px-2"
+                         variant="outline"
+                         className="h-7 px-2 border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
                          onClick={() => setTestCaseToDelete(testCase)}
                        >
                          <Trash2 className="w-3.5 h-3.5" />
                        </Button>
                      </div>
                    </div>
-
+                  
                   <div className="space-y-3">
                     <div>
-                      <p className="mb-1.5 text-[10px] font-medium uppercase tracking-[0.18em] text-on-surface-soft">Input Data</p>
-                      <pre className="rounded-lg bg-surface-container-lowest p-3 text-xs overflow-x-auto font-mono text-on-surface dark:bg-black">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Input Data</p>
+                      <pre className="bg-slate-950 text-slate-100 border border-slate-800 rounded p-3 text-xs overflow-x-auto">
                         {testCase.inputData}
                       </pre>
                     </div>
-
+                    
                     <div>
-                      <p className="mb-1.5 text-[10px] font-medium uppercase tracking-[0.18em] text-on-surface-soft">Expected Output</p>
-                      <pre className="rounded-lg bg-surface-container-lowest p-3 text-xs overflow-x-auto font-mono text-tertiary dark:bg-black">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Expected Output</p>
+                      <pre className="bg-slate-50 border border-slate-200 rounded p-3 text-xs overflow-x-auto text-slate-800">
                         {testCase.expectedOutput}
                       </pre>
                     </div>
