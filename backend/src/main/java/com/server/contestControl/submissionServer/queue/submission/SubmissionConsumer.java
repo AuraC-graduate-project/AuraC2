@@ -5,12 +5,14 @@ import com.server.contestControl.contestServer.repository.TestCaseRepository;
 import com.server.contestControl.submissionServer.config.RabbitMQConfig;
 import com.server.contestControl.submissionServer.entity.Submission;
 import com.server.contestControl.submissionServer.enums.Verdict;
+import com.server.contestControl.submissionServer.event.SubmissionFinalizedEvent;
 import com.server.contestControl.submissionServer.repository.SubmissionRepository;
 import com.server.contestControl.submissionServer.service.judge.Judge0Service;
 import com.server.contestControl.submissionServer.sse.SubmissionSsePublisher;
 import com.server.contestControl.submissionServer.sse.SubmissionStreamEventType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +36,7 @@ public class SubmissionConsumer {
     private final TestCaseRepository testCaseRepository;
     private final Judge0Service judge0Service;
     private final SubmissionSsePublisher submissionSsePublisher;
+    private final ApplicationEventPublisher eventPublisher;
 
     @RabbitListener(queues = RabbitMQConfig.SUBMISSION_QUEUE)
     public void handleSubmission(Long submissionId) {
@@ -51,6 +54,30 @@ public class SubmissionConsumer {
 
         List<TestCase> testCases = testCaseRepository.findByProblemId(submission.getProblem().getId());
         int languageId = convertLanguage(submission.getLanguage());
+
+        if (testCases.isEmpty()) {
+            submission.setVerdict(Verdict.INTERNAL_ERROR);
+            submissionRepository.save(submission);
+            try {
+                submissionSsePublisher.publish(SubmissionStreamEventType.FINALIZED, submission);
+            } catch (RuntimeException e) {
+                log.warn(
+                        "Failed to publish zero-test-case submission event. submissionId={} cause={}: {}",
+                        submission.getId(),
+                        e.getClass().getSimpleName(),
+                        e.getMessage()
+                );
+            }
+            eventPublisher.publishEvent(new SubmissionFinalizedEvent(
+                    submission.getId(),
+                    submission.getContest().getId(),
+                    submission.getProblem().getId(),
+                    submission.getUser().getId(),
+                    submission.getVerdict()
+            ));
+            log.warn("Submission marked INTERNAL_ERROR because problem has no test cases. submissionId={}", submissionId);
+            return;
+        }
 
         if (submission.getVerdict() == Verdict.PENDING) {
             // Normal new submission: increment judgeRunId here

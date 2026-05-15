@@ -241,6 +241,91 @@ export interface SubmissionStreamEvent {
 }
 
 // -----------------------------
+// Scoreboard
+// -----------------------------
+
+export type ScoreboardAudience = 'ADMIN' | 'PUBLIC';
+export type ScoreboardRevealStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
+
+export interface ScoreboardProblemColumn {
+  problemId: number;
+  label: string;
+  title: string;
+}
+
+export interface ScoreboardMetadata {
+  contestId: number;
+  contestTitle: string;
+  audience: ScoreboardAudience;
+  version: number;
+  generatedAt: string;
+  contestStatus: ContestLifecycleState | string;
+  effectiveState: ContestLifecycleState | string;
+  adminLive: boolean;
+  scoreboardFrozen: boolean;
+  freezeTime: string | null;
+  freezeMinutes: number | null;
+  penaltyMinutes: number | null;
+  revealStatus: ScoreboardRevealStatus;
+  revealedCells: number;
+  totalHiddenCells: number;
+  problemColumns: ScoreboardProblemColumn[];
+}
+
+export interface ScoreboardProblemCell {
+  problemId: number;
+  label: string;
+  solved: boolean;
+  attempts: number;
+  wrongAttempts: number;
+  solvedTimeMinutes: number | null;
+  penalty: number | null;
+  firstToSolve: boolean;
+  hidden: boolean;
+  revealed: boolean;
+  pending?: boolean;
+}
+
+export interface ScoreboardRow {
+  rank: number;
+  teamId: number;
+  teamName: string;
+  solvedCount: number;
+  totalPenalty: number;
+  problemCells: ScoreboardProblemCell[];
+}
+
+export interface ScoreboardSnapshot {
+  metadata: ScoreboardMetadata;
+  rows: ScoreboardRow[];
+}
+
+export interface ScoreboardUpdatePayload {
+  eventType: 'scoreboard-update' | 'scoreboard-freeze' | 'scoreboard-reveal-step' | string;
+  reason: string;
+  contestId: number;
+  version: number;
+  previousVersion: number;
+  fullSnapshot: boolean;
+  changedTeamIds: number[];
+  changedRows: ScoreboardRow[];
+  metadata: ScoreboardMetadata;
+  snapshot: ScoreboardSnapshot | null;
+}
+
+export interface ScoreboardRevealResponse {
+  contestId: number;
+  status: ScoreboardRevealStatus;
+  totalCells: number;
+  revealedCells: number;
+  nextTeamId: number | null;
+  nextProblemId: number | null;
+  startedAt: string | null;
+  updatedAt: string | null;
+  completedAt: string | null;
+}
+
+// -----------------------------
 // Rejudge
 // -----------------------------
 

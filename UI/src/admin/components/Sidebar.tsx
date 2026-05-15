@@ -23,7 +23,7 @@ const menuItems = [
   { icon: FileCode, label: 'Problems' },
   { icon: Send, label: 'Submissions' },
   { icon: MessageSquare, label: 'Clarifications' },
-  { icon: Medal, label: 'Scoreboard (Future)' },
+  { icon: Medal, label: 'Scoreboard' },
   { icon: RotateCcw, label: 'Rejudge' },
 ];
 

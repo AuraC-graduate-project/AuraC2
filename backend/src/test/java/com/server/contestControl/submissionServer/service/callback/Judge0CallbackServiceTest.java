@@ -1,5 +1,8 @@
 package com.server.contestControl.submissionServer.service.callback;
 
+import com.server.contestControl.authServer.entity.User;
+import com.server.contestControl.authServer.enums.Role;
+import com.server.contestControl.contestServer.entity.Contest;
 import com.server.contestControl.contestServer.entity.Problem;
 import com.server.contestControl.contestServer.repository.TestCaseRepository;
 import com.server.contestControl.submissionServer.dto.Judge0Response;
@@ -14,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +43,9 @@ class Judge0CallbackServiceTest {
 
     @Mock
     private SubmissionSsePublisher submissionSsePublisher;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private Judge0CallbackService callbackService;
@@ -109,7 +116,9 @@ class Judge0CallbackServiceTest {
         Problem problem = Problem.builder().id(10L).build();
         Submission submission = Submission.builder()
                 .id(1L)
+                .contest(contest())
                 .problem(problem)
+                .user(team())
                 .verdict(Verdict.RUNNING)
                 .judgeRunId(6L)
                 .build();
@@ -133,7 +142,9 @@ class Judge0CallbackServiceTest {
         Problem problem = Problem.builder().id(10L).build();
         Submission submission = Submission.builder()
                 .id(1L)
+                .contest(contest())
                 .problem(problem)
+                .user(team())
                 .verdict(Verdict.RUNNING)
                 .judgeRunId(6L)
                 .build();
@@ -168,7 +179,9 @@ class Judge0CallbackServiceTest {
         Problem problem = Problem.builder().id(10L).build();
         Submission submission = Submission.builder()
                 .id(1L)
+                .contest(contest())
                 .problem(problem)
+                .user(team())
                 .verdict(Verdict.RUNNING)
                 .judgeRunId(0L)
                 .build();
@@ -217,10 +230,20 @@ class Judge0CallbackServiceTest {
 
         return Submission.builder()
                 .id(1L)
+                .contest(contest())
                 .problem(problem)
+                .user(team())
                 .verdict(Verdict.RUNNING)
                 .judgeRunId(7L)
                 .build();
+    }
+
+    private Contest contest() {
+        return Contest.builder().id(99L).build();
+    }
+
+    private User team() {
+        return User.builder().id(42L).username("team42").role(Role.TEAM).build();
     }
 
     private SubmissionJudgeResult result(Submission submission, int testCaseNumber, Verdict verdict) {

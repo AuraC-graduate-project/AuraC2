@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, ChevronUp, Code2, Columns3, FileText, Inbox, MessageSquare, RefreshCw, type LucideIcon } from "lucide-react";
+import { ChevronDown, ChevronUp, Code2, Columns3, FileText, Inbox, MessageSquare, RefreshCw, Trophy, type LucideIcon } from "lucide-react";
 import type { ImperativePanelGroupHandle } from "react-resizable-panels";
 import { Header } from "./components/Header";
 import { ProblemSidebar, ProblemStatus } from "./components/ProblemSidebar";
@@ -7,6 +7,7 @@ import { CodeEditor } from "./components/CodeEditor";
 import { SubmissionHistory, Submission } from "./components/SubmissionHistory";
 import { Clarifications } from "./components/Clarifications";
 import { ProblemStatementPanel } from "./components/ProblemStatementPanel";
+import { Scoreboard } from "./components/Scoreboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
 import { Button } from "./components/ui/button";
 import {
@@ -30,6 +31,7 @@ import {
 import { useSubmissionStream } from "../hooks/useSubmissionStream";
 
 type WorkspaceMode = "balanced" | "problem" | "code";
+type WorkspacePage = "solve" | "scoreboard";
 
 const workspaceModes: Array<{
   value: WorkspaceMode;
@@ -85,6 +87,7 @@ type Props = {
 
 export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
   const panelGroupRef = useRef<ImperativePanelGroupHandle | null>(null);
+  const [workspacePage, setWorkspacePage] = useState<WorkspacePage>("solve");
   const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>("balanced");
   const [submissionsOpen, setSubmissionsOpen] = useState(false);
   const [clarificationsOpen, setClarificationsOpen] = useState(false);
@@ -223,6 +226,7 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
   const contestEndTime = contest.effectiveEndTime ?? contest.endTime ?? undefined;
   const sizes = panelSizes[workspaceMode];
   const submissionCount = submissions.length;
+  const isScoreboardPage = workspacePage === "scoreboard";
 
   const handleSubmitted = useCallback(() => {
     setSubmissionsOpen(true);
@@ -275,19 +279,48 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
       <section className="aura-workspace-toolbar border-b border-slate-200 bg-white px-4 py-3 lg:px-5">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Solving workspace</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">
+              {isScoreboardPage ? "Contest standings" : "Solving workspace"}
+            </p>
             <div className="mt-1 flex flex-wrap items-center gap-2">
               <h2 className="truncate text-lg font-semibold text-slate-950">
-                {selectedProblem ? selectedProblem.title : "Choose a problem"}
+                {isScoreboardPage
+                  ? "Scoreboard"
+                  : selectedProblem
+                    ? selectedProblem.title
+                    : "Choose a problem"}
               </h2>
               <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                {selectedLabel}
+                {isScoreboardPage ? contest.title : selectedLabel}
               </span>
             </div>
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            {modeControl}
+            {isScoreboardPage ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 gap-2 bg-white"
+                onClick={() => setWorkspacePage("solve")}
+              >
+                <FileText className="h-4 w-4" />
+                Workspace
+              </Button>
+            ) : (
+              <>
+                {modeControl}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 gap-2 bg-white"
+                  onClick={() => setWorkspacePage("scoreboard")}
+                >
+                  <Trophy className="h-4 w-4" />
+                  Scoreboard
+                </Button>
+              </>
+            )}
             <Button
               type="button"
               variant="outline"
@@ -301,120 +334,128 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
         </div>
       </section>
 
-      <div className="hidden min-h-0 flex-1 md:flex">
-        <ProblemSidebar
-          problems={problemsWithStatus}
-          selectedProblem={selectedProblem}
-          onSelectProblem={setSelectedProblem}
-          isLoading={loadingProblems}
-          error={problemError}
-          onRetry={loadProblems}
-          className="h-full w-[280px]"
-        />
-
-        <main className="aura-workspace-main min-w-0 flex-1 p-4">
-          <ResizablePanelGroup ref={panelGroupRef} direction="horizontal" className="h-full gap-0 rounded-lg bg-white">
-            <ResizablePanel defaultSize={sizes.statement} minSize={30} className="min-h-0">
-              <ProblemStatementPanel
-                problem={selectedProblem}
-                className="aura-statement-flush h-full rounded-none border-0 shadow-none"
-              />
-            </ResizablePanel>
-
-            <ResizableHandle className="aura-subtle-resize-handle w-px bg-slate-200" />
-
-            <ResizablePanel defaultSize={sizes.editor} minSize={36} className="min-h-0">
-              <div className="flex h-full min-h-0 flex-col overflow-hidden">
-                <CodeEditor
-                  contestId={contest.id}
-                  problem={selectedProblem}
-                  onSubmitted={handleSubmitted}
-                />
-
-                <section className="aura-submissions-panel shrink-0 border-t border-slate-200 bg-white">
-                  <button
-                    type="button"
-                    onClick={() => setSubmissionsOpen((open) => !open)}
-                    aria-expanded={submissionsOpen}
-                    className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left transition hover:bg-slate-50"
-                  >
-                    <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
-                      <Inbox className="h-4 w-4 text-blue-700" />
-                      Submissions
-                    </span>
-                    <span className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500">
-                      {submissionCount} total
-                      {submissionsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    </span>
-                  </button>
-
-                  {submissionsOpen && (
-                    <div className="max-h-[210px] overflow-auto px-3 pb-3">
-                      <SubmissionHistory
-                        submissions={submissions}
-                        isLoading={loadingSubmissions}
-                        title="This Problem"
-                        className="border-0 shadow-none"
-                        compact
-                      />
-                    </div>
-                  )}
-                </section>
-              </div>
-            </ResizablePanel>
-          </ResizablePanelGroup>
+      {isScoreboardPage ? (
+        <main className="aura-workspace-main min-h-0 flex-1 overflow-y-auto p-4 lg:p-5">
+          <Scoreboard contestId={contest.id} fullPage />
         </main>
-      </div>
+      ) : (
+        <>
+          <div className="hidden min-h-0 flex-1 md:flex">
+            <ProblemSidebar
+              problems={problemsWithStatus}
+              selectedProblem={selectedProblem}
+              onSelectProblem={setSelectedProblem}
+              isLoading={loadingProblems}
+              error={problemError}
+              onRetry={loadProblems}
+              className="h-full w-[280px]"
+            />
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-4 md:hidden">
-        <div className="space-y-4">
-          <ProblemSidebar
-            problems={problemsWithStatus}
-            selectedProblem={selectedProblem}
-            onSelectProblem={setSelectedProblem}
-            isLoading={loadingProblems}
-            error={problemError}
-            onRetry={loadProblems}
-            className="h-[340px] rounded-lg border border-slate-200"
-          />
+            <main className="aura-workspace-main min-w-0 flex-1 p-4">
+              <ResizablePanelGroup ref={panelGroupRef} direction="horizontal" className="h-full gap-0 rounded-lg bg-white">
+                <ResizablePanel defaultSize={sizes.statement} minSize={30} className="min-h-0">
+                  <ProblemStatementPanel
+                    problem={selectedProblem}
+                    className="aura-statement-flush h-full rounded-none border-0 shadow-none"
+                  />
+                </ResizablePanel>
 
-          <Tabs defaultValue="problem" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-3 rounded-lg bg-slate-100 p-1">
-              <TabsTrigger value="problem">Problem</TabsTrigger>
-              <TabsTrigger value="code">Code</TabsTrigger>
-              <TabsTrigger value="submissions">Runs</TabsTrigger>
-            </TabsList>
+                <ResizableHandle className="aura-subtle-resize-handle w-px bg-slate-200" />
 
-            <TabsContent value="problem" className="m-0">
-              <ProblemStatementPanel problem={selectedProblem} />
-            </TabsContent>
+                <ResizablePanel defaultSize={sizes.editor} minSize={36} className="min-h-0">
+                  <div className="flex h-full min-h-0 flex-col overflow-hidden">
+                    <CodeEditor
+                      contestId={contest.id}
+                      problem={selectedProblem}
+                      onSubmitted={handleSubmitted}
+                    />
 
-            <TabsContent value="code" className="m-0">
-              <CodeEditor
-                contestId={contest.id}
-                problem={selectedProblem}
-                onSubmitted={handleSubmitted}
+                    <section className="aura-submissions-panel shrink-0 border-t border-slate-200 bg-white">
+                      <button
+                        type="button"
+                        onClick={() => setSubmissionsOpen((open) => !open)}
+                        aria-expanded={submissionsOpen}
+                        className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left transition hover:bg-slate-50"
+                      >
+                        <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
+                          <Inbox className="h-4 w-4 text-blue-700" />
+                          Submissions
+                        </span>
+                        <span className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500">
+                          {submissionCount} total
+                          {submissionsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        </span>
+                      </button>
+
+                      {submissionsOpen && (
+                        <div className="max-h-[210px] overflow-auto px-3 pb-3">
+                          <SubmissionHistory
+                            submissions={submissions}
+                            isLoading={loadingSubmissions}
+                            title="This Problem"
+                            className="border-0 shadow-none"
+                            compact
+                          />
+                        </div>
+                      )}
+                    </section>
+                  </div>
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            </main>
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto p-4 md:hidden">
+            <div className="space-y-4">
+              <ProblemSidebar
+                problems={problemsWithStatus}
+                selectedProblem={selectedProblem}
+                onSelectProblem={setSelectedProblem}
+                isLoading={loadingProblems}
+                error={problemError}
+                onRetry={loadProblems}
+                className="h-[340px] rounded-lg border border-slate-200"
               />
-            </TabsContent>
 
-            <TabsContent value="submissions" className="m-0">
-              <SubmissionHistory
-                submissions={submissions}
-                isLoading={loadingSubmissions}
-                title="This Problem"
-              />
-            </TabsContent>
+              <Tabs defaultValue="problem" className="space-y-4">
+                <TabsList className="grid w-full grid-cols-3 rounded-lg bg-slate-100 p-1">
+                  <TabsTrigger value="problem">Problem</TabsTrigger>
+                  <TabsTrigger value="code">Code</TabsTrigger>
+                  <TabsTrigger value="submissions">Runs</TabsTrigger>
+                </TabsList>
 
-          </Tabs>
+                <TabsContent value="problem" className="m-0">
+                  <ProblemStatementPanel problem={selectedProblem} />
+                </TabsContent>
 
-          {problemError && (
-            <Button variant="outline" className="w-full gap-2 bg-white" onClick={loadProblems}>
-              <RefreshCw className="h-4 w-4" />
-              Retry Loading Problems
-            </Button>
-          )}
-        </div>
-      </div>
+                <TabsContent value="code" className="m-0">
+                  <CodeEditor
+                    contestId={contest.id}
+                    problem={selectedProblem}
+                    onSubmitted={handleSubmitted}
+                  />
+                </TabsContent>
+
+                <TabsContent value="submissions" className="m-0">
+                  <SubmissionHistory
+                    submissions={submissions}
+                    isLoading={loadingSubmissions}
+                    title="This Problem"
+                  />
+                </TabsContent>
+
+              </Tabs>
+
+              {problemError && (
+                <Button variant="outline" className="w-full gap-2 bg-white" onClick={loadProblems}>
+                  <RefreshCw className="h-4 w-4" />
+                  Retry Loading Problems
+                </Button>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       <Dialog open={clarificationsOpen} onOpenChange={setClarificationsOpen}>
         <DialogContent className="max-h-[88vh] overflow-hidden p-0 sm:max-w-3xl lg:max-w-4xl">
@@ -429,6 +470,7 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
           </div>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 }

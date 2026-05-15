@@ -5,6 +5,7 @@ import com.server.contestControl.submissionServer.dto.Judge0Response;
 import com.server.contestControl.submissionServer.entity.Submission;
 import com.server.contestControl.submissionServer.entity.SubmissionJudgeResult;
 import com.server.contestControl.submissionServer.enums.Verdict;
+import com.server.contestControl.submissionServer.event.SubmissionFinalizedEvent;
 import com.server.contestControl.submissionServer.repository.SubmissionJudgeResultRepository;
 import com.server.contestControl.submissionServer.repository.SubmissionRepository;
 import com.server.contestControl.submissionServer.sse.SubmissionSsePublisher;
@@ -12,6 +13,7 @@ import com.server.contestControl.submissionServer.sse.SubmissionStreamEvent;
 import com.server.contestControl.submissionServer.sse.SubmissionStreamEventType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +32,7 @@ public class Judge0CallbackService {
     private final TestCaseRepository testCaseRepository;
     private final SubmissionJudgeResultRepository judgeResultRepository;
     private final SubmissionSsePublisher submissionSsePublisher;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public ResponseEntity<?> handleJudge0Callback(
@@ -56,6 +59,13 @@ public class Judge0CallbackService {
         if (expectedTestCaseCount <= 0) {
             submission.setVerdict(Verdict.INTERNAL_ERROR);
             submissionRepository.save(submission);
+            SubmissionStreamEvent finalizedEvent =
+                    submissionSsePublisher.buildEvent(SubmissionStreamEventType.FINALIZED, submission);
+            SubmissionFinalizedEvent scoreboardEvent = buildFinalizedEvent(submission);
+            publishAfterCommit(() -> {
+                submissionSsePublisher.dispatch(finalizedEvent);
+                eventPublisher.publishEvent(scoreboardEvent);
+            });
             log.error("Judge0 callback received for problem without test cases. submissionId={}", submissionId);
             return ResponseEntity.ok("No test cases configured; marked INTERNAL_ERROR");
         }
@@ -127,9 +137,23 @@ public class Judge0CallbackService {
         // then dispatch after commit so the frontend reads the committed verdict.
         SubmissionStreamEvent finalizedEvent =
                 submissionSsePublisher.buildEvent(SubmissionStreamEventType.FINALIZED, submission);
-        publishAfterCommit(() -> submissionSsePublisher.dispatch(finalizedEvent));
+        SubmissionFinalizedEvent scoreboardEvent = buildFinalizedEvent(submission);
+        publishAfterCommit(() -> {
+            submissionSsePublisher.dispatch(finalizedEvent);
+            eventPublisher.publishEvent(scoreboardEvent);
+        });
 
         return ResponseEntity.ok("Judging completed -> Verdict = " + finalVerdict);
+    }
+
+    private SubmissionFinalizedEvent buildFinalizedEvent(Submission submission) {
+        return new SubmissionFinalizedEvent(
+                submission.getId(),
+                submission.getContest().getId(),
+                submission.getProblem().getId(),
+                submission.getUser().getId(),
+                submission.getVerdict()
+        );
     }
 
     private void recordJudgeResult(

@@ -11,4 +11,5 @@ public interface ProblemRepository extends JpaRepository<Problem, Long> {
 
     List<Problem> findByContest_Id(Long contestId);
     List<Problem> findAllByContest_id(Long contestId);
+    List<Problem> findByContest_IdOrderByIdAsc(Long contestId);
 }

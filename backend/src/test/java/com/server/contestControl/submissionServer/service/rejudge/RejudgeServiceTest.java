@@ -1,5 +1,9 @@
 package com.server.contestControl.submissionServer.service.rejudge;
 
+import com.server.contestControl.authServer.entity.User;
+import com.server.contestControl.authServer.enums.Role;
+import com.server.contestControl.contestServer.entity.Contest;
+import com.server.contestControl.contestServer.entity.Problem;
 import com.server.contestControl.contestServer.repository.ContestRepository;
 import com.server.contestControl.contestServer.repository.ProblemRepository;
 import com.server.contestControl.submissionServer.dto.RejudgeResponse;
@@ -14,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 
@@ -40,6 +45,9 @@ class RejudgeServiceTest {
 
     @Mock
     private SubmissionSsePublisher submissionSsePublisher;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private RejudgeService rejudgeService;
@@ -175,6 +183,9 @@ class RejudgeServiceTest {
     void forceRejudgeAdvancesJudgeRunIdImmediately() {
         Submission running = Submission.builder()
                 .id(10L)
+                .contest(Contest.builder().id(5L).build())
+                .problem(Problem.builder().id(7L).build())
+                .user(User.builder().id(9L).username("team9").role(Role.TEAM).build())
                 .verdict(Verdict.RUNNING)
                 .executionTime(200)
                 .memoryUsage(512)
@@ -195,6 +206,9 @@ class RejudgeServiceTest {
     private Submission submission(Long id, Verdict verdict) {
         return Submission.builder()
                 .id(id)
+                .contest(Contest.builder().id(5L).build())
+                .problem(Problem.builder().id(7L).build())
+                .user(User.builder().id(9L).username("team9").role(Role.TEAM).build())
                 .verdict(verdict)
                 .executionTime(1)
                 .memoryUsage(1)

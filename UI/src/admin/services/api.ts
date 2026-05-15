@@ -17,6 +17,8 @@ import {
   ClarificationRequest,
   ClarificationResponse,
   ReplyRequest,
+  ScoreboardRevealResponse,
+  ScoreboardSnapshot,
 } from "../types/api";
 
 /**
@@ -359,6 +361,46 @@ export async function forceRejudgeProblem(problemId: number): Promise<RejudgeRes
 
 export async function forceRejudgeContest(contestId: number): Promise<RejudgeResponse> {
   return apiFetch<RejudgeResponse>(`/api/admin/rejudge/force/contests/${contestId}`, {
+    method: "POST",
+  });
+}
+
+// -----------------------------
+// Scoreboard
+// -----------------------------
+
+export async function getPublicScoreboard(contestId: number): Promise<ScoreboardSnapshot> {
+  return apiFetch<ScoreboardSnapshot>(`/api/scoreboard/contests/${contestId}`);
+}
+
+export async function getAdminScoreboard(contestId: number): Promise<ScoreboardSnapshot> {
+  return apiFetch<ScoreboardSnapshot>(`/api/admin/scoreboard/contests/${contestId}`);
+}
+
+export async function getScoreboardRevealState(contestId: number): Promise<ScoreboardRevealResponse> {
+  return apiFetch<ScoreboardRevealResponse>(`/api/admin/scoreboard/contests/${contestId}/reveal`);
+}
+
+export async function startScoreboardReveal(contestId: number): Promise<ScoreboardRevealResponse> {
+  return apiFetch<ScoreboardRevealResponse>(`/api/admin/scoreboard/contests/${contestId}/reveal/start`, {
+    method: "POST",
+  });
+}
+
+export async function revealNextScoreboardCell(contestId: number): Promise<ScoreboardRevealResponse> {
+  return apiFetch<ScoreboardRevealResponse>(`/api/admin/scoreboard/contests/${contestId}/reveal/next`, {
+    method: "POST",
+  });
+}
+
+export async function revealAllScoreboardCells(contestId: number): Promise<ScoreboardRevealResponse> {
+  return apiFetch<ScoreboardRevealResponse>(`/api/admin/scoreboard/contests/${contestId}/reveal/all`, {
+    method: "POST",
+  });
+}
+
+export async function resetScoreboardReveal(contestId: number): Promise<ScoreboardRevealResponse> {
+  return apiFetch<ScoreboardRevealResponse>(`/api/admin/scoreboard/contests/${contestId}/reveal/reset`, {
     method: "POST",
   });
 }

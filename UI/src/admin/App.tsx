@@ -7,10 +7,10 @@ import { ProblemsView } from "./components/ProblemsView";
 import { TeamsView } from "./components/TeamsView";
 import { SubmissionsView } from "./components/SubmissionsView";
 import { ClarificationsView } from "./components/ClarificationsView";
+import { ScoreboardView } from "./components/ScoreboardView";
 import { getActiveContest, getPausedContest, getUpcomingContest } from "./services/api";
 import { ContestResponse, ContestStreamSnapshot, ContestStreamUpdate } from "./types/api";
 import { Toaster } from "./components/ui/sonner";
-import { UnderDevelopmentPage } from "../components/UnderDevelopmentPage";
 import { RejudgeView } from "./components/RejudgeView";
 import { useContestStream } from "../hooks/useContestStream";
 
@@ -90,20 +90,8 @@ export default function AdminApp({ onLogout }: { onLogout: () => void }) {
       case "Clarifications":
         return <ClarificationsView contestId={currentContest?.id ?? null} />;
 
-      case "Scoreboard (Future)":
-        return (
-          <UnderDevelopmentPage
-            title="Scoreboard and Standings"
-            subtitle="Future team rankings"
-            relatedCurrentFeature="Submissions review"
-            plannedItems={[
-              "Solved problem count and penalty time",
-              "Frozen scoreboard states during contest endgame",
-              "Public/team-readable standings once backend ranking exists",
-            ]}
-            onBack={() => setActiveView("Submissions")}
-          />
-        );
+      case "Scoreboard":
+        return <ScoreboardView contestId={currentContest?.id ?? null} />;
 
       case "Rejudge":
         return <RejudgeView initialContestId={currentContest?.id ?? null} />;

@@ -3,6 +3,7 @@ import {
     ClarificationRequest,
     ClarificationResponse,
     ProblemResponse,
+    ScoreboardSnapshot,
     SubmissionResponse,
     TestCaseResponse,
 } from "../../admin/types/api";
@@ -161,4 +162,8 @@ export function getMyClarifications(
     contestId: number
 ): Promise<ClarificationResponse[]> {
     return apiFetch(`/api/clarifications/my/${contestId}`);
+}
+
+export function getPublicScoreboard(contestId: number): Promise<ScoreboardSnapshot> {
+    return apiFetch(`/api/scoreboard/contests/${contestId}`);
 }

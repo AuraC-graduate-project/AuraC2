@@ -272,3 +272,84 @@ Two items were intentionally left out of the current implementation and should b
 **Hook relocation** — `useContestStream.ts` imports from `../admin/services/api` and `../admin/types/api`. When the team workspace is built, those dependencies should also move out of `admin/` into a shared location. The hook move is done; the service/types split is a follow-up.
 
 **REST polling fallback** — `ContestOverview.tsx` polls all four REST endpoints every 10 seconds when `connectionState === 'closed'`. This is a safety net that predates the watchdog. With the watchdog now catching silent drops and reconnecting, the polling interval could be relaxed or the fallback removed entirely once the watchdog has been validated in production.
+
+---
+
+## Scoreboard SSE
+
+The real-time ICPC scoreboard uses the same shared SSE infrastructure. It does not introduce WebSockets or a separate connection manager.
+
+### Backend files
+
+```text
+backend/src/main/java/com/server/contestControl/contestServer/scoreboard/sse
+├── AdminScoreboardSseRegistry
+├── ScoreboardSseAdapter
+├── ScoreboardSsePublisher
+└── ScoreboardSseRegistry
+```
+
+Controllers:
+
+```text
+GET /api/scoreboard/contests/{contestId}/stream
+GET /api/admin/scoreboard/contests/{contestId}/stream
+```
+
+Both streams are targeted by `contestId`, so updates for one contest do not fan out to unrelated contest tabs.
+
+### Event names
+
+| Event | Audience | Meaning |
+|---|---|---|
+| `snapshot` | Admin and public/team | Initial stream state |
+| `scoreboard-update` | Admin and public/team | Live scoring or row-level diff |
+| `scoreboard-freeze` | Public/team, admin metadata | Public/team snapshot is frozen or reset to frozen state |
+| `scoreboard-reveal-step` | Admin and public/team | One or more reveal cells became visible |
+| `ping` | All streams | Shared keepalive |
+
+### Domain events
+
+```text
+SubmissionFinalizedEvent
+SubmissionRejudgeQueuedEvent
+ContestUpdatedEvent
+```
+
+Accepted submission flow:
+
+```text
+Judge0CallbackService
+  -> SubmissionFinalizedEvent
+  -> ScoreboardSseAdapter
+  -> ScoreboardService recalculates snapshots
+  -> ScoreboardSsePublisher.publishTo(contestId, ...)
+  -> ScoreboardSseRegistry / AdminScoreboardSseRegistry
+```
+
+### Payload behavior
+
+`ScoreboardUpdatePayload` carries:
+
+- `version`
+- `previousVersion`
+- `fullSnapshot`
+- `changedTeamIds`
+- `changedRows`
+- current `metadata`
+- optional full `snapshot`
+
+Clients patch changed rows when possible. If a version gap is detected, the client refetches the REST snapshot.
+
+### Frontend hook
+
+`UI/src/hooks/useScoreboardStream.ts` follows the contest stream pattern:
+
+- `fetch-event-source` connection.
+- bearer token header.
+- refresh-token retry after `401`.
+- reconnect backoff.
+- watchdog timeout.
+- version-gap callback.
+
+Admin uses `/api/admin/scoreboard/contests/{contestId}/stream`; team/public uses `/api/scoreboard/contests/{contestId}/stream`.

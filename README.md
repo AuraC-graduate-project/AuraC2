@@ -62,9 +62,11 @@ Handles:
 | Judge0 submission sending | Implemented |
 | Judge0 callback handling | Implemented |
 | Per-test-case final aggregated tracking | Implemented for judge runs |
-| Scoreboard / ranking | Not implemented yet |
+| ICPC-style scoreboard / ranking | Implemented |
+| Real-time scoreboard SSE | Implemented |
+| Scoreboard freeze / reveal | Implemented |
 | Clarifications / announcements | Not implemented yet |
-| Real-time contest updates | Not implemented yet |
+| Real-time contest updates | Implemented |
 
 ---
 
@@ -92,6 +94,7 @@ src/main/java/com/server/contestControl
 │   ├── entity
 │   ├── enums
 │   ├── repository
+│   ├── scoreboard
 │   └── service
 │
 ├── submissionServer
@@ -113,7 +116,22 @@ src/main/java/com/server/contestControl
 This separation makes the project easier to reason about as it grows:
 - **authServer** owns identity and token logic
 - **contestServer** owns contest-related business rules
+- **contestServer.scoreboard** owns deterministic ICPC scoring, freeze/reveal state, and scoreboard SSE
 - **submissionServer** owns asynchronous judging flow
+
+## Real-Time Scoreboard
+
+AuraC2 now includes a real-time ICPC-style scoreboard with admin and public/team views.
+
+- Public/team snapshot: `GET /api/scoreboard/contests/{contestId}`
+- Admin snapshot: `GET /api/admin/scoreboard/contests/{contestId}`
+- Public/team stream: `GET /api/scoreboard/contests/{contestId}/stream`
+- Admin stream: `GET /api/admin/scoreboard/contests/{contestId}/stream`
+- Admin reveal endpoints: `/api/admin/scoreboard/contests/{contestId}/reveal/*`
+
+Every finalized submission publishes a scoreboard domain event. Accepted submissions immediately recalculate solved counts, penalties, first-to-solve cells, ranks, and row-level SSE updates. Public/team streams respect freeze and reveal state; admin streams remain live.
+
+Full API, SSE, scoring, reveal, testing, and migration details are in [`docs/scoreboard-feature-documentation.md`](docs/scoreboard-feature-documentation.md).
 
 ---
 

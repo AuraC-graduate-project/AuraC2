@@ -2,6 +2,8 @@
 
 Last reviewed from the current repository state on 2026-05-11.
 
+Scoreboard addendum reviewed from the current repository state on 2026-05-15.
+
 This document explains the backend project in phases. It covers the current implementation, what each feature does, how data moves through the system, which endpoints exist, how SSE is used, how rejudge works, how Judge0 and RabbitMQ are connected, and the current limitations visible in the code.
 
 ## 1. Project Purpose
@@ -53,6 +55,7 @@ contestServer
   exception
   exceptions
   repository
+  scoreboard
   scheduler
   service
   sse
@@ -79,6 +82,7 @@ High-level responsibility by package:
 |---|---|
 | `authServer` | Login, register, refresh tokens, JWTs, user accounts, security config, startup admin bootstrap |
 | `contestServer` | Contests, contest state, problems, test cases, clarifications, contest schedulers, contest/team/clarification SSE |
+| `contestServer.scoreboard` | ICPC-style scoring, freeze/reveal state, scoreboard REST endpoints, scoreboard SSE |
 | `submissionServer` | Submissions, RabbitMQ queues, Judge0 integration, Judge0 callbacks, rejudge |
 | `shared.sse` | Generic SSE registry, publishing, heartbeat scheduling |
 
@@ -2478,4 +2482,161 @@ It also re-scanned all Java files under:
 ```text
 backend/src/main/java
 backend/src/test/java
+```
+
+## 26. Addendum: Real-Time ICPC Scoreboard
+
+This addendum records the scoreboard implementation added after the earlier backend review.
+
+### 26.1 Responsibility
+
+The scoreboard module owns:
+
+- Deterministic ICPC-style calculation.
+- Admin live standings.
+- Public/team freeze-respected standings.
+- Persisted post-contest reveal state.
+- Row-level SSE update payloads.
+- Rejudge and Judge0 callback invalidation.
+
+The implementation lives in:
+
+```text
+backend/src/main/java/com/server/contestControl/contestServer/scoreboard
+```
+
+### 26.2 Scoring
+
+Only `TEAM` users are ranked. Admin submissions are ignored by the calculator.
+
+Scoring rules:
+
+- A problem is solved by the first `ACCEPTED` submission for that team/problem cell.
+- Solved time is minutes from `contest.actualStartTime` to that first accepted submission.
+- Penalty is `solvedTime + wrongAttemptsBeforeAccepted * contest.penaltyMinutes`.
+- Penalized wrong attempts are `WRONG_ANSWER`, `TLE`, `COMPILATION_ERROR`, and `RUNTIME_ERROR`.
+- `INTERNAL_ERROR` is terminal for finalization/SSE but does not add wrong penalty.
+- Rank order is solved descending, penalty ascending.
+- Equal solved count and equal penalty share rank.
+- Display order remains stable by username and id.
+- First-to-solve is tracked per visible problem from visible accepted submissions.
+
+### 26.3 Freeze And Reveal
+
+Freeze timing is delegated to `ContestLifecycleService` through `ScoreboardFreezePolicy`, so pause-aware behavior remains centralized.
+
+Public/team snapshots:
+
+- Hide terminal submissions at or after freeze time while the scoreboard is frozen.
+- Stay frozen after the contest ends until reveal completes.
+- Include only revealed post-freeze cells during reveal.
+
+Admin snapshots:
+
+- Always show live scoring.
+- Include metadata showing whether the official public/team scoreboard is frozen.
+
+Reveal persistence:
+
+```text
+scoreboard_reveal_states
+scoreboard_reveal_cells
+```
+
+Reveal status values:
+
+- `NOT_STARTED`
+- `IN_PROGRESS`
+- `COMPLETED`
+
+Reveal endpoints require the contest effective state to be `ENDED`. `start` rebuilds the hidden-cell queue, `next` reveals one team/problem cell, `all` reveals every queued cell, and `reset` returns public/team standings to the frozen snapshot.
+
+### 26.4 REST Endpoints
+
+Public/team:
+
+| Method | Path | Behavior |
+|---|---|---|
+| `GET` | `/api/scoreboard/contests/{contestId}` | Freeze-respected public/team snapshot |
+| `GET` | `/api/scoreboard/contests/{contestId}/stream` | Public/team SSE stream |
+
+Admin:
+
+| Method | Path | Behavior |
+|---|---|---|
+| `GET` | `/api/admin/scoreboard/contests/{contestId}` | Live admin snapshot |
+| `GET` | `/api/admin/scoreboard/contests/{contestId}/stream` | Admin SSE stream |
+| `GET` | `/api/admin/scoreboard/contests/{contestId}/reveal` | Reveal status and next queued cell |
+| `POST` | `/api/admin/scoreboard/contests/{contestId}/reveal/start` | Build reveal queue |
+| `POST` | `/api/admin/scoreboard/contests/{contestId}/reveal/next` | Reveal one queued cell |
+| `POST` | `/api/admin/scoreboard/contests/{contestId}/reveal/all` | Reveal all queued cells |
+| `POST` | `/api/admin/scoreboard/contests/{contestId}/reveal/reset` | Reset reveal to frozen state |
+
+### 26.5 SSE Flow
+
+Scoreboard streams use `shared.sse`:
+
+- `ScoreboardSseRegistry` for public/team streams.
+- `AdminScoreboardSseRegistry` for admin streams.
+- `ScoreboardSsePublisher` for event dispatch.
+- `ScoreboardSseAdapter` for domain-event-to-SSE conversion.
+
+Events:
+
+- Initial `snapshot`
+- `scoreboard-update`
+- `scoreboard-freeze`
+- `scoreboard-reveal-step`
+- shared `ping`
+
+Flow for accepted submissions:
+
+```text
+Judge0CallbackService finalizes ACCEPTED
+  -> SubmissionFinalizedEvent
+  -> ScoreboardSseAdapter recalculates admin and public/team snapshots
+  -> ScoreboardSsePublisher emits row-level payload
+  -> UI patches changed rows or refetches on version gap
+```
+
+Rejudge flow:
+
+```text
+RejudgeService queues submissions
+  -> SubmissionRejudgeQueuedEvent
+  -> scoreboard invalidates/recalculates
+  -> later Judge0 callback finalizes new verdict
+  -> SubmissionFinalizedEvent
+  -> scoreboard recalculates again
+```
+
+Zero-test-case flow:
+
+```text
+SubmissionConsumer detects no test cases
+  -> marks submission INTERNAL_ERROR
+  -> publishes final submission SSE
+  -> publishes SubmissionFinalizedEvent
+  -> scoreboard streams remain in sync
+```
+
+### 26.6 Tests
+
+New backend coverage includes:
+
+- `ScoreboardCalculatorTest`
+- `ScoreboardServiceTest`
+- `ScoreboardRevealServiceTest`
+- `ScoreboardSsePublisherTest`
+
+Existing submission, Judge0 callback, rejudge, and submission consumer tests were extended for scoreboard event publication and zero-test-case finalization.
+
+Frontend TypeScript integration is verified through `npm run build`. Hook and component coverage is verified through `npm run test` using Vitest and React Testing Library.
+
+### 26.7 Dedicated Feature Doc
+
+Full API contract, SSE payload shape, frontend package map, manual E2E checklist, and migration notes are maintained in:
+
+```text
+docs/scoreboard-feature-documentation.md
 ```

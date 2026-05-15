@@ -7,6 +7,7 @@ import com.server.contestControl.contestServer.repository.ProblemRepository;
 import com.server.contestControl.submissionServer.dto.RejudgeResponse;
 import com.server.contestControl.submissionServer.entity.Submission;
 import com.server.contestControl.submissionServer.enums.Verdict;
+import com.server.contestControl.submissionServer.event.SubmissionRejudgeQueuedEvent;
 import com.server.contestControl.submissionServer.exceptions.InvalidRejudgeRequestException;
 import com.server.contestControl.submissionServer.queue.submission.SubmissionProducer;
 import com.server.contestControl.submissionServer.repository.SubmissionRepository;
@@ -15,6 +16,7 @@ import com.server.contestControl.submissionServer.sse.SubmissionStreamEvent;
 import com.server.contestControl.submissionServer.sse.SubmissionStreamEventType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -42,6 +44,7 @@ public class RejudgeService {
     private final ContestRepository contestRepository;
     private final SubmissionProducer submissionProducer;
     private final SubmissionSsePublisher submissionSsePublisher;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public RejudgeResponse rejudgeSelectedSubmissions(List<Long> submissionIds) {
@@ -219,12 +222,23 @@ public class RejudgeService {
             List<SubmissionStreamEvent> sseEvents = submissionsToQueue.stream()
                     .map(s -> submissionSsePublisher.buildEvent(SubmissionStreamEventType.REJUDGE_QUEUED, s))
                     .toList();
+            List<SubmissionRejudgeQueuedEvent> scoreboardEvents = submissionsToQueue.stream()
+                    .map(s -> new SubmissionRejudgeQueuedEvent(
+                            s.getId(),
+                            s.getContest().getId(),
+                            s.getProblem().getId(),
+                            s.getUser().getId()
+                    ))
+                    .toList();
 
             submissionRepository.saveAll(submissionsToQueue);
             publishAfterCommit(queuedIds);
 
             // Dispatch SSE events after the DB commit so frontend reads committed state.
-            registerAfterCommit(() -> sseEvents.forEach(submissionSsePublisher::dispatch));
+            registerAfterCommit(() -> {
+                sseEvents.forEach(submissionSsePublisher::dispatch);
+                scoreboardEvents.forEach(eventPublisher::publishEvent);
+            });
         }
 
         return new RejudgeResponse(

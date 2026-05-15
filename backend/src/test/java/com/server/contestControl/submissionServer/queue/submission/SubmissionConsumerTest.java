@@ -1,10 +1,14 @@
 package com.server.contestControl.submissionServer.queue.submission;
 
+import com.server.contestControl.authServer.entity.User;
+import com.server.contestControl.authServer.enums.Role;
+import com.server.contestControl.contestServer.entity.Contest;
 import com.server.contestControl.contestServer.entity.Problem;
 import com.server.contestControl.contestServer.entity.TestCase;
 import com.server.contestControl.contestServer.repository.TestCaseRepository;
 import com.server.contestControl.submissionServer.entity.Submission;
 import com.server.contestControl.submissionServer.enums.Verdict;
+import com.server.contestControl.submissionServer.event.SubmissionFinalizedEvent;
 import com.server.contestControl.submissionServer.repository.SubmissionRepository;
 import com.server.contestControl.submissionServer.service.judge.Judge0Service;
 import com.server.contestControl.submissionServer.sse.SubmissionSsePublisher;
@@ -14,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 import java.util.Optional;
@@ -41,6 +46,9 @@ class SubmissionConsumerTest {
 
     @Mock
     private SubmissionSsePublisher submissionSsePublisher;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private SubmissionConsumer submissionConsumer;
@@ -159,5 +167,33 @@ class SubmissionConsumerTest {
         assertThat(submission.getVerdict()).isEqualTo(Verdict.RUNNING);
         verify(submissionRepository).save(submission);
         verify(judge0Service).sendSingleTest(eq(submission), eq(tc), eq(1), anyInt());
+    }
+
+    @Test
+    void consumerMarksZeroTestCaseProblemInternalErrorAndPublishesFinalEvent() {
+        Contest contest = Contest.builder().id(20L).build();
+        Problem problem = Problem.builder().id(10L).contest(contest).build();
+        User team = User.builder().id(30L).username("team30").role(Role.TEAM).build();
+        Submission submission = Submission.builder()
+                .id(5L)
+                .contest(contest)
+                .problem(problem)
+                .user(team)
+                .verdict(Verdict.PENDING)
+                .judgeRunId(0L)
+                .language("java")
+                .code("class Main {}")
+                .build();
+
+        when(submissionRepository.findByIdWithContestProblemUser(5L)).thenReturn(Optional.of(submission));
+        when(testCaseRepository.findByProblemId(10L)).thenReturn(List.of());
+
+        submissionConsumer.handleSubmission(5L);
+
+        assertThat(submission.getVerdict()).isEqualTo(Verdict.INTERNAL_ERROR);
+        verify(submissionRepository).save(submission);
+        verify(submissionSsePublisher).publish(eq(SubmissionStreamEventType.FINALIZED), eq(submission));
+        verify(eventPublisher).publishEvent(any(SubmissionFinalizedEvent.class));
+        verify(judge0Service, never()).sendSingleTest(any(), any(), anyInt(), anyInt());
     }
 }

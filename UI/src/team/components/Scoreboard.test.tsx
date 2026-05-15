@@ -31,7 +31,7 @@ describe("Scoreboard", () => {
 
     expect(await screen.findByText("alpha")).toBeInTheDocument();
     expect(screen.getByText("Frozen")).toBeInTheDocument();
-    expect(screen.getByText(/hidden cells will update during the reveal/i)).toBeInTheDocument();
+    expect(screen.getByText("Official scoreboard frozen")).toBeInTheDocument();
     expect(screen.getByTitle("Contains hidden post-freeze activity")).toBeInTheDocument();
   });
 });
