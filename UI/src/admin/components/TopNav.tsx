@@ -16,23 +16,23 @@ export function TopNav({
   };
 
   return (
-    <header className="aura-topbar flex items-center justify-between border-b border-slate-200 bg-white px-8 py-4">
+    <header className="aura-topbar flex items-center justify-between px-8 py-4">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Aura Contest Control</p>
-        <h1 className="text-xl font-semibold text-slate-950">{activeView}</h1>
+        <p className="text-xs font-medium uppercase tracking-[0.18em] text-on-surface-soft">Aura Contest Control</p>
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-on-surface">{activeView}</h1>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="hidden items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 md:flex">
-          <User className="h-4 w-4 text-blue-700" />
+      <div className="flex items-center gap-3">
+        <div className="hidden items-center gap-2 rounded-xl bg-surface-container-high px-3 py-2 text-sm text-on-surface-variant md:flex">
+          <User className="h-4 w-4 text-primary" />
           Admin
         </div>
-        <Button variant="outline" className="gap-2" onClick={() => window.location.reload()}>
+        <Button variant="ghost" className="gap-2" onClick={() => window.location.reload()}>
           <RefreshCw className="h-4 w-4" />
           Refresh
         </Button>
         <ThemeToggle />
-        <Button onClick={handleLogout} className="gap-2 bg-blue-700 hover:bg-blue-800">
+        <Button onClick={handleLogout} className="gap-2">
           <LogOut className="h-4 w-4" /> Logout
         </Button>
       </div>

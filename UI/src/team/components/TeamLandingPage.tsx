@@ -59,25 +59,25 @@ export default function TeamLandingPage({ lifecycle, contest, onLogout }: Props)
     lifecycle === "NONE" || !contest ? "No active contest" : contest.title;
 
   return (
-    <div className="relative min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
+    <div className="relative min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <Button
         variant="ghost"
         onClick={onLogout}
-        className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
+        className="absolute top-4 right-4"
       >
         <LogOut className="w-4 h-4 mr-2" />
         Logout
       </Button>
 
-      <div className="text-center space-y-6 max-w-2xl">
-        <h1 className="text-3xl md:text-4xl font-bold text-[#1E293B]">
+      <div className="text-center space-y-8 max-w-2xl">
+        <p className="text-xs font-medium uppercase tracking-[0.22em] text-primary">{STATUS_LABEL[lifecycle]}</p>
+
+        <h1 className="font-display text-4xl md:text-5xl font-semibold tracking-tight text-on-surface">
           {heading}
         </h1>
 
-        <p className="text-gray-500">{STATUS_LABEL[lifecycle]}</p>
-
         {showCountdown && (
-          <div className="font-mono text-5xl md:text-6xl text-gray-400 tracking-wider">
+          <div className="font-mono text-5xl md:text-6xl text-on-surface tabular-nums tracking-tight">
             {formatHMS(remainingMs!)}
           </div>
         )}

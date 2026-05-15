@@ -51,7 +51,7 @@ export default function App() {
 
   if (booting) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC] text-slate-600">
+      <div className="flex min-h-screen items-center justify-center bg-background text-on-surface-variant font-display tracking-tight">
         Loading AuraC²...
       </div>
     );

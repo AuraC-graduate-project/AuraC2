@@ -114,7 +114,7 @@ export default function AdminApp({ onLogout }: { onLogout: () => void }) {
   };
 
   return (
-    <div className="aura-app-shell aura-admin-shell flex h-screen bg-[#F8FAFC] text-slate-900">
+    <div className="aura-app-shell aura-admin-shell flex h-screen bg-background text-on-surface">
       <Sidebar activeView={activeView} setActiveView={setActiveView} onLogout={onLogout} />
 
       <div className="flex flex-1 flex-col overflow-hidden">

@@ -89,70 +89,70 @@ export function AdminOverview({ onNavigate }: AdminOverviewProps) {
   }, []);
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-col gap-4 border-b border-slate-200 bg-slate-50 px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
+    <div className="space-y-8">
+      <section className="rounded-xl bg-surface-container">
+        <div className="flex flex-col gap-4 px-6 pt-6 pb-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Admin overview</p>
-            <h1 className="mt-1 text-2xl font-semibold text-slate-950">Aura Contest Control</h1>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Admin overview</p>
+            <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight text-on-surface">Aura Contest Control</h1>
+            <p className="mt-2 text-sm leading-6 text-on-surface-variant">
               Manage the live contest workflow without exposing planned features as production tools.
             </p>
           </div>
-          <Button variant="outline" className="gap-2 bg-white" onClick={loadContest} disabled={loading}>
+          <Button variant="ghost" className="gap-2" onClick={loadContest} disabled={loading}>
             <RefreshCw className="h-4 w-4" />
             Refresh
           </Button>
         </div>
 
-        <div className="grid gap-6 p-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-lg border border-slate-200 p-5">
+        <div className="grid gap-6 px-6 pb-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="rounded-xl bg-surface-container-low p-5">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold text-slate-950">Current contest summary</h2>
-                <p className="text-sm text-slate-500">Loaded from the contest API.</p>
+                <h2 className="font-display text-lg font-semibold tracking-tight text-on-surface">Current contest</h2>
+                <p className="text-xs uppercase tracking-[0.14em] text-on-surface-soft">Live from the contest API</p>
               </div>
               {contest && <StatusBadge kind="contest" value={contest.status} />}
             </div>
 
             {loading ? (
-              <p className="py-10 text-center text-sm text-slate-500">Loading contest...</p>
+              <p className="py-10 text-center text-sm text-on-surface-soft">Loading contest...</p>
             ) : !contest ? (
-              <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-                <p className="text-sm font-medium text-slate-800">No active, paused, or upcoming contest found.</p>
-                <p className="mt-1 text-sm text-slate-500">Create a contest from the contest control page.</p>
-                <Button className="mt-5 bg-blue-700 hover:bg-blue-800" onClick={() => onNavigate("Contests")}>
+              <div className="rounded-xl bg-surface-container-lowest p-8 text-center">
+                <p className="text-sm font-medium text-on-surface">No active, paused, or upcoming contest found.</p>
+                <p className="mt-1 text-sm text-on-surface-soft">Create a contest from the contest control page.</p>
+                <Button className="mt-5" onClick={() => onNavigate("Contests")}>
                   Open Contest Control
                 </Button>
               </div>
             ) : (
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="md:col-span-2">
-                  <p className="text-sm font-semibold text-slate-500">Title</p>
-                  <p className="mt-1 text-lg font-semibold text-slate-950">{contest.title}</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{contest.description || "No description provided."}</p>
+                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-on-surface-soft">Title</p>
+                  <p className="mt-1 font-display text-xl font-semibold tracking-tight text-on-surface">{contest.title}</p>
+                  <p className="mt-2 text-sm leading-6 text-on-surface-variant">{contest.description || "No description provided."}</p>
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Start time</p>
-                  <p className="mt-2 text-sm font-medium text-slate-800">{formatDateTime(contest.startTime)}</p>
+                <div className="rounded-xl bg-surface-container-lowest p-4">
+                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-on-surface-soft">Start time</p>
+                  <p className="mt-2 font-mono text-sm text-on-surface">{formatDateTime(contest.startTime)}</p>
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Duration</p>
-                  <p className="mt-2 text-sm font-medium text-slate-800">{formatDuration(contest.durationMinutes)}</p>
+                <div className="rounded-xl bg-surface-container-lowest p-4">
+                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-on-surface-soft">Duration</p>
+                  <p className="mt-2 font-mono text-sm text-on-surface">{formatDuration(contest.durationMinutes)}</p>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="grid gap-4">
+          <div className="grid gap-3">
             {[
               ["Contest control", "Manage lifecycle from the Contests page using current API state."],
               ["Team management", "Create and maintain student logins in one place."],
               ["Review queues", "Use Submissions and Clarifications for contest operations."],
             ].map(([title, detail]) => (
-              <div key={title} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                <span className="font-semibold text-slate-900">{title}</span>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{detail}</p>
+              <div key={title} className="rounded-xl bg-surface-container-low p-4">
+                <span className="font-semibold text-on-surface">{title}</span>
+                <p className="mt-2 text-sm leading-6 text-on-surface-variant">{detail}</p>
               </div>
             ))}
           </div>
@@ -167,24 +167,24 @@ export function AdminOverview({ onNavigate }: AdminOverviewProps) {
               type="button"
               key={item.title}
               onClick={() => onNavigate(item.view)}
-              className="rounded-lg border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
+              className="group rounded-xl bg-surface-container p-5 text-left transition hover:-translate-y-0.5 hover:bg-surface-container-high"
             >
-              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-primary-fixed text-primary transition group-hover:bg-primary group-hover:text-on-primary dark:bg-primary/15">
                 <Icon className="h-5 w-5" />
               </div>
-              <h3 className="font-semibold text-slate-950">{item.title}</h3>
-              <p className="mt-2 text-sm leading-5 text-slate-600">{item.description}</p>
+              <h3 className="font-display font-semibold tracking-tight text-on-surface">{item.title}</h3>
+              <p className="mt-2 text-sm leading-5 text-on-surface-variant">{item.description}</p>
             </button>
           );
         })}
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-xl bg-surface-container p-5">
         <div className="flex items-start gap-3">
-          <CalendarDays className="mt-0.5 h-5 w-5 text-blue-700" />
+          <CalendarDays className="mt-0.5 h-5 w-5 text-primary" />
           <div>
-            <h2 className="font-semibold text-slate-950">Operational scope</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
+            <h2 className="font-display font-semibold tracking-tight text-on-surface">Operational scope</h2>
+            <p className="mt-1 text-sm leading-6 text-on-surface-variant">
               The main navigation now keeps working contest, team, problem, submission, and clarification workflows prominent.
             </p>
           </div>

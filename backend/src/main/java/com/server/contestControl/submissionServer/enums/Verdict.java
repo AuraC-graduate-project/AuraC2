@@ -17,9 +17,12 @@ public enum Verdict {
             case 4 -> WRONG_ANSWER;
             case 5 -> TLE;
             case 6 -> COMPILATION_ERROR;
-            case 7 -> RUNTIME_ERROR;
-            case 13 -> INTERNAL_ERROR; // judge0 system error
-            default -> PENDING;
+            // Judge0 emits 7..12 for distinct runtime-fault flavors (SIGSEGV,
+            // SIGXFSZ, SIGFPE — divide-by-zero, SIGABRT, NZEC, Other). All are
+            // terminal runtime failures and should resolve as RUNTIME_ERROR.
+            case 7, 8, 9, 10, 11, 12 -> RUNTIME_ERROR;
+            case 13, 14 -> INTERNAL_ERROR; // judge0 system / exec-format error
+            default -> PENDING; // 1 (In Queue), 2 (Processing), or unknown
         };
     }
 }

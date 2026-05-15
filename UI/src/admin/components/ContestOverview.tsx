@@ -485,19 +485,19 @@ export function ContestOverview() {// Every render, React runs this function aga
 
   return (
     <>
-      <Card className="border border-gray-200 shadow-sm">
-        <CardHeader className="bg-[#1E293B] py-4 text-white">
+      <Card>
+        <CardHeader className="bg-surface-container-low py-5 rounded-t-xl">
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Contest lifecycle</p>
-                <CardTitle className="mt-1 leading-none">Contest Overview</CardTitle>
+                <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-primary">Contest lifecycle</p>
+                <CardTitle className="mt-1 font-display text-2xl font-semibold tracking-tight text-on-surface">Contest Overview</CardTitle>
               </div>
 
               <div className="flex items-center gap-2">
               <span
                 title={`Stream ${connectionState}`}
-                className="flex items-center gap-1.5 text-xs text-slate-200"
+                className="flex items-center gap-1.5 text-xs text-on-surface-variant"
               >
                 <span
                   className={`inline-block w-2 h-2 rounded-full ${connectionColor}`}
@@ -505,13 +505,13 @@ export function ContestOverview() {// Every render, React runs this function aga
                 {connectionLabel}
               </span>
               {isFrozen && (
-                <Badge className="bg-cyan-100 text-cyan-700 border-cyan-200 border gap-1">
+                <Badge className="gap-1">
                   <Snowflake className="w-3 h-3" />
                   Frozen
                 </Badge>
               )}
               {contest && (
-                <Badge className={`${getStatusColor(lifecycleState ?? contest.status)} border`}>
+                <Badge>
                   {lifecycleState ?? contest.status}
                 </Badge>
               )}
@@ -522,16 +522,16 @@ export function ContestOverview() {// Every render, React runs this function aga
               type="single"
               value={contestType}
               onValueChange={(v) => v && setContestType(v as ContestTab)}
-              className="grid h-auto w-full grid-cols-4 rounded-lg bg-slate-700 p-1"
+              className="grid h-auto w-full grid-cols-4 rounded-xl bg-surface-container-high p-1"
             >
               {(['active', 'upcoming', 'paused', 'ended'] as const).map((t) => (
                 <ToggleGroupItem
                   key={t}
                   value={t}
                   className="
-                    h-9 w-full justify-center rounded-md px-2 text-sm capitalize text-slate-200
-                    data-[state=on]:bg-white data-[state=on]:text-slate-900 data-[state=on]:shadow-sm
-                    focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60
+                    h-9 w-full justify-center rounded-lg px-2 text-sm capitalize text-on-surface-variant
+                    data-[state=on]:bg-surface-container data-[state=on]:text-on-surface
+                    focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60
                   "
                 >
                   {t}
@@ -585,87 +585,87 @@ export function ContestOverview() {// Every render, React runs this function aga
           ) : (
             <>
               {/* DETAILS */}
-              <div className="grid md:grid-cols-2 gap-6 mb-6">
-                <div className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-x-8 gap-y-5 mb-8">
+                <div className="space-y-5">
                   <div>
-                    <label className="text-slate-600 flex items-center gap-2">
-                      <FileText className="w-4 h-4" />
+                    <label className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-on-surface-soft">
+                      <FileText className="w-3.5 h-3.5 text-primary" />
                       Contest Name
                     </label>
-                    <p className="text-slate-900">{contest.title}</p>
+                    <p className="mt-1.5 font-display text-xl font-semibold tracking-tight text-on-surface">{contest.title}</p>
                   </div>
                   <div>
-                    <label className="text-slate-600 flex items-center gap-2">
-                      <Calendar className="w-4 h-4" />
+                    <label className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-on-surface-soft">
+                      <Calendar className="w-3.5 h-3.5 text-primary" />
                       Scheduled Start
                     </label>
-                    <p className="text-slate-900">{formatTime(contest.startTime)}</p>
+                    <p className="mt-1.5 font-mono text-sm text-primary dark:text-secondary tabular-nums">{formatTime(contest.startTime)}</p>
                   </div>
                   {contest.actualStartTime && (
                     <div>
-                      <label className="text-slate-600 flex items-center gap-2">
-                        <Play className="w-4 h-4" />
+                      <label className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-on-surface-soft">
+                        <Play className="w-3.5 h-3.5 text-tertiary" />
                         Actual Start
                       </label>
-                      <p className="text-slate-900">{formatTime(contest.actualStartTime)}</p>
+                      <p className="mt-1.5 font-mono text-sm text-primary dark:text-secondary tabular-nums">{formatTime(contest.actualStartTime)}</p>
                     </div>
                   )}
                   <div>
-                    <label className="text-slate-600 flex items-center gap-2">
-                      <Calendar className="w-4 h-4" />
+                    <label className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-on-surface-soft">
+                      <Calendar className="w-3.5 h-3.5 text-primary" />
                       End Time
                     </label>
-                    <p className="text-slate-900">
+                    <p className="mt-1.5 font-mono text-sm text-primary dark:text-secondary tabular-nums">
                       {lifecycleState === 'PAUSED'
-                        ? '— (paused)'
+                        ? <span className="text-on-surface-soft">— (paused)</span>
                         : formatTime(contest.effectiveEndTime ?? contest.endTime)}
                     </p>
                   </div>
                   {lifecycleState !== 'ENDED' && (
                     <div>
-                      <label className="text-slate-600 flex items-center gap-2">
-                        <Clock className="w-4 h-4" />
+                      <label className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-on-surface-soft">
+                        <Clock className="w-3.5 h-3.5 text-primary" />
                         Time Remaining
                       </label>
-                      <p className="text-slate-900 font-mono text-lg">
+                      <p className="mt-1.5 font-mono text-2xl font-semibold tabular-nums text-on-surface">
                         {formatCountdown(remainingMs)}
                         {lifecycleState === 'PAUSED' && (
-                          <span className="ml-2 text-orange-600 text-sm">(paused)</span>
+                          <span className="ml-2 text-sm font-normal text-secondary">(paused)</span>
                         )}
                       </p>
                     </div>
                   )}
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-5">
                   <div>
-                    <label className="text-slate-600 flex items-center gap-2">
-                      <Clock className="w-4 h-4" />
+                    <label className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-on-surface-soft">
+                      <Clock className="w-3.5 h-3.5 text-primary" />
                       Duration
                     </label>
-                    <p className="text-slate-900">{formatDuration(contest.durationMinutes)}</p>
+                    <p className="mt-1.5 font-mono text-sm text-primary dark:text-secondary tabular-nums">{formatDuration(contest.durationMinutes)}</p>
                   </div>
                   <div>
-                    <label className="text-slate-600 flex items-center gap-2">
-                      <Snowflake className="w-4 h-4" />
+                    <label className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-on-surface-soft">
+                      <Snowflake className="w-3.5 h-3.5 text-primary" />
                       Scoreboard Freeze
                     </label>
-                    <p className="text-slate-900">
+                    <p className="mt-1.5 font-mono text-sm text-primary dark:text-secondary tabular-nums">
                       {contest.scoreboardFreezeMinutes
                         ? `${contest.scoreboardFreezeMinutes} min before end`
-                        : 'Disabled'}
+                        : <span className="text-on-surface-soft">Disabled</span>}
                     </p>
                   </div>
                   <div>
-                    <label className="text-slate-600">Penalty per Wrong Answer</label>
-                    <p className="text-slate-900">{contest.penaltyMinutes} minutes</p>
+                    <label className="text-[10px] font-medium uppercase tracking-[0.18em] text-on-surface-soft">Penalty per Wrong Answer</label>
+                    <p className="mt-1.5 font-mono text-sm text-primary dark:text-secondary tabular-nums">{contest.penaltyMinutes} minutes</p>
                   </div>
                 </div>
               </div>
 
               {/* CONTROLS */}
-              <div className="border-t pt-6">
-                <h3 className="text-slate-700 mb-4">Contest Controls</h3>
+              <div className="pt-6">
+                <h3 className="mb-4 text-[10px] font-medium uppercase tracking-[0.18em] text-on-surface-soft">Contest Controls</h3>
                 <div className="flex flex-wrap gap-3">
                   <Button
                     variant="outline"
@@ -678,7 +678,8 @@ export function ContestOverview() {// Every render, React runs this function aga
                   </Button>
 
                   <Button
-                    className="bg-green-600 hover:bg-green-700 gap-2"
+                    variant="success"
+                    className="gap-2"
                     disabled={!canStart}
                     onClick={handleStart}
                   >
@@ -687,7 +688,8 @@ export function ContestOverview() {// Every render, React runs this function aga
                   </Button>
 
                   <Button
-                    className="bg-blue-600 hover:bg-blue-700 gap-2"
+                    variant="info"
+                    className="gap-2"
                     disabled={!canResume}
                     onClick={handleResume}
                   >
@@ -696,7 +698,8 @@ export function ContestOverview() {// Every render, React runs this function aga
                   </Button>
 
                   <Button
-                    className="bg-orange-600 hover:bg-orange-700 gap-2"
+                    variant="warning"
+                    className="gap-2"
                     disabled={!canPause}
                     onClick={handlePause}
                   >
@@ -705,7 +708,8 @@ export function ContestOverview() {// Every render, React runs this function aga
                   </Button>
 
                   <Button
-                    className="bg-red-600 hover:bg-red-700 gap-2"
+                    variant="destructive"
+                    className="gap-2"
                     disabled={!canEnd}
                     onClick={() => setEndDialogOpen(true)}
                   >

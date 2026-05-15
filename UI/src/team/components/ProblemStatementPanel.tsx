@@ -128,36 +128,36 @@ export function ProblemStatementPanel({
             ) : (
               <div className="space-y-4">
                 {samples.map((sample, index) => (
-                  <article key={sample.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                    <h4 className="mb-3 text-sm font-semibold text-slate-800">Sample #{index + 1}</h4>
+                  <article key={sample.id} className="rounded-xl bg-surface-container-low p-4">
+                    <h4 className="mb-3 font-display text-sm font-semibold tracking-tight text-on-surface">Sample #{index + 1}</h4>
                     <div className="grid gap-3">
                       <div>
-                        <div className="mb-1 flex items-center justify-between gap-2">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Input</p>
+                        <div className="mb-1.5 flex items-center justify-between gap-2">
+                          <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-on-surface-soft">Input</p>
                           <button
                             type="button"
                             onClick={() => copyText(sample.inputData)}
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-800"
+                            className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-container"
                           >
                             <Copy className="h-3.5 w-3.5" />
                             Copy
                           </button>
                         </div>
-                        <pre className="overflow-x-auto rounded-md bg-slate-950 p-3 text-xs text-slate-100">{sample.inputData}</pre>
+                        <pre className="overflow-x-auto rounded-lg bg-surface-container-lowest p-3 text-xs font-mono text-on-surface dark:bg-black">{sample.inputData}</pre>
                       </div>
                       <div>
-                        <div className="mb-1 flex items-center justify-between gap-2">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Expected Output</p>
+                        <div className="mb-1.5 flex items-center justify-between gap-2">
+                          <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-on-surface-soft">Expected Output</p>
                           <button
                             type="button"
                             onClick={() => copyText(sample.expectedOutput)}
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-800"
+                            className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-container"
                           >
                             <Copy className="h-3.5 w-3.5" />
                             Copy
                           </button>
                         </div>
-                        <pre className="overflow-x-auto rounded-md border border-slate-200 bg-white p-3 text-xs text-slate-800">
+                        <pre className="overflow-x-auto rounded-lg bg-surface-container-lowest p-3 text-xs font-mono text-tertiary dark:bg-black">
                           {sample.expectedOutput}
                         </pre>
                       </div>

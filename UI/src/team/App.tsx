@@ -169,25 +169,25 @@ export default function TeamApp({ onLogout }: { onLogout: () => void }) {
 
 function TeamLoadingPage({ onLogout }: { onLogout: () => void }) {
   return (
-    <div className="relative min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
+    <div className="relative min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <Button
         variant="ghost"
         onClick={onLogout}
-        className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
+        className="absolute top-4 right-4"
       >
         <LogOut className="w-4 h-4 mr-2" />
         Logout
       </Button>
 
       <div className="flex flex-col items-center text-center gap-4">
-        <div className="h-12 w-12 rounded-full border border-gray-200 bg-white shadow-sm flex items-center justify-center">
-          <Loader2 className="w-5 h-5 text-[#1E293B] animate-spin" />
+        <div className="h-12 w-12 rounded-full bg-surface-container flex items-center justify-center">
+          <Loader2 className="w-5 h-5 text-primary animate-spin" />
         </div>
         <div className="space-y-2">
-          <h1 className="text-3xl md:text-4xl font-bold text-[#1E293B]">
+          <h1 className="font-display text-3xl md:text-4xl font-semibold tracking-tight text-on-surface">
             Contest UI
           </h1>
-          <p className="text-gray-500">Preparing your workspace</p>
+          <p className="text-on-surface-soft">Preparing your workspace</p>
         </div>
       </div>
     </div>
@@ -201,10 +201,10 @@ function ConnectionIndicator({
 }) {
   const color =
     state === "open"
-      ? "bg-emerald-500"
+      ? "bg-tertiary"
       : state === "connecting"
-      ? "bg-amber-400"
-      : "bg-slate-400";
+      ? "bg-secondary"
+      : "bg-on-surface-soft";
   const label =
     state === "open"
       ? null
@@ -214,10 +214,10 @@ function ConnectionIndicator({
 
   return (
     <div
-      className="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 px-2 py-1 rounded bg-white/80 backdrop-blur-sm border border-gray-200 shadow-sm text-xs text-gray-600"
+      className="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 rounded-full bg-surface-container/85 px-2.5 py-1 text-xs text-on-surface-variant backdrop-blur-md"
       title={`Stream ${state}`}
     >
-      <span className={`inline-block w-2 h-2 rounded-full ${color}`} />
+      <span className={`inline-block w-2 h-2 rounded-full ${color} ${state === "connecting" ? "aura-pulse" : ""}`} />
       {label}
     </div>
   );
