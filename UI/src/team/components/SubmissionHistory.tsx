@@ -185,8 +185,8 @@ export function SubmissionHistory({
             </div>
           )}
 
-          <div className="max-h-[60vh] overflow-auto rounded-lg bg-slate-950 p-4 text-slate-100">
-            <pre className="whitespace-pre-wrap text-xs">{selected?.code ?? ""}</pre>
+          <div className="max-h-[60vh] overflow-auto rounded-lg bg-surface-container-lowest p-4 text-on-surface dark:bg-black">
+            <pre className="whitespace-pre-wrap font-mono text-xs">{selected?.code ?? ""}</pre>
           </div>
         </DialogContent>
       </Dialog>

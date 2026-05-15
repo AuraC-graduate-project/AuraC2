@@ -458,8 +458,8 @@ export function SubmissionsView() {
                 </div>
               </div>
             )}
-            <div className="bg-slate-950 text-slate-100 rounded-lg p-4 overflow-auto max-h-[60vh]">
-              <pre className="text-xs whitespace-pre-wrap">{codeItem?.code ?? ''}</pre>
+            <div className="bg-surface-container-lowest text-on-surface rounded-lg p-4 overflow-auto max-h-[60vh] dark:bg-black">
+              <pre className="font-mono text-xs whitespace-pre-wrap">{codeItem?.code ?? ''}</pre>
             </div>
           </div>
         </DialogContent>

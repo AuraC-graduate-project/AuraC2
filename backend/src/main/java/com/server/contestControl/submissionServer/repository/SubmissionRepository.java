@@ -16,6 +16,15 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     List<Submission> findAllByProblem_Id(Long problemId);
     List<Submission> findAllByContest_Id(Long contestId);
 
+    @Query("""
+            select submission from Submission submission
+            join fetch submission.contest
+            join fetch submission.problem
+            join fetch submission.user
+            where submission.id = :id
+            """)
+    Optional<Submission> findByIdWithContestProblemUser(@Param("id") Long id);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select submission from Submission submission where submission.id = :id")
     Optional<Submission> findByIdForUpdate(@Param("id") Long id);

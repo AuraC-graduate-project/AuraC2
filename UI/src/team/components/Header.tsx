@@ -49,29 +49,29 @@ export function Header({
   }, [contestEndTime]);
 
   return (
-    <header className="aura-topbar aura-team-header border-b border-slate-200 bg-white px-5 py-3 shadow-sm">
+    <header className="aura-topbar aura-team-header px-6 py-3">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex items-center gap-4">
-          <div className="aura-mark flex h-11 w-11 items-center justify-center rounded-lg bg-[#1E3A5F] text-lg font-semibold text-white">
+          <div className="aura-mark flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-on-primary font-display text-lg font-semibold dark:bg-[image:var(--primary-gradient)]">
             A
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">AuraC²</p>
+            <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-primary">AuraC²</p>
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl font-semibold text-slate-950">{contestName ?? "No Active Contest"}</h1>
+              <h1 className="font-display text-xl font-semibold tracking-tight text-on-surface">{contestName ?? "No Active Contest"}</h1>
               {contestStatus && <StatusBadge kind="contest" value={contestStatus} />}
             </div>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-            <Clock className="h-4 w-4 text-blue-700" />
-            <span className="font-mono font-semibold">{timeLeft === null ? "--:--:--" : formatTime(timeLeft)}</span>
+          <div className="inline-flex items-center gap-2 rounded-xl bg-surface-container-high px-3 py-2 text-sm text-on-surface">
+            <Clock className="h-4 w-4 text-primary" />
+            <span className="font-mono font-semibold tabular-nums">{timeLeft === null ? "--:--:--" : formatTime(timeLeft)}</span>
           </div>
 
-          <div className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
-            <UserRound className="h-4 w-4 text-blue-700" />
+          <div className="inline-flex items-center gap-2 rounded-xl bg-surface-container-high px-3 py-2 text-sm text-on-surface">
+            <UserRound className="h-4 w-4 text-primary" />
             <span className="font-semibold">{teamName}</span>
           </div>
 
@@ -80,7 +80,7 @@ export function Header({
           <button
             type="button"
             onClick={onLogout}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-blue-700 px-4 text-sm font-semibold text-white hover:bg-blue-800"
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-medium text-on-primary transition hover:bg-primary-container dark:bg-[image:var(--primary-gradient)] dark:hover:brightness-110"
           >
             <LogOut className="h-4 w-4" />
             Logout

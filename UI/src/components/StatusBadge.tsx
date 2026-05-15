@@ -10,15 +10,34 @@ type BadgeTone =
   | "cyan"
   | "gold";
 
+/* Each tone gets a distinct hue so verdicts (TLE vs WA vs RE vs CE) read at a
+   glance. Light theme: soft pill fill. Dark theme: low-key surface with a
+   left accent bar per the Obsidian "Pulse Chips" rule. */
 const toneClasses: Record<BadgeTone, string> = {
-  blue: "border-blue-200 bg-blue-50 text-blue-700 dark:border-[#33465f] dark:bg-[#192636] dark:text-[#aebed2]",
-  green: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-[#315040] dark:bg-[#172820] dark:text-[#a9c7b8]",
-  amber: "border-amber-200 bg-amber-50 text-amber-700 dark:border-[#5a4b2d] dark:bg-[#2a2418] dark:text-[#d1c09a]",
-  red: "border-rose-200 bg-rose-50 text-rose-700 dark:border-[#57363b] dark:bg-[#2b1d20] dark:text-[#d4b0b5]",
-  slate: "border-slate-200 bg-slate-50 text-slate-700 dark:border-[#384352] dark:bg-[#1b2431] dark:text-[#c4ccd8]",
-  purple: "border-violet-200 bg-violet-50 text-violet-700 dark:border-[#45394f] dark:bg-[#211d2a] dark:text-[#c1b4cc]",
-  cyan: "border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-[#304c54] dark:bg-[#17272d] dark:text-[#a7c3ca]",
-  gold: "border-yellow-200 bg-yellow-50 text-yellow-800 dark:border-[#5a4b2d] dark:bg-[#2a2418] dark:text-[#d1c09a]",
+  // Cool blue — pending / in-flight
+  blue:
+    "bg-sky-100 text-sky-800 dark:bg-surface-container-highest dark:text-sky-300 dark:border-l-2 dark:border-sky-400",
+  // Calm green — accepted / answered
+  green:
+    "bg-emerald-100 text-emerald-800 dark:bg-surface-container-highest dark:text-emerald-300 dark:border-l-2 dark:border-emerald-400",
+  // Warm amber — timeout (TLE) / paused
+  amber:
+    "bg-amber-100 text-amber-900 dark:bg-surface-container-highest dark:text-amber-300 dark:border-l-2 dark:border-amber-400",
+  // Brick red — wrong answer
+  red:
+    "bg-rose-100 text-rose-800 dark:bg-surface-container-highest dark:text-rose-300 dark:border-l-2 dark:border-rose-400",
+  // Neutral slate — internal / unknown / private
+  slate:
+    "bg-surface-container-high text-on-surface-variant dark:bg-surface-container-highest dark:text-on-surface-variant dark:border-l-2 dark:border-outline-variant",
+  // Violet — runtime error / private (crashy)
+  purple:
+    "bg-violet-100 text-violet-800 dark:bg-surface-container-highest dark:text-violet-300 dark:border-l-2 dark:border-violet-400",
+  // Cyan — public test / brand-adjacent informational
+  cyan:
+    "bg-cyan-100 text-cyan-800 dark:bg-surface-container-highest dark:text-cyan-300 dark:border-l-2 dark:border-cyan-400",
+  // Orange — compilation error (build broken / IDE-style warning)
+  gold:
+    "bg-orange-100 text-orange-800 dark:bg-surface-container-highest dark:text-orange-300 dark:border-l-2 dark:border-orange-400",
 };
 
 export type VerdictLabel =
@@ -74,8 +93,10 @@ function toneForKind(kind: StatusBadgeKind, value: string): BadgeTone {
 
   if (kind === "verdict") {
     if (value === "ACCEPTED") return "green";
-    if (value === "PENDING" || value === "RUNNING") return "amber";
-    if (value === "COMPILATION_ERROR") return "purple";
+    if (value === "PENDING" || value === "RUNNING") return "blue";
+    if (value === "TLE") return "amber";
+    if (value === "RUNTIME_ERROR") return "purple";
+    if (value === "COMPILATION_ERROR") return "gold";
     if (value === "INTERNAL_ERROR") return "slate";
     return "red";
   }
@@ -103,7 +124,7 @@ function toneForKind(kind: StatusBadgeKind, value: string): BadgeTone {
 function IconForStatus({ kind, value }: { kind: StatusBadgeKind; value: string }) {
   if (kind === "verdict") {
     if (value === "ACCEPTED") return <CheckCircle2 className="h-3.5 w-3.5" />;
-    if (value === "PENDING" || value === "RUNNING") return <Clock3 className="h-3.5 w-3.5" />;
+    if (value === "PENDING" || value === "RUNNING") return <Clock3 className="h-3.5 w-3.5 aura-pulse" />;
     return <XCircle className="h-3.5 w-3.5" />;
   }
 
@@ -150,7 +171,7 @@ export function StatusBadge({
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold leading-none ${toneClasses[tone]} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium leading-none tracking-tight ${toneClasses[tone]} ${className}`}
     >
       <IconForStatus kind={kind} value={normalizedValue} />
       {display}

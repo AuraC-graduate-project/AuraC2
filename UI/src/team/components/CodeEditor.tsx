@@ -261,30 +261,30 @@ export function CodeEditor({ contestId, problem, onSubmitted }: Props) {
 
   if (!problem) {
     return (
-      <section className="rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm">
-        <Terminal className="mx-auto mb-3 h-8 w-8 text-slate-400" />
-        <p className="font-medium text-slate-800">Select a problem before writing code.</p>
+      <section className="rounded-xl bg-surface-container p-8 text-center">
+        <Terminal className="mx-auto mb-3 h-8 w-8 text-on-surface-soft" />
+        <p className="font-medium text-on-surface">Select a problem before writing code.</p>
       </section>
     );
   }
 
   return (
-    <section className="aura-code-card flex min-h-0 flex-1 flex-col overflow-hidden rounded-none border-0 bg-white shadow-none">
-      <div className="shrink-0 border-b border-slate-200 bg-slate-50 p-4">
+    <section className="aura-code-card flex min-h-0 flex-1 flex-col overflow-hidden rounded-none border-0 bg-surface-container shadow-none">
+      <div className="shrink-0 bg-surface-container-low p-4">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Code</p>
-            <h2 className="text-lg font-semibold text-slate-950">{problem.title}</h2>
+            <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-primary">Code</p>
+            <h2 className="font-display text-lg font-semibold tracking-tight text-on-surface">{problem.title}</h2>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
-              <Save className="h-4 w-4 text-blue-700" />
+            <div className="inline-flex items-center gap-2 rounded-xl bg-surface-container px-3 py-2 text-xs text-on-surface-variant">
+              <Save className="h-4 w-4 text-primary" />
               {savedAt ? `Draft saved ${savedAt}` : "Draft autosaves"}
             </div>
 
             <Select value={language} onValueChange={handleLanguageChange}>
-              <SelectTrigger className="w-40 bg-white">
+              <SelectTrigger className="w-40">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -299,7 +299,7 @@ export function CodeEditor({ contestId, problem, onSubmitted }: Props) {
             <Button
               onClick={handleSubmit}
               disabled={submitting || !contestId}
-              className="gap-2 bg-blue-700 hover:bg-blue-800"
+              className="gap-2"
             >
               <Send className="h-4 w-4" />
               {submitting ? "Submitting..." : "Submit"}
@@ -310,10 +310,10 @@ export function CodeEditor({ contestId, problem, onSubmitted }: Props) {
 
       {message && (
         <div
-          className={`m-4 flex gap-2 rounded-lg border p-3 text-sm ${
+          className={`m-4 flex gap-2 rounded-xl p-3 text-sm ${
             message.type === "success"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-              : "border-rose-200 bg-rose-50 text-rose-700"
+              ? "bg-tertiary-fixed text-on-tertiary-container dark:bg-tertiary-container/40 dark:text-tertiary"
+              : "bg-error-container text-on-error-container"
           }`}
         >
           {message.type === "success" ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
@@ -321,10 +321,10 @@ export function CodeEditor({ contestId, problem, onSubmitted }: Props) {
         </div>
       )}
 
-      <div className="aura-code-shell grid min-h-0 flex-1 grid-cols-[3.25rem_1fr] overflow-hidden rounded-b-lg bg-slate-950">
+      <div className="aura-code-shell grid min-h-0 flex-1 grid-cols-[3.25rem_1fr] overflow-hidden rounded-b-lg">
         <pre
           ref={lineNumbersRef}
-          className="select-none overflow-hidden border-r border-slate-800 bg-slate-900 px-3 py-4 text-right font-mono text-xs leading-6 text-slate-500"
+          className="select-none overflow-hidden bg-surface-container-low px-3 py-4 text-right font-mono text-xs leading-6 text-on-surface-soft dark:bg-surface-container"
         >
           {lineNumbers}
         </pre>

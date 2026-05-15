@@ -1,6 +1,7 @@
 package com.server.contestControl.authServer.config;
 
 import com.server.contestControl.authServer.filter.JwtAuthFilter;
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -33,6 +34,8 @@ public class SecurityConfiguration {
                 .httpBasic(AbstractHttpConfigurer::disable)
 
                 .authorizeHttpRequests(auth -> auth
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll()
+
                         .requestMatchers(
                                 "/",
                                 "/index.html",

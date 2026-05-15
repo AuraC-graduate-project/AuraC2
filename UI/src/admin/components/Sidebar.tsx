@@ -1,9 +1,9 @@
-import { 
-  LayoutDashboard, 
-  Users, 
-  FileCode, 
-  Send, 
-  MessageSquare, 
+import {
+  LayoutDashboard,
+  Users,
+  FileCode,
+  Send,
+  MessageSquare,
   Trophy,
   Medal,
   RotateCcw,
@@ -29,44 +29,44 @@ const menuItems = [
 
 export function Sidebar({ activeView, setActiveView, onLogout }: SidebarProps) {
   return (
-    <aside className="aura-sidebar flex w-72 shrink-0 flex-col border-r border-slate-800/40 bg-[#1E3A5F] text-white">
-      <div className="border-b border-white/10 p-6">
+    <aside className="aura-sidebar flex w-72 shrink-0 flex-col bg-surface-container-low text-on-surface">
+      <div className="px-6 pt-7 pb-6">
         <div className="flex items-center gap-3">
           <div className="aura-mark aura-mark-sidebar">A</div>
           <div>
-            <h2 className="text-2xl font-semibold tracking-normal">AuraC²</h2>
-            <p className="mt-1 text-sm text-blue-100">Aura Contest Control</p>
+            <h2 className="font-display text-2xl font-semibold tracking-tight text-on-surface">AuraC²</h2>
+            <p className="mt-0.5 text-xs uppercase tracking-[0.18em] text-on-surface-soft">Contest Control</p>
           </div>
         </div>
-        <div className="mt-4 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-blue-100">
+        <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-primary-fixed px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary dark:bg-primary/15">
           Administrator
         </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto p-4">
-        <ul className="space-y-1.5">
+      <nav className="flex-1 overflow-y-auto px-4">
+        <ul className="space-y-1">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeView === item.label;
             const isFuture = item.label.includes('(Future)');
-            
+
             return (
               <li key={item.label}>
                 <button
+                  type="button"
                   onClick={() => setActiveView(item.label)}
-                  className={`aura-nav-item flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-medium transition ${
+                  aria-current={isActive ? 'true' : undefined}
+                  className={`aura-nav-item flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium ${
                     isActive
-                      ? 'bg-white text-[#1E3A5F] shadow-sm'
-                      : 'text-blue-50 hover:bg-white/10 hover:text-white'
+                      ? 'bg-surface-container-highest text-on-surface'
+                      : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
                   }`}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
                   <span className="flex-1">{item.label.replace(' (Future)', '')}</span>
                   {isFuture && (
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                      isActive ? 'bg-amber-100 text-amber-800' : 'bg-white/10 text-amber-100'
-                    }`}>
-                      Future
+                    <span className="rounded-full bg-secondary-container px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-on-secondary-container">
+                      Soon
                     </span>
                   )}
                 </button>
@@ -76,16 +76,16 @@ export function Sidebar({ activeView, setActiveView, onLogout }: SidebarProps) {
         </ul>
       </nav>
 
-      <div className="border-t border-white/10 p-4">
+      <div className="px-4 pb-5 pt-3">
         <button
           type="button"
           onClick={onLogout}
-          className="aura-nav-item mb-3 flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-medium text-blue-50 transition hover:bg-white/10 hover:text-white"
+          className="aura-nav-item mb-3 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
         >
           <LogOut className="h-4 w-4" />
           Logout
         </button>
-        <p className="text-xs leading-5 text-blue-100">
+        <p className="text-xs leading-5 text-on-surface-soft">
           University contest operations for administrators and contest managers.
         </p>
       </div>

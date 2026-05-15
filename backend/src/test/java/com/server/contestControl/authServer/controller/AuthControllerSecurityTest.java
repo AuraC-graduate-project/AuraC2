@@ -15,7 +15,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -80,8 +79,7 @@ class AuthControllerSecurityTest {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(registerRequestJson()))
-                .andExpect(result -> assertThat(result.getResolvedException())
-                        .isInstanceOf(AuthorizationDeniedException.class));
+                .andExpect(status().isUnauthorized());
 
         verify(authFacade, never()).registerTeam("team01", "secret");
     }
@@ -94,8 +92,7 @@ class AuthControllerSecurityTest {
                         .header("Authorization", "Bearer team-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(registerRequestJson()))
-                .andExpect(result -> assertThat(result.getResolvedException())
-                        .isInstanceOf(AuthorizationDeniedException.class));
+                .andExpect(status().isForbidden());
 
         verify(authFacade, never()).registerTeam("team01", "secret");
     }
