@@ -58,8 +58,10 @@ public class AdminController {
     }
 
     @GetMapping("/submissions")
-    public ResponseEntity<List<SubmissionResponse>> getAllSubmissions() {
-        return ResponseEntity.ok(submissionService.getAllSubmission());
+    public ResponseEntity<List<SubmissionResponse>> getAllSubmissions(
+            @RequestParam(required = false) Long contestId
+    ) {
+        return ResponseEntity.ok(submissionService.getAllSubmission(contestId));
     }
 
 }

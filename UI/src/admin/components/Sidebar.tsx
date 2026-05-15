@@ -7,13 +7,11 @@ import {
   Trophy,
   Medal,
   RotateCcw,
-  LogOut,
 } from 'lucide-react';
 
 interface SidebarProps {
   activeView: string;
   setActiveView: (view: string) => void;
-  onLogout: () => void;
 }
 
 const menuItems = [
@@ -27,7 +25,7 @@ const menuItems = [
   { icon: RotateCcw, label: 'Rejudge' },
 ];
 
-export function Sidebar({ activeView, setActiveView, onLogout }: SidebarProps) {
+export function Sidebar({ activeView, setActiveView }: SidebarProps) {
   return (
     <aside className="aura-sidebar flex w-72 shrink-0 flex-col border-r border-slate-800/40 bg-[#1E3A5F] text-white">
       <div className="border-b border-white/10 p-6">
@@ -77,14 +75,6 @@ export function Sidebar({ activeView, setActiveView, onLogout }: SidebarProps) {
       </nav>
 
       <div className="border-t border-white/10 p-4">
-        <button
-          type="button"
-          onClick={onLogout}
-          className="aura-nav-item mb-3 flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-medium text-blue-50 transition hover:bg-white/10 hover:text-white"
-        >
-          <LogOut className="h-4 w-4" />
-          Logout
-        </button>
         <p className="text-xs leading-5 text-blue-100">
           University contest operations for administrators and contest managers.
         </p>

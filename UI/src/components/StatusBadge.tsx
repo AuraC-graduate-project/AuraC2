@@ -4,7 +4,9 @@ type BadgeTone =
   | "blue"
   | "green"
   | "amber"
+  | "orange"
   | "red"
+  | "rose"
   | "slate"
   | "purple"
   | "cyan"
@@ -14,7 +16,9 @@ const toneClasses: Record<BadgeTone, string> = {
   blue: "border-blue-200 bg-blue-50 text-blue-700 dark:border-[#33465f] dark:bg-[#192636] dark:text-[#aebed2]",
   green: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-[#315040] dark:bg-[#172820] dark:text-[#a9c7b8]",
   amber: "border-amber-200 bg-amber-50 text-amber-700 dark:border-[#5a4b2d] dark:bg-[#2a2418] dark:text-[#d1c09a]",
+  orange: "border-orange-200 bg-orange-50 text-orange-700 dark:border-[#5a432d] dark:bg-[#2a2118] dark:text-[#d1b89a]",
   red: "border-rose-200 bg-rose-50 text-rose-700 dark:border-[#57363b] dark:bg-[#2b1d20] dark:text-[#d4b0b5]",
+  rose: "border-pink-200 bg-pink-50 text-pink-700 dark:border-[#573644] dark:bg-[#2b1d24] dark:text-[#d4b0bd]",
   slate: "border-slate-200 bg-slate-50 text-slate-700 dark:border-[#384352] dark:bg-[#1b2431] dark:text-[#c4ccd8]",
   purple: "border-violet-200 bg-violet-50 text-violet-700 dark:border-[#45394f] dark:bg-[#211d2a] dark:text-[#c1b4cc]",
   cyan: "border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-[#304c54] dark:bg-[#17272d] dark:text-[#a7c3ca]",
@@ -29,6 +33,7 @@ export type VerdictLabel =
   | "RUNTIME_ERROR"
   | "INTERNAL_ERROR"
   | "PENDING"
+  | "PENDING_REJUDGE"
   | "RUNNING";
 
 function normalized(value: string | null | undefined): string {
@@ -51,6 +56,7 @@ export function normalizeVerdict(value: string | null | undefined): VerdictLabel
     text === "RUNTIME_ERROR" ||
     text === "INTERNAL_ERROR" ||
     text === "PENDING" ||
+    text === "PENDING_REJUDGE" ||
     text === "RUNNING"
   ) {
     return text;
@@ -60,7 +66,7 @@ export function normalizeVerdict(value: string | null | undefined): VerdictLabel
 
 function toneForKind(kind: StatusBadgeKind, value: string): BadgeTone {
   if (kind === "contest") {
-    if (value === "RUNNING") return "green";
+    if (value === "RUNNING") return "blue";
     if (value === "PAUSED") return "amber";
     if (value === "ENDED") return "slate";
     return "blue";
@@ -74,8 +80,11 @@ function toneForKind(kind: StatusBadgeKind, value: string): BadgeTone {
 
   if (kind === "verdict") {
     if (value === "ACCEPTED") return "green";
-    if (value === "PENDING" || value === "RUNNING") return "amber";
+    if (value === "PENDING" || value === "PENDING_REJUDGE") return "amber";
+    if (value === "RUNNING") return "blue";
+    if (value === "TLE") return "orange";
     if (value === "COMPILATION_ERROR") return "purple";
+    if (value === "RUNTIME_ERROR") return "rose";
     if (value === "INTERNAL_ERROR") return "slate";
     return "red";
   }
@@ -103,7 +112,7 @@ function toneForKind(kind: StatusBadgeKind, value: string): BadgeTone {
 function IconForStatus({ kind, value }: { kind: StatusBadgeKind; value: string }) {
   if (kind === "verdict") {
     if (value === "ACCEPTED") return <CheckCircle2 className="h-3.5 w-3.5" />;
-    if (value === "PENDING" || value === "RUNNING") return <Clock3 className="h-3.5 w-3.5" />;
+    if (value === "PENDING" || value === "PENDING_REJUDGE" || value === "RUNNING") return <Clock3 className="h-3.5 w-3.5" />;
     return <XCircle className="h-3.5 w-3.5" />;
   }
 

@@ -15,6 +15,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     List<Submission> getAllByUser_id(Long userId);
     List<Submission> findAllByProblem_Id(Long problemId);
     List<Submission> findAllByContest_Id(Long contestId);
+    List<Submission> findAllByOrderByCreatedAtDescIdDesc();
+    List<Submission> findAllByContest_IdOrderByCreatedAtDescIdDesc(Long contestId);
 
     @Query("""
             select submission from Submission submission

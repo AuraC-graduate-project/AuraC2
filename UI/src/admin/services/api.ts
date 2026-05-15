@@ -317,8 +317,9 @@ export async function deleteUser(userId: number): Promise<void> {
 // Admin / Submissions
 // -----------------------------
 
-export async function getAllSubmissions(): Promise<SubmissionResponse[]> {
-  return apiFetch<SubmissionResponse[]>(`/api/admin/users/submissions`);
+export async function getAllSubmissions(contestId?: number | null): Promise<SubmissionResponse[]> {
+  const params = contestId == null ? "" : `?contestId=${encodeURIComponent(String(contestId))}`;
+  return apiFetch<SubmissionResponse[]>(`/api/admin/users/submissions${params}`);
 }
 
 // -----------------------------

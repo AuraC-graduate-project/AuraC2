@@ -35,6 +35,11 @@ import {
   forceRejudgeSubmissions,
 } from '../services/api';
 import { ProblemResponse, RejudgeResponse, SubmissionResponse, UserResponse } from '../types/api';
+import {
+  contestLabel,
+  ContestOption,
+  loadContestOptions,
+} from '../utils/contestOptions';
 import { RefreshCw, Eye, Search, RotateCcw, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { StatusBadge, formatStatusText, normalizeVerdict } from '../../components/StatusBadge';
@@ -47,6 +52,38 @@ function formatDateTime(iso: string): string {
   return d.toLocaleString();
 }
 
+const ALL_CONTESTS = 'all';
+
+function contestFilterFromUrl(): string {
+  try {
+    return new URLSearchParams(window.location.search).get('contestId') ?? ALL_CONTESTS;
+  } catch {
+    return ALL_CONTESTS;
+  }
+}
+
+function syncContestFilterToUrl(value: string) {
+  try {
+    const url = new URL(window.location.href);
+    if (value === ALL_CONTESTS) {
+      url.searchParams.delete('contestId');
+    } else {
+      url.searchParams.set('contestId', value);
+    }
+    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+  } catch {
+    // URL persistence is a convenience; filtering still works in memory.
+  }
+}
+
+function compareSubmissionsNewestFirst(a: SubmissionResponse, b: SubmissionResponse): number {
+  const aTime = Date.parse(a.createdAt);
+  const bTime = Date.parse(b.createdAt);
+  const safeATime = Number.isNaN(aTime) ? 0 : aTime;
+  const safeBTime = Number.isNaN(bTime) ? 0 : bTime;
+  return safeBTime - safeATime || b.id - a.id;
+}
+
 export function SubmissionsView() {
   const [loading, setLoading] = useState(true);
   const [submissions, setSubmissions] = useState<SubmissionResponse[]>([]);
@@ -54,6 +91,9 @@ export function SubmissionsView() {
 
   const [users, setUsers] = useState<UserResponse[]>([]);
   const [problemMapByContest, setProblemMapByContest] = useState<Record<number, Record<number, ProblemResponse>>>({});
+  const [contestOptions, setContestOptions] = useState<ContestOption[]>([]);
+  const [contestFilter, setContestFilter] = useState<string>(() => contestFilterFromUrl());
+  const [loadingContests, setLoadingContests] = useState(false);
 
   const [query, setQuery] = useState('');
   const [verdictFilter, setVerdictFilter] = useState<string>('');
@@ -81,15 +121,45 @@ export function SubmissionsView() {
     return map;
   }, [users]);
 
+  useEffect(() => {
+    let mounted = true;
+    setLoadingContests(true);
+    loadContestOptions()
+      .then((options) => {
+        if (mounted) setContestOptions(options);
+      })
+      .catch(() => {
+        if (mounted) setContestOptions([]);
+      })
+      .finally(() => {
+        if (mounted) setLoadingContests(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    syncContestFilterToUrl(contestFilter);
+    setSelected(new Set());
+  }, [contestFilter]);
+
   const load = async () => {
     setLoading(true);
     try {
+      const selectedContestId =
+        contestFilter === ALL_CONTESTS ? null : Number(contestFilter);
       const [subs, u] = await Promise.all([
-        getAllSubmissions(),
+        getAllSubmissions(
+          selectedContestId && Number.isFinite(selectedContestId)
+            ? selectedContestId
+            : null
+        ),
         getAllUsers().catch(() => [] as UserResponse[]),
       ]);
 
-      setSubmissions(subs);
+      setSubmissions([...subs].sort(compareSubmissionsNewestFirst));
       setUsers(u);
 
       // Build (contestId -> problemId -> ProblemResponse) map for nicer display.
@@ -121,12 +191,17 @@ export function SubmissionsView() {
   useEffect(() => {
     load();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshKey]);
+  }, [refreshKey, contestFilter]);
+
+  const orderedSubmissions = useMemo(
+    () => [...submissions].sort(compareSubmissionsNewestFirst),
+    [submissions]
+  );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     const vf = verdictFilter.trim().toLowerCase();
-    return submissions.filter(s => {
+    return orderedSubmissions.filter(s => {
       const verdictOk = !vf || String(s.verdict ?? '').toLowerCase() === vf;
       if (!verdictOk) return false;
 
@@ -147,15 +222,15 @@ export function SubmissionsView() {
         problemTitle.toLowerCase().includes(q)
       );
     });
-  }, [submissions, query, verdictFilter, userMap, problemMapByContest]);
+  }, [orderedSubmissions, query, verdictFilter, userMap, problemMapByContest]);
 
   const uniqueVerdicts = useMemo(() => {
     const set = new Set<string>();
-    for (const s of submissions) {
+    for (const s of orderedSubmissions) {
       if (s.verdict) set.add(String(s.verdict).toUpperCase());
     }
     return Array.from(set).sort();
-  }, [submissions]);
+  }, [orderedSubmissions]);
 
   const openCode = (s: SubmissionResponse) => {
     setCodeItem(s);
@@ -269,6 +344,23 @@ export function SubmissionsView() {
 
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-slate-600">Contest:</span>
+              <select
+                className="h-10 min-w-[220px] rounded-md border border-gray-200 bg-white px-3 text-sm"
+                value={contestFilter}
+                onChange={(e) => setContestFilter(e.target.value)}
+                disabled={loadingContests}
+              >
+                <option value={ALL_CONTESTS}>All contests</option>
+                {contestOptions.map((contest) => (
+                  <option key={contest.id} value={String(contest.id)}>
+                    {contestLabel(contest)} - {contest.bucket}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="relative w-full md:max-w-md">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <Input
@@ -294,7 +386,7 @@ export function SubmissionsView() {
             </div>
 
             <div className="text-sm text-slate-600 md:ml-auto">
-              Showing <b>{filtered.length}</b> of <b>{submissions.length}</b>
+              Showing <b>{filtered.length}</b> of <b>{orderedSubmissions.length}</b>
             </div>
           </div>
 
@@ -425,35 +517,35 @@ export function SubmissionsView() {
             {codeItem && (
               <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm md:grid-cols-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Team</p>
+                  <p className="text-xs font-semibold uppercase text-slate-500">Team</p>
                   <p className="mt-1 font-medium text-slate-900">{userMap[codeItem.userId]?.username ?? `#${codeItem.userId}`}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Problem</p>
+                  <p className="text-xs font-semibold uppercase text-slate-500">Problem</p>
                   <p className="mt-1 font-medium text-slate-900">
                     {problemMapByContest[codeItem.contestId]?.[codeItem.problemId]?.title ?? `#${codeItem.problemId}`}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Verdict</p>
+                  <p className="text-xs font-semibold uppercase text-slate-500">Verdict</p>
                   <div className="mt-1">
                     <StatusBadge kind="verdict" value={String(codeItem.verdict)} />
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Language</p>
+                  <p className="text-xs font-semibold uppercase text-slate-500">Language</p>
                   <p className="mt-1 font-mono text-slate-900">{String(codeItem.language)}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Execution</p>
+                  <p className="text-xs font-semibold uppercase text-slate-500">Execution</p>
                   <p className="mt-1 text-slate-900">{codeItem.executionTime == null ? '-' : `${codeItem.executionTime} ms`}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Memory</p>
+                  <p className="text-xs font-semibold uppercase text-slate-500">Memory</p>
                   <p className="mt-1 text-slate-900">{codeItem.memoryUsage == null ? '-' : `${codeItem.memoryUsage} MB`}</p>
                 </div>
                 <div className="md:col-span-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Submitted at</p>
+                  <p className="text-xs font-semibold uppercase text-slate-500">Submitted at</p>
                   <p className="mt-1 text-slate-900">{formatDateTime(codeItem.createdAt)}</p>
                 </div>
               </div>

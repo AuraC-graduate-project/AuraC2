@@ -89,6 +89,18 @@ function updateToState(update: ContestStreamUpdate): ResolvedState {
     case "MANUAL_END":
     case "AUTO_END":
       return { lifecycle: "ENDED", contest: c };
+    case "UPDATED": {
+      const lifecycle = c.effectiveState ?? c.status;
+      if (
+        lifecycle === "RUNNING" ||
+        lifecycle === "UPCOMING" ||
+        lifecycle === "PAUSED" ||
+        lifecycle === "ENDED"
+      ) {
+        return { lifecycle, contest: c };
+      }
+      return { lifecycle: "NONE", contest: null };
+    }
     case "CREATED":
       return { lifecycle: "UPCOMING", contest: c };
   }

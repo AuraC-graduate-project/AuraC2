@@ -66,6 +66,7 @@ class ContestServiceTest {
         Instant newStart = Instant.now().plus(2, ChronoUnit.HOURS);
         ContestUpdateRequest request = new ContestUpdateRequest(
                 "Updated Contest",
+                "Updated description",
                 newStart,
                 180,
                 45,
@@ -82,6 +83,7 @@ class ContestServiceTest {
         assertThat(response.getScoreboardFreezeMinutes()).isEqualTo(45);
         assertThat(response.getPenaltyMinutes()).isEqualTo(15);
         assertThat(upcomingContest.getTitle()).isEqualTo("Updated Contest");
+        assertThat(upcomingContest.getDescription()).isEqualTo("Updated description");
         assertThat(upcomingContest.getStartTime()).isEqualTo(newStart);
         assertThat(upcomingContest.getDurationMinutes()).isEqualTo(180);
         assertThat(upcomingContest.getScoreboardFreezeMinutes()).isEqualTo(45);
@@ -118,6 +120,7 @@ class ContestServiceTest {
                 upcomingContest.getId(),
                 new ContestUpdateRequest(
                         "Updated Contest",
+                        "Updated description",
                         Instant.now().minus(1, ChronoUnit.MINUTES),
                         120,
                         30,
@@ -139,6 +142,7 @@ class ContestServiceTest {
                 upcomingContest.getId(),
                 new ContestUpdateRequest(
                         "Updated Contest",
+                        "Updated description",
                         Instant.now().plus(1, ChronoUnit.HOURS),
                         120,
                         120,
@@ -160,6 +164,7 @@ class ContestServiceTest {
                 upcomingContest.getId(),
                 new ContestUpdateRequest(
                         "Updated Contest",
+                        "Updated description",
                         Instant.now().plus(1, ChronoUnit.HOURS),
                         120,
                         -1,
@@ -181,6 +186,7 @@ class ContestServiceTest {
                 upcomingContest.getId(),
                 new ContestUpdateRequest(
                         "Updated Contest",
+                        "Updated description",
                         Instant.now().plus(1, ChronoUnit.HOURS),
                         120,
                         30,
@@ -196,6 +202,7 @@ class ContestServiceTest {
     private ContestUpdateRequest validRequest() {
         return new ContestUpdateRequest(
                 "Updated Contest",
+                "Updated description",
                 Instant.now().plus(1, ChronoUnit.HOURS),
                 120,
                 30,

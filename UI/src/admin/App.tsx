@@ -8,20 +8,69 @@ import { TeamsView } from "./components/TeamsView";
 import { SubmissionsView } from "./components/SubmissionsView";
 import { ClarificationsView } from "./components/ClarificationsView";
 import { ScoreboardView } from "./components/ScoreboardView";
-import { getActiveContest, getPausedContest, getUpcomingContest } from "./services/api";
+import { ScoreboardRevealDisplay } from "./components/ScoreboardRevealDisplay";
+import {
+  getActiveContest,
+  getEndedContests,
+  getPausedContest,
+  getUpcomingContest,
+} from "./services/api";
 import { ContestResponse, ContestStreamSnapshot, ContestStreamUpdate } from "./types/api";
 import { Toaster } from "./components/ui/sonner";
 import { RejudgeView } from "./components/RejudgeView";
 import { useContestStream } from "../hooks/useContestStream";
 
+const ADMIN_VIEW_ROUTES: Record<string, string> = {
+  Overview: "/admin/overview",
+  Contests: "/admin/contests",
+  Teams: "/admin/teams",
+  Problems: "/admin/problems",
+  Submissions: "/admin/submissions",
+  Clarifications: "/admin/clarifications",
+  Scoreboard: "/admin/scoreboard",
+  Rejudge: "/admin/rejudge",
+  RevealDisplay: "/admin/scoreboard/reveal-display",
+};
+
 function selectAdminContest(snapshot: ContestStreamSnapshot): ContestResponse | null {
-  return snapshot.active ?? snapshot.paused ?? snapshot.upcoming ?? null;
+  return snapshot.active ?? snapshot.paused ?? snapshot.upcoming ?? snapshot.ended[0] ?? null;
+}
+
+function adminViewFromLocation(): string {
+  const path = window.location.pathname.toLowerCase();
+  if (path.startsWith("/admin/scoreboard/reveal-display")) return "RevealDisplay";
+
+  const entry = Object.entries(ADMIN_VIEW_ROUTES).find(([, route]) => {
+    if (route === "/admin/overview") return false;
+    return path === route || path.startsWith(`${route}/`);
+  });
+
+  if (entry && entry[0] !== "RevealDisplay") return entry[0];
+  return "Overview";
 }
 
 export default function AdminApp({ onLogout }: { onLogout: () => void }) {
-  const [activeView, setActiveView] = useState("Overview");
+  const [activeView, setActiveView] = useState(() => adminViewFromLocation());
   const [currentContest, setCurrentContest] =
     useState<ContestResponse | null>(null);
+
+  const navigateToView = useCallback((view: string, options?: { contestId?: number | null }) => {
+    const nextView = ADMIN_VIEW_ROUTES[view] ? view : "Overview";
+    const path = ADMIN_VIEW_ROUTES[nextView] ?? ADMIN_VIEW_ROUTES.Overview;
+    const params = new URLSearchParams();
+    if (options?.contestId != null) {
+      params.set("contestId", String(options.contestId));
+    }
+    const nextUrl = `${path}${params.toString() ? `?${params}` : ""}`;
+    window.history.pushState({}, "", nextUrl);
+    setActiveView(nextView);
+  }, []);
+
+  useEffect(() => {
+    const handlePopState = () => setActiveView(adminViewFromLocation());
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   const handleContestSnapshot = useCallback((snapshot: ContestStreamSnapshot) => {
     setCurrentContest(selectAdminContest(snapshot));
@@ -42,7 +91,7 @@ export default function AdminApp({ onLogout }: { onLogout: () => void }) {
   });
 
   useEffect(() => {
-    if (activeView === "Overview") return;
+    if (activeView === "Overview" || activeView === "RevealDisplay") return;
 
     let mounted = true;
 
@@ -59,7 +108,12 @@ export default function AdminApp({ onLogout }: { onLogout: () => void }) {
             const upcoming = await getUpcomingContest();
             if (mounted) setCurrentContest(upcoming);
           } catch {
-            if (mounted) setCurrentContest(null);
+            try {
+              const ended = await getEndedContests();
+              if (mounted) setCurrentContest(ended[0] ?? null);
+            } catch {
+              if (mounted) setCurrentContest(null);
+            }
           }
         }
       }
@@ -73,10 +127,16 @@ export default function AdminApp({ onLogout }: { onLogout: () => void }) {
   const renderView = () => {
     switch (activeView) {
       case "Overview":
-        return <AdminOverview onNavigate={setActiveView} />;
+        return <AdminOverview onNavigate={navigateToView} />;
 
       case "Contests":
-        return <ContestOverview />;
+        return (
+          <ContestOverview
+            onOpenScoreboard={(contestId) =>
+              navigateToView("Scoreboard", { contestId })
+            }
+          />
+        );
 
       case "Problems":
         return <ProblemsView contestId={currentContest?.id ?? null} />;
@@ -101,9 +161,13 @@ export default function AdminApp({ onLogout }: { onLogout: () => void }) {
     }
   };
 
+  if (activeView === "RevealDisplay") {
+    return <ScoreboardRevealDisplay />;
+  }
+
   return (
     <div className="aura-app-shell aura-admin-shell flex h-screen bg-[#F8FAFC] text-slate-900">
-      <Sidebar activeView={activeView} setActiveView={setActiveView} onLogout={onLogout} />
+      <Sidebar activeView={activeView} setActiveView={navigateToView} />
 
       <div className="flex flex-1 flex-col overflow-hidden">
         <TopNav activeView={activeView} onLogout={onLogout} />

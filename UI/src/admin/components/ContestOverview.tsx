@@ -12,6 +12,7 @@ import {
   Calendar,
   Clock,
   FileText,
+  Medal,
   RotateCcw,
   Snowflake
 } from 'lucide-react';
@@ -49,11 +50,14 @@ import { Checkbox } from './ui/checkbox';
 import { toast } from 'sonner';
 
 type ContestTab = 'active' | 'upcoming' | 'paused' | 'ended';
+type ContestOverviewProps = {
+  onOpenScoreboard?: (contestId: number) => void;
+};
 
 const FALLBACK_DELAY_MS = 3000;
 
 
-export function ContestOverview() {// Every render, React runs this function again.
+export function ContestOverview({ onOpenScoreboard }: ContestOverviewProps) {// Every render, React runs this function again.
   const [contestType, setContestType] = useState<ContestTab>('active');// This stores which tab is currently selected. It can be 'active', 'upcoming', 'paused', or 'ended'. The default is 'active'.
 
   // This means UI stores all contest buckets separately. Whenever a new update comes in, we can place the contest in the right bucket based on its effective state. This also allows us to show ended contests as a list, since there can be multiple.
@@ -338,11 +342,11 @@ export function ContestOverview() {// Every render, React runs this function aga
   const getStatusColor = (status: ContestLifecycleState) => {
     switch (status) {
       case 'RUNNING':
-        return 'bg-green-100 text-green-700 border-green-200';
+        return 'bg-blue-100 text-blue-700 border-blue-200';
       case 'PAUSED':
         return 'bg-orange-100 text-orange-700 border-orange-200';
       case 'ENDED':
-        return 'bg-red-100 text-red-700 border-red-200';
+        return 'bg-slate-100 text-slate-700 border-slate-200';
       case 'UPCOMING':
         return 'bg-blue-100 text-blue-700 border-blue-200';
     }
@@ -523,15 +527,29 @@ export function ContestOverview() {// Every render, React runs this function aga
                 {endedContests.map((c) => (
                   <div
                     key={c.id}
-                    className="border rounded-lg p-4 flex justify-between items-center"
+                    className="border rounded-lg p-4 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center"
                   >
                     <div>
                       <p className="font-medium text-slate-900">{c.title}</p>
                       <p className="text-sm text-slate-600">{c.description}</p>
                     </div>
-                    <Badge className={`${getStatusColor(c.effectiveState ?? c.status)} border`}>
-                      {c.effectiveState ?? c.status}
-                    </Badge>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {onOpenScoreboard && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="gap-2 bg-white"
+                          onClick={() => onOpenScoreboard(c.id)}
+                        >
+                          <Medal className="h-4 w-4" />
+                          Scoreboard / Reveal
+                        </Button>
+                      )}
+                      <Badge className={`${getStatusColor(c.effectiveState ?? c.status)} border`}>
+                        {c.effectiveState ?? c.status}
+                      </Badge>
+                    </div>
                   </div>
                 ))}
               </div>

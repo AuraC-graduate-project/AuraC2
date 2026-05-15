@@ -128,8 +128,12 @@ public class SubmissionService {
                 .toList();
     }
 
-    public List<SubmissionResponse> getAllSubmission() {
-        return submissionRepository.findAll()
+    public List<SubmissionResponse> getAllSubmission(Long contestId) {
+        List<Submission> submissions = contestId == null
+                ? submissionRepository.findAllByOrderByCreatedAtDescIdDesc()
+                : submissionRepository.findAllByContest_IdOrderByCreatedAtDescIdDesc(contestId);
+
+        return submissions
                 .stream()
                 .map(SubmissionResponse::fromEntity)
                 .toList();

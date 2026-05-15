@@ -1218,6 +1218,62 @@ html.dark [role="dialog"] {
   }
 }
 
+.aura-scoreboard-cell {
+  transition:
+    background-color 260ms var(--aura-ease),
+    border-color 260ms var(--aura-ease),
+    color 200ms ease-out,
+    box-shadow 260ms var(--aura-ease);
+}
+
+.aura-scoreboard-cell-updated {
+  animation: aura-scoreboard-cell-update 1400ms var(--aura-ease-soft) both;
+}
+
+.aura-scoreboard-presentation {
+  background:
+    linear-gradient(180deg, #111827, #0f172a 60%, #10151d) !important;
+  color: #f8fafc !important;
+}
+
+.aura-scoreboard-presentation .aura-scoreboard-presentation-table {
+  border-color: rgba(148, 163, 184, 0.24) !important;
+  background-color: rgba(15, 23, 42, 0.88) !important;
+  box-shadow: none !important;
+}
+
+.aura-scoreboard-presentation .aura-scoreboard-presentation-table table {
+  font-size: 1rem;
+}
+
+.aura-scoreboard-presentation .aura-scoreboard-presentation-table thead tr {
+  background-color: rgba(30, 41, 59, 0.92) !important;
+}
+
+.aura-scoreboard-presentation .aura-scoreboard-presentation-table tbody tr:hover {
+  background-color: rgba(30, 41, 59, 0.72) !important;
+}
+
+.aura-scoreboard-presentation .aura-scoreboard-presentation-table th,
+.aura-scoreboard-presentation .aura-scoreboard-presentation-table td {
+  border-color: rgba(148, 163, 184, 0.22) !important;
+}
+
+.aura-scoreboard-presentation .aura-scoreboard-presentation-table .bg-white {
+  background-color: rgba(248, 250, 252, 0.08) !important;
+  color: #cbd5e1 !important;
+}
+
+@keyframes aura-scoreboard-cell-update {
+  0% {
+    box-shadow: inset 0 0 0 999px rgba(250, 204, 21, 0.2);
+  }
+
+  100% {
+    box-shadow: inset 0 0 0 999px rgba(250, 204, 21, 0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

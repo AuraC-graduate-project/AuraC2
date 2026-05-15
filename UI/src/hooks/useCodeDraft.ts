@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
  * Generates a unique localStorage key for code draft persistence.
  * Key pattern: draft_{userId}_{contestId}_{problemId}_{language}
  */
+export const CODE_DRAFT_FLUSH_EVENT = "aurac:flush-code-draft";
+
 export const getDraftKey = (
     userId: string,
     contestId: string,
@@ -185,11 +187,16 @@ export function useCodeDraft(
         const handleBeforeUnload = () => {
             saveNow(currentKeyRef.current, codeRef.current);
         };
+        const handleFlushDraft = () => {
+            saveNow(currentKeyRef.current, codeRef.current);
+        };
 
         window.addEventListener("beforeunload", handleBeforeUnload);
+        window.addEventListener(CODE_DRAFT_FLUSH_EVENT, handleFlushDraft);
 
         return () => {
             window.removeEventListener("beforeunload", handleBeforeUnload);
+            window.removeEventListener(CODE_DRAFT_FLUSH_EVENT, handleFlushDraft);
         };
     }, [saveNow]);
 

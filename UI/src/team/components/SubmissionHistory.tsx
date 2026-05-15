@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -15,9 +15,6 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import { Eye } from "lucide-react";
-import { getStoredToken } from "../../auth/tokenStore";
-import { decodeJwtSubject } from "../../auth/jwt";
-import { clearDraftFromStorage } from "../../hooks/useCodeDraft";
 import { StatusBadge, VerdictLabel } from "../../components/StatusBadge";
 
 export interface Submission {
@@ -41,12 +38,6 @@ type Props = {
   className?: string;
 };
 
-function getUserId(): string {
-  const token = getStoredToken();
-  if (!token) return "unknown";
-  return decodeJwtSubject(token) ?? "unknown";
-}
-
 export function SubmissionHistory({
   submissions,
   title = "Submission History",
@@ -56,22 +47,6 @@ export function SubmissionHistory({
 }: Props) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Submission | null>(null);
-  const userId = getUserId();
-
-  useEffect(() => {
-    if (!userId || userId === "unknown") return;
-
-    const cleared = new Set<string>();
-    submissions.forEach((submission) => {
-      if (submission.verdict === "ACCEPTED") {
-        const key = `${submission.problemId}-${submission.language}`;
-        if (!cleared.has(key)) {
-          clearDraftFromStorage(userId, String(submission.contestId), String(submission.problemId), submission.language);
-          cleared.add(key);
-        }
-      }
-    });
-  }, [submissions, userId]);
 
   return (
     <>

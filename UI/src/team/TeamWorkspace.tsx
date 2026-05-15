@@ -29,6 +29,7 @@ import {
   getMyAllSubmissions,
 } from "./services/teamApi";
 import { useSubmissionStream } from "../hooks/useSubmissionStream";
+import { CODE_DRAFT_FLUSH_EVENT } from "../hooks/useCodeDraft";
 
 type WorkspaceMode = "balanced" | "problem" | "code";
 type WorkspacePage = "solve" | "scoreboard";
@@ -79,6 +80,31 @@ function getSelectedProblemKey(contestId: number): string {
   return `team_workspace_selected_problem_${contestId}`;
 }
 
+function workspacePageFromUrl(): WorkspacePage {
+  try {
+    return new URLSearchParams(window.location.search).get("view") === "scoreboard"
+      ? "scoreboard"
+      : "solve";
+  } catch {
+    return "solve";
+  }
+}
+
+function syncWorkspacePageToUrl(page: WorkspacePage, replace = false) {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    params.set("view", page);
+    const nextUrl = `/team/workspace?${params.toString()}`;
+    if (replace) {
+      window.history.replaceState({}, "", nextUrl);
+    } else {
+      window.history.pushState({}, "", nextUrl);
+    }
+  } catch {
+    // URL persistence is a convenience; the in-memory workspace still works.
+  }
+}
+
 type Props = {
   contest: ContestResponse;
   teamName: string;
@@ -87,7 +113,7 @@ type Props = {
 
 export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
   const panelGroupRef = useRef<ImperativePanelGroupHandle | null>(null);
-  const [workspacePage, setWorkspacePage] = useState<WorkspacePage>("solve");
+  const [workspacePage, setWorkspacePage] = useState<WorkspacePage>(() => workspacePageFromUrl());
   const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>("balanced");
   const [submissionsOpen, setSubmissionsOpen] = useState(false);
   const [clarificationsOpen, setClarificationsOpen] = useState(false);
@@ -109,6 +135,20 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
       setSubmissionRefreshKey((k) => k + 1);
     },
   });
+
+  useEffect(() => {
+    syncWorkspacePageToUrl(workspacePage, true);
+
+    const handlePopState = () => setWorkspacePage(workspacePageFromUrl());
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  const navigateWorkspacePage = useCallback((page: WorkspacePage) => {
+    window.dispatchEvent(new Event(CODE_DRAFT_FLUSH_EVENT));
+    syncWorkspacePageToUrl(page);
+    setWorkspacePage(page);
+  }, []);
 
   const loadProblems = useCallback(async () => {
     setLoadingProblems(true);
@@ -279,7 +319,7 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
       <section className="aura-workspace-toolbar border-b border-slate-200 bg-white px-4 py-3 lg:px-5">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">
+            <p className="text-xs font-semibold uppercase text-blue-700">
               {isScoreboardPage ? "Contest standings" : "Solving workspace"}
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -302,7 +342,7 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
                 type="button"
                 variant="outline"
                 className="h-11 gap-2 bg-white"
-                onClick={() => setWorkspacePage("solve")}
+                onClick={() => navigateWorkspacePage("solve")}
               >
                 <FileText className="h-4 w-4" />
                 Workspace
@@ -314,7 +354,7 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
                   type="button"
                   variant="outline"
                   className="h-11 gap-2 bg-white"
-                  onClick={() => setWorkspacePage("scoreboard")}
+                  onClick={() => navigateWorkspacePage("scoreboard")}
                 >
                   <Trophy className="h-4 w-4" />
                   Scoreboard

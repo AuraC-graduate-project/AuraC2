@@ -108,6 +108,20 @@ function getUserId(): string {
   return decodeJwtSubject(token) ?? "unknown";
 }
 
+function getLanguageKey(userId: string, contestId: string, problemId: string): string {
+  return `draft_language_${userId}_${contestId}_${problemId}`;
+}
+
+function loadStoredLanguage(userId: string, contestId: string, problemId: string): string {
+  if (problemId === "0") return "cpp";
+  try {
+    const stored = localStorage.getItem(getLanguageKey(userId, contestId, problemId));
+    return languageOptions.some((option) => option.value === stored) ? stored! : "cpp";
+  } catch {
+    return "cpp";
+  }
+}
+
 function escapeHtml(value: string): string {
   return value
     .replaceAll("&", "&amp;")
@@ -171,16 +185,31 @@ function highlightCode(source: string, language: string): string {
 }
 
 export function CodeEditor({ contestId, problem, onSubmitted }: Props) {
-  const [language, setLanguage] = useState("cpp");
+  const userId = useMemo(getUserId, []);
+  const contestKey = contestId ? String(contestId) : "0";
+  const problemKey = problem?.id ? String(problem.id) : "0";
+  const [language, setLanguage] = useState(() =>
+    loadStoredLanguage(userId, contestKey, problemKey)
+  );
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const highlightRef = useRef<HTMLPreElement | null>(null);
   const lineNumbersRef = useRef<HTMLPreElement | null>(null);
 
-  const userId = useMemo(getUserId, []);
-  const contestKey = contestId ? String(contestId) : "0";
-  const problemKey = problem?.id ? String(problem.id) : "0";
+  useEffect(() => {
+    setLanguage(loadStoredLanguage(userId, contestKey, problemKey));
+  }, [userId, contestKey, problemKey]);
+
+  useEffect(() => {
+    if (problemKey === "0") return;
+    try {
+      localStorage.setItem(getLanguageKey(userId, contestKey, problemKey), language);
+    } catch {
+      // Language persistence is a convenience; code drafts remain separately keyed.
+    }
+  }, [userId, contestKey, problemKey, language]);
+
   const starterCode = useMemo(() => {
     if (!problem) return "";
     return (STARTER_CODE[language] ?? STARTER_CODE.cpp)(problem.title);
@@ -273,7 +302,7 @@ export function CodeEditor({ contestId, problem, onSubmitted }: Props) {
       <div className="shrink-0 border-b border-slate-200 bg-slate-50 p-4">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Code</p>
+            <p className="text-xs font-semibold uppercase text-blue-700">Code</p>
             <h2 className="text-lg font-semibold text-slate-950">{problem.title}</h2>
           </div>
 

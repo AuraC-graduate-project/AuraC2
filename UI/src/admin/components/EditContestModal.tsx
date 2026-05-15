@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
 import { updateContestDetails } from "../services/api";
 import { ContestResponse, ContestUpdateRequest } from "../types/api";
 import { toast } from "sonner";
@@ -32,16 +33,22 @@ export function EditContestModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<ContestUpdateRequest>({
     title: contest.title,
+    description: contest.description ?? "",
     startTime: toDatetimeLocal(contest.startTime),
     durationMinutes: contest.durationMinutes,
+    scoreboardFreezeMinutes: contest.scoreboardFreezeMinutes,
+    penaltyMinutes: contest.penaltyMinutes ?? 20,
   });
 
   useEffect(() => {
     if (!open) return;
     setFormData({
       title: contest.title,
+      description: contest.description ?? "",
       startTime: toDatetimeLocal(contest.startTime),
       durationMinutes: contest.durationMinutes,
+      scoreboardFreezeMinutes: contest.scoreboardFreezeMinutes,
+      penaltyMinutes: contest.penaltyMinutes ?? 20,
     });
   }, [open, contest]);
 
@@ -63,12 +70,28 @@ export function EditContestModal({
       return;
     }
 
+    if (
+      formData.scoreboardFreezeMinutes !== null &&
+      formData.scoreboardFreezeMinutes >= formData.durationMinutes
+    ) {
+      toast.error("Scoreboard freeze time must be less than contest duration");
+      return;
+    }
+
+    if (formData.penaltyMinutes < 0) {
+      toast.error("Penalty minutes cannot be negative");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const updated = await updateContestDetails(contest.id, {
         title: formData.title.trim(),
+        description: formData.description.trim(),
         startTime: new Date(formData.startTime).toISOString(),
         durationMinutes: formData.durationMinutes,
+        scoreboardFreezeMinutes: formData.scoreboardFreezeMinutes,
+        penaltyMinutes: formData.penaltyMinutes,
       });
       toast.success("Contest updated successfully");
       onSuccess(updated);
@@ -107,6 +130,18 @@ export function EditContestModal({
               />
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="edit-contest-description">Description</Label>
+              <Textarea
+                id="edit-contest-description"
+                value={formData.description}
+                onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                disabled={isSubmitting || contest.status !== "UPCOMING"}
+                rows={4}
+                className="resize-y"
+              />
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="edit-contest-start-time">Start Date / Time</Label>
@@ -137,6 +172,46 @@ export function EditContestModal({
                   disabled={isSubmitting || contest.status !== "UPCOMING"}
                   className="h-10"
                   required
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="edit-contest-freeze">Scoreboard Freeze (minutes before end)</Label>
+                <Input
+                  id="edit-contest-freeze"
+                  type="number"
+                  min="0"
+                  max={formData.durationMinutes > 0 ? formData.durationMinutes - 1 : undefined}
+                  value={formData.scoreboardFreezeMinutes ?? ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData((prev) => ({
+                      ...prev,
+                      scoreboardFreezeMinutes: value === "" ? null : parseInt(value, 10) || 0,
+                    }));
+                  }}
+                  disabled={isSubmitting || contest.status !== "UPCOMING"}
+                  className="h-10"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-contest-penalty">Penalty (minutes per wrong answer)</Label>
+                <Input
+                  id="edit-contest-penalty"
+                  type="number"
+                  min="0"
+                  value={formData.penaltyMinutes}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      penaltyMinutes: parseInt(e.target.value, 10) || 0,
+                    }))
+                  }
+                  disabled={isSubmitting || contest.status !== "UPCOMING"}
+                  className="h-10"
                 />
               </div>
             </div>

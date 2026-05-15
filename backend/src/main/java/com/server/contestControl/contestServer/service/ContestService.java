@@ -121,6 +121,7 @@ public class ContestService {
         }
 
         contest.setTitle(request.title());
+        contest.setDescription(request.description());
         contest.setStartTime(request.startTime());
         contest.setDurationMinutes(request.durationMinutes());
         contest.setScoreboardFreezeMinutes(request.scoreboardFreezeMinutes());

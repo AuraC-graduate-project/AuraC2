@@ -14,6 +14,8 @@ public record ContestUpdateRequest(
         @NotBlank
         @Size(max = 255)
         String title,
+        @JsonProperty("description")
+        String description,
         @JsonProperty("startTime")
         @NotNull
         Instant startTime,

@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Eye, Lock, Play, RefreshCw, RotateCcw, StepForward, Trophy } from "lucide-react";
+import {
+  ExternalLink,
+  Eye,
+  Lock,
+  Play,
+  RefreshCw,
+  RotateCcw,
+  StepForward,
+  Trophy,
+} from "lucide-react";
 import { toast } from "sonner";
 import type {
   ScoreboardRevealResponse,
@@ -14,6 +23,11 @@ import {
   revealNextScoreboardCell,
   startScoreboardReveal,
 } from "../services/api";
+import {
+  contestLabel,
+  type ContestOption,
+  loadContestOptions as loadContestOptionsList,
+} from "../utils/contestOptions";
 import { useScoreboardStream } from "../../hooks/useScoreboardStream";
 import { ScoreboardTable } from "../../components/scoreboard/ScoreboardTable";
 import { StatusBadge } from "../../components/StatusBadge";
@@ -22,7 +36,32 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
 type Props = {
   contestId: number | null;
+  presentationMode?: boolean;
 };
+
+function parseContestId(value: string | null): number | null {
+  if (!value) return null;
+  const next = Number(value);
+  return Number.isInteger(next) && next > 0 ? next : null;
+}
+
+function contestIdFromUrl(): number | null {
+  return parseContestId(new URLSearchParams(window.location.search).get("contestId"));
+}
+
+function revealDisplayPath(contestId: number): string {
+  return `/admin/scoreboard/reveal-display?contestId=${contestId}`;
+}
+
+function syncScoreboardContestToUrl(contestId: number | null) {
+  const url = new URL(window.location.href);
+  if (contestId == null) {
+    url.searchParams.delete("contestId");
+  } else {
+    url.searchParams.set("contestId", String(contestId));
+  }
+  window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+}
 
 function patchSnapshot(snapshot: ScoreboardSnapshot | null, payload: ScoreboardUpdatePayload): ScoreboardSnapshot | null {
   if (payload.snapshot) return payload.snapshot;
@@ -42,15 +81,56 @@ function patchSnapshot(snapshot: ScoreboardSnapshot | null, payload: ScoreboardU
   };
 }
 
-export function ScoreboardView({ contestId }: Props) {
+export function ScoreboardView({ contestId, presentationMode = false }: Props) {
+  const [selectedContestId, setSelectedContestId] = useState<number | null>(() => contestIdFromUrl() ?? contestId);
+  const [contestOptions, setContestOptions] = useState<ContestOption[]>([]);
+  const [loadingContests, setLoadingContests] = useState(false);
   const [snapshot, setSnapshot] = useState<ScoreboardSnapshot | null>(null);
   const [reveal, setReveal] = useState<ScoreboardRevealResponse | null>(null);
   const [changedTeamIds, setChangedTeamIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [working, setWorking] = useState<string | null>(null);
 
+  const effectiveContestId = selectedContestId ?? contestId;
+
+  useEffect(() => {
+    const urlContestId = contestIdFromUrl();
+    if (urlContestId != null) {
+      setSelectedContestId(urlContestId);
+      return;
+    }
+
+    setSelectedContestId((current) => current ?? contestId);
+  }, [contestId]);
+
+  useEffect(() => {
+    if (presentationMode) return;
+
+    let mounted = true;
+    setLoadingContests(true);
+    loadContestOptionsList()
+      .then((options) => {
+        if (mounted) setContestOptions(options);
+      })
+      .catch(() => {
+        if (mounted) setContestOptions([]);
+      })
+      .finally(() => {
+        if (mounted) setLoadingContests(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [presentationMode]);
+
+  useEffect(() => {
+    if (presentationMode) return;
+    syncScoreboardContestToUrl(effectiveContestId);
+  }, [effectiveContestId, presentationMode]);
+
   const load = useCallback(async () => {
-    if (contestId == null) {
+    if (effectiveContestId == null) {
       setSnapshot(null);
       setReveal(null);
       return;
@@ -59,20 +139,22 @@ export function ScoreboardView({ contestId }: Props) {
     setLoading(true);
     try {
       const [scoreboard, revealState] = await Promise.all([
-        getAdminScoreboard(contestId),
-        getScoreboardRevealState(contestId).catch(() => null),
+        getAdminScoreboard(effectiveContestId),
+        getScoreboardRevealState(effectiveContestId).catch(() => null),
       ]);
       setSnapshot(scoreboard);
       setReveal(revealState);
       setChangedTeamIds([]);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to load scoreboard");
+      if (!presentationMode) {
+        toast.error(error instanceof Error ? error.message : "Failed to load scoreboard");
+      }
       setSnapshot(null);
       setReveal(null);
     } finally {
       setLoading(false);
     }
-  }, [contestId]);
+  }, [effectiveContestId, presentationMode]);
 
   useEffect(() => {
     load();
@@ -85,7 +167,7 @@ export function ScoreboardView({ contestId }: Props) {
   }, []);
 
   useScoreboardStream({
-    contestId,
+    contestId: effectiveContestId,
     role: "ADMIN",
     snapshotVersion: snapshot?.metadata.version ?? 0,
     onSnapshot: (next) => {
@@ -111,10 +193,10 @@ export function ScoreboardView({ contestId }: Props) {
     label: string,
     action: (id: number) => Promise<ScoreboardRevealResponse>
   ) => {
-    if (contestId == null) return;
+    if (effectiveContestId == null) return;
     setWorking(label);
     try {
-      const next = await action(contestId);
+      const next = await action(effectiveContestId);
       setReveal(next);
       await load();
       toast.success(`${label} complete`);
@@ -125,14 +207,83 @@ export function ScoreboardView({ contestId }: Props) {
     }
   };
 
-  if (contestId == null) {
+  if (presentationMode) {
+    if (effectiveContestId == null) {
+      return (
+        <main className="aura-scoreboard-presentation flex min-h-screen items-center justify-center p-8 text-center">
+          <div>
+            <h1 className="text-3xl font-semibold text-white">Missing contest</h1>
+            <p className="mt-3 text-lg text-slate-300">
+              Open this display with a valid contest ID in the URL.
+            </p>
+          </div>
+        </main>
+      );
+    }
+
+    return (
+      <main className="aura-scoreboard-presentation min-h-screen overflow-auto p-6 text-white lg:p-10">
+        <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-[1800px] flex-col gap-5 lg:min-h-[calc(100vh-5rem)]">
+          <header className="flex flex-col gap-3 border-b border-white/15 pb-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase text-slate-300">AuraC2 Scoreboard</p>
+              <h1 className="mt-2 text-4xl font-semibold text-white lg:text-5xl">
+                {snapshot?.metadata.contestTitle ?? "Reveal Display"}
+              </h1>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-200">
+              {snapshot && <StatusBadge kind="contest" value={String(snapshot.metadata.effectiveState)} />}
+              <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 font-semibold">
+                {revealSummary}
+              </span>
+              {snapshot?.metadata.scoreboardFrozen && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3 py-1 font-semibold">
+                  <Lock className="h-4 w-4" />
+                  Frozen
+                </span>
+              )}
+            </div>
+          </header>
+
+          <section className="min-h-0 flex-1">
+            {snapshot ? (
+              <ScoreboardTable
+                snapshot={snapshot}
+                changedTeamIds={changedTeamIds}
+                presentationMode
+              />
+            ) : (
+              <div className="flex min-h-[55vh] items-center justify-center rounded-lg border border-white/15 bg-white/10 text-xl text-slate-200">
+                {loading ? "Loading scoreboard..." : "No scoreboard data is available for this contest."}
+              </div>
+            )}
+          </section>
+        </div>
+      </main>
+    );
+  }
+
+  if (effectiveContestId == null) {
     return (
       <Card className="border border-slate-200 shadow-sm">
         <CardHeader className="border-b border-slate-200 bg-slate-50">
           <CardTitle className="text-2xl text-slate-950">Scoreboard</CardTitle>
         </CardHeader>
-        <CardContent className="p-8 text-center text-slate-600">
-          Select or create a contest before opening the scoreboard.
+        <CardContent className="space-y-4 p-8 text-center text-slate-600">
+          <p>Select or create a contest before opening the scoreboard.</p>
+          <select
+            className="mx-auto h-10 min-w-72 rounded-md border border-slate-300 px-3 text-sm text-slate-900"
+            value=""
+            onChange={(event) => setSelectedContestId(parseContestId(event.target.value))}
+            disabled={loadingContests}
+          >
+            <option value="">{loadingContests ? "Loading contests..." : "Select contest"}</option>
+            {contestOptions.map((contest) => (
+              <option key={contest.id} value={contest.id}>
+                {contest.bucket} - {contestLabel(contest)}
+              </option>
+            ))}
+          </select>
         </CardContent>
       </Card>
     );
@@ -151,6 +302,20 @@ export function ScoreboardView({ contestId }: Props) {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              <select
+                className="h-9 min-w-60 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-900"
+                value={effectiveContestId}
+                onChange={(event) => setSelectedContestId(parseContestId(event.target.value))}
+                disabled={loadingContests}
+                aria-label="Scoreboard contest"
+              >
+                <option value="">{loadingContests ? "Loading contests..." : "Select contest"}</option>
+                {contestOptions.map((contest) => (
+                  <option key={contest.id} value={contest.id}>
+                    {contest.bucket} - {contestLabel(contest)}
+                  </option>
+                ))}
+              </select>
               {snapshot && (
                 <>
                   <StatusBadge kind="contest" value={String(snapshot.metadata.effectiveState)} />
@@ -166,6 +331,15 @@ export function ScoreboardView({ contestId }: Props) {
                   )}
                 </>
               )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 bg-white"
+                onClick={() => window.open(revealDisplayPath(effectiveContestId), "_blank", "noopener,noreferrer")}
+              >
+                <ExternalLink className="h-4 w-4" />
+                Open fullscreen reveal display
+              </Button>
               <Button variant="outline" size="sm" className="gap-2 bg-white" onClick={load} disabled={loading}>
                 <RefreshCw className="h-4 w-4" />
                 Refresh

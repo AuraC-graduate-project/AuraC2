@@ -64,8 +64,6 @@ public class SecurityConfiguration {
                                 "/api/contest/upcoming",
                                 "/api/contest/paused",
                                 "/api/contest/ended",
-                                "/api/contest/stream",
-                                "/api/team/stream",
                                 "/api/scoreboard/**"
                         ).permitAll()
 

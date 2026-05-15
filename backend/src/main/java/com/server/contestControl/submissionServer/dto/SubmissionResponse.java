@@ -1,11 +1,10 @@
 package com.server.contestControl.submissionServer.dto;
 
-import com.server.contestControl.contestServer.dto.problem.ProblemResponse;
-import com.server.contestControl.contestServer.entity.Problem;
 import com.server.contestControl.submissionServer.entity.Submission;
 import com.server.contestControl.submissionServer.enums.Verdict;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.ZoneId;
 
 public record SubmissionResponse(
         Long id,
@@ -16,7 +15,7 @@ public record SubmissionResponse(
         String language,
         String code,
         Verdict verdict,
-        LocalDateTime createdAt,
+        Instant createdAt,
         Integer executionTime,
         Integer memoryUsage
 ) {
@@ -30,7 +29,9 @@ public record SubmissionResponse(
                 submission.getLanguage(),
                 submission.getCode(),
                 submission.getVerdict(),
-                submission.getCreatedAt(),
+                submission.getCreatedAt() == null
+                        ? null
+                        : submission.getCreatedAt().atZone(ZoneId.systemDefault()).toInstant(),
                 submission.getExecutionTime(),
                 submission.getMemoryUsage()
         );

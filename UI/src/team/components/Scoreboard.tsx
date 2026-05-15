@@ -13,6 +13,11 @@ function patchSnapshot(snapshot: ScoreboardSnapshot | null, payload: ScoreboardU
 
   const changedByTeam = new Map(payload.changedRows.map((row) => [row.teamId, row]));
   const mergedRows = snapshot.rows.map((row) => changedByTeam.get(row.teamId) ?? row);
+  for (const row of payload.changedRows) {
+    if (!snapshot.rows.some((existing) => existing.teamId === row.teamId)) {
+      mergedRows.push(row);
+    }
+  }
   return {
     metadata: payload.metadata,
     rows: mergedRows.sort((a, b) => a.rank - b.rank || a.teamName.localeCompare(b.teamName)),

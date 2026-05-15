@@ -4,15 +4,16 @@ import { toast } from 'sonner';
 import {
   forceRejudgeContest,
   forceRejudgeProblem,
-  getActiveContest,
-  getEndedContests,
-  getPausedContest,
   getProblemsByContest,
-  getUpcomingContest,
   rejudgeContest,
   rejudgeProblem,
 } from '../services/api';
-import { ContestResponse, ProblemResponse, RejudgeResponse } from '../types/api';
+import { ProblemResponse, RejudgeResponse } from '../types/api';
+import {
+  contestLabel,
+  ContestOption,
+  loadContestOptions as loadContestOptionsList,
+} from '../utils/contestOptions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,8 +36,6 @@ import {
   SelectValue,
 } from './ui/select';
 
-type ContestBucket = 'Active' | 'Upcoming' | 'Paused' | 'Ended';
-type ContestOption = ContestResponse & { bucket: ContestBucket };
 type ForceTarget =
   | { kind: 'problem'; id: number; label: string }
   | { kind: 'contest'; id: number; label: string }
@@ -54,10 +53,6 @@ function problemLetter(index: number): string {
   return String(index + 1);
 }
 
-function contestLabel(contest: ContestOption): string {
-  return `${contest.title || 'Untitled contest'} (#${contest.id})`;
-}
-
 function difficultyClass(difficulty: ProblemResponse['difficulty']): string {
   switch (difficulty) {
     case 'EASY':
@@ -69,14 +64,6 @@ function difficultyClass(difficulty: ProblemResponse['difficulty']): string {
     default:
       return 'border-slate-200 bg-slate-50 text-slate-700';
   }
-}
-
-function sortEndedContests(contests: ContestResponse[]): ContestResponse[] {
-  return [...contests].sort((a, b) => {
-    const aTime = Date.parse(a.startTime);
-    const bTime = Date.parse(b.startTime);
-    return bTime - aTime;
-  });
 }
 
 export function RejudgeView({ initialContestId = null }: RejudgeViewProps) {
@@ -141,28 +128,8 @@ export function RejudgeView({ initialContestId = null }: RejudgeViewProps) {
     setLoadingContests(true);
     setContestError(null);
 
-    const next: ContestOption[] = [];
-    const seen = new Set<number>();
-    const pushContest = (contest: ContestResponse | null | undefined, bucket: ContestBucket) => {
-      if (!contest || seen.has(contest.id)) return;
-      seen.add(contest.id);
-      next.push({ ...contest, bucket });
-    };
-
     try {
-      const [active, upcoming, paused, ended] = await Promise.allSettled([
-        getActiveContest(),
-        getUpcomingContest(),
-        getPausedContest(),
-        getEndedContests(),
-      ]);
-
-      if (active.status === 'fulfilled') pushContest(active.value, 'Active');
-      if (upcoming.status === 'fulfilled') pushContest(upcoming.value, 'Upcoming');
-      if (paused.status === 'fulfilled') pushContest(paused.value, 'Paused');
-      if (ended.status === 'fulfilled') {
-        sortEndedContests(ended.value).forEach((contest) => pushContest(contest, 'Ended'));
-      }
+      const next = await loadContestOptionsList();
 
       setContestOptions(next);
       setSelectedContestId((previous) => {

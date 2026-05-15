@@ -34,8 +34,13 @@ public class SubmissionController {
 
     @GetMapping("/my")
     @PreAuthorize("hasAnyRole('TEAM', 'ADMIN')")
-    public List<SubmissionResponse> getAllSubmission(Long problemID, HttpServletRequest request) {
-        return submissionService.getAllSubmissionByProblem(problemID, request);
+    public List<SubmissionResponse> getAllSubmission(
+            @RequestParam(name = "problemID", required = false) Long problemID,
+            @RequestParam(name = "problemId", required = false) Long problemId,
+            HttpServletRequest request
+    ) {
+        Long resolvedProblemId = problemID != null ? problemID : problemId;
+        return submissionService.getAllSubmissionByProblem(resolvedProblemId, request);
     }
     @GetMapping("/my/all")
     @PreAuthorize("hasRole('TEAM')")

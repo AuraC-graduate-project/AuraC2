@@ -12,6 +12,7 @@ function cellTitle({
   wrongAttempts,
   solvedTimeMinutes,
   hidden,
+  revealed,
   pending,
 }: {
   solved: boolean;
@@ -19,30 +20,59 @@ function cellTitle({
   wrongAttempts: number;
   solvedTimeMinutes: number | null;
   hidden: boolean;
+  revealed: boolean;
   pending?: boolean;
 }) {
   if (pending) return "Judging in progress";
-  if (hidden) return "Contains hidden post-freeze activity";
+  if (hidden && !revealed) return "Contains hidden post-freeze activity";
   if (solved) return `Accepted at ${solvedTimeMinutes} min with ${wrongAttempts} wrong attempt(s)`;
   if (attempts > 0) return `${attempts} unsuccessful attempt(s)`;
   return "No visible attempts";
 }
 
+function cellTone({
+  solved,
+  attempts,
+  hidden,
+  revealed,
+  pending,
+  firstToSolve,
+}: {
+  solved: boolean;
+  attempts: number;
+  hidden: boolean;
+  revealed: boolean;
+  pending?: boolean;
+  firstToSolve: boolean;
+}): string {
+  if (pending) return "animate-pulse border-amber-300 bg-amber-50 text-amber-800";
+  if (hidden && !revealed) return "border-slate-300 bg-slate-100 text-slate-600";
+  if (solved) {
+    return firstToSolve
+      ? "border-amber-300 bg-amber-50 text-amber-900"
+      : "border-emerald-200 bg-emerald-50 text-emerald-800";
+  }
+  if (attempts > 0) return "border-rose-200 bg-rose-50 text-rose-800";
+  return "border-slate-200 bg-white text-slate-400";
+}
+
 export function ScoreboardTable({
   snapshot,
   changedTeamIds = [],
+  presentationMode = false,
 }: {
   snapshot: ScoreboardSnapshot;
   changedTeamIds?: number[];
+  presentationMode?: boolean;
 }) {
   const changed = new Set(changedTeamIds);
   const columns = snapshot.metadata.problemColumns;
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+    <div className={`overflow-hidden rounded-lg border border-slate-200 bg-white ${presentationMode ? "aura-scoreboard-presentation-table" : ""}`}>
       <div className="overflow-x-auto">
-        <table className="min-w-full border-collapse text-sm">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+        <table className={`min-w-full border-collapse ${presentationMode ? "text-base" : "text-sm"}`}>
+          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
               <th className="sticky left-0 z-10 w-16 border-b border-slate-200 bg-slate-50 px-3 py-3 text-left">
                 Rank
@@ -87,19 +117,16 @@ export function ScoreboardTable({
                       <td key={cell.problemId} className="px-2 py-2 text-center">
                         <div
                           title={cellTitle(cell)}
-                          className={`mx-auto flex min-h-12 w-20 flex-col items-center justify-center rounded-md border px-2 py-1 ${
-                            pending
-                              ? "animate-pulse border-blue-300 bg-blue-50 text-blue-700"
-                              : solved
-                                ? cell.firstToSolve
-                                  ? "border-amber-300 bg-amber-50 text-amber-900"
-                                  : "border-emerald-200 bg-emerald-50 text-emerald-800"
-                                : attempted
-                                  ? "border-rose-200 bg-rose-50 text-rose-800"
-                                  : cell.hidden
-                                    ? "border-slate-200 bg-slate-100 text-slate-500"
-                                    : "border-slate-200 bg-white text-slate-400"
-                          }`}
+                          className={`aura-scoreboard-cell mx-auto flex min-h-12 flex-col items-center justify-center rounded-md border px-2 py-1 transition-colors duration-300 ${
+                            presentationMode ? "w-24 min-h-16" : "w-20"
+                          } ${cellTone({
+                            solved,
+                            attempts: cell.attempts,
+                            hidden: cell.hidden,
+                            revealed: cell.revealed,
+                            pending,
+                            firstToSolve: cell.firstToSolve,
+                          })} ${wasChanged ? "aura-scoreboard-cell-updated" : ""}`}
                         >
                           {pending ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
