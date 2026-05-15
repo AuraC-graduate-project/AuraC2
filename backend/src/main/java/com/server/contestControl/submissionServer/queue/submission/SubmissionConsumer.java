@@ -37,7 +37,7 @@ public class SubmissionConsumer {
 
     @RabbitListener(queues = RabbitMQConfig.SUBMISSION_QUEUE)
     public void handleSubmission(Long submissionId) {
-        Submission submission = submissionRepository.findById(submissionId)
+        Submission submission = submissionRepository.findByIdWithContestProblemUser(submissionId)
                 .orElseThrow(() -> new RuntimeException("Submission not found"));
 
         if (!QUEUEABLE_VERDICTS.contains(submission.getVerdict())) {
@@ -62,9 +62,17 @@ public class SubmissionConsumer {
         submission.setVerdict(Verdict.RUNNING);
         submissionRepository.save(submission);
 
-        // Publish RUNNING event directly — SubmissionConsumer is not transactional,
-        // so the save above is immediately visible and we publish without delay.
-        submissionSsePublisher.publish(SubmissionStreamEventType.RUNNING, submission);
+        // Live UI updates should never prevent the actual judge dispatch.
+        try {
+            submissionSsePublisher.publish(SubmissionStreamEventType.RUNNING, submission);
+        } catch (RuntimeException e) {
+            log.warn(
+                    "Failed to publish RUNNING submission event. Continuing judge dispatch. submissionId={} cause={}: {}",
+                    submission.getId(),
+                    e.getClass().getSimpleName(),
+                    e.getMessage()
+            );
+        }
 
         log.info(
                 "Dispatching submission to Judge0. submissionId={} judgeRunId={} testCaseCount={}",

@@ -8,6 +8,7 @@ import com.server.contestControl.submissionServer.enums.Verdict;
 import com.server.contestControl.submissionServer.repository.SubmissionRepository;
 import com.server.contestControl.submissionServer.service.judge.Judge0Service;
 import com.server.contestControl.submissionServer.sse.SubmissionSsePublisher;
+import com.server.contestControl.submissionServer.sse.SubmissionStreamEventType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -63,7 +65,7 @@ class SubmissionConsumerTest {
                 .expectedOutput("1")
                 .build();
 
-        when(submissionRepository.findById(1L)).thenReturn(Optional.of(submission));
+        when(submissionRepository.findByIdWithContestProblemUser(1L)).thenReturn(Optional.of(submission));
         when(testCaseRepository.findByProblemId(10L)).thenReturn(List.of(tc));
 
         submissionConsumer.handleSubmission(1L);
@@ -72,6 +74,7 @@ class SubmissionConsumerTest {
         assertThat(submission.getJudgeRunId()).isEqualTo(6L);
         assertThat(submission.getVerdict()).isEqualTo(Verdict.RUNNING);
         verify(submissionRepository).save(submission);
+        verify(submissionSsePublisher).publish(eq(SubmissionStreamEventType.RUNNING), eq(submission));
     }
 
     // ─── Test 5: Consumer still increments judgeRunId for normal PENDING submission
@@ -94,7 +97,7 @@ class SubmissionConsumerTest {
                 .expectedOutput("2")
                 .build();
 
-        when(submissionRepository.findById(2L)).thenReturn(Optional.of(submission));
+        when(submissionRepository.findByIdWithContestProblemUser(2L)).thenReturn(Optional.of(submission));
         when(testCaseRepository.findByProblemId(10L)).thenReturn(List.of(tc));
 
         submissionConsumer.handleSubmission(2L);
@@ -103,6 +106,7 @@ class SubmissionConsumerTest {
         assertThat(submission.getJudgeRunId()).isEqualTo(1L);
         assertThat(submission.getVerdict()).isEqualTo(Verdict.RUNNING);
         verify(submissionRepository).save(submission);
+        verify(submissionSsePublisher).publish(eq(SubmissionStreamEventType.RUNNING), eq(submission));
     }
 
     @Test
@@ -117,12 +121,43 @@ class SubmissionConsumerTest {
                 .code("class Main {}")
                 .build();
 
-        when(submissionRepository.findById(3L)).thenReturn(Optional.of(submission));
+        when(submissionRepository.findByIdWithContestProblemUser(3L)).thenReturn(Optional.of(submission));
 
         submissionConsumer.handleSubmission(3L);
 
         // Should not dispatch since verdict is ACCEPTED (not PENDING or PENDING_REJUDGE)
         verify(submissionRepository, never()).save(any());
         verify(judge0Service, never()).sendSingleTest(any(), any(), anyInt(), anyInt());
+    }
+
+    @Test
+    void consumerStillDispatchesToJudgeWhenRunningEventPublishFails() {
+        Problem problem = Problem.builder().id(10L).build();
+        Submission submission = Submission.builder()
+                .id(4L)
+                .problem(problem)
+                .verdict(Verdict.PENDING)
+                .judgeRunId(0L)
+                .language("java")
+                .code("class Main {}")
+                .build();
+
+        TestCase tc = TestCase.builder()
+                .id(102L)
+                .inputData("3")
+                .expectedOutput("3")
+                .build();
+
+        when(submissionRepository.findByIdWithContestProblemUser(4L)).thenReturn(Optional.of(submission));
+        when(testCaseRepository.findByProblemId(10L)).thenReturn(List.of(tc));
+        doThrow(new RuntimeException("sse failed"))
+                .when(submissionSsePublisher)
+                .publish(eq(SubmissionStreamEventType.RUNNING), eq(submission));
+
+        submissionConsumer.handleSubmission(4L);
+
+        assertThat(submission.getVerdict()).isEqualTo(Verdict.RUNNING);
+        verify(submissionRepository).save(submission);
+        verify(judge0Service).sendSingleTest(eq(submission), eq(tc), eq(1), anyInt());
     }
 }
