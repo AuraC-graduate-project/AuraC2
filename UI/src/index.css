@@ -1158,6 +1158,150 @@ button:focus-visible,
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--aura-primary) 10%, transparent) !important;
 }
 
+/* Dark-theme button contrast.
+   Keep this scoped to clickable controls so the wider dark palette stays calm. */
+html.dark [data-slot="button"],
+html.dark button[role="button"],
+html.dark button.aura-theme-toggle {
+  color: #eef4fb !important;
+}
+
+html.dark [data-slot="button"].bg-primary,
+html.dark [data-slot="button"].bg-blue-600,
+html.dark [data-slot="button"].bg-blue-700,
+html.dark button.bg-blue-600,
+html.dark button.bg-blue-700 {
+  background-color: #4f78a3 !important;
+  border-color: #6f96bf !important;
+  color: #f8fafc !important;
+}
+
+html.dark [data-slot="button"].hover\:bg-primary\/90:hover,
+html.dark [data-slot="button"].hover\:bg-blue-700:hover,
+html.dark [data-slot="button"].hover\:bg-blue-800:hover,
+html.dark button.hover\:bg-blue-700:hover,
+html.dark button.hover\:bg-blue-800:hover {
+  background-color: #5e8fc0 !important;
+  border-color: #82a9cf !important;
+  color: #ffffff !important;
+}
+
+html.dark [data-slot="button"].bg-emerald-600,
+html.dark [data-slot="button"].bg-green-600,
+html.dark button.bg-emerald-600,
+html.dark button.bg-green-600 {
+  background-color: #2f8f68 !important;
+  border-color: #5fc99b !important;
+  color: #f0fdf4 !important;
+}
+
+html.dark [data-slot="button"].hover\:bg-emerald-700:hover,
+html.dark [data-slot="button"].hover\:bg-green-700:hover,
+html.dark button.hover\:bg-emerald-700:hover,
+html.dark button.hover\:bg-green-700:hover {
+  background-color: #38a878 !important;
+  border-color: #75d7ad !important;
+  color: #ffffff !important;
+}
+
+html.dark [data-slot="button"].bg-amber-600,
+html.dark [data-slot="button"].bg-yellow-600,
+html.dark button.bg-amber-600,
+html.dark button.bg-yellow-600 {
+  background-color: #a97725 !important;
+  border-color: #d6a84b !important;
+  color: #fff8e1 !important;
+}
+
+html.dark [data-slot="button"].hover\:bg-amber-700:hover,
+html.dark [data-slot="button"].hover\:bg-yellow-700:hover,
+html.dark button.hover\:bg-amber-700:hover,
+html.dark button.hover\:bg-yellow-700:hover {
+  background-color: #bd8730 !important;
+  border-color: #e4b85e !important;
+  color: #ffffff !important;
+}
+
+html.dark [data-slot="button"].bg-destructive,
+html.dark [data-slot="button"].bg-rose-600,
+html.dark [data-slot="button"].bg-red-600,
+html.dark button.bg-rose-600,
+html.dark button.bg-red-600 {
+  background-color: #b84f5e !important;
+  border-color: #da7580 !important;
+  color: #fff7f8 !important;
+}
+
+html.dark [data-slot="button"].hover\:bg-destructive\/90:hover,
+html.dark [data-slot="button"].hover\:bg-rose-700:hover,
+html.dark [data-slot="button"].hover\:bg-red-700:hover,
+html.dark button.hover\:bg-rose-700:hover,
+html.dark button.hover\:bg-red-700:hover {
+  background-color: #cc5f6e !important;
+  border-color: #e58a93 !important;
+  color: #ffffff !important;
+}
+
+html.dark [data-slot="button"].border,
+html.dark [data-slot="button"].bg-background,
+html.dark [data-slot="button"].bg-white,
+html.dark button.border.bg-white,
+html.dark button.bg-white,
+html.dark button.aura-theme-toggle {
+  background-color: #1f2b3a !important;
+  border-color: #526174 !important;
+  color: #eef4fb !important;
+}
+
+html.dark [data-slot="button"].border:hover,
+html.dark [data-slot="button"].hover\:bg-accent:hover,
+html.dark [data-slot="button"].hover\:bg-slate-50:hover,
+html.dark [data-slot="button"].hover\:bg-white\/70:hover,
+html.dark button.border.bg-white:hover,
+html.dark button.bg-white:hover,
+html.dark button.aura-theme-toggle:hover {
+  background-color: #2a394b !important;
+  border-color: #66768c !important;
+  color: #ffffff !important;
+}
+
+html.dark [data-slot="button"].text-rose-700,
+html.dark button.text-rose-700 {
+  color: #fecdd3 !important;
+}
+
+html.dark [data-slot="button"].text-emerald-700,
+html.dark button.text-emerald-700 {
+  color: #a7f3d0 !important;
+}
+
+html.dark [data-slot="button"].text-amber-900,
+html.dark [data-slot="button"].text-amber-800,
+html.dark button.text-amber-900,
+html.dark button.text-amber-800 {
+  color: #fde68a !important;
+}
+
+html.dark [data-slot="button"].hover\:bg-rose-50:hover,
+html.dark button.hover\:bg-rose-50:hover {
+  background-color: #4a222b !important;
+  border-color: #da7580 !important;
+}
+
+html.dark [data-slot="button"].hover\:bg-emerald-50:hover,
+html.dark button.hover\:bg-emerald-50:hover {
+  background-color: #183c2e !important;
+  border-color: #5fc99b !important;
+}
+
+html.dark [data-slot="button"].hover\:bg-amber-100:hover,
+html.dark [data-slot="button"].hover\:bg-amber-50:hover,
+html.dark button.hover\:bg-amber-100:hover,
+html.dark button.hover\:bg-amber-50:hover {
+  background-color: #44341b !important;
+  border-color: #d6a84b !important;
+}
+
 table {
   border-collapse: separate;
   border-spacing: 0;
@@ -1226,19 +1370,68 @@ html.dark [role="dialog"] {
     box-shadow 260ms var(--aura-ease);
 }
 
+html.dark .aura-scoreboard-cell.bg-emerald-50,
+html.dark .aura-scoreboard-cell.bg-emerald-100 {
+  background-color: #164432 !important;
+  border-color: #34d399 !important;
+  color: #ecfdf5 !important;
+}
+
+html.dark .aura-scoreboard-cell.bg-emerald-50 svg,
+html.dark .aura-scoreboard-cell.bg-emerald-100 svg {
+  color: #86efac !important;
+}
+
+html.dark .aura-scoreboard-cell.bg-rose-50 {
+  background-color: #4a222b !important;
+  border-color: #fb7185 !important;
+  color: #ffe4e6 !important;
+}
+
+html.dark .aura-scoreboard-cell.bg-rose-50 svg {
+  color: #fda4af !important;
+}
+
+html.dark .aura-scoreboard-cell.bg-amber-100 {
+  background-color: #44341b !important;
+  border-color: #fbbf24 !important;
+  color: #fef3c7 !important;
+}
+
+html.dark .aura-scoreboard-cell.bg-slate-100 {
+  background-color: #263241 !important;
+  border-color: #64748b !important;
+  color: #e2e8f0 !important;
+}
+
+html.dark .aura-scoreboard-cell.bg-white {
+  background-color: #172231 !important;
+  border-color: #3b4a5f !important;
+  color: #cbd5e1 !important;
+}
+
+html.dark .aura-scoreboard-cell .bg-amber-100 {
+  background-color: #f3d371 !important;
+  color: #1f2937 !important;
+}
+
 .aura-scoreboard-cell-updated {
   animation: aura-scoreboard-cell-update 1400ms var(--aura-ease-soft) both;
 }
 
+.aura-scoreboard-cell-revealed {
+  animation: aura-scoreboard-cell-reveal 1800ms var(--aura-ease-soft) both;
+}
+
 .aura-scoreboard-presentation {
   background:
-    linear-gradient(180deg, #111827, #0f172a 60%, #10151d) !important;
+    linear-gradient(180deg, #172033, #111827 58%, #0f172a) !important;
   color: #f8fafc !important;
 }
 
 .aura-scoreboard-presentation .aura-scoreboard-presentation-table {
-  border-color: rgba(148, 163, 184, 0.24) !important;
-  background-color: rgba(15, 23, 42, 0.88) !important;
+  border-color: rgba(148, 163, 184, 0.38) !important;
+  background-color: rgba(15, 23, 42, 0.94) !important;
   box-shadow: none !important;
 }
 
@@ -1247,30 +1440,49 @@ html.dark [role="dialog"] {
 }
 
 .aura-scoreboard-presentation .aura-scoreboard-presentation-table thead tr {
-  background-color: rgba(30, 41, 59, 0.92) !important;
+  background-color: rgba(51, 65, 85, 0.96) !important;
 }
 
 .aura-scoreboard-presentation .aura-scoreboard-presentation-table tbody tr:hover {
-  background-color: rgba(30, 41, 59, 0.72) !important;
+  background-color: rgba(51, 65, 85, 0.78) !important;
 }
 
 .aura-scoreboard-presentation .aura-scoreboard-presentation-table th,
 .aura-scoreboard-presentation .aura-scoreboard-presentation-table td {
-  border-color: rgba(148, 163, 184, 0.22) !important;
+  border-color: rgba(148, 163, 184, 0.34) !important;
+}
+
+.aura-scoreboard-presentation .aura-scoreboard-presentation-table th {
+  background-color: rgba(51, 65, 85, 0.96) !important;
+  color: #e2e8f0 !important;
 }
 
 .aura-scoreboard-presentation .aura-scoreboard-presentation-table .bg-white {
-  background-color: rgba(248, 250, 252, 0.08) !important;
+  background-color: rgba(248, 250, 252, 0.1) !important;
   color: #cbd5e1 !important;
 }
 
 @keyframes aura-scoreboard-cell-update {
   0% {
-    box-shadow: inset 0 0 0 999px rgba(250, 204, 21, 0.2);
+    box-shadow: inset 0 0 0 999px rgba(59, 130, 246, 0.18);
   }
 
   100% {
-    box-shadow: inset 0 0 0 999px rgba(250, 204, 21, 0);
+    box-shadow: inset 0 0 0 999px rgba(59, 130, 246, 0);
+  }
+}
+
+@keyframes aura-scoreboard-cell-reveal {
+  0% {
+    box-shadow: inset 0 0 0 999px rgba(251, 191, 36, 0.22);
+  }
+
+  55% {
+    box-shadow: inset 0 0 0 999px rgba(14, 165, 233, 0.12);
+  }
+
+  100% {
+    box-shadow: inset 0 0 0 999px rgba(14, 165, 233, 0);
   }
 }
 

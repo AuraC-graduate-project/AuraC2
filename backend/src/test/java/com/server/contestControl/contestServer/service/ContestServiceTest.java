@@ -97,15 +97,131 @@ class ContestServiceTest {
     }
 
     @Test
-    @DisplayName("updateContestDetails should reject non-upcoming contests")
-    void shouldRejectNonUpcomingContest() {
+    @DisplayName("updateContestDetails should allow safe fields while contest is running")
+    void shouldAllowSafeRunningContestUpdates() {
         upcomingContest.setStatus(ContestStatus.RUNNING);
         when(contestRepository.findById(upcomingContest.getId())).thenReturn(Optional.of(upcomingContest));
+        when(contestLifecycleService.resolveEffectiveState(any(), any())).thenReturn(ContestStatus.RUNNING);
+        when(contestLifecycleService.resolveRemainingMillis(any(), any())).thenReturn(90L * 60_000L);
+
+        ContestUpdateRequest request = new ContestUpdateRequest(
+                "Running Rename",
+                "Updated while running",
+                upcomingContest.getStartTime(),
+                upcomingContest.getDurationMinutes(),
+                15,
+                25
+        );
+
+        ContestResponse response = contestService.updateContestDetails(upcomingContest.getId(), request);
+
+        assertThat(response.getTitle()).isEqualTo("Running Rename");
+        assertThat(upcomingContest.getDescription()).isEqualTo("Updated while running");
+        assertThat(upcomingContest.getScoreboardFreezeMinutes()).isEqualTo(15);
+        assertThat(upcomingContest.getPenaltyMinutes()).isEqualTo(25);
+        assertThat(upcomingContest.getStartTime()).isEqualTo(request.startTime());
+        assertThat(upcomingContest.getDurationMinutes()).isEqualTo(120);
+        verify(contestRepository).save(upcomingContest);
+        verify(eventPublisher).publishEvent(any(ContestUpdatedEvent.class));
+    }
+
+    @Test
+    @DisplayName("updateContestDetails should reject timing changes while contest is running")
+    void shouldRejectRunningContestTimingChanges() {
+        upcomingContest.setStatus(ContestStatus.RUNNING);
+        when(contestRepository.findById(upcomingContest.getId())).thenReturn(Optional.of(upcomingContest));
+        when(contestLifecycleService.resolveEffectiveState(any(), any())).thenReturn(ContestStatus.RUNNING);
 
         assertThatThrownBy(() -> contestService.updateContestDetails(
                 upcomingContest.getId(),
-                validRequest()
-        )).isInstanceOf(InvalidContestStateException.class);
+                new ContestUpdateRequest(
+                        "Running Rename",
+                        "Updated while running",
+                        upcomingContest.getStartTime().plus(5, ChronoUnit.MINUTES),
+                        upcomingContest.getDurationMinutes(),
+                        15,
+                        25
+                )
+        )).isInstanceOf(InvalidContestStateException.class)
+                .hasMessageContaining("Start time is locked");
+
+        verify(contestRepository, never()).save(any());
+        verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    @DisplayName("updateContestDetails should allow safe fields while contest is paused")
+    void shouldAllowSafePausedContestUpdates() {
+        upcomingContest.setStatus(ContestStatus.PAUSED);
+        when(contestRepository.findById(upcomingContest.getId())).thenReturn(Optional.of(upcomingContest));
+        when(contestLifecycleService.resolveEffectiveState(any(), any())).thenReturn(ContestStatus.PAUSED);
+        when(contestLifecycleService.resolveRemainingMillis(any(), any())).thenReturn(60L * 60_000L);
+
+        ContestUpdateRequest request = new ContestUpdateRequest(
+                "Paused Rename",
+                "Updated while paused",
+                upcomingContest.getStartTime(),
+                upcomingContest.getDurationMinutes(),
+                10,
+                30
+        );
+
+        contestService.updateContestDetails(upcomingContest.getId(), request);
+
+        assertThat(upcomingContest.getTitle()).isEqualTo("Paused Rename");
+        assertThat(upcomingContest.getDescription()).isEqualTo("Updated while paused");
+        assertThat(upcomingContest.getScoreboardFreezeMinutes()).isEqualTo(10);
+        assertThat(upcomingContest.getPenaltyMinutes()).isEqualTo(30);
+        verify(contestRepository).save(upcomingContest);
+        verify(eventPublisher).publishEvent(any(ContestUpdatedEvent.class));
+    }
+
+    @Test
+    @DisplayName("updateContestDetails should allow title and description only after contest ended")
+    void shouldAllowEndedContestTitleAndDescriptionOnly() {
+        upcomingContest.setStatus(ContestStatus.ENDED);
+        when(contestRepository.findById(upcomingContest.getId())).thenReturn(Optional.of(upcomingContest));
+        when(contestLifecycleService.resolveEffectiveState(any(), any())).thenReturn(ContestStatus.ENDED);
+        when(contestLifecycleService.resolveRemainingMillis(any(), any())).thenReturn(0L);
+
+        ContestUpdateRequest request = new ContestUpdateRequest(
+                "Archived Rename",
+                "Clarified archive notes",
+                upcomingContest.getStartTime(),
+                upcomingContest.getDurationMinutes(),
+                upcomingContest.getScoreboardFreezeMinutes(),
+                upcomingContest.getPenaltyMinutes()
+        );
+
+        ContestResponse response = contestService.updateContestDetails(upcomingContest.getId(), request);
+
+        assertThat(response.getTitle()).isEqualTo("Archived Rename");
+        assertThat(upcomingContest.getDescription()).isEqualTo("Clarified archive notes");
+        assertThat(upcomingContest.getScoreboardFreezeMinutes()).isEqualTo(30);
+        assertThat(upcomingContest.getPenaltyMinutes()).isEqualTo(20);
+        verify(contestRepository).save(upcomingContest);
+        verify(eventPublisher).publishEvent(any(ContestUpdatedEvent.class));
+    }
+
+    @Test
+    @DisplayName("updateContestDetails should reject scoring changes after contest ended")
+    void shouldRejectEndedContestScoringChanges() {
+        upcomingContest.setStatus(ContestStatus.ENDED);
+        when(contestRepository.findById(upcomingContest.getId())).thenReturn(Optional.of(upcomingContest));
+        when(contestLifecycleService.resolveEffectiveState(any(), any())).thenReturn(ContestStatus.ENDED);
+
+        assertThatThrownBy(() -> contestService.updateContestDetails(
+                upcomingContest.getId(),
+                new ContestUpdateRequest(
+                        "Archived Rename",
+                        "Clarified archive notes",
+                        upcomingContest.getStartTime(),
+                        upcomingContest.getDurationMinutes(),
+                        upcomingContest.getScoreboardFreezeMinutes(),
+                        25
+                )
+        )).isInstanceOf(InvalidContestStateException.class)
+                .hasMessageContaining("Ended contests only allow title and description");
 
         verify(contestRepository, never()).save(any());
         verify(eventPublisher, never()).publishEvent(any());
@@ -199,14 +315,4 @@ class ContestServiceTest {
         verify(eventPublisher, never()).publishEvent(any());
     }
 
-    private ContestUpdateRequest validRequest() {
-        return new ContestUpdateRequest(
-                "Updated Contest",
-                "Updated description",
-                Instant.now().plus(1, ChronoUnit.HOURS),
-                120,
-                30,
-                20
-        );
-    }
 }

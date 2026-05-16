@@ -23,6 +23,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -92,14 +93,25 @@ public class ContestService {
         Contest contest = contestRepository.findById(id)
                 .orElseThrow(() -> new ContestNotFoundException(id));
 
-        if (contest.getStatus() != ContestStatus.UPCOMING) {
-            throw new InvalidContestStateException(
-                    "Contest name, start time, and duration can only be updated while contest is UPCOMING."
-            );
+        ContestStatus effectiveState = contestLifecycleService.resolveEffectiveState(contest, now);
+        if (effectiveState == null) {
+            effectiveState = contest.getStatus();
         }
 
-        if (request.startTime() == null || request.startTime().isBefore(now)) {
-            throw new ContestValidationException("Start time must be in the future.");
+        validateContestUpdateFields(request);
+        applyContestUpdateByState(contest, request, effectiveState, now);
+
+        contestRepository.save(contest);
+
+        ContestResponse response = toResponse(contest);
+        eventPublisher.publishEvent(new ContestUpdatedEvent(ContestUpdatedEvent.Reason.UPDATED, response));
+
+        return response;
+    }
+
+    private void validateContestUpdateFields(ContestUpdateRequest request) {
+        if (request.startTime() == null) {
+            throw new ContestValidationException("Start time is required.");
         }
 
         if (request.durationMinutes() == null || request.durationMinutes() < 1) {
@@ -110,28 +122,65 @@ public class ContestService {
             throw new ContestValidationException("Scoreboard freeze time cannot be negative.");
         }
 
-        if (request.scoreboardFreezeMinutes() != null
-                && request.scoreboardFreezeMinutes() >= request.durationMinutes()) {
-            throw new ContestValidationException(
-                    "Scoreboard freeze time must be less than contest duration.");
-        }
-
         if (request.penaltyMinutes() == null || request.penaltyMinutes() < 0) {
             throw new ContestValidationException("Penalty minutes cannot be negative.");
         }
+    }
+
+    private void applyContestUpdateByState(
+            Contest contest,
+            ContestUpdateRequest request,
+            ContestStatus effectiveState,
+            Instant now
+    ) {
+        boolean startChanged = !Objects.equals(request.startTime(), contest.getStartTime());
+        boolean durationChanged = !Objects.equals(request.durationMinutes(), contest.getDurationMinutes());
+        boolean freezeChanged = !Objects.equals(request.scoreboardFreezeMinutes(), contest.getScoreboardFreezeMinutes());
+        boolean penaltyChanged = !Objects.equals(request.penaltyMinutes(), contest.getPenaltyMinutes());
 
         contest.setTitle(request.title());
         contest.setDescription(request.description());
-        contest.setStartTime(request.startTime());
-        contest.setDurationMinutes(request.durationMinutes());
-        contest.setScoreboardFreezeMinutes(request.scoreboardFreezeMinutes());
-        contest.setPenaltyMinutes(request.penaltyMinutes());
-        contestRepository.save(contest);
 
-        ContestResponse response = toResponse(contest);
-        eventPublisher.publishEvent(new ContestUpdatedEvent(ContestUpdatedEvent.Reason.UPDATED, response));
+        switch (effectiveState) {
+            case UPCOMING -> {
+                if (request.startTime().isBefore(now)) {
+                    throw new ContestValidationException("Start time must be in the future.");
+                }
+                validateFreezeAgainstDuration(request.scoreboardFreezeMinutes(), request.durationMinutes());
 
-        return response;
+                contest.setStartTime(request.startTime());
+                contest.setDurationMinutes(request.durationMinutes());
+                contest.setScoreboardFreezeMinutes(request.scoreboardFreezeMinutes());
+                contest.setPenaltyMinutes(request.penaltyMinutes());
+            }
+            case RUNNING, PAUSED -> {
+                if (startChanged) {
+                    throw new InvalidContestStateException(
+                            "Start time is locked once a contest is RUNNING or PAUSED.");
+                }
+                if (durationChanged) {
+                    throw new InvalidContestStateException(
+                            "Duration is locked once a contest is RUNNING or PAUSED.");
+                }
+                validateFreezeAgainstDuration(request.scoreboardFreezeMinutes(), contest.getDurationMinutes());
+
+                contest.setScoreboardFreezeMinutes(request.scoreboardFreezeMinutes());
+                contest.setPenaltyMinutes(request.penaltyMinutes());
+            }
+            case ENDED -> {
+                if (startChanged || durationChanged || freezeChanged || penaltyChanged) {
+                    throw new InvalidContestStateException(
+                            "Ended contests only allow title and description updates. Timing, freeze, and penalty settings are locked because they affect historical scoreboard results.");
+                }
+            }
+        }
+    }
+
+    private void validateFreezeAgainstDuration(Integer freezeMinutes, Integer durationMinutes) {
+        if (freezeMinutes != null && freezeMinutes >= durationMinutes) {
+            throw new ContestValidationException(
+                    "Scoreboard freeze time must be less than contest duration.");
+        }
     }
 
     @Transactional

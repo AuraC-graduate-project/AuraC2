@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 
 /**
  * Generates a unique localStorage key for code draft persistence.
- * Key pattern: draft_{userId}_{contestId}_{problemId}_{language}
+ * Key pattern: auraC2:draft:{userId}:{contestId}:{problemId}:{language}
  */
 export const CODE_DRAFT_FLUSH_EVENT = "aurac:flush-code-draft";
 
@@ -11,7 +11,40 @@ export const getDraftKey = (
     contestId: string,
     problemId: string,
     language: string
+): string => `auraC2:draft:${userId}:${contestId}:${problemId}:${language}`;
+
+const getLegacyDraftKey = (
+    userId: string,
+    contestId: string,
+    problemId: string,
+    language: string
 ): string => `draft_${userId}_${contestId}_${problemId}_${language}`;
+
+function loadDraftFromStorage(
+    userId: string,
+    contestId: string,
+    problemId: string,
+    language: string
+): string | null {
+    try {
+        const current = localStorage.getItem(getDraftKey(userId, contestId, problemId, language));
+        if (current !== null) return current;
+
+        return localStorage.getItem(getLegacyDraftKey(userId, contestId, problemId, language));
+    } catch {
+        return null;
+    }
+}
+
+function removeDraftFromStorage(
+    userId: string,
+    contestId: string,
+    problemId: string,
+    language: string
+): void {
+    localStorage.removeItem(getDraftKey(userId, contestId, problemId, language));
+    localStorage.removeItem(getLegacyDraftKey(userId, contestId, problemId, language));
+}
 
 /**
  * Clears a specific draft from localStorage.
@@ -23,9 +56,8 @@ export function clearDraftFromStorage(
     problemId: string,
     language: string
 ): void {
-    const key = getDraftKey(userId, contestId, problemId, language);
     try {
-        localStorage.removeItem(key);
+        removeDraftFromStorage(userId, contestId, problemId, language);
     } catch {
         console.warn("Failed to clear draft from localStorage");
     }
@@ -35,7 +67,7 @@ export function clearDraftFromStorage(
  * Hook for LeetCode-style code draft persistence using browser localStorage.
  *
  * Save triggers:
- * 1. Debounced auto-save (320ms) while typing
+ * 1. Debounced auto-save while typing
  * 2. Immediate save when user switches problem
  * 3. Immediate save when user switches language
  * 4. Immediate save on tab close / page refresh (beforeunload)
@@ -48,7 +80,9 @@ export function useCodeDraft(
     language: string,
     initialCode = ""
 ) {
-    const [code, setCodeState] = useState<string>("");
+    const [code, setCodeState] = useState<string>(() =>
+        loadDraftFromStorage(userId, contestId, problemId, language) ?? initialCode
+    );
 
     // Refs to always have the latest values without stale closures
     const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -56,12 +90,13 @@ export function useCodeDraft(
     const onSavedCallbackRef = useRef<(() => void) | null>(null);
 
     // Keep latest code/key in refs so event listeners never go stale
-    const codeRef = useRef<string>("");
-    const currentKeyRef = useRef<string>("");
+    const codeRef = useRef<string>(code);
+    const currentKeyRef = useRef<string>(getDraftKey(userId, contestId, problemId, language));
     const initialCodeRef = useRef<string>(initialCode);
     initialCodeRef.current = initialCode;
 
-    // Keep previous problemId + language to save BEFORE switching
+    // Keep previous scope to save BEFORE switching
+    const prevUserIdRef = useRef<string>(userId);
     const prevProblemIdRef = useRef<string>(problemId);
     const prevLanguageRef = useRef<string>(language);
     const prevContestIdRef = useRef<string>(contestId);
@@ -70,11 +105,6 @@ export function useCodeDraft(
     useEffect(() => {
         codeRef.current = code;
     }, [code]);
-
-    // Always sync currentKeyRef to latest key
-    useEffect(() => {
-        currentKeyRef.current = getDraftKey(userId, contestId, problemId, language);
-    }, [userId, contestId, problemId, language]);
 
     /**
      * Core save function — writes current code to localStorage.
@@ -91,24 +121,11 @@ export function useCodeDraft(
     }, []);
 
     /**
-     * Safely loads a draft from localStorage.
-     * Returns null only when no saved draft exists or storage is unavailable.
-     */
-    const loadDraft = useCallback((key: string): string | null => {
-        try {
-            return localStorage.getItem(key);
-        } catch {
-            return null;
-        }
-    }, []);
-
-    /**
      * Clears the draft for the current problem + language.
      */
     const clearDraft = useCallback(() => {
-        const key = getDraftKey(userId, contestId, problemId, language);
         try {
-            localStorage.removeItem(key);
+            removeDraftFromStorage(userId, contestId, problemId, language);
         } catch {
             console.warn("Failed to clear draft from localStorage");
         }
@@ -128,7 +145,7 @@ export function useCodeDraft(
     ============================================================ */
     useEffect(() => {
         const prevKey = getDraftKey(
-            userId,
+            prevUserIdRef.current,
             prevContestIdRef.current,
             prevProblemIdRef.current,
             prevLanguageRef.current
@@ -141,21 +158,24 @@ export function useCodeDraft(
         }
 
         // Update previous refs to current values
+        prevUserIdRef.current = userId;
         prevProblemIdRef.current = problemId;
         prevLanguageRef.current = language;
         prevContestIdRef.current = contestId;
+        currentKeyRef.current = getDraftKey(userId, contestId, problemId, language);
 
         // Load the draft for the new problem/language.
         // If the key exists, even as an empty string, keep it instead of applying starter code.
-        const newKey = getDraftKey(userId, contestId, problemId, language);
-        const loaded = loadDraft(newKey);
-        setCodeState(loaded ?? initialCodeRef.current);
+        const loaded = loadDraftFromStorage(userId, contestId, problemId, language);
+        const nextCode = loaded ?? initialCodeRef.current;
+        codeRef.current = nextCode;
+        setCodeState(nextCode);
 
         isInitialMountRef.current = false;
-    }, [userId, contestId, problemId, language, loadDraft, saveNow]);
+    }, [userId, contestId, problemId, language, saveNow]);
 
     /* ============================================================
-       TRIGGER 2 — Debounced auto-save while typing (320ms)
+       TRIGGER 2 — Debounced auto-save while typing
     ============================================================ */
     useEffect(() => {
         if (isInitialMountRef.current) return;

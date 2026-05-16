@@ -83,9 +83,12 @@ export function scoreboardSnapshot(
 }
 
 export function scoreboardPayload(
-  overrides: Partial<ScoreboardUpdatePayload> = {}
+  overrides: Partial<Omit<ScoreboardUpdatePayload, "metadata">> & {
+    metadata?: Partial<ScoreboardMetadata>;
+  } = {}
 ): ScoreboardUpdatePayload {
-  const metadata = scoreboardMetadata({ version: 2, ...(overrides.metadata ?? {}) });
+  const { metadata: metadataOverrides, ...payloadOverrides } = overrides;
+  const metadata = scoreboardMetadata({ version: 2, ...(metadataOverrides ?? {}) });
   return {
     eventType: "scoreboard-update",
     reason: "SUBMISSION_FINALIZED_ACCEPTED",
@@ -97,7 +100,7 @@ export function scoreboardPayload(
     changedRows: [scoreboardRow({ totalPenalty: 44 })],
     metadata,
     snapshot: null,
-    ...overrides,
+    ...payloadOverrides,
   };
 }
 

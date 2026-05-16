@@ -30,6 +30,15 @@ export function EditContestModal({
   contest,
   onSuccess,
 }: EditContestModalProps) {
+  const contestState = contest.effectiveState ?? contest.status;
+  const canEditTiming = contestState === "UPCOMING";
+  const canEditScoring = contestState === "UPCOMING" || contestState === "RUNNING" || contestState === "PAUSED";
+  const editMessage =
+    contestState === "UPCOMING"
+      ? "Timing, scoring, title, and description can be edited before the contest starts."
+      : contestState === "ENDED"
+        ? "Ended contests keep timing and scoring locked. Only title and description can be edited."
+        : "Start time and duration are locked. Title, description, freeze time, and penalty can still be edited.";
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<ContestUpdateRequest>({
     title: contest.title,
@@ -60,17 +69,18 @@ export function EditContestModal({
       return;
     }
 
-    if (!formData.startTime) {
+    if (canEditTiming && !formData.startTime) {
       toast.error("Start time is required");
       return;
     }
 
-    if (!formData.durationMinutes || formData.durationMinutes <= 0) {
+    if (canEditTiming && (!formData.durationMinutes || formData.durationMinutes <= 0)) {
       toast.error("Duration must be greater than 0");
       return;
     }
 
     if (
+      canEditScoring &&
       formData.scoreboardFreezeMinutes !== null &&
       formData.scoreboardFreezeMinutes >= formData.durationMinutes
     ) {
@@ -78,7 +88,7 @@ export function EditContestModal({
       return;
     }
 
-    if (formData.penaltyMinutes < 0) {
+    if (canEditScoring && formData.penaltyMinutes < 0) {
       toast.error("Penalty minutes cannot be negative");
       return;
     }
@@ -88,10 +98,14 @@ export function EditContestModal({
       const updated = await updateContestDetails(contest.id, {
         title: formData.title.trim(),
         description: formData.description.trim(),
-        startTime: new Date(formData.startTime).toISOString(),
-        durationMinutes: formData.durationMinutes,
-        scoreboardFreezeMinutes: formData.scoreboardFreezeMinutes,
-        penaltyMinutes: formData.penaltyMinutes,
+        startTime: canEditTiming ? new Date(formData.startTime).toISOString() : contest.startTime,
+        durationMinutes: canEditTiming ? formData.durationMinutes : contest.durationMinutes,
+        scoreboardFreezeMinutes: canEditScoring
+          ? formData.scoreboardFreezeMinutes
+          : contest.scoreboardFreezeMinutes,
+        penaltyMinutes: canEditScoring
+          ? formData.penaltyMinutes
+          : contest.penaltyMinutes ?? 20,
       });
       toast.success("Contest updated successfully");
       onSuccess(updated);
@@ -111,12 +125,10 @@ export function EditContestModal({
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-5 py-4">
-            {contest.status !== "UPCOMING" && (
-              <div className="flex gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+            <div className="flex gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                <span>Only UPCOMING contests can be edited.</span>
+                <span>{editMessage}</span>
               </div>
-            )}
 
             <div className="space-y-2">
               <Label htmlFor="edit-contest-title">Contest Name</Label>
@@ -124,7 +136,7 @@ export function EditContestModal({
                 id="edit-contest-title"
                 value={formData.title}
                 onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
-                disabled={isSubmitting || contest.status !== "UPCOMING"}
+                disabled={isSubmitting}
                 className="h-10"
                 required
               />
@@ -136,7 +148,7 @@ export function EditContestModal({
                 id="edit-contest-description"
                 value={formData.description}
                 onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-                disabled={isSubmitting || contest.status !== "UPCOMING"}
+                disabled={isSubmitting}
                 rows={4}
                 className="resize-y"
               />
@@ -150,7 +162,7 @@ export function EditContestModal({
                   type="datetime-local"
                   value={formData.startTime}
                   onChange={(e) => setFormData((prev) => ({ ...prev, startTime: e.target.value }))}
-                  disabled={isSubmitting || contest.status !== "UPCOMING"}
+                  disabled={isSubmitting || !canEditTiming}
                   className="h-10"
                   required
                 />
@@ -169,7 +181,7 @@ export function EditContestModal({
                       durationMinutes: parseInt(e.target.value, 10) || 0,
                     }))
                   }
-                  disabled={isSubmitting || contest.status !== "UPCOMING"}
+                  disabled={isSubmitting || !canEditTiming}
                   className="h-10"
                   required
                 />
@@ -192,7 +204,7 @@ export function EditContestModal({
                       scoreboardFreezeMinutes: value === "" ? null : parseInt(value, 10) || 0,
                     }));
                   }}
-                  disabled={isSubmitting || contest.status !== "UPCOMING"}
+                  disabled={isSubmitting || !canEditScoring}
                   className="h-10"
                 />
               </div>
@@ -210,7 +222,7 @@ export function EditContestModal({
                       penaltyMinutes: parseInt(e.target.value, 10) || 0,
                     }))
                   }
-                  disabled={isSubmitting || contest.status !== "UPCOMING"}
+                  disabled={isSubmitting || !canEditScoring}
                   className="h-10"
                 />
               </div>
@@ -221,7 +233,7 @@ export function EditContestModal({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || contest.status !== "UPCOMING"} className="bg-blue-700 hover:bg-blue-800">
+            <Button type="submit" disabled={isSubmitting} className="bg-blue-700 hover:bg-blue-800">
               {isSubmitting ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>

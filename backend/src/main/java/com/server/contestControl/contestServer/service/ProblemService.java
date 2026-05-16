@@ -31,6 +31,7 @@ public class ProblemService {
     private final SubmissionRepository submissionRepository;
     private final SubmissionJudgeResultRepository submissionJudgeResultRepository;
 
+    @Transactional
     public ProblemResponse createProblem(ProblemRequest request) {
 
         Contest contest = contestRepository.findById(request.getContestId())
@@ -50,6 +51,7 @@ public class ProblemService {
         return ProblemResponse.from(problem);
     }
 
+    @Transactional
     public ProblemResponse updateProblem(Long id, ProblemUpdateRequest request) {
         Problem problem = problemRepository.findById(id)
                 .orElseThrow(() -> new ProblemNotFoundException(id));

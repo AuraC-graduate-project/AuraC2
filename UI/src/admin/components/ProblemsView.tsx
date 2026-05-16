@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { Plus, ChevronRight, Pencil, Search, Timer, Database, Trash2 } from 'lucide-react';
+import { Plus, ChevronRight, Pencil, Search, Timer, Database, Trash2, AlertTriangle, RefreshCw, RotateCcw } from 'lucide-react';
 import { CreateProblemModal } from './CreateProblemModal';
 import { TestCasesPanel } from './TestCasesPanel';
 import { EditProblemModal } from './EditProblemModal';
@@ -21,12 +21,54 @@ import { ProblemResponse } from '../types/api';
 import { toast } from 'sonner';
 import { StatusBadge } from '../../components/StatusBadge';
 import { RichTextContent } from '../../components/RichTextContent';
+import {
+  contestLabel,
+  ContestOption,
+  loadContestOptions,
+} from '../utils/contestOptions';
 
 interface ProblemsViewProps {
   contestId: number | null;
 }
 
+function contestIdFromUrl(): string {
+  try {
+    return new URLSearchParams(window.location.search).get('contestId') ?? '';
+  } catch {
+    return '';
+  }
+}
+
+function syncContestIdToUrl(value: string) {
+  try {
+    const url = new URL(window.location.href);
+    if (value) {
+      url.searchParams.set('contestId', value);
+    } else {
+      url.searchParams.delete('contestId');
+    }
+    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+  } catch {
+    // URL persistence is a convenience; the in-memory selector still works.
+  }
+}
+
+function navigateToRejudge(contestId: number) {
+  try {
+    window.history.pushState({}, '', `/admin/rejudge?contestId=${contestId}`);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  } catch {
+    window.location.href = `/admin/rejudge?contestId=${contestId}`;
+  }
+}
+
 export function ProblemsView({ contestId }: ProblemsViewProps) {
+  const [contestOptions, setContestOptions] = useState<ContestOption[]>([]);
+  const [selectedContestId, setSelectedContestId] = useState(() =>
+    contestIdFromUrl() || (contestId != null ? String(contestId) : '')
+  );
+  const [isLoadingContests, setIsLoadingContests] = useState(false);
+  const [contestError, setContestError] = useState<string | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [problems, setProblems] = useState<ProblemResponse[]>([]);
   const [selectedProblem, setSelectedProblem] = useState<ProblemResponse | null>(null);
@@ -37,24 +79,81 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
   const [isDeletingProblem, setIsDeletingProblem] = useState(false);
   const [query, setQuery] = useState('');
 
+  const selectedContest = useMemo(
+    () => contestOptions.find((contest) => String(contest.id) === selectedContestId) ?? null,
+    [contestOptions, selectedContestId]
+  );
+  const selectedContestNumericId = useMemo(() => {
+    const numeric = Number(selectedContestId);
+    return selectedContestId && Number.isFinite(numeric) && numeric > 0 ? numeric : null;
+  }, [selectedContestId]);
+  const selectedContestState = selectedContest?.effectiveState ?? selectedContest?.status;
+  const isEndedContest = selectedContestState === 'ENDED';
+
+  const loadContestChoices = useCallback(async () => {
+    setIsLoadingContests(true);
+    setContestError(null);
+    try {
+      const options = await loadContestOptions();
+      setContestOptions(options);
+      setSelectedContestId((previous) => {
+        const urlContestId = contestIdFromUrl();
+        const fallbackContestId = contestId != null ? String(contestId) : '';
+        const candidates = [previous, urlContestId, fallbackContestId];
+        const match = candidates.find(
+          (candidate) => candidate && options.some((contest) => String(contest.id) === candidate)
+        );
+
+        return match ?? (options[0] ? String(options[0].id) : '');
+      });
+
+      if (options.length === 0) {
+        setContestError('No contests were found. Create a contest before adding problems.');
+      }
+    } catch (error) {
+      setContestOptions([]);
+      setSelectedContestId('');
+      setContestError(error instanceof Error ? error.message : 'Failed to load contests.');
+    } finally {
+      setIsLoadingContests(false);
+    }
+  }, [contestId]);
+
   const loadProblems = useCallback(async () => {
-    if (!contestId) return;
+    if (!selectedContestNumericId) {
+      setProblems([]);
+      setSelectedProblem(null);
+      return;
+    }
+
     setIsLoadingList(true);
     try {
-      const list = await getProblemsByContest(contestId);
+      const list = await getProblemsByContest(selectedContestNumericId);
       setProblems(list);
       setSelectedProblem((prev) => {
         if (!prev) return null;
-        return list.find((p) => p.id === prev.id) ? prev : null;
+        return list.find((p) => p.id === prev.id) ?? null;
       });
     } catch (error) {
       console.error('Failed to load problems list:', error);
       toast.error('Failed to load problems list');
       setProblems([]);
+      setSelectedProblem(null);
     } finally {
       setIsLoadingList(false);
     }
-  }, [contestId]);
+  }, [selectedContestNumericId]);
+
+  useEffect(() => {
+    loadContestChoices();
+  }, [loadContestChoices]);
+
+  useEffect(() => {
+    syncContestIdToUrl(selectedContestId);
+    setQuery('');
+    setSelectedProblem(null);
+    setProblems([]);
+  }, [selectedContestId]);
 
   useEffect(() => {
     loadProblems();
@@ -106,22 +205,6 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
     }
   };
 
-  if (!contestId) {
-    return (
-      <Card className="border border-gray-200 shadow-sm">
-        <CardHeader className="border-b border-slate-200 bg-slate-50">
-          <CardTitle className="text-2xl text-slate-950">Problems Management</CardTitle>
-        </CardHeader>
-        <CardContent className="p-6">
-          <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
-            <p className="text-sm font-medium text-slate-800">No active, paused, or upcoming contest found.</p>
-            <p className="mt-1 text-sm text-slate-500">Create or select a contest before adding problems.</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   const filteredProblems = problems.filter((problem) => {
     const q = query.trim().toLowerCase();
     if (!q) return true;
@@ -137,17 +220,88 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
       <div className="mb-6 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Contest #{contestId}</p>
+            <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">
+              {selectedContest ? `${selectedContest.bucket} contest #${selectedContest.id}` : 'Contest selection'}
+            </p>
             <h1 className="mt-1 text-2xl font-semibold text-slate-950">Problems Management</h1>
             <p className="mt-1 text-sm text-slate-600">Create problem statements and manage public/private judge tests.</p>
           </div>
-          <Button className="gap-2 bg-blue-700 hover:bg-blue-800" onClick={() => setCreateModalOpen(true)}>
-            <Plus className="h-4 w-4" />
-            Create Problem
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <select
+              className="h-10 min-w-[260px] rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900"
+              value={selectedContestId}
+              onChange={(event) => setSelectedContestId(event.target.value)}
+              disabled={isLoadingContests || contestOptions.length === 0}
+            >
+              <option value="">{isLoadingContests ? 'Loading contests...' : 'Select contest'}</option>
+              {contestOptions.map((contest) => (
+                <option key={contest.id} value={String(contest.id)}>
+                  {contestLabel(contest)} - {contest.bucket}
+                </option>
+              ))}
+            </select>
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-2 bg-white"
+              disabled={isLoadingContests}
+              onClick={loadContestChoices}
+            >
+              <RefreshCw className="h-4 w-4" />
+              Refresh
+            </Button>
+            <Button
+              className="gap-2 bg-blue-700 hover:bg-blue-800"
+              disabled={!selectedContestNumericId}
+              onClick={() => setCreateModalOpen(true)}
+            >
+              <Plus className="h-4 w-4" />
+              Create Problem
+            </Button>
+          </div>
         </div>
       </div>
 
+      {contestError && (
+        <div className="mb-6 flex gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{contestError}</span>
+        </div>
+      )}
+
+      {isEndedContest && selectedContestNumericId && (
+        <div className="mb-6 flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 md:flex-row md:items-center md:justify-between">
+          <div className="flex gap-3">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <div>
+              <p className="font-semibold">Editing problems or test cases in an ended contest may affect rejudge results.</p>
+              <p className="mt-1 text-amber-800">
+                After changing old contest data, run rejudge for the affected problem or contest.
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="gap-2 border-amber-300 bg-white text-amber-900 hover:bg-amber-100"
+            onClick={() => navigateToRejudge(selectedContestNumericId)}
+          >
+            <RotateCcw className="h-4 w-4" />
+            Open Rejudge
+          </Button>
+        </div>
+      )}
+
+      {!selectedContestNumericId ? (
+        <Card className="border border-gray-200 shadow-sm">
+          <CardContent className="p-6">
+            <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
+              <p className="text-sm font-medium text-slate-800">No contest selected.</p>
+              <p className="mt-1 text-sm text-slate-500">Select any active, paused, upcoming, or ended contest before managing problems.</p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="border border-gray-200 shadow-sm lg:col-span-1">
           <CardHeader className="border-b border-slate-200 bg-slate-50">
@@ -278,16 +432,17 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
           </CardContent>
         </Card>
       </div>
+      )}
 
       {/* Test Cases Panel - Only shown when a problem is selected */}
-      {selectedProblem && (
+      {selectedContestNumericId && selectedProblem && (
         <TestCasesPanel 
           problemId={selectedProblem.id} 
           problemTitle={selectedProblem.title}
         />
       )}
 
-      {selectedProblem && (
+      {selectedContestNumericId && selectedProblem && (
         <EditProblemModal
           open={editModalOpen}
           onOpenChange={setEditModalOpen}
@@ -296,12 +451,14 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
         />
       )}
 
-      <CreateProblemModal 
-        open={createModalOpen}
-        onOpenChange={setCreateModalOpen}
-        contestId={contestId}
-        onSuccess={handleProblemCreated}
-      />
+      {selectedContestNumericId && (
+        <CreateProblemModal
+          open={createModalOpen}
+          onOpenChange={setCreateModalOpen}
+          contestId={selectedContestNumericId}
+          onSuccess={handleProblemCreated}
+        />
+      )}
 
       <AlertDialog
         open={Boolean(problemToDelete)}

@@ -43,8 +43,7 @@ export function ProblemSidebar({
   return (
     <aside className={`aura-problem-rail flex h-full min-h-0 shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white ${className}`}>
       <div className="shrink-0 border-b border-slate-200 p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Problems</p>
-        <h2 className="mt-1 text-base font-semibold text-slate-950">{problems.length} available</h2>
+        <h2 className="text-base font-semibold text-slate-950">Problems</h2>
       </div>
 
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3">

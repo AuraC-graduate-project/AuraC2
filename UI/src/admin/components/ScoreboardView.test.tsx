@@ -1,3 +1,4 @@
+import "../../test/setup";
 import { render, screen } from "@testing-library/react";
 import { ScoreboardView } from "./ScoreboardView";
 import { scoreboardSnapshot, revealResponse } from "../../test/scoreboardFixtures";

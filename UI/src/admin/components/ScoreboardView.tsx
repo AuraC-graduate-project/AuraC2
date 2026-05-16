@@ -17,6 +17,7 @@ import type {
 } from "../types/api";
 import {
   getAdminScoreboard,
+  getPublicScoreboard,
   getScoreboardRevealState,
   resetScoreboardReveal,
   revealAllScoreboardCells,
@@ -29,7 +30,7 @@ import {
   loadContestOptions as loadContestOptionsList,
 } from "../utils/contestOptions";
 import { useScoreboardStream } from "../../hooks/useScoreboardStream";
-import { ScoreboardTable } from "../../components/scoreboard/ScoreboardTable";
+import { ScoreboardTable, type ScoreboardRankChange } from "../../components/scoreboard/ScoreboardTable";
 import { StatusBadge } from "../../components/StatusBadge";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -81,6 +82,22 @@ function patchSnapshot(snapshot: ScoreboardSnapshot | null, payload: ScoreboardU
   };
 }
 
+function rankChangesFor(
+  snapshot: ScoreboardSnapshot | null,
+  payload: ScoreboardUpdatePayload
+): Record<number, ScoreboardRankChange> {
+  if (!snapshot) return {};
+
+  const previousRanks = new Map(snapshot.rows.map((row) => [row.teamId, row.rank]));
+  const changes: Record<number, ScoreboardRankChange> = {};
+  for (const row of payload.changedRows) {
+    const previousRank = previousRanks.get(row.teamId);
+    if (previousRank == null || previousRank === row.rank) continue;
+    changes[row.teamId] = row.rank < previousRank ? "up" : "down";
+  }
+  return changes;
+}
+
 export function ScoreboardView({ contestId, presentationMode = false }: Props) {
   const [selectedContestId, setSelectedContestId] = useState<number | null>(() => contestIdFromUrl() ?? contestId);
   const [contestOptions, setContestOptions] = useState<ContestOption[]>([]);
@@ -88,6 +105,7 @@ export function ScoreboardView({ contestId, presentationMode = false }: Props) {
   const [snapshot, setSnapshot] = useState<ScoreboardSnapshot | null>(null);
   const [reveal, setReveal] = useState<ScoreboardRevealResponse | null>(null);
   const [changedTeamIds, setChangedTeamIds] = useState<number[]>([]);
+  const [rankChanges, setRankChanges] = useState<Record<number, ScoreboardRankChange>>({});
   const [loading, setLoading] = useState(false);
   const [working, setWorking] = useState<string | null>(null);
 
@@ -139,12 +157,15 @@ export function ScoreboardView({ contestId, presentationMode = false }: Props) {
     setLoading(true);
     try {
       const [scoreboard, revealState] = await Promise.all([
-        getAdminScoreboard(effectiveContestId),
+        presentationMode
+          ? getPublicScoreboard(effectiveContestId)
+          : getAdminScoreboard(effectiveContestId),
         getScoreboardRevealState(effectiveContestId).catch(() => null),
       ]);
       setSnapshot(scoreboard);
       setReveal(revealState);
       setChangedTeamIds([]);
+      setRankChanges({});
     } catch (error) {
       if (!presentationMode) {
         toast.error(error instanceof Error ? error.message : "Failed to load scoreboard");
@@ -161,18 +182,25 @@ export function ScoreboardView({ contestId, presentationMode = false }: Props) {
   }, [load]);
 
   const applyPayload = useCallback((payload: ScoreboardUpdatePayload) => {
-    setSnapshot((current) => patchSnapshot(current, payload));
+    setSnapshot((current) => {
+      setRankChanges(rankChangesFor(current, payload));
+      return patchSnapshot(current, payload);
+    });
     setChangedTeamIds(payload.changedTeamIds);
-    window.setTimeout(() => setChangedTeamIds([]), 1800);
+    window.setTimeout(() => {
+      setChangedTeamIds([]);
+      setRankChanges({});
+    }, 1800);
   }, []);
 
   useScoreboardStream({
     contestId: effectiveContestId,
-    role: "ADMIN",
+    role: presentationMode ? "PUBLIC" : "ADMIN",
     snapshotVersion: snapshot?.metadata.version ?? 0,
     onSnapshot: (next) => {
       setSnapshot(next);
       setChangedTeamIds([]);
+      setRankChanges({});
     },
     onUpdate: applyPayload,
     onFreeze: applyPayload,
@@ -250,6 +278,7 @@ export function ScoreboardView({ contestId, presentationMode = false }: Props) {
               <ScoreboardTable
                 snapshot={snapshot}
                 changedTeamIds={changedTeamIds}
+                rankChanges={rankChanges}
                 presentationMode
               />
             ) : (
@@ -351,14 +380,10 @@ export function ScoreboardView({ contestId, presentationMode = false }: Props) {
         <CardContent className="space-y-4 p-5">
           {snapshot ? (
             <>
-              <div className="grid gap-3 md:grid-cols-4">
+              <div className="grid gap-3 md:grid-cols-3">
                 <div className="rounded-md border border-slate-200 bg-white p-3">
                   <p className="text-xs font-semibold uppercase text-slate-500">Contest</p>
                   <p className="mt-1 font-semibold text-slate-950">{snapshot.metadata.contestTitle}</p>
-                </div>
-                <div className="rounded-md border border-slate-200 bg-white p-3">
-                  <p className="text-xs font-semibold uppercase text-slate-500">Version</p>
-                  <p className="mt-1 font-mono text-slate-950">{snapshot.metadata.version}</p>
                 </div>
                 <div className="rounded-md border border-slate-200 bg-white p-3">
                   <p className="text-xs font-semibold uppercase text-slate-500">Penalty</p>
@@ -421,7 +446,7 @@ export function ScoreboardView({ contestId, presentationMode = false }: Props) {
                 </div>
               </div>
 
-              <ScoreboardTable snapshot={snapshot} changedTeamIds={changedTeamIds} />
+              <ScoreboardTable snapshot={snapshot} changedTeamIds={changedTeamIds} rankChanges={rankChanges} />
             </>
           ) : (
             <div className="py-10 text-center text-slate-600">

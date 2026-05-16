@@ -3,7 +3,7 @@ import { Lock, RefreshCw, Trophy } from "lucide-react";
 import type { ScoreboardSnapshot, ScoreboardUpdatePayload } from "../../admin/types/api";
 import { useScoreboardStream } from "../../hooks/useScoreboardStream";
 import { useSubmissionStream } from "../../hooks/useSubmissionStream";
-import { ScoreboardTable } from "../../components/scoreboard/ScoreboardTable";
+import { ScoreboardTable, type ScoreboardRankChange } from "../../components/scoreboard/ScoreboardTable";
 import { getPublicScoreboard } from "../services/teamApi";
 import { Button } from "./ui/button";
 
@@ -24,6 +24,22 @@ function patchSnapshot(snapshot: ScoreboardSnapshot | null, payload: ScoreboardU
   };
 }
 
+function rankChangesFor(
+  snapshot: ScoreboardSnapshot | null,
+  payload: ScoreboardUpdatePayload
+): Record<number, ScoreboardRankChange> {
+  if (!snapshot) return {};
+
+  const previousRanks = new Map(snapshot.rows.map((row) => [row.teamId, row.rank]));
+  const changes: Record<number, ScoreboardRankChange> = {};
+  for (const row of payload.changedRows) {
+    const previousRank = previousRanks.get(row.teamId);
+    if (previousRank == null || previousRank === row.rank) continue;
+    changes[row.teamId] = row.rank < previousRank ? "up" : "down";
+  }
+  return changes;
+}
+
 type ScoreboardProps = {
   contestId: number;
   fullPage?: boolean;
@@ -38,6 +54,7 @@ function formatGeneratedAt(value: string): string {
 export function Scoreboard({ contestId, fullPage = false }: ScoreboardProps) {
   const [snapshot, setSnapshot] = useState<ScoreboardSnapshot | null>(null);
   const [changedTeamIds, setChangedTeamIds] = useState<number[]>([]);
+  const [rankChanges, setRankChanges] = useState<Record<number, ScoreboardRankChange>>({});
   const [loading, setLoading] = useState(false);
   const [pendingByTeam, setPendingByTeam] = useState<Map<string, Set<number>>>(new Map());
 
@@ -47,6 +64,7 @@ export function Scoreboard({ contestId, fullPage = false }: ScoreboardProps) {
       const data = await getPublicScoreboard(contestId);
       setSnapshot(data);
       setChangedTeamIds([]);
+      setRankChanges({});
     } finally {
       setLoading(false);
     }
@@ -57,9 +75,15 @@ export function Scoreboard({ contestId, fullPage = false }: ScoreboardProps) {
   }, [load]);
 
   const applyPayload = useCallback((payload: ScoreboardUpdatePayload) => {
-    setSnapshot((current) => patchSnapshot(current, payload));
+    setSnapshot((current) => {
+      setRankChanges(rankChangesFor(current, payload));
+      return patchSnapshot(current, payload);
+    });
     setChangedTeamIds(payload.changedTeamIds);
-    window.setTimeout(() => setChangedTeamIds([]), 1800);
+    window.setTimeout(() => {
+      setChangedTeamIds([]);
+      setRankChanges({});
+    }, 1800);
   }, []);
 
   useScoreboardStream({
@@ -69,6 +93,7 @@ export function Scoreboard({ contestId, fullPage = false }: ScoreboardProps) {
     onSnapshot: (next) => {
       setSnapshot(next);
       setChangedTeamIds([]);
+      setRankChanges({});
     },
     onUpdate: applyPayload,
     onFreeze: applyPayload,
@@ -139,9 +164,6 @@ export function Scoreboard({ contestId, fullPage = false }: ScoreboardProps) {
           {snapshot && (
             <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-600">
               <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold">
-                Version {snapshot.metadata.version}
-              </span>
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold">
                 Updated {formatGeneratedAt(snapshot.metadata.generatedAt)}
               </span>
               {snapshot.metadata.revealStatus !== "NOT_STARTED" && (
@@ -190,7 +212,7 @@ export function Scoreboard({ contestId, fullPage = false }: ScoreboardProps) {
               Official scoreboard frozen
             </div>
           )}
-          <ScoreboardTable snapshot={displaySnapshot} changedTeamIds={changedTeamIds} />
+          <ScoreboardTable snapshot={displaySnapshot} changedTeamIds={changedTeamIds} rankChanges={rankChanges} />
         </>
       ) : (
         <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-slate-600">

@@ -1,5 +1,7 @@
-import { CheckCircle2, Loader2, Lock, Medal, Minus } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, CheckCircle2, Loader2, Lock, Medal, Minus } from "lucide-react";
 import type { ScoreboardSnapshot } from "../../admin/types/api";
+
+export type ScoreboardRankChange = "up" | "down";
 
 function formatMinutes(value: number | null | undefined): string {
   if (value == null) return "";
@@ -45,68 +47,82 @@ function cellTone({
   pending?: boolean;
   firstToSolve: boolean;
 }): string {
-  if (pending) return "animate-pulse border-amber-300 bg-amber-50 text-amber-800";
-  if (hidden && !revealed) return "border-slate-300 bg-slate-100 text-slate-600";
+  if (pending) return "animate-pulse border-amber-400 bg-amber-100 text-amber-950";
+  if (hidden && !revealed) return "border-slate-400 bg-slate-100 text-slate-700";
+
+  const revealAccent = revealed ? "aura-scoreboard-cell-revealed ring-1 ring-sky-300" : "";
   if (solved) {
     return firstToSolve
-      ? "border-amber-300 bg-amber-50 text-amber-900"
-      : "border-emerald-200 bg-emerald-50 text-emerald-800";
+      ? `border-emerald-600 bg-emerald-100 text-emerald-950 ${revealAccent}`
+      : `border-emerald-500 bg-emerald-50 text-emerald-900 ${revealAccent}`;
   }
-  if (attempts > 0) return "border-rose-200 bg-rose-50 text-rose-800";
-  return "border-slate-200 bg-white text-slate-400";
+  if (attempts > 0) return `border-rose-300 bg-rose-50 text-rose-800 ${revealAccent}`;
+  return `border-slate-200 bg-white text-slate-500 ${revealAccent}`;
+}
+
+function rowTone(wasChanged: boolean, rankChange: ScoreboardRankChange | undefined): string {
+  if (rankChange === "up") return "bg-emerald-50/80";
+  if (rankChange === "down") return "bg-rose-50/80";
+  if (wasChanged) return "bg-sky-50/80";
+  return "bg-white hover:bg-slate-50";
 }
 
 export function ScoreboardTable({
   snapshot,
   changedTeamIds = [],
+  rankChanges = {},
   presentationMode = false,
 }: {
   snapshot: ScoreboardSnapshot;
   changedTeamIds?: number[];
+  rankChanges?: Record<number, ScoreboardRankChange>;
   presentationMode?: boolean;
 }) {
   const changed = new Set(changedTeamIds);
   const columns = snapshot.metadata.problemColumns;
 
   return (
-    <div className={`overflow-hidden rounded-lg border border-slate-200 bg-white ${presentationMode ? "aura-scoreboard-presentation-table" : ""}`}>
+    <div className={`overflow-hidden rounded-lg border border-slate-300 bg-white ${presentationMode ? "aura-scoreboard-presentation-table" : ""}`}>
       <div className="overflow-x-auto">
         <table className={`min-w-full border-collapse ${presentationMode ? "text-base" : "text-sm"}`}>
-          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+          <thead className="bg-slate-100 text-xs uppercase text-slate-600">
             <tr>
-              <th className="sticky left-0 z-10 w-16 border-b border-slate-200 bg-slate-50 px-3 py-3 text-left">
+              <th className="sticky left-0 z-10 w-20 border-b border-slate-300 bg-slate-100 px-3 py-3 text-left">
                 Rank
               </th>
-              <th className="sticky left-16 z-10 min-w-56 border-b border-slate-200 bg-slate-50 px-3 py-3 text-left">
+              <th className="sticky left-20 z-10 min-w-56 border-b border-slate-300 bg-slate-100 px-3 py-3 text-left">
                 Team
               </th>
               {columns.map((problem) => (
                 <th
                   key={problem.problemId}
-                  className="w-24 border-b border-slate-200 px-2 py-3 text-center"
+                  className="w-24 border-b border-slate-300 px-2 py-3 text-center"
                   title={problem.title}
                 >
                   {problem.label}
                 </th>
               ))}
-              <th className="w-20 border-b border-slate-200 px-3 py-3 text-center">Solved</th>
-              <th className="w-24 border-b border-slate-200 px-3 py-3 text-center">Penalty</th>
+              <th className="w-20 border-b border-slate-300 px-3 py-3 text-center">Solved</th>
+              <th className="w-24 border-b border-slate-300 px-3 py-3 text-center">Penalty</th>
             </tr>
           </thead>
           <tbody>
             {snapshot.rows.map((row) => {
               const wasChanged = changed.has(row.teamId);
+              const rankChange = rankChanges[row.teamId];
               return (
                 <tr
                   key={row.teamId}
-                  className={`border-b border-slate-100 transition-colors last:border-b-0 ${
-                    wasChanged ? "bg-blue-50/70" : "bg-white hover:bg-slate-50"
-                  }`}
+                  className={`border-b border-slate-200 transition-colors last:border-b-0 ${rowTone(wasChanged, rankChange)}`}
                 >
-                  <td className="sticky left-0 z-10 bg-inherit px-3 py-3 font-mono font-semibold text-slate-800">
-                    {row.rank}
+                  <td className="sticky left-0 z-10 bg-inherit px-3 py-3 font-mono font-semibold text-slate-900">
+                    <span className="inline-flex min-w-12 items-center gap-1">
+                      {row.rank}
+                      {rankChange === "up" && <ArrowUpRight className="h-4 w-4 text-emerald-700" aria-label="Rank up" />}
+                      {rankChange === "down" && <ArrowDownRight className="h-4 w-4 text-rose-700" aria-label="Rank down" />}
+                    </span>
                   </td>
-                  <td className="sticky left-16 z-10 bg-inherit px-3 py-3">
+                  <td className="sticky left-20 z-10 bg-inherit px-3 py-3">
                     <div className="font-semibold text-slate-950">{row.teamName}</div>
                   </td>
                   {row.problemCells.map((cell) => {
@@ -131,14 +147,23 @@ export function ScoreboardTable({
                           {pending ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : cell.hidden && !cell.revealed ? (
-                            <Lock className="h-4 w-4" />
+                            <>
+                              <Lock className="h-4 w-4" />
+                              <span className="mt-0.5 text-[10px] font-bold uppercase tracking-normal">Hidden</span>
+                            </>
                           ) : solved ? (
                             <>
                               <span className="flex items-center gap-1 text-xs font-bold">
-                                {cell.firstToSolve ? <Medal className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                                {cell.firstToSolve ? (
+                                  <span className="inline-flex items-center rounded-full bg-amber-100 px-1 py-0.5 text-amber-800">
+                                    <Medal className="h-3.5 w-3.5" />
+                                  </span>
+                                ) : (
+                                  <CheckCircle2 className="h-3.5 w-3.5" />
+                                )}
                                 {formatMinutes(cell.solvedTimeMinutes)}
                               </span>
-                              <span className="mt-0.5 text-[11px] font-medium">
+                              <span className="mt-0.5 text-[11px] font-semibold">
                                 {cell.wrongAttempts > 0 ? `+${cell.wrongAttempts}` : "AC"}
                               </span>
                             </>
@@ -154,7 +179,7 @@ export function ScoreboardTable({
                   <td className="px-3 py-3 text-center font-semibold text-slate-950">
                     {row.solvedCount}
                   </td>
-                  <td className="px-3 py-3 text-center font-mono text-slate-800">
+                  <td className="px-3 py-3 text-center font-mono text-slate-900">
                     {row.totalPenalty}
                   </td>
                 </tr>

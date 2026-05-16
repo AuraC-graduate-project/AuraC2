@@ -40,7 +40,7 @@ import {
   ContestOption,
   loadContestOptions,
 } from '../utils/contestOptions';
-import { RefreshCw, Eye, Search, RotateCcw, Zap } from 'lucide-react';
+import { RefreshCw, Eye, Search, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { StatusBadge, formatStatusText, normalizeVerdict } from '../../components/StatusBadge';
 import { useSubmissionStream } from '../../hooks/useSubmissionStream';
@@ -324,7 +324,6 @@ export function SubmissionsView() {
                     disabled={rejudging}
                     onClick={() => setForceDialogOpen(true)}
                   >
-                    <Zap className="w-4 h-4" />
                     {rejudging ? 'Rejudging...' : `Force Rejudge (${selected.size})`}
                   </Button>
                 </>

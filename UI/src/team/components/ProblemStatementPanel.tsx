@@ -112,18 +112,15 @@ export function ProblemStatementPanel({
           </div>
         ) : (
           <div>
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <h3 className="font-semibold text-slate-900">Public Test Cases</h3>
-              <StatusBadge kind="testcase" value="PUBLIC SAMPLE" label="Public sample only" />
-            </div>
+            <h3 className="mb-3 font-semibold text-slate-900">The Test cases</h3>
 
             {loading ? (
               <p className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
-                Loading public samples...
+                Loading samples...
               </p>
             ) : samples.length === 0 ? (
               <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
-                No public sample test cases are available for this problem.
+                No sample test cases are available for this problem.
               </p>
             ) : (
               <div className="space-y-4">

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, FileCode, RefreshCw, RotateCcw, Search, Trophy, Zap } from 'lucide-react';
+import { AlertTriangle, FileCode, RefreshCw, RotateCcw, Search, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   forceRejudgeContest,
@@ -66,7 +66,19 @@ function difficultyClass(difficulty: ProblemResponse['difficulty']): string {
   }
 }
 
+function contestIdFromUrl(): number | null {
+  try {
+    const raw = new URLSearchParams(window.location.search).get('contestId');
+    if (!raw) return null;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
 export function RejudgeView({ initialContestId = null }: RejudgeViewProps) {
+  const preferredContestId = contestIdFromUrl() ?? initialContestId;
   const [contestOptions, setContestOptions] = useState<ContestOption[]>([]);
   const [selectedContestId, setSelectedContestId] = useState('');
   const [problems, setProblems] = useState<ProblemResponse[]>([]);
@@ -137,10 +149,10 @@ export function RejudgeView({ initialContestId = null }: RejudgeViewProps) {
           return previous;
         }
         if (
-          initialContestId != null &&
-          next.some((contest) => contest.id === initialContestId)
+          preferredContestId != null &&
+          next.some((contest) => contest.id === preferredContestId)
         ) {
-          return String(initialContestId);
+          return String(preferredContestId);
         }
         return next[0] ? String(next[0].id) : '';
       });
@@ -155,7 +167,7 @@ export function RejudgeView({ initialContestId = null }: RejudgeViewProps) {
     } finally {
       setLoadingContests(false);
     }
-  }, [initialContestId]);
+  }, [preferredContestId]);
 
   const loadProblems = useCallback(async (contestId: number) => {
     setLoadingProblems(true);
@@ -484,7 +496,6 @@ export function RejudgeView({ initialContestId = null }: RejudgeViewProps) {
                     disabled={problemActionDisabled}
                     onClick={() => openForceDialog('problem')}
                   >
-                    <Zap className="h-4 w-4" />
                     {actionInFlight === 'force-problem' ? 'Working...' : 'Force Rejudge'}
                   </Button>
                 </div>
@@ -523,7 +534,6 @@ export function RejudgeView({ initialContestId = null }: RejudgeViewProps) {
                   disabled={contestActionDisabled}
                   onClick={() => openForceDialog('contest')}
                 >
-                  <Zap className="h-4 w-4" />
                   {actionInFlight === 'force-contest' ? 'Working...' : 'Force Contest'}
                 </Button>
               </div>

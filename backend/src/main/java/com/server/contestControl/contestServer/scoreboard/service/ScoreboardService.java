@@ -71,23 +71,24 @@ public class ScoreboardService {
                 revealContext.status(),
                 now
         );
-        boolean viewFrozen = audience == ScoreboardAudience.PUBLIC && publicFrozen;
-        Set<ScoreboardCellKey> hiddenCells = !publicFrozen
+        ScoreboardViewMode viewMode = viewModeFor(audience);
+        Set<ScoreboardCellKey> publicHiddenCells = !publicFrozen
                 ? Set.of()
                 : calculator.hiddenCellsAfterFreeze(freezeTime, allSubmissions);
-        Set<ScoreboardCellKey> revealedCells = audience == ScoreboardAudience.ADMIN
-                ? revealContext.revealedCells()
-                : revealContext.revealedCells();
-
-        List<Submission> visibleSubmissions = allSubmissions.stream()
-                .filter(submission -> audience == ScoreboardAudience.ADMIN
-                        || !viewFrozen
-                        || freezePolicy.isBeforeFreeze(submission, freezeTime)
-                        || revealedCells.contains(new ScoreboardCellKey(
-                                submission.getUser().getId(),
-                                submission.getProblem().getId()
-                        )))
-                .toList();
+        Set<ScoreboardCellKey> revealedCells = revealContext.revealedCells();
+        Set<ScoreboardCellKey> rowHiddenCells = viewMode == ScoreboardViewMode.PUBLIC_OFFICIAL && publicFrozen
+                ? publicHiddenCells
+                : Set.of();
+        Set<ScoreboardCellKey> rowRevealedCells = viewMode == ScoreboardViewMode.PUBLIC_OFFICIAL && publicFrozen
+                ? revealedCells
+                : Set.of();
+        List<Submission> visibleSubmissions = buildVisibleSubmissions(
+                viewMode,
+                publicFrozen,
+                freezeTime,
+                revealedCells,
+                allSubmissions
+        );
 
         List<ScoreboardMetadata.ProblemColumn> columns = new ArrayList<>();
         for (int i = 0; i < problems.size(); i++) {
@@ -115,14 +116,59 @@ public class ScoreboardService {
                 contest.getPenaltyMinutes(),
                 revealContext.status(),
                 revealContext.revealedCount(),
-                hiddenCells.size(),
+                publicHiddenCells.size(),
                 List.copyOf(columns)
         );
 
         return new ScoreboardSnapshot(
                 metadata,
-                calculator.calculateRows(contest, problems, teams, visibleSubmissions, hiddenCells, revealedCells)
+                calculator.calculateRows(contest, problems, teams, visibleSubmissions, rowHiddenCells, rowRevealedCells)
         );
+    }
+
+    private ScoreboardViewMode viewModeFor(ScoreboardAudience audience) {
+        return audience == ScoreboardAudience.ADMIN
+                ? ScoreboardViewMode.ADMIN_LIVE
+                : ScoreboardViewMode.PUBLIC_OFFICIAL;
+    }
+
+    private List<Submission> buildVisibleSubmissions(
+            ScoreboardViewMode viewMode,
+            boolean publicFrozen,
+            Instant freezeTime,
+            Set<ScoreboardCellKey> revealedCells,
+            List<Submission> allSubmissions
+    ) {
+        if (viewMode == ScoreboardViewMode.ADMIN_LIVE || !publicFrozen) {
+            return allSubmissions;
+        }
+
+        return allSubmissions.stream()
+                .filter(submission -> isSubmissionVisibleForPublic(submission, freezeTime, revealedCells))
+                .toList();
+    }
+
+    private boolean isSubmissionVisibleForPublic(
+            Submission submission,
+            Instant freezeTime,
+            Set<ScoreboardCellKey> revealedCells
+    ) {
+        return !isFrozenSubmission(submission, freezeTime) || isCellRevealed(submission, revealedCells);
+    }
+
+    private boolean isFrozenSubmission(Submission submission, Instant freezeTime) {
+        return !freezePolicy.isBeforeFreeze(submission, freezeTime);
+    }
+
+    private boolean isCellRevealed(Submission submission, Set<ScoreboardCellKey> revealedCells) {
+        if (submission.getUser() == null || submission.getProblem() == null) {
+            return false;
+        }
+
+        return revealedCells.contains(new ScoreboardCellKey(
+                submission.getUser().getId(),
+                submission.getProblem().getId()
+        ));
     }
 
     public ScoreboardUpdatePayload buildUpdatePayload(
@@ -195,5 +241,10 @@ public class ScoreboardService {
             Set<ScoreboardCellKey> revealedCells,
             long revealedCount
     ) {
+    }
+
+    private enum ScoreboardViewMode {
+        ADMIN_LIVE,
+        PUBLIC_OFFICIAL
     }
 }

@@ -24,6 +24,7 @@ public class TestCaseService {
     private final ProblemRepository problemRepository;
     private final TestCaseRepository testCaseRepository;
 
+    @Transactional
     public TestCaseResponse addTestCase(Long problemId, TestCaseRequest request) {
 
         Problem problem = problemRepository.findById(problemId)
@@ -41,6 +42,7 @@ public class TestCaseService {
         return TestCaseResponse.fromEntity(testCase);
     }
 
+    @Transactional
     public TestCaseResponse updateTestCase(Long id, TestCaseUpdateRequest request) {
         TestCase testCase = testCaseRepository.findById(id)
                 .orElseThrow(() -> new TestCaseNotFoundException(id));

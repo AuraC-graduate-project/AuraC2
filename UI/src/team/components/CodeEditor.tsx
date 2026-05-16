@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type UIEvent } from "react";
-import { CheckCircle2, Save, Send, Terminal, XCircle } from "lucide-react";
+import { CheckCircle2, Send, Terminal, XCircle } from "lucide-react";
 import { Button } from "./ui/button";
 import {
   Select,
@@ -193,7 +193,6 @@ export function CodeEditor({ contestId, problem, onSubmitted }: Props) {
   );
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const [savedAt, setSavedAt] = useState<string | null>(null);
   const highlightRef = useRef<HTMLPreElement | null>(null);
   const lineNumbersRef = useRef<HTMLPreElement | null>(null);
 
@@ -215,20 +214,13 @@ export function CodeEditor({ contestId, problem, onSubmitted }: Props) {
     return (STARTER_CODE[language] ?? STARTER_CODE.cpp)(problem.title);
   }, [language, problem?.id, problem?.title]);
 
-  const { code, setCode, setOnSavedCallback } = useCodeDraft(
+  const { code, setCode } = useCodeDraft(
     userId,
     contestKey,
     problemKey,
     language,
     starterCode
   );
-
-  useEffect(() => {
-    setOnSavedCallback(() => {
-      setSavedAt(new Date().toLocaleTimeString());
-    });
-    return () => setOnSavedCallback(null);
-  }, [setOnSavedCallback]);
 
   const handleLanguageChange = useCallback((newLanguage: string) => {
     setLanguage(newLanguage);
@@ -307,11 +299,6 @@ export function CodeEditor({ contestId, problem, onSubmitted }: Props) {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
-              <Save className="h-4 w-4 text-blue-700" />
-              {savedAt ? `Draft saved ${savedAt}` : "Draft autosaves"}
-            </div>
-
             <Select value={language} onValueChange={handleLanguageChange}>
               <SelectTrigger className="w-40 bg-white">
                 <SelectValue />
