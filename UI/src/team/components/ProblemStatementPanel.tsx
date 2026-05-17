@@ -112,8 +112,6 @@ export function ProblemStatementPanel({
           </div>
         ) : (
           <div>
-            <h3 className="mb-3 font-semibold text-slate-900">The Test cases</h3>
-
             {loading ? (
               <p className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
                 Loading samples...

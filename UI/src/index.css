@@ -687,18 +687,23 @@ html.dark .aura-main {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 10px 24px rgba(17, 24, 39, 0.12);
 }
 
+.aura-logo-chip {
+  background: #ffffff !important;
+  border-color: rgba(203, 213, 225, 0.95) !important;
+}
+
 .aura-mark-sidebar {
   display: inline-flex;
-  height: 2.75rem;
-  width: 2.75rem;
+  height: 5rem;
+  width: 5rem;
   align-items: center;
   justify-content: center;
   border-radius: 0.5rem;
-  background: color-mix(in srgb, white 12%, transparent);
+  background: rgba(255, 255, 255, 0.92);
   color: #f5f0df;
   font-size: 1.125rem;
   font-weight: 700;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.36);
 }
 
 .aura-nav-item {
@@ -769,6 +774,50 @@ html.dark .aura-main {
   background-size: 44px 44px, 44px 44px, 180px 180px;
   mask-image: linear-gradient(90deg, transparent, black 18%, black 82%, transparent);
   opacity: 0.7;
+}
+
+.aura-login-brand-lockup {
+  max-width: 28rem;
+}
+
+.aura-login-symbol-shell {
+  display: inline-flex;
+  height: clamp(13rem, 18vw, 16rem);
+  width: clamp(13rem, 18vw, 16rem);
+  align-items: center;
+  justify-content: center;
+  border-radius: 1.25rem;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(232, 238, 245, 0.88));
+  padding: 1.35rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    0 20px 46px rgba(5, 15, 30, 0.28);
+}
+
+.aura-login-symbol-watermark {
+  position: absolute;
+  right: -9rem;
+  top: 0.5rem;
+  width: 31rem;
+  max-width: none;
+  opacity: 0.07;
+  transform: rotate(-8deg);
+  filter: grayscale(1);
+}
+
+.aura-login-brand-title {
+  font-size: clamp(4.25rem, 6.2vw, 6.25rem);
+  line-height: 0.88;
+  color: #f8fafc;
+}
+
+.aura-login-brand-title sup {
+  position: relative;
+  top: -0.55em;
+  margin-left: 0.04em;
+  color: #facc15;
+  font-size: 0.38em;
 }
 
 .aura-tech-background {
@@ -1415,12 +1464,29 @@ html.dark .aura-scoreboard-cell .bg-amber-100 {
   color: #1f2937 !important;
 }
 
+.aura-scoreboard-row {
+  background-color: var(--aura-surface);
+}
+
+.aura-scoreboard-row-updated {
+  animation: aura-scoreboard-row-update 1100ms var(--aura-ease-soft) both;
+}
+
+.aura-scoreboard-row-rank-up {
+  animation: aura-scoreboard-row-up 1100ms var(--aura-ease-soft) both;
+}
+
+.aura-scoreboard-row-rank-down {
+  animation: aura-scoreboard-row-down 1100ms var(--aura-ease-soft) both;
+}
+
 .aura-scoreboard-cell-updated {
-  animation: aura-scoreboard-cell-update 1400ms var(--aura-ease-soft) both;
+  animation: aura-scoreboard-cell-update 900ms var(--aura-ease-soft) both;
 }
 
 .aura-scoreboard-cell-revealed {
-  animation: aura-scoreboard-cell-reveal 1800ms var(--aura-ease-soft) both;
+  box-shadow: inset 0 0 0 2px rgba(56, 189, 248, 0.48);
+  animation: aura-scoreboard-cell-reveal 1200ms var(--aura-ease-soft) both;
 }
 
 .aura-scoreboard-presentation {
@@ -1447,6 +1513,14 @@ html.dark .aura-scoreboard-cell .bg-amber-100 {
   background-color: rgba(51, 65, 85, 0.78) !important;
 }
 
+.aura-scoreboard-presentation .aura-scoreboard-row {
+  background-color: rgba(15, 23, 42, 0.52) !important;
+}
+
+.aura-scoreboard-presentation .aura-scoreboard-row:nth-child(even) {
+  background-color: rgba(30, 41, 59, 0.46) !important;
+}
+
 .aura-scoreboard-presentation .aura-scoreboard-presentation-table th,
 .aura-scoreboard-presentation .aura-scoreboard-presentation-table td {
   border-color: rgba(148, 163, 184, 0.34) !important;
@@ -1464,25 +1538,91 @@ html.dark .aura-scoreboard-cell .bg-amber-100 {
 
 @keyframes aura-scoreboard-cell-update {
   0% {
-    box-shadow: inset 0 0 0 999px rgba(59, 130, 246, 0.18);
+    box-shadow:
+      inset 0 0 0 2px rgba(96, 165, 250, 0.58),
+      0 0 0 0 rgba(96, 165, 250, 0.14);
+  }
+
+  55% {
+    box-shadow:
+      inset 0 0 0 2px rgba(96, 165, 250, 0.4),
+      0 0 0 4px rgba(96, 165, 250, 0.08);
   }
 
   100% {
-    box-shadow: inset 0 0 0 999px rgba(59, 130, 246, 0);
+    box-shadow:
+      inset 0 0 0 1px rgba(96, 165, 250, 0),
+      0 0 0 0 rgba(96, 165, 250, 0);
+  }
+}
+
+@keyframes aura-scoreboard-row-update {
+  0% {
+    box-shadow: inset 4px 0 0 rgba(96, 165, 250, 0.75);
+  }
+
+  100% {
+    box-shadow: inset 4px 0 0 rgba(96, 165, 250, 0);
+  }
+}
+
+@keyframes aura-scoreboard-row-up {
+  0% {
+    box-shadow:
+      inset 4px 0 0 rgba(16, 185, 129, 0.76),
+      inset 0 0 0 999px rgba(255, 255, 255, 0.15);
+  }
+
+  38% {
+    box-shadow:
+      inset 4px 0 0 rgba(16, 185, 129, 0.48),
+      inset 0 0 0 999px rgba(255, 255, 255, 0.055);
+  }
+
+  100% {
+    box-shadow:
+      inset 4px 0 0 rgba(16, 185, 129, 0),
+      inset 0 0 0 999px rgba(255, 255, 255, 0);
+  }
+}
+
+@keyframes aura-scoreboard-row-down {
+  0% {
+    box-shadow:
+      inset 4px 0 0 rgba(244, 114, 182, 0.64),
+      inset 0 0 0 999px rgba(255, 255, 255, 0.15);
+  }
+
+  38% {
+    box-shadow:
+      inset 4px 0 0 rgba(244, 114, 182, 0.42),
+      inset 0 0 0 999px rgba(255, 255, 255, 0.055);
+  }
+
+  100% {
+    box-shadow:
+      inset 4px 0 0 rgba(244, 114, 182, 0),
+      inset 0 0 0 999px rgba(255, 255, 255, 0);
   }
 }
 
 @keyframes aura-scoreboard-cell-reveal {
   0% {
-    box-shadow: inset 0 0 0 999px rgba(251, 191, 36, 0.22);
+    box-shadow:
+      inset 0 0 0 2px rgba(56, 189, 248, 0.72),
+      0 0 0 0 rgba(56, 189, 248, 0.22);
   }
 
   55% {
-    box-shadow: inset 0 0 0 999px rgba(14, 165, 233, 0.12);
+    box-shadow:
+      inset 0 0 0 2px rgba(56, 189, 248, 0.54),
+      0 0 0 5px rgba(56, 189, 248, 0.1);
   }
 
   100% {
-    box-shadow: inset 0 0 0 999px rgba(14, 165, 233, 0);
+    box-shadow:
+      inset 0 0 0 2px rgba(56, 189, 248, 0.38),
+      0 0 0 0 rgba(56, 189, 248, 0);
   }
 }
 

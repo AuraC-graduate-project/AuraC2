@@ -1,4 +1,5 @@
 import { ArrowDownRight, ArrowUpRight, CheckCircle2, Loader2, Lock, Medal, Minus } from "lucide-react";
+import { useLayoutEffect, useRef } from "react";
 import type { ScoreboardSnapshot } from "../../admin/types/api";
 
 export type ScoreboardRankChange = "up" | "down";
@@ -50,7 +51,7 @@ function cellTone({
   if (pending) return "animate-pulse border-amber-400 bg-amber-100 text-amber-950";
   if (hidden && !revealed) return "border-slate-400 bg-slate-100 text-slate-700";
 
-  const revealAccent = revealed ? "aura-scoreboard-cell-revealed ring-1 ring-sky-300" : "";
+  const revealAccent = revealed ? "aura-scoreboard-cell-revealed" : "";
   if (solved) {
     return firstToSolve
       ? `border-emerald-600 bg-emerald-100 text-emerald-950 ${revealAccent}`
@@ -61,10 +62,10 @@ function cellTone({
 }
 
 function rowTone(wasChanged: boolean, rankChange: ScoreboardRankChange | undefined): string {
-  if (rankChange === "up") return "bg-emerald-50/80";
-  if (rankChange === "down") return "bg-rose-50/80";
-  if (wasChanged) return "bg-sky-50/80";
-  return "bg-white hover:bg-slate-50";
+  if (rankChange === "up") return "aura-scoreboard-row aura-scoreboard-row-rank-up";
+  if (rankChange === "down") return "aura-scoreboard-row aura-scoreboard-row-rank-down";
+  if (wasChanged) return "aura-scoreboard-row aura-scoreboard-row-updated";
+  return "aura-scoreboard-row hover:bg-slate-50";
 }
 
 export function ScoreboardTable({
@@ -80,17 +81,50 @@ export function ScoreboardTable({
 }) {
   const changed = new Set(changedTeamIds);
   const columns = snapshot.metadata.problemColumns;
+  const rowRefs = useRef(new Map<number, HTMLTableRowElement>());
+  const previousRowTops = useRef(new Map<number, number>());
+
+  useLayoutEffect(() => {
+    const nextTops = new Map<number, number>();
+
+    snapshot.rows.forEach((row) => {
+      const element = rowRefs.current.get(row.teamId);
+      if (!element) return;
+
+      const nextTop = element.getBoundingClientRect().top;
+      const previousTop = previousRowTops.current.get(row.teamId);
+      nextTops.set(row.teamId, nextTop);
+
+      if (previousTop == null) return;
+
+      const delta = previousTop - nextTop;
+      if (Math.abs(delta) < 1) return;
+
+      element.animate(
+        [
+          { transform: `translateY(${delta}px)` },
+          { transform: "translateY(0)" },
+        ],
+        {
+          duration: 900,
+          easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+        }
+      );
+    });
+
+    previousRowTops.current = nextTops;
+  }, [snapshot.rows]);
 
   return (
-    <div className={`overflow-hidden rounded-lg border border-slate-300 bg-white ${presentationMode ? "aura-scoreboard-presentation-table" : ""}`}>
+    <div className={`overflow-x-auto rounded-lg border border-slate-300 bg-white ${presentationMode ? "aura-scoreboard-presentation-table" : ""}`}>
       <div className="overflow-x-auto">
-        <table className={`min-w-full border-collapse ${presentationMode ? "text-base" : "text-sm"}`}>
+        <table className={`w-max min-w-max border-collapse ${presentationMode ? "text-base" : "text-sm"}`}>
           <thead className="bg-slate-100 text-xs uppercase text-slate-600">
             <tr>
               <th className="sticky left-0 z-10 w-20 border-b border-slate-300 bg-slate-100 px-3 py-3 text-left">
                 Rank
               </th>
-              <th className="sticky left-20 z-10 min-w-56 border-b border-slate-300 bg-slate-100 px-3 py-3 text-left">
+              <th className="sticky left-20 z-10 w-56 border-b border-slate-300 bg-slate-100 px-3 py-3 text-left">
                 Team
               </th>
               {columns.map((problem) => (
@@ -113,7 +147,14 @@ export function ScoreboardTable({
               return (
                 <tr
                   key={row.teamId}
-                  className={`border-b border-slate-200 transition-colors last:border-b-0 ${rowTone(wasChanged, rankChange)}`}
+                  ref={(element) => {
+                    if (element) {
+                      rowRefs.current.set(row.teamId, element);
+                    } else {
+                      rowRefs.current.delete(row.teamId);
+                    }
+                  }}
+                  className={`border-b border-slate-200 transition-[background-color,box-shadow,transform] duration-500 last:border-b-0 ${rowTone(wasChanged, rankChange)}`}
                 >
                   <td className="sticky left-0 z-10 bg-inherit px-3 py-3 font-mono font-semibold text-slate-900">
                     <span className="inline-flex min-w-12 items-center gap-1">
@@ -122,7 +163,7 @@ export function ScoreboardTable({
                       {rankChange === "down" && <ArrowDownRight className="h-4 w-4 text-rose-700" aria-label="Rank down" />}
                     </span>
                   </td>
-                  <td className="sticky left-20 z-10 bg-inherit px-3 py-3">
+                  <td className="sticky left-20 z-10 w-56 bg-inherit px-3 py-3">
                     <div className="font-semibold text-slate-950">{row.teamName}</div>
                   </td>
                   {row.problemCells.map((cell) => {

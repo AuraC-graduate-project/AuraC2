@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Clock, LogOut, UserRound } from "lucide-react";
 import { StatusBadge } from "../../components/StatusBadge";
 import { ThemeToggle } from "../../components/ThemeToggle";
+import auraSymbol from "../../assets/aura-symbol.png";
 
 type HeaderProps = {
   contestName?: string;
@@ -52,8 +53,8 @@ export function Header({
     <header className="aura-topbar aura-team-header border-b border-slate-200 bg-white px-5 py-3 shadow-sm">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex items-center gap-4">
-          <div className="aura-mark flex h-11 w-11 items-center justify-center rounded-lg bg-[#1E3A5F] text-lg font-semibold text-white">
-            A
+          <div className="aura-mark aura-logo-chip flex h-14 w-14 items-center justify-center rounded-lg border border-slate-200 p-2.5">
+            <img src={auraSymbol} alt="AuraC2 logo" className="h-full w-full object-contain" />
           </div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">AuraC²</p>

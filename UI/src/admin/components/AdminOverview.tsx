@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CalendarDays, FileCode2, Inbox, MessageSquare, RefreshCw, Trophy, Users } from "lucide-react";
+import { FileCode2, Inbox, MessageSquare, RefreshCw, Trophy, Users } from "lucide-react";
 import { Button } from "./ui/button";
 import { getActiveContest, getPausedContest, getUpcomingContest } from "../services/api";
 import { ContestResponse } from "../types/api";
@@ -105,12 +105,11 @@ export function AdminOverview({ onNavigate }: AdminOverviewProps) {
           </Button>
         </div>
 
-        <div className="grid gap-6 p-6 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="p-6">
           <div className="rounded-lg border border-slate-200 p-5">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-slate-950">Current contest summary</h2>
-                <p className="text-sm text-slate-500">Loaded from the contest API.</p>
               </div>
               {contest && <StatusBadge kind="contest" value={contest.status} />}
             </div>
@@ -143,19 +142,6 @@ export function AdminOverview({ onNavigate }: AdminOverviewProps) {
               </div>
             )}
           </div>
-
-          <div className="grid gap-4">
-            {[
-              ["Contest control", "Manage lifecycle from the Contests page using current API state."],
-              ["Team management", "Create and maintain student logins in one place."],
-              ["Review queues", "Use Submissions and Clarifications for contest operations."],
-            ].map(([title, detail]) => (
-              <div key={title} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                <span className="font-semibold text-slate-900">{title}</span>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{detail}</p>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
@@ -177,18 +163,6 @@ export function AdminOverview({ onNavigate }: AdminOverviewProps) {
             </button>
           );
         })}
-      </section>
-
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex items-start gap-3">
-          <CalendarDays className="mt-0.5 h-5 w-5 text-blue-700" />
-          <div>
-            <h2 className="font-semibold text-slate-950">Operational scope</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
-              The main navigation now keeps working contest, team, problem, submission, and clarification workflows prominent.
-            </p>
-          </div>
-        </div>
       </section>
     </div>
   );

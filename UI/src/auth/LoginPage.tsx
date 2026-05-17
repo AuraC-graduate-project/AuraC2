@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { Input } from "./loginui/components/ui/input";
 import { Label } from "./loginui/components/ui/label";
 import { Button } from "./loginui/components/ui/button";
-import { AlertCircle, Lock, ShieldCheck, User } from "lucide-react";
+import { AlertCircle, Lock, User } from "lucide-react";
 import { loginApi } from "../services/authApi";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { TechBackground } from "./loginui/components/TechBackground";
+import auraSymbol from "../assets/aura-symbol.png";
 
 export function LoginPage({
   onLoginSuccess,
@@ -42,20 +43,27 @@ export function LoginPage({
       </div>
       <div className="relative z-10 mx-auto flex min-h-[calc(100vh-5rem)] max-w-6xl items-center justify-center">
         <section className="aura-login-card grid w-full max-w-5xl overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl md:grid-cols-[1fr_1.05fr]">
-          <div className="aura-brand-panel relative hidden min-h-[560px] overflow-hidden border-r border-slate-200 bg-[#1E3A5F] p-10 text-white md:flex md:flex-col md:justify-center">
+          <div className="aura-brand-panel relative hidden min-h-[560px] overflow-hidden border-r border-slate-200 bg-[#1E3A5F] px-12 py-10 text-white md:flex md:flex-col md:justify-center">
             <div className="aura-brand-panel-grid" aria-hidden="true" />
-            <div className="relative">
-              <div className="mb-8 inline-flex h-14 w-14 items-center justify-center rounded-lg bg-white/10 ring-1 ring-white/20">
-                <ShieldCheck className="h-6 w-6 text-[#FACC15]" />
+            <img src={auraSymbol} alt="" className="aura-login-symbol-watermark" aria-hidden="true" />
+            <div className="aura-login-brand-lockup relative mx-auto text-center">
+              <div className="aura-login-symbol-shell mx-auto mb-7">
+                <img src={auraSymbol} alt="AuraC2 logo" className="h-full w-full object-contain" />
               </div>
-              <h1 className="text-5xl font-semibold tracking-normal">AuraC²</h1>
-              <p className="mt-3 text-xl font-medium text-blue-100">Aura Contest Control</p>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-blue-100">University Contest Platform</p>
+              <h1 className="aura-login-brand-title font-semibold tracking-normal">
+                AuraC<sup>2</sup>
+              </h1>
+              <p className="mt-5 text-2xl font-medium text-blue-100">Aura Contest Control</p>
             </div>
           </div>
 
           <div className="p-6 sm:p-10">
             <div className="mb-8 md:hidden">
-              <h1 className="text-3xl font-semibold">AuraC²</h1>
+              <div className="mb-4 inline-flex h-20 w-20 items-center justify-center rounded-lg bg-white p-3 ring-1 ring-blue-100">
+                <img src={auraSymbol} alt="AuraC2 logo" className="h-full w-full object-contain" />
+              </div>
+              <h1 className="text-4xl font-semibold tracking-normal">AuraC<sup className="text-xl">2</sup></h1>
               <p className="text-sm text-slate-600">Aura Contest Control</p>
             </div>
 
