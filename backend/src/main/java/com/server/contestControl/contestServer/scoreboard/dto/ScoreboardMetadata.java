@@ -24,6 +24,6 @@ public record ScoreboardMetadata(
         long totalHiddenCells,
         List<ProblemColumn> problemColumns
 ) {
-    public record ProblemColumn(Long problemId, String label, String title) {
+    public record ProblemColumn(Long problemId, String label, String title, String balloonColor) {
     }
 }

@@ -110,7 +110,7 @@ class ScoreboardCalculatorTest {
     }
 
     @Test
-    void hiddenCellsAfterFreezeIncludesTerminalTeamSubmissionsAtOrAfterFreeze() {
+    void hiddenCellsAfterFreezeIncludesTeamSubmissionsAtOrAfterFreeze() {
         Instant freezeTime = START.plusSeconds(60 * 60);
 
         Set<ScoreboardCellKey> hiddenCells = calculator.hiddenCellsAfterFreeze(
@@ -123,7 +123,33 @@ class ScoreboardCalculatorTest {
                 )
         );
 
-        assertThat(hiddenCells).containsExactly(new ScoreboardCellKey(alpha.getId(), problemA.getId()));
+        assertThat(hiddenCells).containsExactly(
+                new ScoreboardCellKey(alpha.getId(), problemA.getId()),
+                new ScoreboardCellKey(beta.getId(), problemB.getId())
+        );
+    }
+
+    @Test
+    void pendingAttemptsAreExposedWithoutChangingRankOrPenalty() {
+        List<ScoreboardRow> rows = calculator.calculateRows(
+                contest,
+                List.of(problemA),
+                List.of(alpha),
+                List.of(
+                        submission(1L, alpha, problemA, Verdict.WRONG_ANSWER, 12),
+                        submission(2L, alpha, problemA, Verdict.RUNNING, 13)
+                ),
+                Set.of(),
+                Set.of()
+        );
+
+        ScoreboardRow row = rows.getFirst();
+        ScoreboardProblemCell cell = cell(row, problemA.getId());
+
+        assertThat(row.solvedCount()).isZero();
+        assertThat(row.totalPenalty()).isZero();
+        assertThat(cell.wrongAttempts()).isEqualTo(1);
+        assertThat(cell.pendingCount()).isEqualTo(1);
     }
 
     private ScoreboardProblemCell cell(ScoreboardRow row, Long problemId) {

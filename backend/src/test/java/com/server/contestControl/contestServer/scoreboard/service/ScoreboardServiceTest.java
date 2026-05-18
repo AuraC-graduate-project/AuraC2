@@ -93,7 +93,7 @@ class ScoreboardServiceTest {
                         RevealStatus.NOT_STARTED,
                         0,
                         0,
-                        List.of(new ScoreboardMetadata.ProblemColumn(10L, "A", "Warmup"))
+                        List.of(new ScoreboardMetadata.ProblemColumn(10L, "A", "Warmup", "#2563EB"))
                 ),
                 List.of(rows)
         );
@@ -106,7 +106,7 @@ class ScoreboardServiceTest {
                 teamName,
                 solved,
                 penalty,
-                List.of(new ScoreboardProblemCell(10L, "A", solved > 0, solved > 0 ? 1 : 0, 0, solved > 0 ? penalty : null, solved > 0 ? penalty : null, solved > 0, false, false))
+                List.of(new ScoreboardProblemCell(10L, "A", solved > 0, solved > 0 ? 1 : 0, 0, 0, solved > 0 ? penalty : null, solved > 0 ? penalty : null, solved > 0, false, false))
         );
     }
 }

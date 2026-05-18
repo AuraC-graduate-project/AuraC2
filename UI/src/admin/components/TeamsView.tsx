@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { UserPlus, Pencil, KeyRound, Trash2, RefreshCw, Search, ShieldCheck } from 'lucide-react';
+import { ClipboardList, Copy, UserPlus, Pencil, KeyRound, Trash2, RefreshCw, Search, ShieldCheck } from 'lucide-react';
 import { RegisterModal } from './RegisterModal';
 import { Input } from './ui/input';
 import {
@@ -30,8 +30,8 @@ import {
   TableRow,
 } from './ui/table';
 import { toast } from 'sonner';
-import { deleteUser, getAllUsers, updateUserName, updateUserPassword } from '../services/api';
-import { UserResponse } from '../types/api';
+import { deleteUser, generateTeamAccounts, getAllUsers, updateUserName, updateUserPassword } from '../services/api';
+import { GeneratedTeamCredentialResponse, UserResponse } from '../types/api';
 import { StatusBadge } from '../../components/StatusBadge';
 
 export function TeamsView() {
@@ -40,6 +40,12 @@ export function TeamsView() {
   const [users, setUsers] = useState<UserResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
+  const [bulkPrefix, setBulkPrefix] = useState('team');
+  const [bulkStartNumber, setBulkStartNumber] = useState(1);
+  const [bulkEndNumber, setBulkEndNumber] = useState(20);
+  const [bulkPasswordLength, setBulkPasswordLength] = useState(10);
+  const [bulkGenerating, setBulkGenerating] = useState(false);
+  const [generatedCredentials, setGeneratedCredentials] = useState<GeneratedTeamCredentialResponse[]>([]);
 
   const [editNameOpen, setEditNameOpen] = useState(false);
   const [editPasswordOpen, setEditPasswordOpen] = useState(false);
@@ -77,6 +83,55 @@ export function TeamsView() {
       setUsers([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const credentialsCsv = (credentials: GeneratedTeamCredentialResponse[]) => [
+    'username,password',
+    ...credentials.map((credential) => `${credential.username},${credential.password}`),
+  ].join('\n');
+
+  const copyText = async (value: string, successMessage: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success(successMessage);
+    } catch {
+      toast.error('Copy failed. Please copy the credentials manually.');
+    }
+  };
+
+  const handleGenerateTeams = async (event: FormEvent) => {
+    event.preventDefault();
+    const prefix = bulkPrefix.trim();
+
+    if (!prefix) {
+      toast.error('Prefix cannot be blank');
+      return;
+    }
+    if (bulkStartNumber > bulkEndNumber) {
+      toast.error('Start number must be less than or equal to end number');
+      return;
+    }
+    if (bulkPasswordLength < 8) {
+      toast.error('Password length must be at least 8 characters');
+      return;
+    }
+
+    setBulkGenerating(true);
+    try {
+      const credentials = await generateTeamAccounts({
+        prefix,
+        startNumber: bulkStartNumber,
+        endNumber: bulkEndNumber,
+        passwordLength: bulkPasswordLength,
+      });
+      setGeneratedCredentials(credentials);
+      toast.success(`${credentials.length} team account${credentials.length === 1 ? '' : 's'} generated`);
+      await loadUsers();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to generate team accounts');
+    } finally {
+      setBulkGenerating(false);
     }
   };
 
@@ -191,6 +246,143 @@ export function TeamsView() {
           </div>
         </CardHeader>
         <CardContent className="p-6">
+          <form
+            onSubmit={handleGenerateTeams}
+            className="mb-6 rounded-lg border border-slate-200 bg-slate-50 p-4"
+          >
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <ClipboardList className="h-5 w-5 text-blue-700" />
+                  <h3 className="font-semibold text-slate-950">Bulk Team Generation</h3>
+                </div>
+                <p className="mt-1 text-sm text-slate-600">
+                  Generated passwords are shown only once after creation. They are hashed on the server and cannot be recovered later.
+                </p>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[9rem_8rem_8rem_9rem_auto]">
+                <div className="space-y-1.5">
+                  <label htmlFor="bulk-prefix" className="text-xs font-semibold uppercase text-slate-500">
+                    Prefix
+                  </label>
+                  <Input
+                    id="bulk-prefix"
+                    value={bulkPrefix}
+                    onChange={(event) => setBulkPrefix(event.target.value)}
+                    className="h-10 bg-white"
+                    disabled={bulkGenerating}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="bulk-start" className="text-xs font-semibold uppercase text-slate-500">
+                    Start
+                  </label>
+                  <Input
+                    id="bulk-start"
+                    type="number"
+                    min={1}
+                    value={bulkStartNumber}
+                    onChange={(event) => setBulkStartNumber(Number(event.target.value))}
+                    className="h-10 bg-white"
+                    disabled={bulkGenerating}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="bulk-end" className="text-xs font-semibold uppercase text-slate-500">
+                    End
+                  </label>
+                  <Input
+                    id="bulk-end"
+                    type="number"
+                    min={1}
+                    value={bulkEndNumber}
+                    onChange={(event) => setBulkEndNumber(Number(event.target.value))}
+                    className="h-10 bg-white"
+                    disabled={bulkGenerating}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="bulk-password-length" className="text-xs font-semibold uppercase text-slate-500">
+                    Password length
+                  </label>
+                  <Input
+                    id="bulk-password-length"
+                    type="number"
+                    min={8}
+                    value={bulkPasswordLength}
+                    onChange={(event) => setBulkPasswordLength(Number(event.target.value))}
+                    className="h-10 bg-white"
+                    disabled={bulkGenerating}
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="h-10 gap-2 bg-blue-700 hover:bg-blue-800 sm:col-span-2 xl:col-span-1"
+                  disabled={bulkGenerating}
+                >
+                  <UserPlus className="h-4 w-4" />
+                  {bulkGenerating ? 'Generating...' : 'Generate'}
+                </Button>
+              </div>
+            </div>
+          </form>
+
+          {generatedCredentials.length > 0 && (
+            <div className="mb-6 overflow-hidden rounded-lg border border-slate-200 bg-white">
+              <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <h3 className="font-semibold text-slate-950">Generated Credentials</h3>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Store these securely now. Plaintext passwords will not be available after you leave this result.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="gap-2 bg-white"
+                  onClick={() => copyText(credentialsCsv(generatedCredentials), 'All generated credentials copied')}
+                >
+                  <Copy className="h-4 w-4" />
+                  Copy All
+                </Button>
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Username</TableHead>
+                    <TableHead>Password</TableHead>
+                    <TableHead className="w-[120px]">Role</TableHead>
+                    <TableHead className="w-[110px] text-right">Copy</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {generatedCredentials.map((credential) => (
+                    <TableRow key={credential.username}>
+                      <TableCell className="font-medium text-slate-900">{credential.username}</TableCell>
+                      <TableCell className="font-mono text-sm text-slate-900">{credential.password}</TableCell>
+                      <TableCell>
+                        <StatusBadge kind="neutral" value={credential.role} />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="gap-2 bg-white"
+                          onClick={() => copyText(`${credential.username},${credential.password}`, `${credential.username} copied`)}
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                          Copy
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+
           <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="relative w-full md:max-w-md">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />

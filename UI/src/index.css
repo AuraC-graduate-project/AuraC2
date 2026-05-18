@@ -1419,49 +1419,88 @@ html.dark [role="dialog"] {
     box-shadow 260ms var(--aura-ease);
 }
 
-html.dark .aura-scoreboard-cell.bg-emerald-50,
-html.dark .aura-scoreboard-cell.bg-emerald-100 {
-  background-color: #164432 !important;
-  border-color: #34d399 !important;
-  color: #ecfdf5 !important;
+.aura-scoreboard-cell--not-attempted {
+  background: var(--aura-surface-soft);
+  border-color: var(--aura-border);
+  color: var(--aura-text-soft);
 }
 
-html.dark .aura-scoreboard-cell.bg-emerald-50 svg,
-html.dark .aura-scoreboard-cell.bg-emerald-100 svg {
-  color: #86efac !important;
+.aura-scoreboard-cell--attempted {
+  background: #fca5a5;
+  border-color: #f87171;
+  color: #450a0a;
 }
 
-html.dark .aura-scoreboard-cell.bg-rose-50 {
-  background-color: #4a222b !important;
-  border-color: #fb7185 !important;
-  color: #ffe4e6 !important;
+.aura-scoreboard-cell--solved {
+  background: #86ef8c;
+  border-color: #22c55e;
+  color: #052e16;
 }
 
-html.dark .aura-scoreboard-cell.bg-rose-50 svg {
-  color: #fda4af !important;
+.aura-scoreboard-cell--first-solve {
+  background: #008a22;
+  border-color: #047018;
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
 }
 
-html.dark .aura-scoreboard-cell.bg-amber-100 {
-  background-color: #44341b !important;
-  border-color: #fbbf24 !important;
-  color: #fef3c7 !important;
+.aura-scoreboard-cell--pending {
+  background: #8582e8;
+  border-color: #6d68d9;
+  color: #1e1b4b;
 }
 
-html.dark .aura-scoreboard-cell.bg-slate-100 {
-  background-color: #263241 !important;
-  border-color: #64748b !important;
-  color: #e2e8f0 !important;
+.aura-scoreboard-cell--frozen {
+  background: #dbeafe;
+  border-color: #38a3ff;
+  color: #075fb8;
 }
 
-html.dark .aura-scoreboard-cell.bg-white {
-  background-color: #172231 !important;
-  border-color: #3b4a5f !important;
-  color: #cbd5e1 !important;
+.aura-scoreboard-cell--attempted svg,
+.aura-scoreboard-cell--solved svg,
+.aura-scoreboard-cell--first-solve svg,
+.aura-scoreboard-cell--pending svg,
+.aura-scoreboard-cell--frozen svg {
+  color: currentColor;
 }
 
-html.dark .aura-scoreboard-cell .bg-amber-100 {
-  background-color: #f3d371 !important;
-  color: #1f2937 !important;
+.aura-scoreboard-balloon {
+  position: relative;
+  display: inline-flex;
+  width: 2rem;
+  height: 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--balloon-color);
+  color: var(--balloon-text);
+  font-weight: 800;
+  line-height: 1;
+  box-shadow:
+    inset 0 -6px 10px rgba(15, 23, 42, 0.16),
+    0 0 0 1px rgba(15, 23, 42, 0.18);
+}
+
+.aura-scoreboard-balloon::after {
+  content: "";
+  position: absolute;
+  bottom: -0.2rem;
+  left: 50%;
+  width: 0.42rem;
+  height: 0.42rem;
+  background: var(--balloon-color);
+  border-radius: 0 0 0.12rem 0;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.aura-scoreboard-legend-swatch {
+  display: inline-block;
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 0.22rem;
+  border-width: 1px;
+  border-style: solid;
+  box-shadow: none;
 }
 
 .aura-scoreboard-row {
@@ -1491,14 +1530,79 @@ html.dark .aura-scoreboard-cell .bg-amber-100 {
 
 .aura-scoreboard-presentation {
   background:
+    linear-gradient(180deg, #f8fafc, #eef3f8 58%, #e7edf5) !important;
+  color: #102033 !important;
+}
+
+html.dark .aura-scoreboard-presentation {
+  background:
     linear-gradient(180deg, #172033, #111827 58%, #0f172a) !important;
   color: #f8fafc !important;
 }
 
+.aura-scoreboard-presentation .text-white {
+  color: #102033 !important;
+}
+
+.aura-scoreboard-presentation .text-slate-300,
+.aura-scoreboard-presentation .text-slate-200 {
+  color: #5f6f82 !important;
+}
+
+.aura-scoreboard-presentation .border-white\/15 {
+  border-color: rgba(148, 163, 184, 0.45) !important;
+}
+
+.aura-scoreboard-presentation .bg-white\/10 {
+  background-color: rgba(255, 255, 255, 0.72) !important;
+}
+
+html.dark .aura-scoreboard-presentation .text-white {
+  color: #f8fafc !important;
+}
+
+html.dark .aura-scoreboard-presentation .text-slate-300,
+html.dark .aura-scoreboard-presentation .text-slate-200 {
+  color: #cbd5e1 !important;
+}
+
+html.dark .aura-scoreboard-presentation .border-white\/15 {
+  border-color: rgba(148, 163, 184, 0.34) !important;
+}
+
+html.dark .aura-scoreboard-presentation .bg-white\/10 {
+  background-color: rgba(248, 250, 252, 0.1) !important;
+}
+
+.aura-scoreboard-theme-toggle {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #102033 !important;
+}
+
+.aura-scoreboard-theme-toggle:hover {
+  background: #f0f4f8 !important;
+}
+
+html.dark .aura-scoreboard-theme-toggle {
+  background: rgba(248, 250, 252, 0.1) !important;
+  border-color: rgba(148, 163, 184, 0.42) !important;
+  color: #f8fafc !important;
+}
+
+html.dark .aura-scoreboard-theme-toggle:hover {
+  background: rgba(248, 250, 252, 0.16) !important;
+}
+
 .aura-scoreboard-presentation .aura-scoreboard-presentation-table {
+  border-color: #cbd5e1 !important;
+  background-color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+html.dark .aura-scoreboard-presentation .aura-scoreboard-presentation-table {
   border-color: rgba(148, 163, 184, 0.38) !important;
   background-color: rgba(15, 23, 42, 0.94) !important;
-  box-shadow: none !important;
 }
 
 .aura-scoreboard-presentation .aura-scoreboard-presentation-table table {
@@ -1506,32 +1610,63 @@ html.dark .aura-scoreboard-cell .bg-amber-100 {
 }
 
 .aura-scoreboard-presentation .aura-scoreboard-presentation-table thead tr {
+  background-color: #e7edf5 !important;
+}
+
+html.dark .aura-scoreboard-presentation .aura-scoreboard-presentation-table thead tr {
   background-color: rgba(51, 65, 85, 0.96) !important;
 }
 
 .aura-scoreboard-presentation .aura-scoreboard-presentation-table tbody tr:hover {
+  background-color: #edf2f7 !important;
+}
+
+html.dark .aura-scoreboard-presentation .aura-scoreboard-presentation-table tbody tr:hover {
   background-color: rgba(51, 65, 85, 0.78) !important;
 }
 
 .aura-scoreboard-presentation .aura-scoreboard-row {
+  background-color: #ffffff !important;
+}
+
+html.dark .aura-scoreboard-presentation .aura-scoreboard-row {
   background-color: rgba(15, 23, 42, 0.52) !important;
 }
 
 .aura-scoreboard-presentation .aura-scoreboard-row:nth-child(even) {
+  background-color: #f8fafc !important;
+}
+
+html.dark .aura-scoreboard-presentation .aura-scoreboard-row:nth-child(even) {
   background-color: rgba(30, 41, 59, 0.46) !important;
 }
 
 .aura-scoreboard-presentation .aura-scoreboard-presentation-table th,
 .aura-scoreboard-presentation .aura-scoreboard-presentation-table td {
+  border-color: #d7e0eb !important;
+}
+
+html.dark .aura-scoreboard-presentation .aura-scoreboard-presentation-table th,
+html.dark .aura-scoreboard-presentation .aura-scoreboard-presentation-table td {
   border-color: rgba(148, 163, 184, 0.34) !important;
 }
 
 .aura-scoreboard-presentation .aura-scoreboard-presentation-table th {
+  background-color: #e7edf5 !important;
+  color: #475569 !important;
+}
+
+html.dark .aura-scoreboard-presentation .aura-scoreboard-presentation-table th {
   background-color: rgba(51, 65, 85, 0.96) !important;
   color: #e2e8f0 !important;
 }
 
 .aura-scoreboard-presentation .aura-scoreboard-presentation-table .bg-white {
+  background-color: #ffffff !important;
+  color: #475569 !important;
+}
+
+html.dark .aura-scoreboard-presentation .aura-scoreboard-presentation-table .bg-white {
   background-color: rgba(248, 250, 252, 0.1) !important;
   color: #cbd5e1 !important;
 }

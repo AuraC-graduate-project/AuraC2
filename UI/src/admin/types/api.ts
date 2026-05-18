@@ -69,6 +69,7 @@ export interface ProblemRequest {
   timeLimit: number;
   memoryLimit: number;
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
+  balloonColor: string;
 }
 
 export interface ProblemUpdateRequest {
@@ -77,6 +78,7 @@ export interface ProblemUpdateRequest {
   timeLimit: number;
   memoryLimit: number;
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
+  balloonColor: string;
 }
 
 export interface ProblemResponse {
@@ -87,6 +89,7 @@ export interface ProblemResponse {
   timeLimit: number;
   memoryLimit: number;
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
+  balloonColor: string;
 }
 
 export interface TestCaseRequest {
@@ -178,6 +181,19 @@ export interface UserResponse {
   role: string;
 }
 
+export interface BulkTeamGenerationRequest {
+  prefix: string;
+  startNumber: number;
+  endNumber: number;
+  passwordLength: number;
+}
+
+export interface GeneratedTeamCredentialResponse {
+  username: string;
+  password: string;
+  role: string;
+}
+
 export interface UpdateUserNameRequest {
   // Backend DTO name is unknown; we send multiple keys to be resilient.
   newUsername?: string;
@@ -255,6 +271,7 @@ export interface ScoreboardProblemColumn {
   problemId: number;
   label: string;
   title: string;
+  balloonColor: string;
 }
 
 export interface ScoreboardMetadata {
@@ -282,6 +299,7 @@ export interface ScoreboardProblemCell {
   solved: boolean;
   attempts: number;
   wrongAttempts: number;
+  pendingCount: number;
   solvedTimeMinutes: number | null;
   penalty: number | null;
   firstToSolve: boolean;

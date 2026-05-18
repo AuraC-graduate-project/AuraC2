@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -8,17 +8,20 @@ import { RichTextEditor } from './RichTextEditor';
 import { richTextToPlainText, sanitizeRichText } from '../../components/richText';
 import { createProblem } from '../services/api';
 import { ProblemRequest, ProblemResponse } from '../types/api';
+import { BALLOON_COLOR_PRESETS, defaultBalloonColor, DEFAULT_BALLOON_COLOR, isBalloonColor, normalizeBalloonColor } from '../utils/balloonColors';
 import { toast } from 'sonner';
 
 interface CreateProblemModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   contestId: number;
+  nextProblemIndex?: number;
   onSuccess: (problem: ProblemResponse) => void;
 }
 
-export function CreateProblemModal({ open, onOpenChange, contestId, onSuccess }: CreateProblemModalProps) {
+export function CreateProblemModal({ open, onOpenChange, contestId, nextProblemIndex = 0, onSuccess }: CreateProblemModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const initialBalloonColor = defaultBalloonColor(nextProblemIndex);
   const [formData, setFormData] = useState<ProblemRequest>({
     contestId,
     title: '',
@@ -26,7 +29,21 @@ export function CreateProblemModal({ open, onOpenChange, contestId, onSuccess }:
     timeLimit: 0,
     memoryLimit: 0,
     difficulty: 'EASY',
+    balloonColor: initialBalloonColor,
   });
+
+  useEffect(() => {
+    if (!open) return;
+    setFormData({
+      contestId,
+      title: '',
+      description: '',
+      timeLimit: 0,
+      memoryLimit: 0,
+      difficulty: 'EASY',
+      balloonColor: defaultBalloonColor(nextProblemIndex),
+    });
+  }, [contestId, nextProblemIndex, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,15 +58,21 @@ export function CreateProblemModal({ open, onOpenChange, contestId, onSuccess }:
       toast.error('Time and memory limits must be greater than 0');
       return;
     }
+    if (!isBalloonColor(formData.balloonColor)) {
+      toast.error('Balloon color must be a hex color like #2563EB');
+      return;
+    }
 
     setIsSubmitting(true);
 
     try {
+      const balloonColor = normalizeBalloonColor(formData.balloonColor);
       const createdProblem = await createProblem({
         ...formData,
         contestId,
         title: formData.title.trim(),
         description: sanitizedDescription,
+        balloonColor,
       });
       toast.success('Problem created successfully');
       onOpenChange(false);
@@ -62,6 +85,7 @@ export function CreateProblemModal({ open, onOpenChange, contestId, onSuccess }:
         timeLimit: 0,
         memoryLimit: 0,
         difficulty: 'EASY',
+        balloonColor: defaultBalloonColor(nextProblemIndex),
       });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to create problem');
@@ -69,6 +93,9 @@ export function CreateProblemModal({ open, onOpenChange, contestId, onSuccess }:
       setIsSubmitting(false);
     }
   };
+
+  const normalizedBalloonColor = normalizeBalloonColor(formData.balloonColor);
+  const colorInputValue = isBalloonColor(formData.balloonColor) ? normalizedBalloonColor : DEFAULT_BALLOON_COLOR;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -142,6 +169,46 @@ export function CreateProblemModal({ open, onOpenChange, contestId, onSuccess }:
                   <SelectItem value="HARD">Hard</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="balloonColor">Balloon Color</Label>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Input
+                  id="balloonColor"
+                  type="color"
+                  value={colorInputValue}
+                  onChange={(e) => setFormData({ ...formData, balloonColor: normalizeBalloonColor(e.target.value) })}
+                  className="h-10 w-16 cursor-pointer p-1"
+                  disabled={isSubmitting}
+                  aria-label="Choose balloon color"
+                />
+                <Input
+                  value={formData.balloonColor}
+                  onChange={(e) => setFormData({ ...formData, balloonColor: normalizeBalloonColor(e.target.value) })}
+                  className="h-10 font-mono uppercase"
+                  placeholder="#2563EB"
+                  disabled={isSubmitting}
+                />
+              </div>
+              <div className="flex flex-wrap gap-2" aria-label="Balloon color presets">
+                {BALLOON_COLOR_PRESETS.map((color) => {
+                  const selected = normalizedBalloonColor === color;
+                  return (
+                    <button
+                      key={color}
+                      type="button"
+                      className={`h-8 w-8 rounded-md border transition ${
+                        selected ? 'border-slate-950 ring-2 ring-slate-300' : 'border-slate-200 hover:border-slate-400'
+                      }`}
+                      style={{ backgroundColor: color }}
+                      onClick={() => setFormData({ ...formData, balloonColor: color })}
+                      disabled={isSubmitting}
+                      aria-label={`Use ${color}`}
+                    />
+                  );
+                })}
+              </div>
             </div>
           </div>
           

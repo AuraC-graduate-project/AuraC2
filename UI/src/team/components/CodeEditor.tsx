@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type UIEvent } from "react";
-import { CheckCircle2, Send, Terminal, XCircle } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type UIEvent } from "react";
+import { Send, Terminal, XCircle } from "lucide-react";
 import { Button } from "./ui/button";
 import {
   Select,
@@ -96,6 +96,8 @@ const languageOptions = [
   { value: "go", label: "Go" },
 ];
 
+const TAB_INDENT = "    ";
+
 type Props = {
   contestId?: number | null;
   problem: { id: number; title: string } | null;
@@ -184,6 +186,75 @@ function highlightCode(source: string, language: string): string {
   return result || " ";
 }
 
+function selectedLineRange(value: string, selectionStart: number, selectionEnd: number) {
+  const lineStart = value.lastIndexOf("\n", Math.max(0, selectionStart - 1)) + 1;
+  const adjustedEnd =
+    selectionEnd > selectionStart && value[selectionEnd - 1] === "\n"
+      ? selectionEnd - 1
+      : selectionEnd;
+  const nextLineBreak = value.indexOf("\n", adjustedEnd);
+  const lineEnd = nextLineBreak === -1 ? value.length : nextLineBreak;
+
+  return { lineStart, lineEnd };
+}
+
+function indentSelection(value: string, selectionStart: number, selectionEnd: number) {
+  if (selectionStart === selectionEnd) {
+    return {
+      nextCode: `${value.slice(0, selectionStart)}${TAB_INDENT}${value.slice(selectionEnd)}`,
+      nextStart: selectionStart + TAB_INDENT.length,
+      nextEnd: selectionStart + TAB_INDENT.length,
+    };
+  }
+
+  const { lineStart, lineEnd } = selectedLineRange(value, selectionStart, selectionEnd);
+  const selectedLines = value.slice(lineStart, lineEnd);
+  const lineCount = selectedLines.split("\n").length;
+  const indented = selectedLines
+    .split("\n")
+    .map((line) => `${TAB_INDENT}${line}`)
+    .join("\n");
+
+  return {
+    nextCode: `${value.slice(0, lineStart)}${indented}${value.slice(lineEnd)}`,
+    nextStart: selectionStart + TAB_INDENT.length,
+    nextEnd: selectionEnd + TAB_INDENT.length * lineCount,
+  };
+}
+
+function removableIndentWidth(line: string): number {
+  if (line.startsWith(TAB_INDENT)) return TAB_INDENT.length;
+  if (line.startsWith("\t")) return 1;
+  return line.match(/^ {1,3}/)?.[0].length ?? 0;
+}
+
+function unindentSelection(value: string, selectionStart: number, selectionEnd: number) {
+  const { lineStart, lineEnd } = selectedLineRange(value, selectionStart, selectionEnd);
+  const selectedLines = value.slice(lineStart, lineEnd).split("\n");
+  let originalOffset = 0;
+  let removedBeforeStart = 0;
+  let removedBeforeEnd = 0;
+
+  const unindented = selectedLines
+    .map((line) => {
+      const removeCount = removableIndentWidth(line);
+      const lineAbsoluteStart = lineStart + originalOffset;
+
+      removedBeforeStart += Math.min(removeCount, Math.max(0, selectionStart - lineAbsoluteStart));
+      removedBeforeEnd += Math.min(removeCount, Math.max(0, selectionEnd - lineAbsoluteStart));
+      originalOffset += line.length + 1;
+
+      return line.slice(removeCount);
+    })
+    .join("\n");
+
+  return {
+    nextCode: `${value.slice(0, lineStart)}${unindented}${value.slice(lineEnd)}`,
+    nextStart: selectionStart - removedBeforeStart,
+    nextEnd: selectionEnd - removedBeforeEnd,
+  };
+}
+
 export function CodeEditor({ contestId, problem, onSubmitted }: Props) {
   const userId = useMemo(getUserId, []);
   const contestKey = contestId ? String(contestId) : "0";
@@ -192,9 +263,10 @@ export function CodeEditor({ contestId, problem, onSubmitted }: Props) {
     loadStoredLanguage(userId, contestKey, problemKey)
   );
   const [submitting, setSubmitting] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [message, setMessage] = useState<{ text: string } | null>(null);
   const highlightRef = useRef<HTMLPreElement | null>(null);
   const lineNumbersRef = useRef<HTMLPreElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     setLanguage(loadStoredLanguage(userId, contestKey, problemKey));
@@ -241,20 +313,15 @@ export function CodeEditor({ contestId, problem, onSubmitted }: Props) {
     setSubmitting(true);
     setMessage(null);
     try {
-      const response = await submitCode({
+      await submitCode({
         contestId,
         problemId: problem.id,
         language,
         code,
       });
-      setMessage({
-        type: "success",
-        text: `Submission #${response.id} queued with verdict ${String(response.verdict ?? "PENDING")}.`,
-      });
       onSubmitted?.();
     } catch (error) {
       setMessage({
-        type: "error",
         text: error instanceof Error ? error.message : "Submission failed.",
       });
     } finally {
@@ -278,6 +345,24 @@ export function CodeEditor({ contestId, problem, onSubmitted }: Props) {
     if (lineNumbersRef.current) {
       lineNumbersRef.current.scrollTop = event.currentTarget.scrollTop;
     }
+  };
+
+  const handleEditorKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key !== "Tab") return;
+
+    event.preventDefault();
+
+    const textarea = event.currentTarget;
+    const selectionStart = textarea.selectionStart;
+    const selectionEnd = textarea.selectionEnd;
+    const edit = event.shiftKey
+      ? unindentSelection(code, selectionStart, selectionEnd)
+      : indentSelection(code, selectionStart, selectionEnd);
+
+    setCode(edit.nextCode);
+    requestAnimationFrame(() => {
+      textareaRef.current?.setSelectionRange(edit.nextStart, edit.nextEnd);
+    });
   };
 
   if (!problem) {
@@ -325,14 +410,8 @@ export function CodeEditor({ contestId, problem, onSubmitted }: Props) {
       </div>
 
       {message && (
-        <div
-          className={`m-4 flex gap-2 rounded-lg border p-3 text-sm ${
-            message.type === "success"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-              : "border-rose-200 bg-rose-50 text-rose-700"
-          }`}
-        >
-          {message.type === "success" ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+        <div className="m-4 flex gap-2 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+          <XCircle className="h-4 w-4" />
           <span>{message.text}</span>
         </div>
       )}
@@ -352,8 +431,10 @@ export function CodeEditor({ contestId, problem, onSubmitted }: Props) {
             dangerouslySetInnerHTML={{ __html: `${highlightedCode}\n` }}
           />
           <textarea
+            ref={textareaRef}
             value={code}
             onChange={(e) => setCode(e.target.value)}
+            onKeyDown={handleEditorKeyDown}
             onScroll={handleEditorScroll}
             className="aura-code-input relative z-10 h-full min-h-0 w-full resize-none border-0 bg-transparent px-4 py-4 font-mono text-sm leading-6 shadow-none outline-none"
             placeholder="Write your solution here..."

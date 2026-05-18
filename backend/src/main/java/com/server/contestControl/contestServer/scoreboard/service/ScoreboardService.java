@@ -20,6 +20,7 @@ import com.server.contestControl.contestServer.scoreboard.model.ScoreboardCellKe
 import com.server.contestControl.contestServer.scoreboard.repository.ScoreboardRevealCellRepository;
 import com.server.contestControl.contestServer.scoreboard.repository.ScoreboardRevealStateRepository;
 import com.server.contestControl.contestServer.service.ContestLifecycleService;
+import com.server.contestControl.contestServer.util.ProblemBalloonColors;
 import com.server.contestControl.submissionServer.entity.Submission;
 import com.server.contestControl.submissionServer.repository.SubmissionRepository;
 import lombok.RequiredArgsConstructor;
@@ -96,7 +97,8 @@ public class ScoreboardService {
             columns.add(new ScoreboardMetadata.ProblemColumn(
                     problem.getId(),
                     problemLabel(i),
-                    problem.getTitle()
+                    problem.getTitle(),
+                    ProblemBalloonColors.valueOrFallback(problem.getBalloonColor(), i)
             ));
         }
 

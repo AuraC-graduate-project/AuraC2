@@ -12,6 +12,7 @@ import com.server.contestControl.contestServer.exceptions.ProblemNotFoundExcepti
 import com.server.contestControl.contestServer.repository.ClarificationRepository;
 import com.server.contestControl.contestServer.repository.ContestRepository;
 import com.server.contestControl.contestServer.repository.ProblemRepository;
+import com.server.contestControl.contestServer.util.ProblemBalloonColors;
 import com.server.contestControl.submissionServer.entity.Submission;
 import com.server.contestControl.submissionServer.repository.SubmissionJudgeResultRepository;
 import com.server.contestControl.submissionServer.repository.SubmissionRepository;
@@ -36,6 +37,7 @@ public class ProblemService {
 
         Contest contest = contestRepository.findById(request.getContestId())
                 .orElseThrow(() -> new ContestNotFoundException(request.getContestId()));
+        int nextProblemIndex = Math.toIntExact(problemRepository.countByContest_Id(contest.getId()));
 
         Problem problem = Problem.builder()
                 .contest(contest)
@@ -44,11 +46,12 @@ public class ProblemService {
                 .timeLimit(request.getTimeLimit())
                 .memoryLimit(request.getMemoryLimit())
                 .difficulty(parseDifficulty(request.getDifficulty()))
+                .balloonColor(ProblemBalloonColors.normalizeOrFallback(request.getBalloonColor(), nextProblemIndex))
                 .build();
 
         problemRepository.save(problem);
 
-        return ProblemResponse.from(problem);
+        return ProblemResponse.from(problem, nextProblemIndex);
     }
 
     @Transactional
@@ -61,9 +64,12 @@ public class ProblemService {
         problem.setTimeLimit(request.getTimeLimit());
         problem.setMemoryLimit(request.getMemoryLimit());
         problem.setDifficulty(parseDifficulty(request.getDifficulty()));
+        if (request.getBalloonColor() != null && !request.getBalloonColor().isBlank()) {
+            problem.setBalloonColor(ProblemBalloonColors.normalize(request.getBalloonColor()));
+        }
 
         problemRepository.save(problem);
-        return ProblemResponse.from(problem);
+        return ProblemResponse.from(problem, problemIndex(problem));
     }
 
     public ProblemResponse getProblem(Long id) {
@@ -78,6 +84,7 @@ public class ProblemService {
                 .memoryLimit(problem.getMemoryLimit())
                 .difficulty(problem.getDifficulty().name())
                 .contestId(problem.getContest().getId())
+                .balloonColor(ProblemBalloonColors.valueOrFallback(problem.getBalloonColor(), problemIndex(problem)))
                 .build();
     }
 
@@ -90,8 +97,9 @@ public class ProblemService {
     }
 
     public List<ProblemResponse> getAllProblems(Long contestId) {
-        return problemRepository.findAllByContest_id(contestId).stream()
-                .map(ProblemResponse::from)
+        List<Problem> problems = problemRepository.findByContest_IdOrderByIdAsc(contestId);
+        return java.util.stream.IntStream.range(0, problems.size())
+                .mapToObj(index -> ProblemResponse.from(problems.get(index), index))
                 .toList();
     }
 
@@ -119,5 +127,15 @@ public class ProblemService {
         } catch (IllegalArgumentException ex) {
             throw new InvalidDifficultyException(value);
         }
+    }
+
+    private int problemIndex(Problem problem) {
+        List<Problem> problems = problemRepository.findByContest_IdOrderByIdAsc(problem.getContest().getId());
+        for (int i = 0; i < problems.size(); i++) {
+            if (problems.get(i).getId().equals(problem.getId())) {
+                return i;
+            }
+        }
+        return -1;
     }
 }

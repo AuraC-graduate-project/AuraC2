@@ -32,13 +32,14 @@ export function EditContestModal({
 }: EditContestModalProps) {
   const contestState = contest.effectiveState ?? contest.status;
   const canEditTiming = contestState === "UPCOMING";
+  const canEditDuration = contestState === "UPCOMING" || contestState === "RUNNING" || contestState === "PAUSED";
   const canEditScoring = contestState === "UPCOMING" || contestState === "RUNNING" || contestState === "PAUSED";
   const editMessage =
     contestState === "UPCOMING"
       ? "Timing, scoring, title, and description can be edited before the contest starts."
       : contestState === "ENDED"
         ? "Ended contests keep timing and scoring locked. Only title and description can be edited."
-        : "Start time and duration are locked. Title, description, freeze time, and penalty can still be edited.";
+        : "Start time is locked. Duration can be increased, and title, description, freeze time, and penalty can still be edited.";
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<ContestUpdateRequest>({
     title: contest.title,
@@ -74,8 +75,13 @@ export function EditContestModal({
       return;
     }
 
-    if (canEditTiming && (!formData.durationMinutes || formData.durationMinutes <= 0)) {
+    if (canEditDuration && (!formData.durationMinutes || formData.durationMinutes <= 0)) {
       toast.error("Duration must be greater than 0");
+      return;
+    }
+
+    if (!canEditTiming && canEditDuration && formData.durationMinutes < contest.durationMinutes) {
+      toast.error("Duration can only be increased after the contest starts");
       return;
     }
 
@@ -99,7 +105,7 @@ export function EditContestModal({
         title: formData.title.trim(),
         description: formData.description.trim(),
         startTime: canEditTiming ? new Date(formData.startTime).toISOString() : contest.startTime,
-        durationMinutes: canEditTiming ? formData.durationMinutes : contest.durationMinutes,
+        durationMinutes: canEditDuration ? formData.durationMinutes : contest.durationMinutes,
         scoreboardFreezeMinutes: canEditScoring
           ? formData.scoreboardFreezeMinutes
           : contest.scoreboardFreezeMinutes,
@@ -173,7 +179,7 @@ export function EditContestModal({
                 <Input
                   id="edit-contest-duration"
                   type="number"
-                  min="1"
+                  min={canEditTiming ? 1 : contest.durationMinutes}
                   value={formData.durationMinutes || ""}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -181,7 +187,7 @@ export function EditContestModal({
                       durationMinutes: parseInt(e.target.value, 10) || 0,
                     }))
                   }
-                  disabled={isSubmitting || !canEditTiming}
+                  disabled={isSubmitting || !canEditDuration}
                   className="h-10"
                   required
                 />

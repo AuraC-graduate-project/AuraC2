@@ -38,6 +38,12 @@ public class ScoreboardCalculator {
             Verdict.INTERNAL_ERROR
     );
 
+    private static final Set<Verdict> ACTIVE_VERDICTS = EnumSet.of(
+            Verdict.PENDING,
+            Verdict.PENDING_REJUDGE,
+            Verdict.RUNNING
+    );
+
     private final ScoreboardRankingService rankingService;
 
     public List<ScoreboardRow> calculateRows(
@@ -86,6 +92,7 @@ public class ScoreboardCalculator {
                         score.solved(),
                         score.attempts(),
                         score.wrongAttempts(),
+                        score.pendingCount(),
                         score.solvedTimeMinutes(),
                         score.solved() ? score.penalty() : null,
                         key.equals(firstSolveByProblem.get(problem.getId())),
@@ -117,7 +124,7 @@ public class ScoreboardCalculator {
 
         return allSubmissions.stream()
                 .filter(this::isTeamSubmission)
-                .filter(submission -> submission.getVerdict() != null && TERMINAL_VERDICTS.contains(submission.getVerdict()))
+                .filter(submission -> submission.getVerdict() != null)
                 .filter(submission -> !isBefore(submission, freezeTime))
                 .map(submission -> new ScoreboardCellKey(
                         submission.getUser().getId(),
@@ -169,6 +176,7 @@ public class ScoreboardCalculator {
         Optional<Submission> firstAccepted = firstAccepted(ordered);
         int wrongAttempts;
         int attempts;
+        int pendingCount = countPendingAttempts(ordered);
 
         if (firstAccepted.isPresent()) {
             Submission accepted = firstAccepted.get();
@@ -179,11 +187,11 @@ public class ScoreboardCalculator {
             attempts = wrongAttempts + 1;
             int solvedMinutes = solvedMinutes(contest, accepted);
             int penalty = solvedMinutes + wrongAttempts * penaltyMinutes(contest);
-            return new CellScore(true, attempts, wrongAttempts, solvedMinutes, penalty);
+            return new CellScore(true, attempts, wrongAttempts, pendingCount, solvedMinutes, penalty);
         }
 
         wrongAttempts = countWrongPenaltyAttempts(ordered);
-        return new CellScore(false, wrongAttempts, wrongAttempts, null, 0);
+        return new CellScore(false, wrongAttempts, wrongAttempts, pendingCount, null, 0);
     }
 
     private Optional<Submission> firstAccepted(List<Submission> submissions) {
@@ -195,6 +203,12 @@ public class ScoreboardCalculator {
     private int countWrongPenaltyAttempts(List<Submission> submissions) {
         return (int) submissions.stream()
                 .filter(submission -> WRONG_PENALTY_VERDICTS.contains(submission.getVerdict()))
+                .count();
+    }
+
+    private int countPendingAttempts(List<Submission> submissions) {
+        return (int) submissions.stream()
+                .filter(submission -> ACTIVE_VERDICTS.contains(submission.getVerdict()))
                 .count();
     }
 
@@ -247,6 +261,7 @@ public class ScoreboardCalculator {
             boolean solved,
             int attempts,
             int wrongAttempts,
+            int pendingCount,
             Integer solvedTimeMinutes,
             int penalty
     ) {

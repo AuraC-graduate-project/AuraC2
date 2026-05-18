@@ -25,4 +25,6 @@ public class ProblemUpdateRequest {
 
     @NotBlank
     private String difficulty;   // EASY, MEDIUM, HARD
+
+    private String balloonColor;
 }

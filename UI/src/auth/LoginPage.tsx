@@ -8,6 +8,11 @@ import { ThemeToggle } from "../components/ThemeToggle";
 import { TechBackground } from "./loginui/components/TechBackground";
 import auraSymbol from "../assets/aura-symbol.png";
 
+function normalizeLoginError(message: string | null | undefined): string | null {
+  if (!message) return null;
+  return message === "Invalid email or password." ? "Invalid username or password." : message;
+}
+
 export function LoginPage({
   onLoginSuccess,
   initialError,
@@ -18,7 +23,7 @@ export function LoginPage({
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(initialError ?? null);
+  const [error, setError] = useState<string | null>(() => normalizeLoginError(initialError));
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +34,7 @@ export function LoginPage({
       if (!res.accessToken) throw new Error("Backend did not return accessToken");
       onLoginSuccess(res.accessToken);
     } catch (err: any) {
-      setError(err?.message || "Login failed");
+      setError(normalizeLoginError(err?.message) || "Login failed");
     } finally {
       setLoading(false);
     }

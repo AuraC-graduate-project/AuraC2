@@ -3,9 +3,11 @@ import {
   ExternalLink,
   Eye,
   Lock,
+  Moon,
   Play,
   RefreshCw,
   RotateCcw,
+  Sun,
   StepForward,
   Trophy,
 } from "lucide-react";
@@ -32,6 +34,7 @@ import {
 import { useScoreboardStream } from "../../hooks/useScoreboardStream";
 import { ScoreboardTable, type ScoreboardRankChange } from "../../components/scoreboard/ScoreboardTable";
 import { StatusBadge } from "../../components/StatusBadge";
+import { useTheme } from "../../components/ThemeProvider";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
@@ -99,6 +102,7 @@ function rankChangesFor(
 }
 
 export function ScoreboardView({ contestId, presentationMode = false }: Props) {
+  const { isDark, toggleTheme } = useTheme();
   const [selectedContestId, setSelectedContestId] = useState<number | null>(() => contestIdFromUrl() ?? contestId);
   const [contestOptions, setContestOptions] = useState<ContestOption[]>([]);
   const [loadingContests, setLoadingContests] = useState(false);
@@ -260,6 +264,16 @@ export function ScoreboardView({ contestId, presentationMode = false }: Props) {
               </h1>
             </div>
             <div className="flex flex-wrap items-center gap-3 text-sm text-slate-200">
+              <button
+                type="button"
+                onClick={toggleTheme}
+                aria-label={isDark ? "Switch reveal display to light mode" : "Switch reveal display to dark mode"}
+                aria-pressed={isDark}
+                className="aura-scoreboard-theme-toggle inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm font-semibold transition"
+              >
+                {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                <span>{isDark ? "Light mode" : "Dark mode"}</span>
+              </button>
               {snapshot && <StatusBadge kind="contest" value={String(snapshot.metadata.effectiveState)} />}
               <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 font-semibold">
                 {revealSummary}

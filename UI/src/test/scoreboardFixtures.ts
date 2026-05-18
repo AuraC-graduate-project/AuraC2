@@ -26,8 +26,8 @@ export function scoreboardMetadata(
     revealedCells: 0,
     totalHiddenCells: 0,
     problemColumns: [
-      { problemId: 10, label: "A", title: "Warmup" },
-      { problemId: 20, label: "B", title: "Graphs" },
+      { problemId: 10, label: "A", title: "Warmup", balloonColor: "#EF4444" },
+      { problemId: 20, label: "B", title: "Graphs", balloonColor: "#3B82F6" },
     ],
     ...overrides,
   };
@@ -47,6 +47,7 @@ export function scoreboardRow(overrides: Partial<ScoreboardRow> = {}): Scoreboar
         solved: true,
         attempts: 2,
         wrongAttempts: 1,
+        pendingCount: 0,
         solvedTimeMinutes: 22,
         penalty: 42,
         firstToSolve: true,
@@ -59,6 +60,7 @@ export function scoreboardRow(overrides: Partial<ScoreboardRow> = {}): Scoreboar
         solved: false,
         attempts: 0,
         wrongAttempts: 0,
+        pendingCount: 0,
         solvedTimeMinutes: null,
         penalty: null,
         firstToSolve: false,

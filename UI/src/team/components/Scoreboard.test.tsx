@@ -75,6 +75,7 @@ describe("Scoreboard", () => {
           solved: false,
           attempts: 0,
           wrongAttempts: 0,
+          pendingCount: 0,
           solvedTimeMinutes: null,
           penalty: null,
           firstToSolve: false,
@@ -87,6 +88,7 @@ describe("Scoreboard", () => {
           solved: false,
           attempts: 0,
           wrongAttempts: 0,
+          pendingCount: 0,
           solvedTimeMinutes: null,
           penalty: null,
           firstToSolve: false,
@@ -149,7 +151,7 @@ describe("Scoreboard", () => {
 
     await waitFor(() => expect(screen.getByLabelText("Rank up")).toBeInTheDocument());
     expect(screen.getByLabelText("Rank down")).toBeInTheDocument();
-    expect(screen.getByTitle("Accepted at 61 min with 0 wrong attempt(s)")).toHaveClass(
+    expect(screen.getByTitle("Accepted on attempt 1 at 61 min with 0 wrong attempt(s)")).toHaveClass(
       "aura-scoreboard-cell-revealed"
     );
   });

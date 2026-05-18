@@ -56,6 +56,27 @@ type ContestOverviewProps = {
 
 const FALLBACK_DELAY_MS = 3000;
 
+function getContestCountdownMs(
+  contest: ContestResponse,
+  lifecycleState: ContestLifecycleState | null
+): number | null {
+  if (lifecycleState === 'RUNNING') {
+    const endMs = new Date(contest.effectiveEndTime ?? contest.endTime ?? '').getTime();
+    return Number.isFinite(endMs) ? Math.max(0, endMs - Date.now()) : contest.remainingMillis ?? null;
+  }
+
+  if (lifecycleState === 'UPCOMING') {
+    const startMs = new Date(contest.startTime).getTime();
+    return Number.isFinite(startMs) ? Math.max(0, startMs - Date.now()) : null;
+  }
+
+  if (lifecycleState === 'PAUSED') {
+    return contest.remainingMillis ?? 0;
+  }
+
+  return null;
+}
+
 
 export function ContestOverview({ onOpenScoreboard }: ContestOverviewProps) {// Every render, React runs this function again.
   const [contestType, setContestType] = useState<ContestTab>('active');// This stores which tab is currently selected. It can be 'active', 'upcoming', 'paused', or 'ended'. The default is 'active'.
@@ -381,7 +402,10 @@ export function ContestOverview({ onOpenScoreboard }: ContestOverviewProps) {// 
   const canResume = lifecycleState === 'PAUSED';
   const canPause = lifecycleState === 'RUNNING';
   const canEnd = lifecycleState === 'RUNNING' || lifecycleState === 'PAUSED';
-  const canEdit = lifecycleState === 'UPCOMING';
+  const canEdit =
+    lifecycleState === 'UPCOMING' ||
+    lifecycleState === 'RUNNING' ||
+    lifecycleState === 'PAUSED';
 
   /**
    * The backend gives the base truth, and frontend creates a smooth local ticking timer between SSE updates.
@@ -403,18 +427,25 @@ export function ContestOverview({ onOpenScoreboard }: ContestOverviewProps) {// 
    **/
   const [remainingMs, setRemainingMs] = useState<number | null>(null);
   useEffect(() => {
-
     if (!contest) {
       setRemainingMs(null);
       return;
     }
-    setRemainingMs(contest.remainingMillis ?? 0);
-    if (lifecycleState !== 'RUNNING') return;
-    const id = setInterval(() => {
-      setRemainingMs((prev) => (prev == null ? prev : Math.max(0, prev - 1000)));
-    }, 1000);
+
+    const tick = () => setRemainingMs(getContestCountdownMs(contest, lifecycleState));
+    tick();
+
+    if (lifecycleState !== 'RUNNING' && lifecycleState !== 'UPCOMING') return;
+    const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [contest, lifecycleState]);
+  }, [
+    contest?.id,
+    contest?.startTime,
+    contest?.remainingMillis,
+    contest?.effectiveEndTime,
+    contest?.endTime,
+    lifecycleState
+  ]);
 
   const formatCountdown = (ms: number | null) => {
     if (ms == null) return '—';

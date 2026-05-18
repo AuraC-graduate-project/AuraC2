@@ -351,7 +351,14 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
                     <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                          Problem {String.fromCharCode(65 + index)}
+                          <span className="inline-flex items-center gap-2">
+                            <span
+                              className="h-3 w-3 rounded-full border border-slate-300"
+                              style={{ backgroundColor: problem.balloonColor }}
+                              aria-hidden="true"
+                            />
+                            Problem {String.fromCharCode(65 + index)}
+                          </span>
                         </p>
                         <p className="text-sm font-medium text-slate-900 truncate">
                           {problem.title}
@@ -410,6 +417,14 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
                   </div>
                   <div className="flex flex-wrap items-center gap-2 mb-4">
                     <StatusBadge kind="difficulty" value={selectedProblem.difficulty} />
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                      <span
+                        className="h-3 w-3 rounded-full border border-slate-300"
+                        style={{ backgroundColor: selectedProblem.balloonColor }}
+                        aria-hidden="true"
+                      />
+                      Balloon {selectedProblem.balloonColor}
+                    </span>
                     <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
                       <Timer className="h-3.5 w-3.5" />
                       {selectedProblem.timeLimit} ms
@@ -456,6 +471,7 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
           open={createModalOpen}
           onOpenChange={setCreateModalOpen}
           contestId={selectedContestNumericId}
+          nextProblemIndex={problems.length}
           onSuccess={handleProblemCreated}
         />
       )}

@@ -9,6 +9,7 @@ export type ProblemRequest = {
   timeLimit: number;
   memoryLimit: number;
   difficulty: "EASY" | "MEDIUM" | "HARD";
+  balloonColor: string;
 };
 
 export type ProblemResponse = {
@@ -19,6 +20,7 @@ export type ProblemResponse = {
   memoryLimit: number;
   difficulty: string;
   contestId: number;
+  balloonColor: string;
 };
 
 // Backend:

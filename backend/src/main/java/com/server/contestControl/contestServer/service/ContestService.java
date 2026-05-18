@@ -158,12 +158,13 @@ public class ContestService {
                     throw new InvalidContestStateException(
                             "Start time is locked once a contest is RUNNING or PAUSED.");
                 }
-                if (durationChanged) {
+                if (request.durationMinutes() < contest.getDurationMinutes()) {
                     throw new InvalidContestStateException(
-                            "Duration is locked once a contest is RUNNING or PAUSED.");
+                            "Duration can only be increased once a contest is RUNNING or PAUSED.");
                 }
-                validateFreezeAgainstDuration(request.scoreboardFreezeMinutes(), contest.getDurationMinutes());
+                validateFreezeAgainstDuration(request.scoreboardFreezeMinutes(), request.durationMinutes());
 
+                contest.setDurationMinutes(request.durationMinutes());
                 contest.setScoreboardFreezeMinutes(request.scoreboardFreezeMinutes());
                 contest.setPenaltyMinutes(request.penaltyMinutes());
             }

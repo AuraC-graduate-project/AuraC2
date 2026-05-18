@@ -10,6 +10,8 @@ import {
   UpdatePasswordRequest,
   UpdateUserNameRequest,
   UserResponse,
+  BulkTeamGenerationRequest,
+  GeneratedTeamCredentialResponse,
   TestCaseRequest,
   TestCaseUpdateRequest,
   TestCaseResponse,
@@ -156,11 +158,7 @@ async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise
 
       if (!retryRes.ok) {
         const body = await parseBodySafe(retryRes);
-        throw new Error(
-          typeof body === "string" && body.length > 0
-            ? body
-            : `Request failed (${retryRes.status})`
-        );
+        throw new Error(formatApiError(body, retryRes.status));
       }
 
       // Handle empty body
@@ -172,14 +170,19 @@ async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise
 
   if (!res.ok) {
     const body = await parseBodySafe(res);
-    throw new Error(
-      typeof body === "string" && body.length > 0 ? body : `Request failed (${res.status})`
-    );
+    throw new Error(formatApiError(body, res.status));
   }
 
   const contentType = res.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json")) return undefined as T;
   return (await res.json()) as T;
+}
+
+function formatApiError(body: any, status: number): string {
+  if (typeof body === "string" && body.length > 0) return body;
+  if (typeof body?.message === "string" && body.message.length > 0) return body.message;
+  if (typeof body?.error === "string" && body.error.length > 0) return body.error;
+  return `Request failed (${status})`;
 }
 
 // -----------------------------
@@ -311,6 +314,16 @@ export async function updateUserPassword(userId: number, newPassword: string): P
 
 export async function deleteUser(userId: number): Promise<void> {
   await apiFetch<void>(`/api/admin/users/${userId}`, { method: 'DELETE' });
+}
+
+export async function generateTeamAccounts(
+  data: BulkTeamGenerationRequest
+): Promise<GeneratedTeamCredentialResponse[]> {
+  return apiFetch<GeneratedTeamCredentialResponse[]>('/api/admin/users/bulk-generate-teams', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
 }
 
 // -----------------------------

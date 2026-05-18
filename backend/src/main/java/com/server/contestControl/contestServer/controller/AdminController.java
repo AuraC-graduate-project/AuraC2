@@ -1,5 +1,7 @@
 package com.server.contestControl.contestServer.controller;
 import com.server.contestControl.authServer.service.user.UserService;
+import com.server.contestControl.contestServer.dto.BulkTeamGenerationRequest;
+import com.server.contestControl.contestServer.dto.GeneratedTeamCredentialResponse;
 import com.server.contestControl.contestServer.dto.UpdatePasswordRequest;
 import com.server.contestControl.contestServer.dto.UpdateUserNameRequest;
 import com.server.contestControl.contestServer.dto.UserResponse;
@@ -25,6 +27,13 @@ public class AdminController {
     @GetMapping
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
+    }
+
+    @PostMapping("/bulk-generate-teams")
+    public ResponseEntity<List<GeneratedTeamCredentialResponse>> generateTeamAccounts(
+            @RequestBody BulkTeamGenerationRequest request
+    ) {
+        return ResponseEntity.ok(userService.generateTeamAccounts(request));
     }
 
     /* ===================== UPDATE USER NAME ===================== */

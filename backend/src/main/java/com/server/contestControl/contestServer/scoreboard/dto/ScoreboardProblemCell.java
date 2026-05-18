@@ -6,6 +6,7 @@ public record ScoreboardProblemCell(
         boolean solved,
         int attempts,
         int wrongAttempts,
+        int pendingCount,
         Integer solvedTimeMinutes,
         Integer penalty,
         boolean firstToSolve,

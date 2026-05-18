@@ -138,7 +138,7 @@ export function Scoreboard({ contestId, fullPage = false }: ScoreboardProps) {
           ...row,
           problemCells: row.problemCells.map((cell) =>
             pending.has(cell.problemId) && !cell.solved
-              ? { ...cell, pending: true }
+              ? { ...cell, pending: true, pendingCount: Math.max(cell.pendingCount ?? 0, 1) }
               : cell
           ),
         };

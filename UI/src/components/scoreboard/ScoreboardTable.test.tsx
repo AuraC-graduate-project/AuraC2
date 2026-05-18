@@ -9,10 +9,12 @@ describe("ScoreboardTable", () => {
 
     expect(screen.getByText("alpha")).toBeInTheDocument();
     expect(screen.getByText("42")).toBeInTheDocument();
-    expect(screen.getByTitle("Accepted at 22 min with 1 wrong attempt(s)")).toBeInTheDocument();
-    expect(screen.getByTitle("Contains hidden post-freeze activity")).toBeInTheDocument();
+    expect(screen.getByTitle("Accepted on attempt 2 at 22 min with 1 wrong attempt(s)")).toBeInTheDocument();
+    expect(screen.getByTitle("Frozen cell with hidden post-freeze activity")).toBeInTheDocument();
     expect(screen.getByText("Hidden")).toBeInTheDocument();
-    expect(screen.getByRole("row", { name: /1 alpha 22\+1 hidden 1 42/i })).toHaveClass("bg-sky-50/80");
+    expect(screen.getByRole("row", { name: /1 alpha 2 \/ 22 fts hidden 1 42/i })).toHaveClass(
+      "aura-scoreboard-row-updated"
+    );
   });
 
   it("shows reveal highlights and rank direction indicators", () => {
@@ -33,6 +35,7 @@ describe("ScoreboardTable", () => {
                   solved: false,
                   attempts: 0,
                   wrongAttempts: 0,
+                  pendingCount: 0,
                   solvedTimeMinutes: null,
                   penalty: null,
                   firstToSolve: false,
@@ -45,6 +48,7 @@ describe("ScoreboardTable", () => {
                   solved: true,
                   attempts: 1,
                   wrongAttempts: 0,
+                  pendingCount: 0,
                   solvedTimeMinutes: 61,
                   penalty: 61,
                   firstToSolve: true,
@@ -67,7 +71,7 @@ describe("ScoreboardTable", () => {
 
     expect(screen.getByLabelText("Rank up")).toBeInTheDocument();
     expect(screen.getByLabelText("Rank down")).toBeInTheDocument();
-    expect(screen.getByTitle("Accepted at 61 min with 0 wrong attempt(s)")).toHaveClass(
+    expect(screen.getByTitle("Accepted on attempt 1 at 61 min with 0 wrong attempt(s)")).toHaveClass(
       "aura-scoreboard-cell-revealed"
     );
   });

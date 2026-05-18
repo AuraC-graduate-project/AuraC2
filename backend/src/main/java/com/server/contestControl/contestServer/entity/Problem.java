@@ -33,6 +33,10 @@ public class Problem {
     @Enumerated(EnumType.STRING)
     private Difficulty difficulty;
 
+    @Builder.Default
+    @Column(name = "balloon_color", nullable = false, length = 7)
+    private String balloonColor = "#2563EB";
+
     @OneToMany(mappedBy = "problem", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<TestCase> testCases;
 }

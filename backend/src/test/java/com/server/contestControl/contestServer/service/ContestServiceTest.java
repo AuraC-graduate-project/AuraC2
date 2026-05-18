@@ -98,17 +98,17 @@ class ContestServiceTest {
 
     @Test
     @DisplayName("updateContestDetails should allow safe fields while contest is running")
-    void shouldAllowSafeRunningContestUpdates() {
+    void shouldAllowSafeRunningContestUpdatesAndDurationIncrease() {
         upcomingContest.setStatus(ContestStatus.RUNNING);
         when(contestRepository.findById(upcomingContest.getId())).thenReturn(Optional.of(upcomingContest));
         when(contestLifecycleService.resolveEffectiveState(any(), any())).thenReturn(ContestStatus.RUNNING);
-        when(contestLifecycleService.resolveRemainingMillis(any(), any())).thenReturn(90L * 60_000L);
+        when(contestLifecycleService.resolveRemainingMillis(any(), any())).thenReturn(150L * 60_000L);
 
         ContestUpdateRequest request = new ContestUpdateRequest(
                 "Running Rename",
                 "Updated while running",
                 upcomingContest.getStartTime(),
-                upcomingContest.getDurationMinutes(),
+                180,
                 15,
                 25
         );
@@ -120,7 +120,7 @@ class ContestServiceTest {
         assertThat(upcomingContest.getScoreboardFreezeMinutes()).isEqualTo(15);
         assertThat(upcomingContest.getPenaltyMinutes()).isEqualTo(25);
         assertThat(upcomingContest.getStartTime()).isEqualTo(request.startTime());
-        assertThat(upcomingContest.getDurationMinutes()).isEqualTo(120);
+        assertThat(upcomingContest.getDurationMinutes()).isEqualTo(180);
         verify(contestRepository).save(upcomingContest);
         verify(eventPublisher).publishEvent(any(ContestUpdatedEvent.class));
     }
@@ -150,18 +150,42 @@ class ContestServiceTest {
     }
 
     @Test
+    @DisplayName("updateContestDetails should reject duration decreases while contest is running")
+    void shouldRejectRunningContestDurationDecrease() {
+        upcomingContest.setStatus(ContestStatus.RUNNING);
+        when(contestRepository.findById(upcomingContest.getId())).thenReturn(Optional.of(upcomingContest));
+        when(contestLifecycleService.resolveEffectiveState(any(), any())).thenReturn(ContestStatus.RUNNING);
+
+        assertThatThrownBy(() -> contestService.updateContestDetails(
+                upcomingContest.getId(),
+                new ContestUpdateRequest(
+                        "Running Rename",
+                        "Updated while running",
+                        upcomingContest.getStartTime(),
+                        90,
+                        15,
+                        25
+                )
+        )).isInstanceOf(InvalidContestStateException.class)
+                .hasMessageContaining("Duration can only be increased");
+
+        verify(contestRepository, never()).save(any());
+        verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
     @DisplayName("updateContestDetails should allow safe fields while contest is paused")
-    void shouldAllowSafePausedContestUpdates() {
+    void shouldAllowSafePausedContestUpdatesAndDurationIncrease() {
         upcomingContest.setStatus(ContestStatus.PAUSED);
         when(contestRepository.findById(upcomingContest.getId())).thenReturn(Optional.of(upcomingContest));
         when(contestLifecycleService.resolveEffectiveState(any(), any())).thenReturn(ContestStatus.PAUSED);
-        when(contestLifecycleService.resolveRemainingMillis(any(), any())).thenReturn(60L * 60_000L);
+        when(contestLifecycleService.resolveRemainingMillis(any(), any())).thenReturn(120L * 60_000L);
 
         ContestUpdateRequest request = new ContestUpdateRequest(
                 "Paused Rename",
                 "Updated while paused",
                 upcomingContest.getStartTime(),
-                upcomingContest.getDurationMinutes(),
+                180,
                 10,
                 30
         );
@@ -170,6 +194,7 @@ class ContestServiceTest {
 
         assertThat(upcomingContest.getTitle()).isEqualTo("Paused Rename");
         assertThat(upcomingContest.getDescription()).isEqualTo("Updated while paused");
+        assertThat(upcomingContest.getDurationMinutes()).isEqualTo(180);
         assertThat(upcomingContest.getScoreboardFreezeMinutes()).isEqualTo(10);
         assertThat(upcomingContest.getPenaltyMinutes()).isEqualTo(30);
         verify(contestRepository).save(upcomingContest);

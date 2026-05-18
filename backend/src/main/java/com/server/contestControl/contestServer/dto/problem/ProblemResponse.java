@@ -1,7 +1,7 @@
 package com.server.contestControl.contestServer.dto.problem;
 
 import com.server.contestControl.contestServer.entity.Problem;
-import com.server.contestControl.contestServer.enums.Difficulty;
+import com.server.contestControl.contestServer.util.ProblemBalloonColors;
 import lombok.Builder;
 import lombok.Data;
 
@@ -16,8 +16,13 @@ public class ProblemResponse {
     private Integer memoryLimit;
     private String difficulty;
     private Long contestId;
+    private String balloonColor;
 
     public static ProblemResponse from(Problem problem) {
+        return from(problem, -1);
+    }
+
+    public static ProblemResponse from(Problem problem, int problemIndex) {
         return ProblemResponse.builder()
                 .id(problem.getId())
                 .title(problem.getTitle())
@@ -26,6 +31,9 @@ public class ProblemResponse {
                 .memoryLimit(problem.getMemoryLimit())
                 .difficulty(problem.getDifficulty().name()) // enum → String
                 .contestId(problem.getContest().getId())
+                .balloonColor(problemIndex >= 0
+                        ? ProblemBalloonColors.valueOrFallback(problem.getBalloonColor(), problemIndex)
+                        : ProblemBalloonColors.valueOrDefault(problem.getBalloonColor()))
                 .build();
     }
 }
