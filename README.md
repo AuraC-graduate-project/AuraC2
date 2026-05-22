@@ -132,6 +132,8 @@ AuraC2 now includes a real-time ICPC-style scoreboard with admin and public/team
 
 Every finalized submission publishes a scoreboard domain event. Accepted submissions immediately recalculate solved counts, penalties, first-to-solve cells, ranks, and row-level SSE updates. Public/team streams respect freeze and reveal state; admin streams remain live.
 
+Contest timing and scoreboard visibility are pause-aware. Submissions are accepted only while an effective `RUNNING` contest exists; upcoming, paused, and ended contests reject new submissions, and the exact effective end instant is treated as ended. ICPC penalties count wrong attempts before the first accepted submission according to the configured contest penalty, while wrong attempts after the first accepted submission do not add penalty. Public frozen scoreboards hide cells at or after the freeze boundary until reveal; admin views remain live.
+
 Full API, SSE, scoring, reveal, testing, and migration details are in [`docs/scoreboard-feature-documentation.md`](docs/scoreboard-feature-documentation.md).
 
 ---

@@ -30,16 +30,16 @@ This document is based on the current local codebase only. The instructor templa
 | Manual start/pause/resume/end | Implemented | `ContestController.start/resume/pause/end`, `ContestService.updateStatus` | Admin transitions are validated by current state. Manual end before effective end requires `juryOverride=true`. | Include as implemented requirements and use cases. |
 | Jury override | Implemented | `ContestController.endContest`, `ContestService.updateStatus(..., juryOverride)` | Admin can force an early end with query parameter `juryOverride=true`. | Include in lifecycle controls and risk notes. |
 | Auto start and auto end | Implemented | `ContestStatusSyncService`, `ContestStatusSyncExecutor`, `ContestTransitionScheduler`, `ContestStatusSyncScheduler` | Exact-time scheduler and fallback scheduler synchronize persisted state to effective state. Auto-start stamps `actualStartTime`; auto-end uses effective end. | Include exact-time and fallback scheduler diagrams. |
-| `ContestUpdatedEvent` | Implemented | `ContestUpdatedEvent`, `ContestService`, `ContestStatusSyncService`, `ContestStreamBroadcaster`, `ContestTransitionScheduler` | Manual and automatic transitions publish event reasons used by scheduler and SSE broadcaster. | Include in event/listener list and architecture diagram. |
-| `@TransactionalEventListener` after commit behavior | Implemented | `ContestTransitionScheduler.onContestUpdated`, `ContestStreamBroadcaster.onContestUpdated` | Listeners react after transaction completion, with fallback execution allowed when no transaction exists. | Explain why this avoids broadcasting or scheduling stale state. |
+| `ContestUpdatedEvent` | Implemented | `ContestUpdatedEvent`, `ContestService`, `ContestStatusSyncService`, `ContestSseAdapter`, `ContestTransitionScheduler` | Manual and automatic transitions publish event reasons used by scheduler and SSE adapter. | Include in event/listener list and architecture diagram. |
+| `@TransactionalEventListener` after commit behavior | Implemented | `ContestTransitionScheduler.onContestUpdated`, `ContestSseAdapter.onContestUpdated` | Listeners react after transaction completion, with fallback execution allowed when no transaction exists. | Explain why this avoids broadcasting or scheduling stale state. |
 | `REQUIRES_NEW` in lifecycle scheduling/sync | Implemented | `ContestTransitionScheduler.onContestUpdated`, `ContestStatusSyncExecutor.syncContestStatus`, `ContestService.buildResponseForId` | New transactions are used for scheduler side effects, row locking, and fresh response reads. | Include in design decisions. |
 | Row locking for contest sync | Implemented | `ContestRepository.findByIdWithLock`, `ContestStatusSyncExecutor.syncContestStatus` | Pessimistic write lock prevents concurrent scheduler calls from applying duplicate auto transitions. | Include as reliability and race-condition control. |
 | Application startup scheduler recovery | Implemented | `ContestTransitionScheduler.onApplicationReady` | Existing contests are read from the database and rescheduled after application startup. | Include scheduler startup recovery diagram. |
 | Scheduler configuration flags | Implemented | `application.yml`, `ContestStatusSyncScheduler`, `SchedulerConfig` | `contest.sync.enabled`, `delay-ms`, and `initial-delay-ms` configure fallback sync. ThreadPoolTaskScheduler pool size is 3. | Include in configuration list. |
 | Lazy dependency injection for lifecycle cycles | Unknown / Needs Confirmation | No `@Lazy` usage found in lifecycle classes | The code splits sync writing into `ContestStatusSyncExecutor` rather than using lazy injection. There is no discovered lazy dependency injection for this area. | Do not claim lazy injection unless confirmed. |
-| SSE stream endpoint | Implemented | `ContestStreamController.stream`, `ContestStreamBroadcaster`, `useContestStream` | Browser opens `/api/contest/stream`; backend returns an `SseEmitter`, sends a `snapshot`, registers emitter, and broadcasts `contest-update` events. | Include SSE architecture and connection activity diagrams. |
-| SSE emitter registry and cleanup | Implemented | `ContestStreamBroadcaster.emitters`, `CopyOnWriteArrayList`, `register`, `safeSend` | Emitters are stored in a thread-safe list; completion, timeout, error, and failed send remove emitters. | Include in real-time design. |
-| SSE heartbeat | Implemented | `ContestStreamBroadcaster.heartbeat` | A scheduled heartbeat comment is sent every 15 seconds. | Include in SSE diagram and non-functional reliability notes. |
+| SSE stream endpoint | Implemented | `ContestStreamController.stream`, `ContestSseRegistry`, `ContestSseAdapter`, `useContestStream` | Browser opens `/api/contest/stream`; backend returns an `SseEmitter`, sends a `snapshot`, registers emitter, and broadcasts `contest-update` events. | Include SSE architecture and connection activity diagrams. |
+| SSE emitter registry and cleanup | Implemented | `SseEmitterRegistry`, `ContestSseRegistry`, `register`, `safeSend` | Emitters are stored in a thread-safe registry; completion, timeout, error, and failed send remove emitters. | Include in real-time design. |
+| SSE heartbeat | Implemented | `SseHeartbeatScheduler`, `SseEmitterRegistry.keepAliveAll` | A scheduled named `ping` event is sent every 15 seconds to active broadcast and targeted SSE registries. | Include in SSE diagram and non-functional reliability notes. |
 | Frontend SSE snapshot and update handling | Implemented | `useContestStream`, `ContestOverview.applySnapshot`, `ContestOverview.placeContest`, `switchTabForReason` | Snapshot hydrates all contest buckets; updates move a contest between active/upcoming/paused/ended tabs. | Include as frontend real-time implementation. |
 | REST fallback if no SSE snapshot arrives | Implemented | `ContestOverview` fallback timer | After 3 seconds without hydration, REST endpoints are called to populate contest state. | Include in SSE failure flow. |
 | Polling fallback when SSE closes | Implemented | `ContestOverview` polling effect | When connection state is closed, the UI polls contest REST endpoints every 10 seconds. | Include in SSE failure flow. |
@@ -111,7 +111,7 @@ The backend is best described as a modular monolith rather than separate microse
 | User administration | `AdminController`, `UserService`, `UserRepository`, user DTOs | Admin list/update/delete users and review all submissions. |
 | Contest lifecycle | `ContestController`, `ContestService`, `ContestLifecycleService`, `ContestRepository`, `ContestUpdatedEvent` | Contest creation, manual transitions, effective state calculation, pause-aware timing, event publishing. |
 | Contest scheduling | `ContestTransitionScheduler`, `ContestStatusSyncScheduler`, `ContestStatusSyncService`, `ContestStatusSyncExecutor` | Exact-time auto transition scheduling, fallback periodic sync, row-locked status updates, startup recovery. |
-| SSE real-time updates | `ContestStreamController`, `ContestStreamBroadcaster`, `ContestStreamSnapshot`, `useContestStream`, `ContestOverview` | Initial snapshot, lifecycle update broadcast, heartbeat, emitter cleanup, frontend bucket placement and fallback polling. |
+| SSE real-time updates | `ContestStreamController`, `ContestSseAdapter`, `ContestSseRegistry`, `ContestStreamSnapshot`, `SseHeartbeatScheduler`, `useContestStream`, `ContestOverview` | Initial snapshot, lifecycle update broadcast, heartbeat, emitter cleanup, frontend bucket placement and fallback polling. |
 | Problem management | `ProblemController`, `ProblemService`, `ProblemRepository`, problem DTOs | Admin problem create/update/delete and role-protected problem retrieval. |
 | Test-case management | `TestCaseController`, `TestCaseService`, `TestCaseRepository`, test-case DTOs | Admin test-case create/update/delete and role-filtered public/private test-case listing. |
 | Clarifications | `ClarificationController`, `ClarificationService`, `ClarificationRepository`, clarification entity/enums/DTOs, `ClarificationsView`, team `Clarifications` | Team clarification submission, admin reply, public/private answer visibility, and admin/team frontend integration. |
@@ -168,7 +168,7 @@ The backend is best described as a modular monolith rather than separate microse
 | `/api/testcases/{id}` | DELETE | ADMIN | Implemented | `TestCaseController.deleteTestCase`, `TestCaseService.deleteTestCase` |
 | `/api/testcases/problem/{problemId}` | GET | ADMIN or TEAM | Implemented with filtering | `TestCaseController.getTestCases`, `TestCaseService` |
 | `/api/scoreboard/contests/{contestId}` | GET | Public | Implemented | `ScoreboardController`, `ScoreboardService` |
-| `/api/scoreboard/contests/{contestId}/stream` | GET SSE | Public | Implemented | `ScoreboardStreamController`, `ScoreboardBroadcaster` |
+| `/api/scoreboard/contests/{contestId}/stream` | GET SSE | Public | Implemented | `ScoreboardStreamController`, `ScoreboardSseAdapter`, `ScoreboardSsePublisher` |
 | `/api/admin/scoreboard/contests/{contestId}` | GET | ADMIN | Implemented | `AdminScoreboardController` |
 | `/api/admin/scoreboard/contests/{contestId}/stream` | GET SSE | ADMIN | Implemented | `AdminScoreboardStreamController` |
 | `/api/admin/scoreboard/contests/{contestId}/reveal/*` | POST | ADMIN | Implemented | `AdminScoreboardController` |
@@ -178,7 +178,7 @@ The backend is best described as a modular monolith rather than separate microse
 | `/api/clarifications/admin/all` | GET | ADMIN | Implemented | `ClarificationController.getAllClarifications`, admin clarification UI |
 | `/api/clarifications/admin/{id}/reply` | PUT | ADMIN | Implemented | `ClarificationController.replyClarification`, admin clarification UI |
 | `/api/clarifications/public/{contestId}` | GET | Public | Implemented | `ClarificationController.getPublicClarifications` |
-| `/api/submissions` | POST | TEAM or ADMIN | Partially implemented due validation gaps | `SubmissionController.submit`, `SubmissionService.submitCode` |
+| `/api/submissions` | POST | TEAM or ADMIN | Implemented with judging-language limitation | `SubmissionController.submit`, `SubmissionService.submitCode`, `SubmissionServiceValidationTest` |
 | `/api/submissions/{id}` | GET | TEAM or ADMIN | Implemented with owner check for non-admin | `SubmissionController.getSubmission`, `SubmissionService.getSubmissionById` |
 | `/api/submissions/my?problemID={id}` | GET | TEAM or ADMIN | Implemented | `SubmissionController.getAllSubmission`, `teamApi.getMySubmissions` |
 | `/api/submissions/my/all` | GET | TEAM | Implemented | `SubmissionController.getAllMySubmissions` |
@@ -193,12 +193,12 @@ The backend is best described as a modular monolith rather than separate microse
 | Item | Type | Status | Purpose |
 |---|---|---|---|
 | `ContestUpdatedEvent` | Application event | Implemented | Carries lifecycle reason and contest snapshot. |
-| `ContestStreamBroadcaster.onContestUpdated` | `@TransactionalEventListener(fallbackExecution = true)` | Implemented | Broadcasts `contest-update` SSE events after contest changes. |
+| `ContestSseAdapter.onContestUpdated` | `@TransactionalEventListener(fallbackExecution = true)` | Implemented | Publishes `contest-update` SSE events after contest changes. |
 | `ContestTransitionScheduler.onContestUpdated` | `@TransactionalEventListener` + `REQUIRES_NEW` | Implemented | Reschedules or cancels exact-time transition tasks after contest changes. |
 | `ContestTransitionScheduler.onApplicationReady` | `@EventListener(ApplicationReadyEvent.class)` | Implemented | Restores scheduled transition tasks from persisted contests after restart. |
 | `ContestTransitionScheduler` | One-shot task scheduler | Implemented | Schedules next auto-start or auto-end at exact time. |
 | `ContestStatusSyncScheduler` | `@Scheduled` fallback | Implemented | Periodically syncs persisted contest state with effective state. |
-| `ContestStreamBroadcaster.heartbeat` | `@Scheduled(fixedDelay = 15000)` | Implemented | Sends SSE keepalive comments. |
+| `SseHeartbeatScheduler.heartbeat` | `@Scheduled(fixedDelay = 15000)` | Implemented | Sends named `ping` SSE keepalive events to active registries. |
 | `SchedulerConfig.taskScheduler` | `ThreadPoolTaskScheduler` | Implemented | Shared scheduler with pool size 3 and graceful shutdown. |
 
 ## G. Updated Queue and Asynchronous Flow List
@@ -210,7 +210,7 @@ The backend is best described as a modular monolith rather than separate microse
 | Judge0 callback processing | Implemented | `CallbackHandler`, `Judge0CallbackSignatureService`, `Judge0CallbackService`, `SubmissionJudgeResultRepository` | Callback verifies HMAC signature, writes each per-case result idempotently, and finalizes after all tests arrive. |
 | Rejudge republish | Implemented backend | `RejudgeService`, `SubmissionProducer`, `SubmissionConsumer` | Rejudge resets final submissions to `PENDING_REJUDGE` and republishes after commit. |
 | Result queue | Partially Implemented | `RabbitMQConfig.RESULT_QUEUE`, empty `ResultProducer`, empty `ResultConsumer` | Queue exists but no result notification flow is implemented. |
-| SSE contest updates | Implemented | `ContestUpdatedEvent`, `ContestStreamBroadcaster`, `ContestOverview` | Pushes contest lifecycle updates, not submission verdict updates. |
+| SSE contest updates | Implemented | `ContestUpdatedEvent`, `ContestSseAdapter`, `ContestOverview` | Pushes contest lifecycle updates, not submission verdict updates. |
 | Team verdict refresh | Partially Implemented | `teamApi.getMySubmissions`, `SubmissionHistory` | Team UI reads history via REST but has no live verdict push or polling loop discovered. |
 
 ## H. Updated Frontend Screen / Hook / Component List
@@ -307,7 +307,7 @@ Use the instructor template as the required structure, with these code-aligned s
 | 9 | SSE Connection and Contest Update Flow | Recommended |
 | 10 | Judge0 Callback and Per-Test-Case Result Flow | Recommended |
 | 11 | Rejudge Workflow Diagram | Recommended |
-| 12 | Clarification Backend vs Frontend Gap Diagram | Recommended |
+| 12 | Clarification Workflow Diagram | Recommended |
 | 13 | Contest Lifecycle Architecture Diagram | Recommended |
 | 14 | Submission and Asynchronous Judging Architecture Diagram | Recommended |
 | 15 | Current ER Diagram | Recommended |
