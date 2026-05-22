@@ -11,6 +11,7 @@ import com.server.contestControl.submissionServer.repository.SubmissionRepositor
 import com.server.contestControl.submissionServer.sse.SubmissionSsePublisher;
 import com.server.contestControl.submissionServer.sse.SubmissionStreamEvent;
 import com.server.contestControl.submissionServer.sse.SubmissionStreamEventType;
+import com.server.contestControl.submissionServer.util.Judge0AuditUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -54,6 +55,17 @@ public class Judge0CallbackService {
                     testCaseNumber
             );
             return ResponseEntity.ok("Stale callback ignored");
+        }
+
+        if (submission.getVerdict() != Verdict.RUNNING) {
+            log.info(
+                    "Ignoring Judge0 callback for non-running submission. submissionId={} judgeRunId={} currentVerdict={} testCaseNumber={}",
+                    submissionId,
+                    judgeRunId,
+                    submission.getVerdict(),
+                    testCaseNumber
+            );
+            return ResponseEntity.ok("Submission is no longer running");
         }
 
         int expectedTestCaseCount = testCaseRepository.countByProblemId(submission.getProblem().getId());
@@ -189,6 +201,19 @@ public class Judge0CallbackService {
         result.setVerdict(verdict);
         result.setExecutionTime(response == null ? 0 : response.getTimeAsInt());
         result.setMemoryUsage(response == null ? 0 : response.getMemoryAsInt());
+        result.setJudge0StatusId(response == null || response.getStatus() == null
+                ? null
+                : response.getStatus().getId());
+        result.setJudge0StatusDescription(response == null || response.getStatus() == null
+                ? null
+                : Judge0AuditUtil.safeStatusDescription(response.getStatus().getDescription()));
+        result.setDiagnostic(response == null
+                ? null
+                : Judge0AuditUtil.firstSafeDiagnostic(
+                        response.getCompileOutput(),
+                        response.getMessage(),
+                        response.getStderr()
+                ));
         try {
             judgeResultRepository.save(result);
             return true;

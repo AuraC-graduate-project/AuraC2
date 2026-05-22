@@ -1,11 +1,11 @@
 package com.server.contestControl.submissionServer.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Judge0SubmissionDTO {
 
     @JsonProperty("source_code")
@@ -22,4 +22,10 @@ public class Judge0SubmissionDTO {
 
     @JsonProperty("callback_url")
     private final String callbackUrl;
+
+    @JsonProperty("cpu_time_limit")
+    private final Double cpuTimeLimit;
+
+    @JsonProperty("memory_limit")
+    private final Integer memoryLimit;
 }

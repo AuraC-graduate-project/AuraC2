@@ -14,6 +14,7 @@ import com.server.contestControl.submissionServer.repository.SubmissionRepositor
 import com.server.contestControl.submissionServer.sse.SubmissionSsePublisher;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -226,6 +227,66 @@ class Judge0CallbackServiceTest {
     }
 
     @Test
+    void nonTerminalJudge0StatusDoesNotStoreOrFinalize() {
+        Submission submission = runningSubmission();
+
+        when(submissionRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(submission));
+        when(testCaseRepository.countByProblemId(10L)).thenReturn(1);
+
+        ResponseEntity<?> response = callbackService.handleJudge0Callback(1L, 7L, 1, judge0Response(1));
+
+        assertThat(response.getBody()).isEqualTo("Non-terminal callback ignored");
+        assertThat(submission.getVerdict()).isEqualTo(Verdict.RUNNING);
+        verify(judgeResultRepository, never()).save(any());
+        verify(submissionRepository, never()).save(submission);
+    }
+
+    @Test
+    void unknownJudge0StatusMapsToInternalErrorAndStoresAuditDetails() {
+        Submission submission = runningSubmission();
+        SubmissionJudgeResult internalResult = result(submission, 1, Verdict.INTERNAL_ERROR);
+        internalResult.setJudge0StatusId(999);
+        internalResult.setJudge0StatusDescription("Mystery Status");
+        internalResult.setDiagnostic("compiler exploded");
+
+        when(submissionRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(submission));
+        when(testCaseRepository.countByProblemId(10L)).thenReturn(1);
+        when(judgeResultRepository.findBySubmission_IdAndJudgeRunIdAndTestCaseNumber(1L, 7L, 1))
+                .thenReturn(Optional.empty());
+        when(judgeResultRepository.countBySubmission_IdAndJudgeRunId(1L, 7L)).thenReturn(1L);
+        when(judgeResultRepository.findBySubmission_IdAndJudgeRunId(1L, 7L))
+                .thenReturn(List.of(internalResult));
+
+        Judge0Response judge0Response = judge0Response(999, "Mystery Status");
+        judge0Response.setCompileOutput("compiler exploded");
+        callbackService.handleJudge0Callback(1L, 7L, 1, judge0Response);
+
+        ArgumentCaptor<SubmissionJudgeResult> resultCaptor =
+                ArgumentCaptor.forClass(SubmissionJudgeResult.class);
+        verify(judgeResultRepository).save(resultCaptor.capture());
+        SubmissionJudgeResult saved = resultCaptor.getValue();
+        assertThat(saved.getVerdict()).isEqualTo(Verdict.INTERNAL_ERROR);
+        assertThat(saved.getJudge0StatusId()).isEqualTo(999);
+        assertThat(saved.getJudge0StatusDescription()).isEqualTo("Mystery Status");
+        assertThat(saved.getDiagnostic()).isEqualTo("compiler exploded");
+        assertThat(submission.getVerdict()).isEqualTo(Verdict.INTERNAL_ERROR);
+    }
+
+    @Test
+    void callbackForAlreadyFinalizedSubmissionIsIgnored() {
+        Submission submission = runningSubmission();
+        submission.setVerdict(Verdict.INTERNAL_ERROR);
+
+        when(submissionRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(submission));
+
+        ResponseEntity<?> response = callbackService.handleJudge0Callback(1L, 7L, 1, judge0Response(3));
+
+        assertThat(response.getBody()).isEqualTo("Submission is no longer running");
+        verify(judgeResultRepository, never()).save(any());
+        verify(submissionRepository, never()).save(submission);
+    }
+
+    @Test
     void duplicateCallbackForExistingResultIsIdempotent() {
         Submission submission = runningSubmission();
         SubmissionJudgeResult existingResult = result(submission, 1, Verdict.ACCEPTED);
@@ -296,9 +357,14 @@ class Judge0CallbackServiceTest {
     }
 
     private Judge0Response judge0Response(int statusId) {
+        return judge0Response(statusId, null);
+    }
+
+    private Judge0Response judge0Response(int statusId, String description) {
         Judge0Response response = new Judge0Response();
         Judge0Response.Status status = new Judge0Response.Status();
         status.setId(statusId);
+        status.setDescription(description);
         response.setStatus(status);
         response.setTime("0.010");
         response.setMemory(1024);

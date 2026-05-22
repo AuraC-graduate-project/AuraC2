@@ -56,6 +56,15 @@ public class SubmissionJudgeResult {
 
     private Integer executionTime;
     private Integer memoryUsage;
+
+    private Integer judge0StatusId;
+
+    @Column(length = 128)
+    private String judge0StatusDescription;
+
+    @Column(length = 4096)
+    private String diagnostic;
+
     private LocalDateTime receivedAt;
 
     @PrePersist

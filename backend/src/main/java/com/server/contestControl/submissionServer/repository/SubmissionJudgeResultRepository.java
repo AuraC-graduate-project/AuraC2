@@ -22,6 +22,11 @@ public interface SubmissionJudgeResultRepository extends JpaRepository<Submissio
 
     List<SubmissionJudgeResult> findBySubmission_IdAndJudgeRunId(Long submissionId, Long judgeRunId);
 
+    List<SubmissionJudgeResult> findBySubmission_IdAndJudgeRunIdOrderByTestCaseNumberAsc(
+            Long submissionId,
+            Long judgeRunId
+    );
+
     @Modifying
     @Query("delete from SubmissionJudgeResult result where result.submission.id in :submissionIds")
     void deleteAllBySubmissionIds(@Param("submissionIds") Collection<Long> submissionIds);

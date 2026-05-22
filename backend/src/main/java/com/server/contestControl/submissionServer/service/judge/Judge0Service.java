@@ -11,12 +11,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.client.RestTemplate;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class Judge0Service {
 
     private final Judge0CallbackSignatureService callbackSignatureService;
+    private final RestTemplate judge0RestTemplate;
 
     @Value("${judge0.url}")
     private String judge0Url;
@@ -31,10 +35,12 @@ public class Judge0Service {
                 languageId,
                 tc.getInputData(),
                 tc.getExpectedOutput(),
-                buildSignedCallbackUrl(submission, testCaseNumber)
+                buildSignedCallbackUrl(submission, testCaseNumber),
+                toJudge0CpuTimeLimitSeconds(submission.getProblem().getTimeLimit()),
+                toJudge0MemoryLimitKilobytes(submission.getProblem().getMemoryLimit())
         );
 
-        new RestTemplate().postForObject(judge0Url, dto, Object.class);
+        judge0RestTemplate.postForObject(judge0Url, dto, Object.class);
 
         log.info(
                 "Sent test case to Judge0. submissionId={} judgeRunId={} testCaseNumber={}",
@@ -42,6 +48,25 @@ public class Judge0Service {
                 submission.getJudgeRunId(),
                 testCaseNumber
         );
+    }
+
+    Double toJudge0CpuTimeLimitSeconds(Integer timeLimitMillis) {
+        if (timeLimitMillis == null || timeLimitMillis <= 0) {
+            return null;
+        }
+
+        return BigDecimal.valueOf(timeLimitMillis)
+                .divide(BigDecimal.valueOf(1000), 3, RoundingMode.HALF_UP)
+                .stripTrailingZeros()
+                .doubleValue();
+    }
+
+    Integer toJudge0MemoryLimitKilobytes(Integer memoryLimitMegabytes) {
+        if (memoryLimitMegabytes == null || memoryLimitMegabytes <= 0) {
+            return null;
+        }
+
+        return Math.multiplyExact(memoryLimitMegabytes, 1024);
     }
 
     String buildSignedCallbackUrl(Submission submission, int testCaseNumber) {
