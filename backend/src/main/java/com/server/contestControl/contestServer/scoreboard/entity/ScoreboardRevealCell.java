@@ -13,7 +13,11 @@ import java.time.Instant;
         uniqueConstraints = @UniqueConstraint(
                 name = "uk_scoreboard_reveal_state_team_problem",
                 columnNames = {"reveal_state_id", "team_id", "problem_id"}
-        )
+        ),
+        indexes = {
+                @Index(name = "idx_scoreboard_reveal_cells_state_order", columnList = "reveal_state_id, reveal_order, id"),
+                @Index(name = "idx_scoreboard_reveal_cells_state_revealed_order", columnList = "reveal_state_id, revealed, reveal_order, id")
+        }
 )
 @Data
 @Builder

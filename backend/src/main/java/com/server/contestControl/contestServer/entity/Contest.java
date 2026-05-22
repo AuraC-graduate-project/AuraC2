@@ -9,7 +9,13 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Entity
-@Table(name = "contests")
+@Table(
+        name = "contests",
+        indexes = {
+                @Index(name = "idx_contests_status_start_time", columnList = "status, start_time"),
+                @Index(name = "idx_contests_start_time", columnList = "start_time")
+        }
+)
 @Data
 @Builder
 @NoArgsConstructor
@@ -20,11 +26,14 @@ public class Contest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String title;
 
     /** Scheduled start time — planning/display only. Real countdown begins at actualStartTime. */
+    @Column(nullable = false)
     private Instant startTime;
 
+    @Column(nullable = false)
     private Integer durationMinutes;
 
     /** Set the first time the contest transitions UPCOMING -> RUNNING. Never overwritten on resume. */
@@ -35,6 +44,7 @@ public class Contest {
 
     /** Accumulated milliseconds spent paused across all pause/resume cycles. */
     @Builder.Default
+    @Column(nullable = false)
     private Long totalPauseMillis = 0L;
 
     @Column(columnDefinition = "TEXT")
@@ -44,6 +54,7 @@ public class Contest {
     private List<Problem> problems;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private ContestStatus status;
 
     /**
@@ -51,6 +62,7 @@ public class Contest {
      * Use this for contests that are manually controlled by jury/admin.
      */
     @Builder.Default
+    @Column(nullable = false)
     private Boolean statusLocked = false;
 
     /**
@@ -64,6 +76,7 @@ public class Contest {
      * ICPC: Penalty minutes per wrong submission (typically 20).
      */
     @Builder.Default
+    @Column(nullable = false)
     private Integer penaltyMinutes = 20;
 
     @PrePersist

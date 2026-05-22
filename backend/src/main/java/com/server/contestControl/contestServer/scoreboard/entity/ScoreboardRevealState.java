@@ -8,7 +8,12 @@ import lombok.*;
 import java.time.Instant;
 
 @Entity
-@Table(name = "scoreboard_reveal_states")
+@Table(
+        name = "scoreboard_reveal_states",
+        indexes = {
+                @Index(name = "idx_scoreboard_reveal_states_status", columnList = "status")
+        }
+)
 @Data
 @Builder
 @NoArgsConstructor
@@ -28,6 +33,7 @@ public class ScoreboardRevealState {
     private RevealStatus status;
 
     private Instant startedAt;
+    @Column(nullable = false)
     private Instant updatedAt;
     private Instant completedAt;
 

@@ -17,7 +17,8 @@ export type TestCaseResponse = {
 
 // Backend:
 // - POST /api/testcases/{problemId}
-// - GET  /api/testcases/problem/{problemId}
+// - GET  /api/testcases/problem/{problemId} (admin)
+// - GET  /api/testcases/public/problem/{problemId} (team samples)
 
 export function addTestCase(problemId: number, body: TestCaseRequest) {
   return apiJson<TestCaseResponse>(`${API_BASE}/api/testcases/${problemId}`, {
@@ -29,4 +30,8 @@ export function addTestCase(problemId: number, body: TestCaseRequest) {
 
 export function getTestCases(problemId: number) {
   return apiJson<TestCaseResponse[]>(`${API_BASE}/api/testcases/problem/${problemId}`);
+}
+
+export function getPublicTestCases(problemId: number) {
+  return apiJson<TestCaseResponse[]>(`${API_BASE}/api/testcases/public/problem/${problemId}`);
 }

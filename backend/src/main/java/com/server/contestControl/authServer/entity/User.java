@@ -15,7 +15,12 @@ import java.util.Collection;
 import java.util.List;
 
 @Entity
-@Table(name = "users")
+@Table(
+        name = "users",
+        indexes = {
+                @Index(name = "idx_users_role_username", columnList = "role, username")
+        }
+)
 @Data
 @Builder
 @NoArgsConstructor
@@ -35,10 +40,13 @@ public class User implements UserDetails {
 
 
     @Builder.Default
+    @Column(nullable = false)
     private boolean accountNonLocked = true;
     @Builder.Default
+    @Column(nullable = false)
     private boolean credentialsNonExpired = true;
     @Builder.Default
+    @Column(nullable = false)
     private boolean accountNonExpired = true;
 
     @Column(nullable = false)

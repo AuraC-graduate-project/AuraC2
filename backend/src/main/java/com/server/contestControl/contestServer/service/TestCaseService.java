@@ -3,6 +3,7 @@ package com.server.contestControl.contestServer.service;
 import com.server.contestControl.contestServer.dto.testcase.TestCaseRequest;
 import com.server.contestControl.contestServer.dto.testcase.TestCaseResponse;
 import com.server.contestControl.contestServer.dto.testcase.TestCaseUpdateRequest;
+import com.server.contestControl.contestServer.dto.testcase.PublicTestCaseResponse;
 import com.server.contestControl.contestServer.entity.Problem;
 import com.server.contestControl.contestServer.entity.TestCase;
 import com.server.contestControl.contestServer.exceptions.ProblemNotFoundException;
@@ -10,8 +11,6 @@ import com.server.contestControl.contestServer.exceptions.TestCaseNotFoundExcept
 import com.server.contestControl.contestServer.repository.ProblemRepository;
 import com.server.contestControl.contestServer.repository.TestCaseRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,15 +54,19 @@ public class TestCaseService {
         return TestCaseResponse.fromEntity(testCase);
     }
 
-    public List<TestCaseResponse> getTestCases(Long problemId) {
-        List<TestCase> testCases = testCaseRepository.findByProblemId(problemId);
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        boolean isAdmin = authentication != null && authentication.getAuthorities().stream()
-                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
-
+    @Transactional(readOnly = true)
+    public List<TestCaseResponse> getAdminTestCases(Long problemId) {
+        List<TestCase> testCases = testCaseRepository.findByProblemIdOrderByIdAsc(problemId);
         return testCases.stream()
-                .filter(testCase -> isAdmin || testCase.isPublic())
-                .map(isAdmin ? TestCaseResponse::fromEntity : TestCaseResponse::fromPublicEntity)
+                .map(TestCaseResponse::fromEntity)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<PublicTestCaseResponse> getPublicTestCases(Long problemId) {
+        return testCaseRepository.findByProblemIdAndIsPublicTrueOrderByIdAsc(problemId)
+                .stream()
+                .map(PublicTestCaseResponse::fromEntity)
                 .toList();
     }
 

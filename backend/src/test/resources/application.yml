@@ -1,0 +1,39 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/authserver}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:1234}
+    driver-class-name: org.postgresql.Driver
+  flyway:
+    enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:guest}
+    password: ${SPRING_RABBITMQ_PASSWORD:guest}
+
+judge0:
+  url: ${JUDGE0_URL:https://ce.judge0.com/submissions?wait=false}
+  callback: ${JUDGE0_CALLBACK_URL:http://localhost:8080/api/callback/judge0}
+  callback-secret: ${JUDGE0_CALLBACK_SECRET:test-callback-secret}
+
+contest:
+  sync:
+    enabled: false
+
+jwt:
+  access-secret: ${JWT_ACCESS_SECRET:HrsxedVrtFb4LRvJXWmNbN/UAWhz6i0yZQH4DafTEZo=}
+  refresh-secret: ${JWT_REFRESH_SECRET:TAvuy/amtiO5tEpBHUVArpY8pG6syxwTAqfYYZxRHnI=}
+  expiration: 900000
+  refresh-expiration: 604800000
+
+bootstrap:
+  admin:
+    username: ${BOOTSTRAP_ADMIN_USERNAME:admin}
+    credentials-file: ${BOOTSTRAP_ADMIN_CREDENTIALS_FILE:${java.io.tmpdir}/aurac-test-admin-account.txt}
+    reset-existing-password: ${BOOTSTRAP_ADMIN_RESET_EXISTING_PASSWORD:false}

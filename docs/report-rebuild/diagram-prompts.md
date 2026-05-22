@@ -600,10 +600,10 @@ CBS --> DB : aggregate final verdict
 - Report section: 6.2 Data Architecture Design
 - Diagram type: ER diagram
 - Purpose: Represent the current persistent model accurately.
-- Actors/components/swimlanes/entities: User, RefreshToken, Contest, Problem, TestCase, Clarification, Submission, SubmissionJudgeResult.
-- What the diagram should show: One User to many RefreshToken; Contest to many Problem; Problem to many TestCase; User/Contest/Problem to Submission; Submission to many SubmissionJudgeResult; Contest/User/optional Problem/admin User to Clarification.
-- What the diagram must NOT include: Scoreboard, SecurityAlert, Team entity, contest-membership table, Announcement entity, unless added in future code.
-- AI image-generation prompt: Create a readable ER diagram for the current AuraC2 database. Entities: User, RefreshToken, Contest, Problem, TestCase, Clarification, Submission, SubmissionJudgeResult. Show primary keys, important fields, and cardinalities. Emphasize that Team is represented by User.role = TEAM. Do not include future-only tables such as Scoreboard, SecurityAlert, Announcement, or ContestMembership.
+- Actors/components/swimlanes/entities: User, RefreshToken, Contest, Problem, TestCase, Clarification, Submission, SubmissionJudgeResult, ScoreboardRevealState, ScoreboardRevealCell.
+- What the diagram should show: One User to many RefreshToken; Contest to many Problem; Problem to many TestCase; User/Contest/Problem to Submission; Submission to many SubmissionJudgeResult; Contest/User/optional Problem/admin User to Clarification; Contest to one ScoreboardRevealState; reveal state to many reveal cells; reveal cells link to team User and Problem.
+- What the diagram must NOT include: SecurityAlert, Team entity, contest-membership table, Announcement entity, or a generic future Scoreboard table unless added in future code.
+- AI image-generation prompt: Create a readable ER diagram for the current AuraC2 database. Entities: User, RefreshToken, Contest, Problem, TestCase, Clarification, Submission, SubmissionJudgeResult, ScoreboardRevealState, and ScoreboardRevealCell. Show primary keys, important fields, cardinalities, and the note that Team is represented by User.role = TEAM. Show TestCase visibility as admin/internal for private cases and public/sample for TEAM users. Do not include future-only tables such as SecurityAlert, Announcement, or ContestMembership.
 - PlantUML:
 
 ```plantuml
@@ -676,6 +676,19 @@ entity SubmissionJudgeResult {
   memoryUsage
   receivedAt
 }
+entity ScoreboardRevealState {
+  * id
+  status
+  startedAt
+  updatedAt
+  completedAt
+}
+entity ScoreboardRevealCell {
+  * id
+  revealOrder
+  revealed
+  revealedAt
+}
 User ||--o{ RefreshToken
 Contest ||--o{ Problem
 Problem ||--o{ TestCase
@@ -687,6 +700,14 @@ Contest ||--o{ Clarification
 User ||--o{ Clarification
 Problem ||--o{ Clarification
 User ||--o{ Clarification : repliedByAdmin
+Contest ||--|| ScoreboardRevealState
+ScoreboardRevealState ||--o{ ScoreboardRevealCell
+User ||--o{ ScoreboardRevealCell : team
+Problem ||--o{ ScoreboardRevealCell
+note right of TestCase
+Private rows are admin/internal only.
+TEAM API returns public samples only.
+end note
 @enduml
 ```
 
@@ -746,10 +767,10 @@ end note
 - Report section: 6.2 Data Architecture Design
 - Diagram type: Logical database schema diagram
 - Purpose: Provide implementation-level table names and important columns.
-- Actors/components/swimlanes/entities: `users`, `refresh_tokens`, `contests`, `problems`, `test_cases`, `clarifications`, `submissions`, `submission_judge_results`.
-- What the diagram should show: Tables, primary keys, foreign keys, enum-as-string fields, and unique constraints.
-- What the diagram must NOT include: Unimplemented tables such as scoreboard, announcements, security alerts, or contest membership.
-- AI image-generation prompt: Create a relational schema diagram for AuraC2 using actual table names: users, refresh_tokens, contests, problems, test_cases, clarifications, submissions, submission_judge_results. Show primary keys, foreign keys, enum string fields, and unique constraints such as users.username and submission_judge_results submission_id plus judge_run_id plus test_case_number. Keep the diagram compact and readable.
+- Actors/components/swimlanes/entities: `users`, `refresh_tokens`, `contests`, `problems`, `test_cases`, `clarifications`, `submissions`, `submission_judge_results`, `scoreboard_reveal_states`, `scoreboard_reveal_cells`.
+- What the diagram should show: Tables, primary keys, foreign keys, enum-as-string fields, important NOT NULL columns, indexes for lookup paths, and unique constraints.
+- What the diagram must NOT include: Unimplemented tables such as announcements, security alerts, contest membership, or generic scoreboard snapshots.
+- AI image-generation prompt: Create a relational schema diagram for AuraC2 using actual table names: users, refresh_tokens, contests, problems, test_cases, clarifications, submissions, submission_judge_results, scoreboard_reveal_states, and scoreboard_reveal_cells. Show primary keys, foreign keys, enum string fields, useful indexes, NOT NULL required fields, and unique constraints such as users.username, submission_judge_results submission_id plus judge_run_id plus test_case_number, scoreboard_reveal_states contest_id, and scoreboard_reveal_cells reveal_state_id plus team_id plus problem_id. Keep the diagram compact and readable.
 - PlantUML:
 
 ```plantuml
@@ -788,9 +809,9 @@ entity problems {
 entity test_cases {
   * id : bigint
   problem_id : bigint <<FK>>
-  input_data : text
-  expected_output : text
-  is_public : boolean
+  input_data : text <<not null>>
+  expected_output : text <<not null>>
+  is_public : boolean <<not null>>
 }
 entity clarifications {
   * id : bigint
@@ -817,6 +838,20 @@ entity submission_judge_results {
   test_case_number : int
   verdict : varchar
 }
+entity scoreboard_reveal_states {
+  * id : bigint
+  contest_id : bigint <<FK unique>>
+  status : varchar
+  updated_at : timestamp
+}
+entity scoreboard_reveal_cells {
+  * id : bigint
+  reveal_state_id : bigint <<FK>>
+  team_id : bigint <<FK>>
+  problem_id : bigint <<FK>>
+  reveal_order : int
+  revealed : boolean
+}
 users ||--o{ refresh_tokens
 contests ||--o{ problems
 problems ||--o{ test_cases
@@ -828,9 +863,22 @@ contests ||--o{ clarifications
 users ||--o{ clarifications
 problems ||--o{ clarifications
 users ||--o{ clarifications : replied_by_admin
+contests ||--|| scoreboard_reveal_states
+scoreboard_reveal_states ||--o{ scoreboard_reveal_cells
+users ||--o{ scoreboard_reveal_cells : team_id
+problems ||--o{ scoreboard_reveal_cells
 note bottom of submission_judge_results
 Unique constraint:
 submission_id + judge_run_id + test_case_number
+end note
+note bottom of scoreboard_reveal_cells
+Unique constraint:
+reveal_state_id + team_id + problem_id
+end note
+note right of test_cases
+Index:
+problem_id + is_public
+TEAM sample API uses public rows only.
 end note
 @enduml
 ```
