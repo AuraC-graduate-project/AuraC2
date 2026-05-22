@@ -342,6 +342,8 @@ For each test case, the backend sends:
 - mapped language ID
 - stdin
 - expected output
+- problem time limit as Judge0 `cpu_time_limit` in seconds, when configured
+- problem memory limit as Judge0 `memory_limit` in KB, when configured
 - signed callback URL
 
 Judge0 then calls back:
@@ -355,6 +357,7 @@ The callback handler:
 - resolves the submission
 - maps Judge0 status to internal verdict
 - stores execution time and memory usage
+- stores safe per-test-case audit details, including Judge0 status id/description and truncated diagnostic text
 - stores one result per submission, judge run, and test case
 - waits until all test case callbacks for the current judge run are received
 - calculates the final verdict from the completed run, so out-of-order callbacks cannot mark a submission accepted early
@@ -711,9 +714,8 @@ Instead of embedding compilers and sandboxes directly into the backend, the syst
 
 Based on the uploaded source, the following areas still look incomplete or early-stage:
 - result queue producer/consumer classes are still empty
-- no scoreboard implementation yet
-- no clarification / announcement module
-- no explicit per-test-case result entity yet
+- advanced output comparison policies are not implemented; judging still uses Judge0 `expected_output`
+- announcements are not implemented
 - some exceptions are still generic `RuntimeException`
 - current config uses `ddl-auto: create-drop`, which is not suitable for production
 - current source tree does not show migration tooling
@@ -731,8 +733,7 @@ Based on the uploaded source, the following areas still look incomplete or early
 - clarifications
 
 ### Judging Improvements
-- per-test-case result table
-- richer verdict history
+- richer verdict history and operator-facing diagnostics
 - retry and failure recovery logic
 - worker observability and metrics
 

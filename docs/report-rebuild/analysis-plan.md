@@ -45,43 +45,43 @@ This document is based on the current local codebase only. The instructor templa
 | Reconnection behavior | Implemented by browser | `useContestStream` | The hook relies on native `EventSource` retry behavior and updates UI state to connecting/open/closed. | Describe as native browser reconnection, not custom reconnect logic. |
 | Problem creation | Implemented | `ProblemController.createProblem`, `ProblemService.createProblem`, `CreateProblemModal` | Admin creates contest-bound problems with title, description, time limit, memory limit, and difficulty. | Include in contest content management. |
 | Problem retrieval/listing | Implemented | `ProblemController.getProblem`, `ProblemController.getProblemsByContest`, `ProblemsView`, `teamApi.getProblemsByContest` | Admin and team users can retrieve problems by id and by contest. | Include as implemented. |
-| Problem update/delete | Planned / Future Work | No `PUT`, `PATCH`, or `DELETE` in `ProblemController` | There is no update/delete endpoint or UI action. | Mark missing in current scope. |
+| Problem update/delete | Implemented | `ProblemController.updateProblem`, `ProblemController.deleteProblem`, `ProblemService.updateProblem`, `ProblemService.deleteProblem`, `EditProblemModal` | Admin can update and delete contest problems. | Include as implemented, with caution around rejudge effects. |
 | Test-case creation | Implemented | `TestCaseController.addTestCase`, `TestCaseService.addTestCase`, `AddTestCaseModal` | Admin can attach test cases to a problem. | Include as implemented. |
 | Test-case retrieval and visibility | Partially Implemented | `TestCaseController.getTestCases`, `TestCaseService.getTestCases`, `TestCaseResponse.fromPublicEntity` | Team users only receive public test cases, but public responses still include expected output. Private cases are hidden. There is no differentiated sample-only representation. | Explain accurately in requirements and limitations. |
-| Test-case update/delete | Planned / Future Work | No `PUT`, `PATCH`, or `DELETE` in `TestCaseController` | Test cases can be added and listed but not edited or deleted. | Mark missing. |
+| Test-case update/delete | Implemented | `TestCaseController.updateTestCase`, `TestCaseController.deleteTestCase`, `TestCaseService.updateTestCase`, `TestCaseService.deleteTestCase`, `TestCasesPanel` | Admin can edit or delete existing test cases. | Include as implemented, with caution around rejudge effects. |
 | Difficulty handling | Implemented | `Difficulty`, `Difficulty.fromString`, `ProblemService.createProblem`, `CreateProblemModal` | Difficulty is stored as enum and selected in UI. | Include in data model. |
-| Time and memory limit fields | Partially Implemented | `Problem.timeLimit`, `Problem.memoryLimit`, `ProblemRequest`, `ProblemResponse`, `Judge0Service` | Limits are stored and displayed, but Judge0 request does not pass a CPU time limit or memory limit parameter. | Classify as metadata implemented, enforcement not implemented. |
+| Time and memory limit fields | Implemented | `Problem.timeLimit`, `Problem.memoryLimit`, `ProblemRequest`, `ProblemResponse`, `Judge0SubmissionDTO`, `Judge0Service` | Limits are stored and displayed; Judge0 requests now pass `cpu_time_limit` in seconds and `memory_limit` in KB when positive limits are configured. | Classify as implemented Judge0 fixed-test limits. |
 | Submission creation | Implemented | `SubmissionController.submit`, `SubmissionService.submitCode`, `Submission` entity | Submissions are persisted after active contest/problem validation, then the RabbitMQ message is published only after the database transaction commits. | Include after-commit queue publish behavior in judging flow. |
 | Validation of running contest | Implemented | `SubmissionService.submitCode`, `ContestService.getContestEntity` | Submission requires `getContestEntity`, which finds an effective RUNNING contest or throws. | Include as implemented. |
 | Validation of authenticated user/team | Implemented | `SecurityConfiguration`, `SubmissionController`, `SecurityContextHolder` in `SubmissionService` | The controller allows TEAM and ADMIN, then uses the authenticated principal as the submission owner. | Include; note ADMIN can submit by policy. |
 | RabbitMQ submission queue | Implemented | `RabbitMQConfig`, `SubmissionProducer`, `SubmissionConsumer` | Submissions are sent to durable `submissionQueue` through direct exchange after commit and consumed by `@RabbitListener`; the consumer locks the submission before claiming it to reduce duplicate dispatch risk. | Include asynchronous judging architecture and duplicate-message guard. |
 | Result queue | Partially Implemented | `RabbitMQConfig.RESULT_QUEUE`, `ResultProducer`, `ResultConsumer` | Queue/exchange/binding constants and beans exist, but producer and consumer classes are empty. | Mark as scaffolded only. |
-| Judge0 request dispatch | Implemented | `SubmissionConsumer.handleSubmission`, `Judge0Service.sendSingleTest`, `Judge0SubmissionDTO` | Consumer maps language, increments judge run, marks RUNNING, sends one Judge0 submission per test case with callback URL. | Include judging flow. |
+| Judge0 request dispatch | Implemented | `SubmissionConsumer.handleSubmission`, `Judge0Service.sendSingleTest`, `Judge0SubmissionDTO` | Consumer maps language, increments judge run, marks RUNNING, sends one Judge0 submission per test case with stdin, expected output, signed callback URL, and configured CPU/memory limits. | Include judging flow. |
 | Judge0 language mapping | Implemented | `LanguageMapper.convertLanguage` | Supports C, C++, Java, Python, JavaScript, and Go IDs. Unsupported language throws `IllegalArgumentException`. | Include supported language list and risk for unhandled unsupported language. |
 | Judge0 callback URL with run, test case, and signature | Implemented | `Judge0Service`, `Judge0CallbackSignatureService`, `CallbackHandler` | Callback URL includes `submissionId`, `judgeRunId`, `testCaseNumber`, and an HMAC signature query parameter. A signed legacy callback route also exists for run zero. | Include in stale callback and callback-security diagrams. |
 | Judge0 callback processing | Implemented | `CallbackHandler`, `Judge0CallbackService.handleJudge0Callback`, `SubmissionRepository.findByIdForUpdate` | Callback signature verification runs before state mutation; the service then locks the submission, rejects stale or invalid callbacks, records terminal test-case results, and finalizes aggregate verdict when all expected tests arrive. | Include as implemented. |
 | Per-test-case result tracking | Implemented | `SubmissionJudgeResult`, `SubmissionJudgeResultRepository`, `Judge0CallbackService.recordJudgeResult` | Each test case result is stored with unique `(submission_id, judge_run_id, test_case_number)`; duplicate callbacks are treated idempotently. | Update ER and judging diagrams. |
 | Aggregate verdict calculation | Implemented | `Judge0CallbackService.finalVerdict`, `Judge0CallbackServiceTest` | Final verdict is the earliest non-accepted test case by test-case number, or ACCEPTED if all are accepted. | Replace old callback-ordering limitation with current fix. |
 | Stale callback protection | Implemented | `Submission.judgeRunId`, `CallbackHandler`, `Judge0CallbackService.isStaleCallback`, `Judge0CallbackServiceTest.staleCallbackFromOlderRunIsIgnored` | Old callbacks are ignored if their judgeRunId does not match the current submission run. Legacy callbacks are stale once run id is greater than zero. | Include as implemented and explain why run tracking exists. |
-| Zero-test-case behavior | Partially Implemented | `SubmissionConsumer`, `Judge0CallbackService` | Callback service marks INTERNAL_ERROR if a callback arrives for zero tests, but consumer sets submission RUNNING and sends no callbacks when the problem has zero test cases. | Mark as risk; no proactive zero-test guard exists. |
-| Execution time and memory storage | Partially Implemented | `Judge0Response.getTimeAsInt`, `getMemoryAsInt`, `Judge0CallbackService.maxExecutionTime/maxMemoryUsage`, frontend submission views | Time is converted to milliseconds and maxed across cases. Memory is stored raw from Judge0 KB, while admin UI labels it as MB. | Include as implementation detail and unit-risk limitation. |
+| Zero-test-case behavior | Implemented | `SubmissionConsumer`, `Judge0CallbackService`, `SubmissionConsumerTest` | The consumer marks zero-test submissions as `INTERNAL_ERROR` immediately; callback handling also protects the zero-test path. | Keep as implemented safety behavior, while recommending problem-authoring validation. |
+| Execution time, memory, and audit storage | Implemented with UI unit notes | `Judge0Response`, `SubmissionJudgeResult`, `SubmissionJudgeResultResponse`, `Judge0CallbackService.maxExecutionTime/maxMemoryUsage`, frontend submission views | Time is converted to milliseconds and maxed across cases. Memory is stored raw from Judge0 KB, while some UI labels still call it MB. Per-test-case rows store Judge0 status id/description and safe truncated diagnostic text. | Include as implementation detail and UI unit-risk limitation. |
 | Team submission history | Implemented | `SubmissionController.getAllMySubmissions`, `getAllSubmissionByProblem`, `teamApi`, `SubmissionHistory` | Team can view all own submissions and problem-filtered submissions. | Include as implemented. |
 | Admin submission review | Implemented | `AdminController.getAllSubmissions`, `SubmissionsView` | Admin can list all submissions, search/filter, inspect code, and resolve user/problem labels. | Include as implemented. |
 | Rejudge backend | Implemented | `RejudgeController`, `RejudgeService`, `RejudgeResponse`, `RejudgeSubmissionsRequest`, tests | Admin-only endpoints rejudge selected submissions, all submissions for a problem, or all submissions for a contest. Final verdicts are reset to PENDING_REJUDGE and republished after commit. | Include as implemented backend feature. |
-| Rejudge UI | Planned / Future Work | `SubmissionsView` has no rejudge calls; no rejudge functions in `UI/src/admin/services/api.ts` | Admin frontend does not expose rejudge actions. | Mark as missing UI integration. |
+| Rejudge UI | Implemented | `SubmissionsView`, `RejudgeView`, `UI/src/admin/services/api.ts`, `Sidebar` | Admin frontend exposes selected-submission, problem, contest, and force rejudge controls wired to backend endpoints. | Include as implemented UI integration. |
 | Rejudge old result handling | Implemented with notes | `RejudgeService`, `SubmissionConsumer`, `SubmissionJudgeResult` | Old per-test-case rows are not cleared or archived, but the consumer increments `judgeRunId`; new callbacks write a new run, and old callbacks are rejected. | Explain as superseding by run id, not deletion. |
 | Rejudge partial publish failure reporting | Partially Implemented | `RejudgeService.publishSubmissions` | Failures while republishing are logged after commit, but the `RejudgeResponse` already counts submissions as queued and does not return publish failure details. | Include as operational limitation. |
 | Clarification backend | Implemented | `Clarification`, `ClarificationController`, `ClarificationService`, `ClarificationRepository`, clarification enums/DTOs | Backend supports team submission during running contests, admin review/reply, public/private replies, standard replies, and public answered clarification listing. | Update old report: clarifications are not backend-planned-only anymore. |
-| Clarification frontend | Partially Implemented | `AdminApp` placeholder, `team/components/Clarifications.tsx` mock array and `console.log` submit | Admin page is placeholder; team UI uses hardcoded data and does not call backend clarification endpoints. | Classify full feature as partial until frontend is wired. |
-| Scoreboard freeze metadata | Implemented | `Contest.scoreboardFreezeMinutes`, `penaltyMinutes`, `ContestLifecycleService.isScoreboardFrozen`, `ContestOverview` freeze badge | Contest stores freeze/penalty settings and computes frozen window state. | Include under contest configuration, not full scoreboard ranking. |
-| Scoreboard ranking | Planned / Future Work | No scoreboard entity/service/controller/UI found | There is no ranking calculation, standings endpoint, penalty aggregation, or scoreboard screen. | Mark as future work. |
+| Clarification frontend | Implemented | `ClarificationsView`, `team/components/Clarifications.tsx`, `teamApi`, `admin/services/api.ts`, `useClarificationStream` | Team and admin UI load clarifications, submit/reply through backend APIs, and refresh through SSE stream hooks. | Classify frontend clarification workflow as implemented. |
+| Scoreboard freeze metadata | Implemented | `Contest.scoreboardFreezeMinutes`, `penaltyMinutes`, `ContestLifecycleService.isScoreboardFrozen`, `ContestOverview` freeze badge | Contest stores freeze/penalty settings and computes frozen window state. | Include under contest configuration and scoreboard behavior. |
+| Scoreboard ranking/freeze/reveal | Implemented | `ScoreboardService`, `ScoreboardCalculator`, `ScoreboardController`, `ScoreboardRevealService`, `useScoreboardStream`, `ScoreboardView` | The backend calculates ICPC-style rows, public/admin views, freeze visibility, reveal state, and SSE updates; the UI contains scoreboard views and streams. | Include as implemented scoreboard subsystem. |
 | Security monitoring UI | Planned / Future Work | `AdminApp` Security Monitor placeholder, no backend security monitor package | Only a placeholder screen exists. Refresh token stores device IP, but no alerting, anomaly detection, or monitoring endpoint exists. | Mark as future work; do not claim monitoring is implemented. |
 | Quick statistics panel | Planned / Future Work | `StatsPanel` values are dashes with tooltip "No endpoint yet" | UI placeholders exist without backend aggregate endpoints. | Mark as placeholder. |
 | Announcements | Planned / Future Work | No announcement entity/controller/service/UI found | No implementation discovered. | Include only in future scope if desired. |
 | Notification/result dissemination | Partially Implemented | Empty `ResultProducer`, `ResultConsumer`, no frontend live verdict stream | Verdicts are persisted, but no result queue consumer/producer or push notification flow exists. | Classify as scaffold/future. |
 | LAN-first/offline operation | Partially Implemented | `docker-compose.yml`, `application.yml` default Judge0 URL | Docker Compose runs PostgreSQL, RabbitMQ, backend, and frontend locally, but Judge0 defaults to external `https://ce.judge0.com` unless configured otherwise. | Mark local deployment supported, full offline judging not guaranteed. |
 | Contest participation/join workflow | Planned / Future Work | No Team entity, contest_membership table, participation controller, or join UI | Teams are users with `TEAM` role and see the active contest; there is no explicit enrollment per contest. | Mark future work or out of current scope. |
-| Mock-only UI | Partially Implemented | `Clarifications.tsx`, `StatsPanel`, `PlaceholderView` in admin clarifications/security | Some UI surfaces are present only as placeholders or mock data. | Call out in frontend implementation and limitations. |
+| Placeholder UI | Partially Implemented | `StatsPanel`, `PlaceholderView` in admin security | Some non-core UI surfaces are present only as placeholders. | Call out in frontend implementation and limitations. |
 
 ## B. Current Architecture Summary
 
@@ -113,13 +113,13 @@ The backend is best described as a modular monolith rather than separate microse
 | SSE real-time updates | `ContestStreamController`, `ContestStreamBroadcaster`, `ContestStreamSnapshot`, `useContestStream`, `ContestOverview` | Initial snapshot, lifecycle update broadcast, heartbeat, emitter cleanup, frontend bucket placement and fallback polling. |
 | Problem management | `ProblemController`, `ProblemService`, `ProblemRepository`, problem DTOs | Admin problem creation and role-protected problem retrieval. |
 | Test-case management | `TestCaseController`, `TestCaseService`, `TestCaseRepository`, test-case DTOs | Admin test-case creation and role-filtered public/private test-case listing. |
-| Clarifications | `ClarificationController`, `ClarificationService`, `ClarificationRepository`, clarification entity/enums/DTOs | Backend clarification submission, admin reply, public/private answer visibility. Frontend is not wired. |
+| Clarifications | `ClarificationController`, `ClarificationService`, `ClarificationRepository`, clarification entity/enums/DTOs, `ClarificationsView`, `Clarifications`, `useClarificationStream` | Backend clarification submission, admin reply, public/private answer visibility, team/admin UI, and SSE refresh are wired. |
 | Submission management | `SubmissionController`, `SubmissionService`, `SubmissionRepository`, `Submission` | Store submissions, retrieve team/admin histories, enforce owner read access for individual submission. |
 | Judging | `RabbitMQConfig`, `SubmissionProducer`, `SubmissionConsumer`, `Judge0Service`, `LanguageMapper`, `CallbackHandler`, `Judge0CallbackService` | Queue submissions, dispatch per test case to Judge0, process callbacks, persist per-test-case results, aggregate verdict. |
 | Rejudge | `RejudgeController`, `RejudgeService`, `RejudgeSubmissionsRequest`, `RejudgeResponse` | Admin rejudge of selected submissions, problem submissions, or contest submissions. |
 | Frontend auth | `App.tsx`, `LoginPage`, `authApi`, `http.ts`, `jwt.ts`, `tokenStore.ts` | Login, silent refresh, JWT role routing, access-token storage, logout. |
 | Frontend admin | `admin/App.tsx`, `ContestOverview`, `ProblemsView`, `TeamsView`, `SubmissionsView`, `StatsPanel`, `PlaceholderView` | Admin dashboard, contest controls, problem/test-case management, user management, submission review, placeholders. |
-| Frontend team | `team/App.tsx`, `CodeEditor`, `ProblemSidebar`, `SubmissionHistory`, `Header`, `Clarifications`, `useCodeDraft` | Team active-contest workspace, code draft persistence, submissions, problem sidebar, timer, mock clarifications. |
+| Frontend team | `team/App.tsx`, `CodeEditor`, `ProblemSidebar`, `SubmissionHistory`, `Header`, `Clarifications`, `useCodeDraft` | Team active-contest workspace, code draft persistence, submissions, problem sidebar, timer, and backend-wired clarifications. |
 
 ## D. Updated Entity List
 
@@ -128,9 +128,9 @@ The backend is best described as a modular monolith rather than separate microse
 | `User` | `id`, `username`, `password`, account flags, `role` | One user has many `RefreshToken`; user also relates to submissions and clarifications. | There is no separate Team entity. A team is a `User` with role `TEAM`. |
 | `RefreshToken` | `id`, `tokenHash`, `deviceIp`, `createdAt`, `expiresAt`, `revoked` | Many refresh tokens belong to one user. | Token hash is stored after JWT refresh token is generated. |
 | `Contest` | `id`, `title`, `startTime`, `durationMinutes`, `actualStartTime`, `pausedAt`, `totalPauseMillis`, `description`, `status`, `statusLocked`, `scoreboardFreezeMinutes`, `penaltyMinutes` | One contest has many problems, submissions, and clarifications. | Supports persisted vs effective lifecycle state. |
-| `Problem` | `id`, `title`, `description`, `timeLimit`, `memoryLimit`, `difficulty` | Many problems belong to one contest; one problem has many test cases and submissions. | Time/memory limits are metadata; Judge0 request does not enforce them yet. |
+| `Problem` | `id`, `title`, `description`, `timeLimit`, `memoryLimit`, `difficulty` | Many problems belong to one contest; one problem has many test cases and submissions. | Positive time/memory limits are passed to Judge0 requests for fixed-test execution. |
 | `TestCase` | `id`, `inputData`, `expectedOutput`, `isPublic` | Many test cases belong to one problem. | Public/private visibility is applied by filtering in service. |
-| `Clarification` | `id`, `question`, `createdAt`, `standardReply`, `reply`, `repliedAt`, `status`, `replyType` | Belongs to contest, optional problem, user, and optional admin user who replied. | Backend implemented; frontend not wired. |
+| `Clarification` | `id`, `question`, `createdAt`, `standardReply`, `reply`, `repliedAt`, `status`, `replyType` | Belongs to contest, optional problem, user, and optional admin user who replied. | Backend and frontend clarification workflows are wired. |
 | `Submission` | `id`, `code`, `language`, `verdict`, `createdAt`, `executionTime`, `memoryUsage`, `judgeRunId` | Belongs to contest, problem, and user. Has many `SubmissionJudgeResult` rows conceptually. | `judgeRunId` enables rejudge and stale callback protection. |
 | `SubmissionJudgeResult` | `id`, `judgeRunId`, `testCaseNumber`, `verdict`, `executionTime`, `memoryUsage`, `receivedAt` | Many results belong to one submission. | Unique constraint on submission/run/test-case. No direct `TestCase` relation; result refers to test case number. |
 
@@ -162,11 +162,11 @@ The backend is best described as a modular monolith rather than separate microse
 | `/api/problems/contest/{id}` | GET | ADMIN or TEAM | Implemented | `ProblemController.getProblemsByContest` |
 | `/api/testcases/{problemId}` | POST | ADMIN | Implemented | `TestCaseController.addTestCase` |
 | `/api/testcases/problem/{problemId}` | GET | ADMIN or TEAM | Implemented with filtering | `TestCaseController.getTestCases`, `TestCaseService` |
-| `/api/clarifications` | POST | TEAM | Backend implemented, UI not wired | `ClarificationController.submitClarification` |
-| `/api/clarifications/my/{contestId}` | GET | TEAM | Backend implemented, UI not wired | `ClarificationController.getMyClarifications` |
-| `/api/clarifications/admin/contest/{contestId}` | GET | ADMIN | Backend implemented, UI not wired | `ClarificationController.getContestClarifications` |
-| `/api/clarifications/admin/all` | GET | ADMIN | Backend implemented, UI not wired | `ClarificationController.getAllClarifications` |
-| `/api/clarifications/admin/{id}/reply` | PUT | ADMIN | Backend implemented, UI not wired | `ClarificationController.replyClarification` |
+| `/api/clarifications` | POST | TEAM | Implemented and used by team UI | `ClarificationController.submitClarification`, `teamApi.submitClarification` |
+| `/api/clarifications/my/{contestId}` | GET | TEAM | Implemented and used by team UI | `ClarificationController.getMyClarifications`, `teamApi.getMyClarifications` |
+| `/api/clarifications/admin/contest/{contestId}` | GET | ADMIN | Implemented and used by admin UI | `ClarificationController.getContestClarifications`, `getContestClarifications` |
+| `/api/clarifications/admin/all` | GET | ADMIN | Implemented and used by admin UI | `ClarificationController.getAllClarifications`, `getAllClarifications` |
+| `/api/clarifications/admin/{id}/reply` | PUT | ADMIN | Implemented and used by admin UI | `ClarificationController.replyClarification`, `replyClarification` |
 | `/api/clarifications/public/{contestId}` | GET | Public | Implemented backend | `ClarificationController.getPublicClarifications` |
 | `/api/submissions` | POST | TEAM or ADMIN | Partially implemented due validation gaps | `SubmissionController.submit`, `SubmissionService.submitCode` |
 | `/api/submissions/{id}` | GET | TEAM or ADMIN | Implemented with owner check for non-admin | `SubmissionController.getSubmission`, `SubmissionService.getSubmissionById` |
@@ -214,28 +214,28 @@ The backend is best described as a modular monolith rather than separate microse
 | Problems admin | `ProblemsView`, `CreateProblemModal` | Implemented for create/list/view | No edit/delete. |
 | Test cases admin | `TestCasesPanel`, `AddTestCaseModal` | Implemented for add/list | No edit/delete. |
 | Teams admin | `TeamsView`, `RegisterModal` | Implemented | List users, register team, update username/password, delete non-admin. |
-| Admin submissions | `SubmissionsView` | Implemented | Search/filter, code dialog, user/problem label enrichment. No rejudge UI. |
-| Admin clarifications | `PlaceholderView` through `admin/App.tsx` | Planned / Future Work | Backend exists but UI says coming soon. |
+| Admin submissions | `SubmissionsView` | Implemented | Search/filter, code dialog, user/problem label enrichment, selected-submission rejudge, and force rejudge controls. |
+| Admin clarifications | `ClarificationsView`, `useClarificationStream`, `admin/services/api.ts` | Implemented | Admin can load, filter, and reply to clarifications through backend APIs. |
 | Security monitor | `PlaceholderView` through `admin/App.tsx` | Planned / Future Work | No backend endpoints. |
 | Quick statistics | `StatsPanel` | Planned / Future Work | Static dashes and tooltip "No endpoint yet". |
 | Team workspace | `team/App.tsx`, `Header`, `ProblemSidebar`, `CodeEditor`, `SubmissionHistory` | Partially Implemented | Uses active contest, problems, submissions, code editor. Problem statement display is minimal and no live submission updates. |
 | Code draft persistence | `useCodeDraft`, `DraftIndicator` | Implemented, indicator appears unused | Draft hook saves to localStorage. `DraftIndicator` exists but is not visibly integrated into `CodeEditor`. |
-| Team clarifications | `team/components/Clarifications.tsx` | Mock-only / Planned UI integration | Hardcoded clarification rows and local console logging. |
+| Team clarifications | `team/components/Clarifications.tsx`, `team/services/teamApi.ts`, `useClarificationStream` | Implemented | Team can ask clarifications, view own questions, and see public answered replies. |
 
 ## I. Current Limitations and Risks
 
 1. Email verification is no longer implemented despite verification exception classes and `/verify/**` security remnants.
 2. Admin bootstrap rotates the existing admin password on every startup, which is operationally sensitive and should be explained.
 3. New submission RabbitMQ publish failures after commit are logged, but the team response already contains the committed submission.
-4. Problem time and memory limits are stored but not passed to Judge0 for enforcement.
+4. Problem time and memory limits are passed to Judge0 for fixed-test execution; UI copy should make the memory unit consistent with Judge0 KB values.
 5. Zero-test-case submissions are marked `INTERNAL_ERROR`; this protects judging state but should still be prevented earlier by problem authoring validation.
-6. Unsupported language throws in the RabbitMQ consumer path without a user-facing validation response at submission time.
+6. Unsupported language is converted to `INTERNAL_ERROR` in the RabbitMQ consumer path, but it still lacks a user-facing validation response at submission time.
 7. Result queue is configured but producer/consumer are empty.
-8. Clarification backend exists, but frontend still uses mock/placeholder screens.
+8. Clarification backend and frontend are wired; remaining work should focus on UX and edge-case testing.
 9. Rejudge backend exists, but there is no frontend rejudge control.
 10. Rejudge publish failures are logged after commit but not reflected in `RejudgeResponse`.
 11. Memory is stored from Judge0 in KB, while admin UI labels memory as MB.
-12. Scoreboard freeze metadata exists, but full rank/penalty scoreboard is not implemented.
+12. Scoreboard ranking, freeze, reveal, and SSE are implemented; remaining scoreboard risks should focus on edge-case validation and operational testing.
 13. Security Monitor and Quick Statistics are placeholders.
 14. There is no explicit contest participation/join workflow or team-contest membership model.
 15. Team workspace does not appear to poll or subscribe for verdict changes after submission.
@@ -298,7 +298,7 @@ Use the instructor template as the required structure, with these code-aligned s
 | 9 | SSE Connection and Contest Update Flow | Recommended |
 | 10 | Judge0 Callback and Per-Test-Case Result Flow | Recommended |
 | 11 | Rejudge Workflow Diagram | Recommended |
-| 12 | Clarification Backend vs Frontend Gap Diagram | Recommended |
+| 12 | Clarification Workflow Diagram | Recommended |
 | 13 | Contest Lifecycle Architecture Diagram | Recommended |
 | 14 | Submission and Asynchronous Judging Architecture Diagram | Recommended |
 | 15 | Current ER Diagram | Recommended |
@@ -318,12 +318,12 @@ Large old diagrams should be split by subsystem. No diagram should combine authe
 ## M. Old Report Sections That Must Be Replaced
 
 1. Any ER section claiming only six persistent entities must be replaced. Current code has eight main entities: `User`, `RefreshToken`, `Contest`, `Problem`, `TestCase`, `Clarification`, `Submission`, and `SubmissionJudgeResult`.
-2. Any claim that clarifications are only planned must be updated: backend is implemented, but frontend is not integrated.
+2. Any claim that clarifications are only planned or mock-only must be replaced with the current backend and frontend implementation.
 3. Any claim that callback ordering remains unresolved must be replaced: per-test-case results and `judgeRunId` now address stale callbacks and out-of-order results.
 4. Any submission workflow that lacks rejudge must be replaced with the current rejudge backend flow.
 5. Any contest lifecycle explanation without effective state, pause-aware time, exact-time scheduler, fallback scheduler, row locking, and SSE must be replaced.
 6. Any architecture diagram that omits SSE, schedulers, `SubmissionJudgeResult`, `Clarification`, or rejudge is outdated.
-7. Any statement that scoreboard is implemented must be narrowed to scoreboard freeze metadata only. Ranking scoreboard is future work.
+7. Any statement that scoreboard is future-only must be replaced with the current ranking, freeze, reveal, and SSE implementation.
 8. Any statement that security monitoring is implemented must be replaced with placeholder/future-work status.
 9. Any statement that the system is fully LAN/offline must be qualified because Judge0 defaults to an external URL.
 
@@ -334,7 +334,7 @@ Large old diagrams should be split by subsystem. No diagram should combine authe
 | Large full-system flow diagram | Split | Too broad; should become context, lifecycle, SSE, judging, and rejudge diagrams. |
 | Old six-entity ER diagram | Replace | Missing `Clarification` and `SubmissionJudgeResult`; submission result modeling changed. |
 | Old submission workflow | Replace | Current flow includes judgeRunId, per-test-case result rows, stale callback rejection, and rejudge. |
-| Old clarification workflow | Replace/update | Backend exists now, but UI still mock/placeholder. |
+| Old clarification workflow | Replace/update | Backend and UI are wired now; old mock/placeholder descriptions are outdated. |
 | Old intended full-system use case diagram | Split and mark future features | Future work should not appear as implemented use cases. |
 | Old architecture diagram without SSE | Replace | SSE and scheduler/event architecture are major current implementation features. |
 
@@ -352,8 +352,8 @@ Large old diagrams should be split by subsystem. No diagram should combine authe
 
 1. Should the final report keep the project name as `AuraC2` or use the styled `AuraC^2`/`AuraC squared` form on the title page?
 2. Should the team/member/supervisor/date information from the old report be reused exactly in the final DOCX?
-3. Should the report include backend clarification endpoints as implemented even though frontend clarification screens are not wired?
-4. Should scoreboard freeze metadata be treated as part of contest lifecycle only, while ranking scoreboard remains future work?
+3. Should the report include clarification screens in the main implementation screenshots or only in the appendix?
+4. Should scoreboard documentation emphasize the full ranking/freeze/reveal subsystem in the main implementation section or keep detailed scoreboard discussion in a dedicated subsection?
 5. Should the final report include screenshots from the current running UI, and should those screenshots show placeholder pages honestly?
 6. Should the final report include code appendix excerpts or only file/class references?
 7. Do you want the literature review references gathered from external sources in Phase 2, or should we keep it source-neutral and brief?
@@ -363,7 +363,7 @@ Large old diagrams should be split by subsystem. No diagram should combine authe
 
 1. Should admin password rotation on startup remain as-is, or should it be changed to create-once/manual-rotate behavior before final submission?
 2. Which screenshots should be inserted into the Implementation Phase and Appendix B?
-3. Should mock/placeholder screens such as team clarifications, admin clarifications, security monitoring, and quick statistics be included honestly or excluded from screenshots?
+3. Should placeholder screens such as security monitoring and quick statistics be included honestly or excluded from screenshots?
 4. Which external references should be used in the Literature Review: PC2, DOMjudge, Codeforces, Judge0, Spring Boot, Spring Security, RabbitMQ, PostgreSQL, React, and SSE are recommended.
 5. Should all diagrams stay in the body, or should some move to an appendix? For now, all diagrams remain in the body as requested.
 6. Confirm final title, team members, supervisor name, course information, university formatting, and submission date details.

@@ -9,7 +9,7 @@ Use these prompts after Phase 1 review to generate small, focused diagrams. All 
 - Purpose: Show the major runtime actors and external systems around AuraC2.
 - Actors/components/swimlanes/entities: Admin/Team browser, React frontend, Spring Boot backend, PostgreSQL, RabbitMQ, Judge0 API, SSE clients, Judge0 callback endpoint.
 - What the diagram should show: Browser-to-frontend usage, frontend REST calls to backend, backend SSE stream to browser, backend JPA persistence, RabbitMQ submission queue, backend Judge0 requests, and Judge0 callback into backend.
-- What the diagram must NOT include: Individual controllers, DTOs, all database tables, or future-only systems such as scoreboard ranking and security monitoring.
+- What the diagram must NOT include: Individual controllers, DTOs, all database tables, or future-only systems such as announcements and security monitoring.
 - AI image-generation prompt: Create a clean academic system context diagram for AuraC2, a university programming contest control system. Use simple boxes and labeled arrows. Show Browser/React Frontend, Spring Boot Backend, PostgreSQL Database, RabbitMQ, Judge0 API, SSE clients, REST API, submission queue, and Judge0 callback endpoint. Use a formal blue-gray palette, readable labels, and no decorative elements.
 - PlantUML:
 
@@ -85,9 +85,9 @@ cloud "Judge0" as J0
 - Diagram type: Four-column scope/status diagram
 - Purpose: Visually distinguish implemented, partially implemented, planned/future, and deprecated/removed features.
 - Actors/components/swimlanes/entities: Implemented scope, partial scope, future scope, deprecated/removed scope.
-- What the diagram should show: Implemented: login, admin-protected team registration, refresh rotation/logout revocation, admin bootstrap, user admin, contest lifecycle, SSE contest updates, problem/test-case creation, submission queue, Judge0 callback, per-case results, backend rejudge, backend clarifications. Partial: team workspace completeness, frontend clarifications, result queue, time/memory enforcement, rejudge UI, local/offline deployment. Future: scoreboard ranking, announcements, security monitor, statistics endpoints, participation/join workflow, full LAN-first Judge0. Removed: email verification.
+- What the diagram should show: Implemented: login, admin-protected team registration, refresh rotation/logout revocation, admin bootstrap, user admin, contest lifecycle, SSE contest updates, problem/test-case creation, submission queue, Judge0 callback, problem time/memory limits, per-case audit results, backend/frontend rejudge, backend/frontend clarifications, scoreboard ranking/freeze/reveal. Partial: team workspace completeness, result queue, local/offline deployment. Future: announcements, security monitor, statistics endpoints, participation/join workflow, full LAN-first Judge0. Removed: email verification.
 - What the diagram must NOT include: Detailed code paths, class names, or unverified features.
-- AI image-generation prompt: Create a clean status diagram for AuraC2 with four labeled groups: Implemented, Partially Implemented, Planned/Future Work, Deprecated/Removed. Include concise feature chips. Make clear that registration is admin-protected, logout revocation is implemented, scoreboard freeze metadata is implemented, and full scoreboard ranking remains future work. Use formal academic styling and avoid clutter.
+- AI image-generation prompt: Create a clean status diagram for AuraC2 with four labeled groups: Implemented, Partially Implemented, Planned/Future Work, Deprecated/Removed. Include concise feature chips. Make clear that registration is admin-protected, logout revocation is implemented, scoreboard ranking/freeze/reveal are implemented, and security monitoring remains future work. Use formal academic styling and avoid clutter.
 - PlantUML:
 
 ```plantuml
@@ -96,15 +96,15 @@ left to right direction
 rectangle "Implemented" as I {
   rectangle "Auth login\nAdmin-protected team registration\nRefresh rotation\nLogout revocation"
   rectangle "Contest lifecycle\nSSE updates\nProblem and test-case create/read"
-  rectangle "Submission queue\nJudge0 callbacks\nPer-test-case results"
-  rectangle "Backend rejudge\nBackend clarifications\nScoreboard freeze metadata"
+  rectangle "Submission queue\nJudge0 callbacks\nProblem limits\nPer-test-case audit results"
+  rectangle "Backend/frontend rejudge\nBackend/frontend clarifications\nScoreboard ranking/freeze/reveal"
 }
 rectangle "Partially Implemented" as P {
-  rectangle "Team workspace polish\nFrontend clarifications\nResult queue scaffold"
-  rectangle "Time/memory enforcement\nRejudge UI\nLocal/offline Judge0 setup"
+  rectangle "Team workspace polish\nResult queue scaffold"
+  rectangle "Local/offline Judge0 setup"
 }
 rectangle "Planned / Future Work" as F {
-  rectangle "Scoreboard ranking\nAnnouncements\nSecurity monitor\nStatistics endpoints\nParticipation workflow"
+  rectangle "Announcements\nSecurity monitor\nStatistics endpoints\nParticipation workflow"
 }
 rectangle "Deprecated / Removed" as R {
   rectangle "Email verification workflow"
@@ -121,9 +121,9 @@ F -[hidden]-> R
 - Diagram type: UML use case diagram
 - Purpose: Show administrator operations currently implemented or partially implemented.
 - Actors/components/swimlanes/entities: Administrator, AuraC2 backend.
-- What the diagram should show: Manage team accounts, register team account, create contest, view contest buckets, start/pause/resume/end contest, force end with jury override, create problem, add test case, review submissions, call backend rejudge endpoints, view clarification placeholder as partial.
+- What the diagram should show: Manage team accounts, register team account, create contest, view contest buckets, start/pause/resume/end contest, force end with jury override, create/update/delete problems, add/update/delete test cases, review submissions, use rejudge controls, and answer clarifications.
 - What the diagram must NOT include: Scoreboard ranking, security monitoring implementation, announcements, or team-only actions.
-- AI image-generation prompt: Create a small UML use case diagram for AuraC2 contest administration. Actor: Administrator. Use cases: Manage Team Accounts, Register Team Account, Create Contest, View Contest Buckets, Start Contest, Pause Contest, Resume Contest, End Contest, Force End With Jury Override, Create Problem, Add Test Case, Review Submissions, Backend Rejudge. Mark Clarifications UI, Statistics, and Security Monitor as partial or future. Keep it readable and academic.
+- AI image-generation prompt: Create a small UML use case diagram for AuraC2 contest administration. Actor: Administrator. Use cases: Manage Team Accounts, Register Team Account, Create Contest, View Contest Buckets, Start Contest, Pause Contest, Resume Contest, End Contest, Force End With Jury Override, Create/Update/Delete Problems, Add/Update/Delete Test Cases, Review Submissions, Rejudge, and Answer Clarifications. Mark Statistics and Security Monitor as future. Keep it readable and academic.
 - PlantUML:
 
 ```plantuml
@@ -144,7 +144,7 @@ rectangle "AuraC2" {
   usecase "Add Test Case" as UC11
   usecase "Review Submissions" as UC12
   usecase "Backend Rejudge" as UC13
-  usecase "Clarifications UI\npartial" as UC14
+  usecase "Answer\nClarifications" as UC14
 }
 Admin --> UC1
 Admin --> UC2
@@ -169,9 +169,9 @@ Admin --> UC14
 - Diagram type: UML use case diagram
 - Purpose: Show current team capabilities and partial/mock capabilities.
 - Actors/components/swimlanes/entities: Team User, AuraC2 backend/frontend.
-- What the diagram should show: Log in, view active contest, view problem list, select problem, write code, save local draft, submit code, view own submission history, view submitted code, view mock clarification UI, and backend clarification capability not fully wired in UI.
+- What the diagram should show: Log in, view active contest, view problem list, select problem, write code, save local draft, submit code, view own submission history, view submitted code, ask clarifications, view own clarifications, and view public answered clarifications.
 - What the diagram must NOT include: Admin user management or rejudge as a team action.
-- AI image-generation prompt: Create a UML use case diagram for AuraC2 team workspace. Actor: Team User. Include implemented use cases for login, view active contest, view problems, select problem, write code, local draft persistence, submit code, view own submission history, and view submitted code. Show clarification use cases with a dashed boundary labeled partial because backend exists but frontend is mock/not wired.
+- AI image-generation prompt: Create a UML use case diagram for AuraC2 team workspace. Actor: Team User. Include implemented use cases for login, view active contest, view problems, select problem, write code, local draft persistence, submit code, view own submission history, view submitted code, ask clarifications, view own clarifications, and view public answered clarifications.
 - PlantUML:
 
 ```plantuml
@@ -188,7 +188,7 @@ rectangle "AuraC2 Team Workspace" {
   usecase "Submit Code" as T7
   usecase "View Own Submission History" as T8
   usecase "View Submitted Code" as T9
-  usecase "Clarifications\npartial UI" as T10
+  usecase "Ask/View\nClarifications" as T10
 }
 Team --> T1
 Team --> T2
@@ -199,7 +199,7 @@ T5 ..> T6 : includes
 Team --> T7
 Team --> T8
 Team --> T9
-Team ..> T10 : partial
+Team --> T10
 @enduml
 ```
 
@@ -420,11 +420,11 @@ stop
 
 - Report section: 5.3 Activity Diagrams for Complicated Behaviors
 - Diagram type: Activity diagram
-- Purpose: Show backend rejudge behavior and frontend limitation.
-- Actors/components/swimlanes/entities: Administrator/API client, RejudgeController, RejudgeService, SubmissionRepository, SubmissionProducer, RabbitMQ, SubmissionConsumer, Judge0 callback flow.
-- What the diagram should show: Admin/API chooses selected submissions/problem/contest, service validates scope, selects submissions, skips active verdicts, sets final submissions to `PENDING_REJUDGE`, clears aggregate execution/memory, saves, publishes after commit, consumer increments `judgeRunId` and reuses Judge0 flow, stale old callbacks rejected.
-- What the diagram must NOT include: A completed rejudge UI button, because no admin frontend integration was found.
-- AI image-generation prompt: Create an AuraC2 backend rejudge workflow diagram. Show Administrator/API client calling RejudgeController for selected submissions, problem, or contest. RejudgeService validates request, loads submissions, skips PENDING/PENDING_REJUDGE/RUNNING, sets eligible submissions to PENDING_REJUDGE, clears aggregate metrics, saves, publishes submission IDs after transaction commit, RabbitMQ consumer reuses the Judge0 judging flow, increments judgeRunId, and old callbacks are rejected. Add a note: frontend rejudge controls are future work.
+- Purpose: Show rejudge behavior across admin UI, backend, queueing, and stale-callback protection.
+- Actors/components/swimlanes/entities: Administrator, admin rejudge UI, RejudgeController, RejudgeService, SubmissionRepository, SubmissionProducer, RabbitMQ, SubmissionConsumer, Judge0 callback flow.
+- What the diagram should show: Admin UI/API chooses selected submissions/problem/contest, service validates scope, selects submissions, skips active verdicts unless force rejudge is used, sets final submissions to `PENDING_REJUDGE`, clears aggregate execution/memory, saves, publishes after commit, consumer increments `judgeRunId` and reuses Judge0 flow, stale old callbacks rejected.
+- What the diagram must NOT include: Scoreboard internals or Judge0 callback details beyond reusing the existing judging flow.
+- AI image-generation prompt: Create an AuraC2 rejudge workflow diagram. Show Administrator using admin rejudge UI or API to call RejudgeController for selected submissions, problem, or contest. RejudgeService validates request, loads submissions, skips PENDING/PENDING_REJUDGE/RUNNING for normal rejudge, supports force rejudge, sets eligible submissions to PENDING_REJUDGE, clears aggregate metrics, saves, publishes submission IDs after transaction commit, RabbitMQ consumer reuses the Judge0 judging flow, increments judgeRunId, and old callbacks are rejected.
 - PlantUML:
 
 ```plantuml
@@ -450,15 +450,15 @@ stop
 @enduml
 ```
 
-## Figure 12 - Clarification Backend vs Frontend Gap Diagram
+## Figure 12 - Clarification Workflow Diagram
 
 - Report section: 5.3 Activity Diagrams for Complicated Behaviors
-- Diagram type: Gap/status component diagram
-- Purpose: Show why clarifications are classified as partially implemented end-to-end.
-- Actors/components/swimlanes/entities: Team User, Administrator, ClarificationController, ClarificationService, ClarificationRepository, Clarification entity, Team Clarifications UI, Admin Placeholder UI.
-- What the diagram should show: Backend supports team submit, team fetch own/public, admin fetch, admin reply, and public answered fetch. Frontend team screen uses mock data and console logging; admin screen is placeholder.
+- Diagram type: Workflow component diagram
+- Purpose: Show the implemented clarification workflow.
+- Actors/components/swimlanes/entities: Team User, Administrator, Team Clarifications UI, Admin ClarificationsView, ClarificationController, ClarificationService, ClarificationRepository, Clarification entity, Clarification stream hook.
+- What the diagram should show: Team submits and fetches clarifications, admin fetches contest/all clarifications, admin replies with public/private scope, public answered clarifications are visible to teams, and stream hooks refresh UI state after clarification events.
 - What the diagram must NOT include: Scoreboard, submission judging, or future announcements.
-- AI image-generation prompt: Create a clear gap diagram for AuraC2 clarifications. Left side labeled Implemented Backend: ClarificationController, ClarificationService, ClarificationRepository, Clarification entity, endpoints for team submit, team fetch, admin fetch, admin reply, public answered clarifications. Right side labeled Frontend Gap: team Clarifications component uses hardcoded mock data and console logging; admin Clarifications page is a placeholder. Show overall status: partially implemented end-to-end.
+- AI image-generation prompt: Create a clear workflow diagram for AuraC2 clarifications. Show Team User using the Team Clarifications UI to submit and fetch clarifications; Administrator using ClarificationsView to fetch, filter, and reply; ClarificationController and ClarificationService storing data in ClarificationRepository; public/private reply visibility; and clarification stream hooks refreshing team/admin UI state. Show overall status: implemented.
 - PlantUML:
 
 ```plantuml
@@ -466,24 +466,23 @@ stop
 left to right direction
 actor "Team User" as Team
 actor Administrator as Admin
-rectangle "Implemented Backend" as Backend {
-  [ClarificationController]
-  [ClarificationService]
-  database "ClarificationRepository\nClarification table" as CDB
-}
-rectangle "Frontend Gap" as Frontend {
-  [Team Clarifications UI\nmock data]
-  [Admin Clarifications Page\nplaceholder]
-}
-Team --> [ClarificationController] : submit / fetch own
-Admin --> [ClarificationController] : fetch / reply
-[ClarificationController] --> [ClarificationService]
-[ClarificationService] --> CDB
-Team ..> [Team Clarifications UI\nmock data] : not wired to API
-Admin ..> [Admin Clarifications Page\nplaceholder] : not wired to API
+component "Team Clarifications UI" as TeamUI
+component "Admin ClarificationsView" as AdminUI
+component "ClarificationController" as Controller
+component "ClarificationService" as Service
+database "ClarificationRepository\nClarification table" as CDB
+component "Clarification stream hook" as Stream
+Team --> TeamUI : ask / review
+Admin --> AdminUI : review / reply
+TeamUI --> Controller : submit / fetch own
+AdminUI --> Controller : fetch / reply
+Controller --> Service
+Service --> CDB
+Service --> Stream : publish events
+Stream --> TeamUI : refresh
+Stream --> AdminUI : refresh
 note bottom
-Overall status: backend implemented;
-end-to-end UI integration is partial.
+Overall status: implemented.
 end note
 @enduml
 ```
@@ -534,11 +533,11 @@ SSE --> Clients : contest-update
 
 - Report section: 6.1 Application Architecture Design / Context Diagram
 - Diagram type: Architecture flow diagram
-- Purpose: Show submission persistence, after-commit RabbitMQ publishing, Judge0 dispatch with signed callback URL, callback verification, and final result persistence.
+- Purpose: Show submission persistence, after-commit RabbitMQ publishing, Judge0 dispatch with fixed inputs/expected outputs, problem limits, signed callback URL, callback verification, audit persistence, and final result persistence.
 - Actors/components/swimlanes/entities: Team UI, SubmissionController, SubmissionService, SubmissionRepository/PostgreSQL, SubmissionProducer, RabbitMQ, SubmissionConsumer, TestCaseRepository, LanguageMapper, Judge0Service, Judge0CallbackSignatureService, Judge0 API, CallbackHandler, Judge0CallbackService, SubmissionJudgeResult.
-- What the diagram should show: Submission request, save PENDING row, publish submissionId only after commit, consume message, lock/claim submission, map language, increment judgeRunId, mark RUNNING, fetch test cases, send each test to Judge0 with signed callback URL, callback verifies signature, persists per-case result idempotently, aggregate final verdict.
+- What the diagram should show: Submission request, save PENDING row, publish submissionId only after commit, consume message, lock/claim submission, map language, increment judgeRunId, mark RUNNING, fetch test cases, send each test to Judge0 with stdin, expected output, `cpu_time_limit`, `memory_limit`, and signed callback URL, callback verifies signature, persists per-case audit result idempotently, aggregate final verdict.
 - What the diagram must NOT include: Contest lifecycle scheduler details or frontend admin screens.
-- AI image-generation prompt: Create a technical architecture diagram for AuraC2 asynchronous judging. Show Team React UI submitting code to SubmissionController and SubmissionService, PostgreSQL storing a PENDING Submission, SubmissionProducer publishing submissionId to RabbitMQ submissionQueue after commit, SubmissionConsumer consuming it with a row lock, fetching test cases, LanguageMapper, Judge0Service and Judge0CallbackSignatureService sending one request per test case to Judge0 with signed callback URL, Judge0 calling CallbackHandler, CallbackHandler verifying signature, Judge0CallbackService storing SubmissionJudgeResult rows idempotently and updating final Submission verdict. Label judgeRunId, testCaseNumber, and signature.
+- AI image-generation prompt: Create a technical architecture diagram for AuraC2 asynchronous judging. Show Team React UI submitting code to SubmissionController and SubmissionService, PostgreSQL storing a PENDING Submission, SubmissionProducer publishing submissionId to RabbitMQ submissionQueue after commit, SubmissionConsumer consuming it with a row lock, fetching test cases, LanguageMapper, Judge0Service and Judge0CallbackSignatureService sending one request per test case to Judge0 with stdin, expected output, CPU time limit, memory limit, and signed callback URL, Judge0 calling CallbackHandler, CallbackHandler verifying signature, Judge0CallbackService storing SubmissionJudgeResult audit rows idempotently and updating final Submission verdict. Label judgeRunId, testCaseNumber, and signature.
 - PlantUML:
 
 ```plantuml
@@ -568,11 +567,11 @@ Consumer --> TCR : fetch test cases
 Consumer --> LM : map language
 Consumer --> J0S : dispatch each test case
 J0S --> Sig : sign submissionId,\njudgeRunId, testCaseNumber
-J0S --> J0 : source, stdin,\nexpected output, signed callback URL
+J0S --> J0 : source, stdin,\nexpected output,\ncpu_time_limit, memory_limit,\nsigned callback URL
 J0 --> CB : callback with submissionId,\njudgeRunId, testCaseNumber,\nsignature
 CB --> Sig : verify signature
 CB --> CBS
-CBS --> Results : save per-case result\nidempotently
+CBS --> Results : save per-case audit result\nidempotently
 CBS --> DB : aggregate final verdict
 @enduml
 ```
@@ -678,9 +677,9 @@ User ||--o{ Clarification : repliedByAdmin
 - Diagram type: Mini ER diagram
 - Purpose: Focus on per-test-case result tracking and rejudge.
 - Actors/components/swimlanes/entities: Submission, SubmissionJudgeResult, Problem, TestCase.
-- What the diagram should show: Submission has `judgeRunId`; each result has `judgeRunId`, `testCaseNumber`, verdict, time, memory; unique constraint on `(submission_id, judge_run_id, test_case_number)`; TestCase is not directly referenced by foreign key.
+- What the diagram should show: Submission has `judgeRunId`; each result has `judgeRunId`, `testCaseNumber`, verdict, time, memory, Judge0 status id/description, and safe diagnostic text; unique constraint on `(submission_id, judge_run_id, test_case_number)`; TestCase is not directly referenced by foreign key.
 - What the diagram must NOT include: User account or contest lifecycle details unless needed for foreign-key context.
-- AI image-generation prompt: Create a focused mini ER diagram for AuraC2 judging. Show Submission linked to Problem and many SubmissionJudgeResult rows. Highlight judgeRunId on Submission and SubmissionJudgeResult, testCaseNumber, verdict, executionTime, memoryUsage, and the unique constraint submission_id + judge_run_id + test_case_number. Show TestCase under Problem and note that judge result stores testCaseNumber rather than a direct TestCase foreign key.
+- AI image-generation prompt: Create a focused mini ER diagram for AuraC2 judging. Show Submission linked to Problem and many SubmissionJudgeResult rows. Highlight judgeRunId on Submission and SubmissionJudgeResult, testCaseNumber, verdict, executionTime, memoryUsage, Judge0 status id/description, diagnostic, and the unique constraint submission_id + judge_run_id + test_case_number. Show TestCase under Problem and note that judge result stores testCaseNumber rather than a direct TestCase foreign key.
 - PlantUML:
 
 ```plantuml
@@ -709,6 +708,9 @@ entity SubmissionJudgeResult {
   verdict
   executionTime
   memoryUsage
+  judge0StatusId
+  judge0StatusDescription
+  diagnostic
   receivedAt
 }
 Problem ||--o{ TestCase
@@ -791,6 +793,8 @@ entity submissions {
   language : varchar
   verdict : varchar
   judge_run_id : bigint
+  execution_time : int
+  memory_usage : int
 }
 entity submission_judge_results {
   * id : bigint
@@ -798,6 +802,11 @@ entity submission_judge_results {
   judge_run_id : bigint
   test_case_number : int
   verdict : varchar
+  execution_time : int
+  memory_usage : int
+  judge0_status_id : int
+  judge0_status_description : varchar
+  diagnostic : varchar
 }
 users ||--o{ refresh_tokens
 contests ||--o{ problems
