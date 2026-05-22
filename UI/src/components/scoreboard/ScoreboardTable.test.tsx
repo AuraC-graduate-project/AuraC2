@@ -12,7 +12,7 @@ describe("ScoreboardTable", () => {
     expect(screen.getByTitle("Accepted on attempt 2 at 22 min with 1 wrong attempt(s)")).toBeInTheDocument();
     expect(screen.getByTitle("Frozen cell with hidden post-freeze activity")).toBeInTheDocument();
     expect(screen.getByText("Hidden")).toBeInTheDocument();
-    expect(screen.getByRole("row", { name: /1 alpha 2 \/ 22 fts hidden 1 42/i })).toHaveClass(
+    expect(screen.getByRole("row", { name: /1 alpha 2 \/ 22\s*fts hidden 1 42/i })).toHaveClass(
       "aura-scoreboard-row-updated"
     );
   });

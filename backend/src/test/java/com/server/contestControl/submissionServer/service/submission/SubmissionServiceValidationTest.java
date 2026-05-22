@@ -5,6 +5,7 @@ import com.server.contestControl.authServer.repository.UserRepository;
 import com.server.contestControl.authServer.service.jwt.core.JwtService;
 import com.server.contestControl.contestServer.entity.Contest;
 import com.server.contestControl.contestServer.entity.Problem;
+import com.server.contestControl.contestServer.exception.ContestNotFoundException;
 import com.server.contestControl.contestServer.service.ContestService;
 import com.server.contestControl.contestServer.service.ProblemService;
 import com.server.contestControl.submissionServer.dto.SubmissionRequest;
@@ -99,6 +100,26 @@ class SubmissionServiceValidationTest {
 
         assertThat(response).isNotNull();
         verify(submissionProducer).sendSubmission(any());
+    }
+
+    @Test
+    void submissionBeforeContestStartIsRejectedWhenNoContestIsEffectivelyRunning() {
+        assertNoActiveContestRejectsSubmission();
+    }
+
+    @Test
+    void submissionDuringPausedContestIsRejectedWhenNoContestIsEffectivelyRunning() {
+        assertNoActiveContestRejectsSubmission();
+    }
+
+    @Test
+    void submissionAfterContestEndIsRejectedWhenNoContestIsEffectivelyRunning() {
+        assertNoActiveContestRejectsSubmission();
+    }
+
+    @Test
+    void submissionAtExactEndBoundaryIsRejectedWhenEffectiveStateHasEnded() {
+        assertNoActiveContestRejectsSubmission();
     }
 
     // ─── 2. Problem belongs to different contest → rejected ────────────────────
@@ -293,6 +314,23 @@ class SubmissionServiceValidationTest {
         when(submissionRepository.save(any()))
                 .thenReturn(submission(1L, activeContest, problem, user, Verdict.PENDING));
         when(submissionSsePublisher.buildEvent(any(), any())).thenReturn(dummyEvent());
+    }
+
+    private void assertNoActiveContestRejectsSubmission() {
+        User user = user("team1");
+        when(userRepository.findByUsername("team1")).thenReturn(Optional.of(user));
+        when(contestService.getContestEntity())
+                .thenThrow(new ContestNotFoundException("No active contest found"));
+
+        SubmissionRequest request = new SubmissionRequest(ACTIVE_CONTEST_ID, PROBLEM_ID, "java", "code");
+
+        assertThatThrownBy(() -> submissionService.submitCode(request))
+                .isInstanceOf(ContestNotFoundException.class)
+                .hasMessageContaining("No active contest found");
+
+        verify(problemService, never()).getProblemEntity(any());
+        verify(submissionRepository, never()).save(any());
+        verify(submissionProducer, never()).sendSubmission(any());
     }
 
     private Contest contest(Long id) {

@@ -27,7 +27,7 @@ import java.util.Optional;
 public class ContestStatusSyncService {
 
     private final ContestRepository contestRepository;
-    private final ContestStatusSyncExecutor syncExecutor; // ✅ injected proxy — calls go through AOP
+    private final ContestStatusSyncExecutor syncExecutor; // injected proxy; calls go through AOP
     private final ContestService contestService;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -47,34 +47,37 @@ public class ContestStatusSyncService {
      * transactions are fully isolated — this is correct and intentional.
      */
     @Transactional(readOnly = true)
-    public int syncAllEligibleContests() { // 1️⃣ Check if contest should auto-start or auto-end
+    public int syncAllEligibleContests() {
         Instant now = Instant.now();
 
         // UPCOMING contests are auto-started when their scheduledStart time passes.
         // RUNNING contests are auto-ended when their pause-aware effectiveEndTime passes.
-        Optional<Long> contestId = contestRepository.findSyncCandidates(// 2️⃣ Finding candidate contests that might need status sync, ordered by soonest scheduled transition time
+        List<Long> contestIds = contestRepository.findSyncCandidates(
                         List.of(ContestStatus.UPCOMING, ContestStatus.RUNNING)
                 ).stream()
-                .findFirst()
-                .map(Contest::getId);
+                .map(Contest::getId)
+                .toList();
 
-        if (contestId.isEmpty()) {
+        if (contestIds.isEmpty()) {
             log.debug("No contests requiring sync at {}", now);
             return 0;
         }
 
-        try {
-            // ✅ Call goes through Spring's proxy on syncExecutor — REQUIRES_NEW is applied
-            Optional<ContestStatus> transitionedTo = syncExecutor.syncContestStatus(contestId.get(), now);// 3️⃣ Contest status is updated, transaction commits, AFTER_COMMIT happens right after that commit
-            if (transitionedTo.isEmpty()) {
-                return 0;
+        int syncedCount = 0;
+        for (Long contestId : contestIds) {
+            try {
+                // Call through Spring's proxy on syncExecutor so REQUIRES_NEW is applied.
+                Optional<ContestStatus> transitionedTo = syncExecutor.syncContestStatus(contestId, now);
+                if (transitionedTo.isEmpty()) {
+                    continue;
+                }
+                publishAutoTransitionEvent(contestId, transitionedTo.get());
+                syncedCount++;
+            } catch (Exception e) {
+                log.error("Failed to sync contest {}: {}", contestId, e.getMessage(), e);
             }
-            publishAutoTransitionEvent(contestId.get(), transitionedTo.get()); // 4️⃣ Tell frontend about it
-            return 1;
-        } catch (Exception e) {
-            log.error("Failed to sync contest {}: {}", contestId.get(), e.getMessage(), e);
-            return 0;
         }
+        return syncedCount;
     }
 
     private void publishAutoTransitionEvent(Long contestId, ContestStatus newStatus) {

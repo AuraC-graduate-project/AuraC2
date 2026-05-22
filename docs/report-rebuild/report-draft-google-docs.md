@@ -33,7 +33,7 @@ Figure 8. Exact-Time Scheduler and Fallback Sync Diagram
 Figure 9. SSE Connection and Contest Update Flow  
 Figure 10. Judge0 Callback and Per-Test-Case Result Flow  
 Figure 11. Rejudge Workflow Diagram  
-Figure 12. Clarification Backend vs Frontend Gap Diagram  
+Figure 12. Clarification Workflow Diagram
 Figure 13. Contest Lifecycle Architecture Diagram  
 Figure 14. Submission and Asynchronous Judging Architecture Diagram  
 Figure 15. Current ER Diagram  
@@ -44,7 +44,7 @@ Figure 17. Relational Schema Diagram
 
 AuraC2, also referred to as Aura Contest Control, is a web-based programming contest management system designed for university competitive programming environments. The system supports two main roles: administrators who prepare and control contests, and team users who participate in active contests by reading problems, writing code, submitting solutions, and reviewing submission history.
 
-The current implementation is a real web application composed of a Spring Boot backend, a React frontend, PostgreSQL persistence, RabbitMQ asynchronous messaging, and Judge0 integration for code execution. The system is not only a static design proposal; it includes implemented authentication, contest lifecycle control, problem and test-case management, asynchronous judging, per-test-case result tracking, backend clarification handling, real-time contest lifecycle updates using server-sent events, and backend rejudge functionality.
+The current implementation is a real web application composed of a Spring Boot backend, a React frontend, PostgreSQL persistence, RabbitMQ asynchronous messaging, and Judge0 integration for code execution. The system is not only a static design proposal; it includes implemented authentication, contest lifecycle control, problem and test-case management, asynchronous judging, per-test-case result tracking, backend/frontend clarification handling, real-time contest lifecycle updates using server-sent events, and backend/admin rejudge functionality.
 
 This report rebuilds the previous system analysis and design documentation so that it reflects the current local codebase. The codebase is treated as the source of truth. Features that exist only as placeholder UI or unused scaffolding are not described as complete. Features that were previously planned but now have backend implementation are reclassified accordingly. Features that exist only as unused scaffolding or old exception remnants are identified as partial, future work, or deprecated.
 
@@ -157,10 +157,10 @@ The main difference is scope. AuraC2 does not currently implement online communi
 | FR-IMP-06 | Create a contest with schedule, duration, freeze, and penalty settings. | Administrator | `ContestController`, `ContestService`, `CreateContestModal` | Implemented |
 | FR-IMP-07 | Start, pause, resume, and end contests manually. | Administrator | `ContestController`, `ContestService.updateStatus`, `ContestOverview` | Implemented |
 | FR-IMP-08 | Automatically start and end contests based on effective state. | Backend System | `ContestTransitionScheduler`, `ContestStatusSyncScheduler`, `ContestStatusSyncExecutor` | Implemented |
-| FR-IMP-09 | Stream contest lifecycle changes to the admin UI. | Administrator, Backend | `ContestStreamController`, `ContestStreamBroadcaster`, `useContestStream` | Implemented |
+| FR-IMP-09 | Stream contest lifecycle changes to the admin UI. | Administrator, Backend | `ContestStreamController`, `ContestSseAdapter`, `ContestSseRegistry`, `useContestStream` | Implemented |
 | FR-IMP-10 | Create, retrieve, update, and delete contest problems. | Administrator, Team | `ProblemController`, `ProblemService`, `ProblemsView`, `teamApi` | Implemented |
 | FR-IMP-11 | Add, retrieve, update, and delete test cases with public/private filtering. | Administrator, Team | `TestCaseController`, `TestCaseService`, `TestCasesPanel` | Implemented with visibility notes |
-| FR-IMP-12 | Submit code for judging. | Team, Administrator | `SubmissionController`, `SubmissionService`, `CodeEditor` | Implemented with validation limitations |
+| FR-IMP-12 | Submit code for judging. | Team, Administrator | `SubmissionController`, `SubmissionService`, `CodeEditor` | Implemented with judging limitations |
 | FR-IMP-13 | Dispatch submissions asynchronously to Judge0. | Backend, RabbitMQ, Judge0 | `SubmissionProducer`, `SubmissionConsumer`, `Judge0Service` | Implemented |
 | FR-IMP-14 | Store per-test-case judging results. | Backend | `SubmissionJudgeResult`, `Judge0CallbackService` | Implemented |
 | FR-IMP-15 | Reject unsigned, invalid, stale, or duplicate Judge0 callbacks. | Backend, Judge0 | `Judge0CallbackSignatureService`, `judgeRunId`, `Judge0CallbackService.isStaleCallback`, `SubmissionJudgeResult` unique constraint | Implemented |
@@ -207,7 +207,7 @@ The main difference is scope. AuraC2 does not currently implement online communi
 | Scalability | Queue-based judging can be extended with more consumers, though the backend remains a monolith. | Partially implemented |
 | Maintainability | Controllers, services, repositories, DTOs, entities, enums, events, schedulers, and UI components are separated. | Implemented |
 | Usability | Role-specific admin/team UI exists, including contest control, problem/test-case management, submissions, rejudge, scoreboard, and clarifications; quick statistics and security monitoring remain placeholders. | Partially implemented |
-| Data Integrity | Enums and foreign-key relationships model roles, contest status, verdicts, clarifications, and judging results. Row locks protect selected critical updates. | Implemented with validation gaps |
+| Data Integrity | Enums and foreign-key relationships model roles, contest status, verdicts, clarifications, and judging results. Row locks protect selected critical updates, including contest status synchronization and callback updates. | Implemented with noted judging limitations |
 | Extensibility | Package structure supports extending scoreboard reporting, notifications, monitoring, and additional UI integrations. | Implemented as design capacity |
 | Portability / Deployment Flexibility | Docker Compose supports local PostgreSQL/RabbitMQ/backend/frontend deployment. Judge0 needs explicit local configuration for full offline use. | Partially implemented |
 | Observability | Logging exists in lifecycle, scheduler, judging, rejudge, and SSE components, but no metrics dashboard or monitoring subsystem exists. | Partially implemented |
@@ -288,7 +288,7 @@ Current Status: Implemented for contest workspace, submissions, scoreboard, and 
 
 | Field | Description |
 |---|---|
-| Status | Implemented with validation limitations |
+| Status | Implemented with judging limitations |
 | Primary Actor | Team user |
 | Goal | Submit a solution and eventually receive a verdict. |
 | Preconditions | User is authenticated and an effective RUNNING contest exists. |
@@ -312,12 +312,12 @@ Current Status: Implemented for contest workspace, submissions, scoreboard, and 
 
 | Field | Description |
 |---|---|
-| Status | Backend implemented, frontend partial |
+| Status | Implemented |
 | Primary Actors | Team user, Administrator |
 | Goal | Allow teams to ask contest questions and administrators to answer privately or publicly. |
 | Preconditions | Contest is running for team submission. |
 | Main Flow | Team submits clarification, backend validates contest and optional problem, clarification is stored PENDING, admin replies using standard or custom reply, backend marks ANSWERED and stores private/public reply type. |
-| Alternative Flows | Non-running contest rejects submission. Problem outside contest is rejected. Current frontend does not call these endpoints. |
+| Alternative Flows | Non-running contest rejects submission. Problem outside contest is rejected. Team and admin screens refresh through clarification SSE. |
 | Code Evidence | `ClarificationController`, `ClarificationService`, `Clarification`, `Clarifications.tsx`, `admin/App.tsx`. |
 
 ## 5.3 Activity Diagrams for Complicated Behaviors
@@ -354,8 +354,8 @@ Current Status: Implemented.
 Figure 9. SSE Connection and Contest Update Flow
 
 Purpose: To show real-time contest updates.  
-Description: The backend sends an initial snapshot, later `contest-update` events, and heartbeat comments. The frontend applies snapshots, places updates into contest buckets, falls back to REST if no snapshot arrives, and polls when SSE closes.  
-Code Alignment: `ContestStreamController`, `ContestStreamBroadcaster`, `useContestStream`, `ContestOverview`.  
+Description: The backend sends an initial snapshot, later `contest-update` events, and named `ping` heartbeats. The frontend applies snapshots, places updates into contest buckets, falls back to REST if no snapshot arrives, and polls when SSE closes.
+Code Alignment: `ContestStreamController`, `ContestSseAdapter`, `ContestSseRegistry`, `SseHeartbeatScheduler`, `useContestStream`, `ContestOverview`.
 Current Status: Implemented.
 
 [Insert Figure 10 here: Judge0 Callback and Per-Test-Case Result Flow]
@@ -374,9 +374,9 @@ Figure 11. Rejudge Workflow Diagram
 Purpose: To show how rejudge reuses the existing judging flow.  
 Description: Rejudge resets eligible submissions, republishes them after commit, increments run ID during consumption, and relies on stale callback rejection.  
 Code Alignment: `RejudgeController`, `RejudgeService`, `SubmissionConsumer`, `Judge0CallbackService`.  
-Current Status: Implemented backend; frontend missing.
+Current Status: Implemented backend and admin frontend.
 
-[Insert Figure 12 here: Clarification Backend vs Frontend Gap Diagram]
+[Insert Figure 12 here: Clarification Workflow Diagram]
 
 Figure 12. Clarification Workflow Diagram
 
@@ -423,7 +423,7 @@ Figure 13. Contest Lifecycle Architecture Diagram
 
 Purpose: To show how contest lifecycle control, events, schedulers, and SSE updates interact.  
 Description: The administrator calls contest endpoints. The backend saves state and publishes events. Schedulers reschedule or synchronize transitions. SSE broadcasts updates after committed changes.  
-Code Alignment: `ContestController`, `ContestService`, `ContestUpdatedEvent`, `ContestTransitionScheduler`, `ContestStatusSyncService`, `ContestStreamBroadcaster`.  
+Code Alignment: `ContestController`, `ContestService`, `ContestUpdatedEvent`, `ContestTransitionScheduler`, `ContestStatusSyncService`, `ContestSseAdapter`, `SsePublisher`.
 Current Status: Implemented.
 
 [Insert Figure 14 here: Submission and Asynchronous Judging Architecture Diagram]
@@ -433,7 +433,7 @@ Figure 14. Submission and Asynchronous Judging Architecture Diagram
 Purpose: To show asynchronous submission processing.  
 Description: The team UI submits code, the backend saves a pending submission, RabbitMQ dispatches judging after commit, Judge0 evaluates each test case using a signed callback URL, and verified callbacks update per-test-case and aggregate results.
 Code Alignment: `SubmissionService`, `SubmissionProducer`, `SubmissionConsumer`, `Judge0Service`, `Judge0CallbackSignatureService`, `CallbackHandler`, `Judge0CallbackService`.
-Current Status: Implemented with validation limitations.
+Current Status: Implemented with judging limitations.
 
 ## 6.2 Data Architecture Design
 
@@ -640,7 +640,7 @@ Suggested files:
 |---|---|
 | Authentication | `AuthController`, `LoginService`, `RefreshTokenService`, `JwtAuthFilter`, `SecurityConfiguration` |
 | Contest lifecycle | `Contest`, `ContestService`, `ContestLifecycleService`, `ContestTransitionScheduler`, `ContestStatusSyncExecutor` |
-| SSE | `ContestStreamController`, `ContestStreamBroadcaster`, `useContestStream`, `ContestOverview` |
+| SSE | `ContestStreamController`, `ContestSseAdapter`, `ContestSseRegistry`, `SseHeartbeatScheduler`, `useContestStream`, `ContestOverview` |
 | Judging | `SubmissionService`, `SubmissionProducer`, `SubmissionConsumer`, `Judge0Service`, `CallbackHandler`, `Judge0CallbackService` |
 | Rejudge | `RejudgeController`, `RejudgeService` |
 | Clarifications | `Clarification`, `ClarificationController`, `ClarificationService` |

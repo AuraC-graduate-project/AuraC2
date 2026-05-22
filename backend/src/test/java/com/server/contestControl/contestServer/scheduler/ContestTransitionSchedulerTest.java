@@ -74,6 +74,48 @@ class ContestTransitionSchedulerTest {
         verify(taskScheduler).schedule(any(Runnable.class), eq(newStart));
     }
 
+    @Test
+    @DisplayName("MANUAL_PAUSE event should cancel the pending transition without scheduling a new one")
+    void shouldCancelPendingTaskOnManualPause() {
+        Long contestId = 1L;
+        Instant start = Instant.now().plus(1, ChronoUnit.HOURS);
+        Contest contest = upcomingContest(contestId, start);
+        ContestResponse snapshot = ContestResponse.builder().id(contestId).build();
+
+        when(contestRepository.findById(contestId)).thenReturn(Optional.of(contest));
+        doReturn(oldFuture).when(taskScheduler).schedule(any(Runnable.class), eq(start));
+        when(oldFuture.isDone()).thenReturn(false);
+
+        scheduler.onContestUpdated(new ContestUpdatedEvent(ContestUpdatedEvent.Reason.CREATED, snapshot));
+        scheduler.onContestUpdated(new ContestUpdatedEvent(ContestUpdatedEvent.Reason.MANUAL_PAUSE, snapshot));
+
+        verify(oldFuture).cancel(false);
+    }
+
+    @Test
+    @DisplayName("MANUAL_RESUME event should schedule the pause-aware effective end time")
+    void shouldSchedulePauseAwareEndTimeAfterResume() {
+        Long contestId = 1L;
+        Instant effectiveEnd = Instant.now().plus(90, ChronoUnit.MINUTES);
+        Contest contest = Contest.builder()
+                .id(contestId)
+                .title("Contest")
+                .status(ContestStatus.RUNNING)
+                .actualStartTime(Instant.now().minus(30, ChronoUnit.MINUTES))
+                .durationMinutes(120)
+                .totalPauseMillis(10_000L)
+                .build();
+        ContestResponse snapshot = ContestResponse.builder().id(contestId).build();
+
+        when(contestRepository.findById(contestId)).thenReturn(Optional.of(contest));
+        when(lifecycleService.resolveEffectiveEndTime(eq(contest), any())).thenReturn(effectiveEnd);
+        doReturn(newFuture).when(taskScheduler).schedule(any(Runnable.class), eq(effectiveEnd));
+
+        scheduler.onContestUpdated(new ContestUpdatedEvent(ContestUpdatedEvent.Reason.MANUAL_RESUME, snapshot));
+
+        verify(taskScheduler).schedule(any(Runnable.class), eq(effectiveEnd));
+    }
+
     private Contest upcomingContest(Long id, Instant startTime) {
         return Contest.builder()
                 .id(id)

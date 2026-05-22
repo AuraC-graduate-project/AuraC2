@@ -51,7 +51,7 @@ describe("Scoreboard", () => {
     expect(await screen.findByText("alpha")).toBeInTheDocument();
     expect(screen.getByText("Frozen")).toBeInTheDocument();
     expect(screen.getByText("Official scoreboard frozen")).toBeInTheDocument();
-    expect(screen.getByTitle("Contains hidden post-freeze activity")).toBeInTheDocument();
+    expect(screen.getByTitle("Frozen cell with hidden post-freeze activity")).toBeInTheDocument();
   });
 
   it("updates ranking when a reveal step payload arrives", async () => {

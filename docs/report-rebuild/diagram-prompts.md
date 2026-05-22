@@ -57,7 +57,7 @@ package "contestServer" {
   [ContestController]
   [ContestService + LifecycleService]
   [Transition + Sync Schedulers]
-  [SSE Broadcaster]
+  [SSE Adapters + Registries]
   [Problem / TestCase / Clarification Services]
 }
 package "submissionServer" {
@@ -343,10 +343,10 @@ stop
 - Report section: 5.3 Activity Diagrams for Complicated Behaviors
 - Diagram type: Sequence diagram
 - Purpose: Show snapshot, incremental update, heartbeat, cleanup, REST fallback, and polling fallback.
-- Actors/components/swimlanes/entities: `ContestOverview`, `useContestStream`, `EventSource`, `ContestStreamController`, `ContestStreamBroadcaster`, `ContestService`, REST contest endpoints.
-- What the diagram should show: EventSource connects, backend sends snapshot, frontend hydrates buckets, `ContestUpdatedEvent` triggers broadcast, frontend places contest in correct bucket, heartbeat keeps connection alive, failure cleanup, REST hydration after no snapshot, polling when closed.
+- Actors/components/swimlanes/entities: `ContestOverview`, `useContestStream`, `EventSource`, `ContestStreamController`, `ContestSseRegistry`, `ContestSseAdapter`, `SseHeartbeatScheduler`, `ContestService`, REST contest endpoints.
+- What the diagram should show: EventSource connects, backend sends snapshot, frontend hydrates buckets, emitter is registered, `ContestUpdatedEvent` triggers the SSE adapter, frontend places contest in the correct bucket, named `ping` heartbeat keeps the connection alive, failure cleanup, REST hydration after no snapshot, and polling when closed.
 - What the diagram must NOT include: Judge0, RabbitMQ, or database schema.
-- AI image-generation prompt: Create an SSE sequence diagram for AuraC2 contest updates. Show React ContestOverview/useContestStream opening EventSource to /api/contest/stream, backend creating SseEmitter, ContestService building snapshot, frontend applying snapshot, ContestUpdatedEvent causing ContestStreamBroadcaster to send contest-update, frontend moving contest between active/upcoming/paused/ended buckets, heartbeat every 15 seconds, emitter cleanup on failure, REST hydration after no snapshot, and 10-second polling when stream is closed.
+- AI image-generation prompt: Create an SSE sequence diagram for AuraC2 contest updates. Show React ContestOverview/useContestStream opening EventSource to /api/contest/stream, backend creating SseEmitter, ContestService building snapshot, frontend applying snapshot, ContestUpdatedEvent causing ContestSseAdapter and SsePublisher to send contest-update through ContestSseRegistry, frontend moving contest between active/upcoming/paused/ended buckets, named ping heartbeat every 15 seconds, emitter cleanup on failure, REST hydration after no snapshot, and 10-second polling when stream is closed.
 - PlantUML:
 
 ```plantuml
@@ -355,18 +355,22 @@ participant "ContestOverview" as UI
 participant "useContestStream" as Hook
 participant "ContestStreamController" as Controller
 participant "ContestService" as Service
-participant "ContestStreamBroadcaster" as Broadcaster
+participant "ContestSseRegistry" as Registry
+participant "ContestSseAdapter" as Adapter
+participant "SseHeartbeatScheduler" as Heartbeat
 UI -> Hook : mount handlers
 Hook -> Controller : GET /api/contest/stream
 Controller -> Service : getStreamSnapshot()
 Service --> Controller : active/upcoming/paused/ended
 Controller --> Hook : event: snapshot
 Hook --> UI : applySnapshot()
-Controller -> Broadcaster : register emitter
+Controller -> Registry : register emitter
 ... contest changes ...
-Broadcaster --> Hook : event: contest-update
+Adapter -> Registry : publish event: contest-update
+Registry --> Hook : event: contest-update
 Hook --> UI : placeContest(); switchTabForReason()
-Broadcaster --> Hook : heartbeat comment
+Heartbeat -> Registry : event: ping
+Registry --> Hook : event: ping
 alt no snapshot after 3 seconds
   UI -> Service : REST fallback endpoints
 end
@@ -503,10 +507,10 @@ rectangle "Backend" as Backend {
 - Report section: 6.1 Application Architecture Design / Context Diagram
 - Diagram type: Component interaction diagram
 - Purpose: Show how contest lifecycle writes, events, schedulers, row locking, and SSE cooperate.
-- Actors/components/swimlanes/entities: Admin UI, ContestController, ContestService, ContestLifecycleService, ContestRepository/PostgreSQL, ContestUpdatedEvent, ContestTransitionScheduler, ContestStatusSyncScheduler, ContestStatusSyncService, ContestStatusSyncExecutor, ContestStreamBroadcaster, Browser SSE clients.
-- What the diagram should show: Admin creates/changes contest, service saves and publishes event, transactional listeners run after commit, exact-time scheduler reschedules/cancels tasks, fallback sync runs periodically, executor locks row and syncs persisted state, broadcaster sends SSE update.
+- Actors/components/swimlanes/entities: Admin UI, ContestController, ContestService, ContestLifecycleService, ContestRepository/PostgreSQL, ContestUpdatedEvent, ContestTransitionScheduler, ContestStatusSyncScheduler, ContestStatusSyncService, ContestStatusSyncExecutor, ContestSseAdapter, SsePublisher, ContestSseRegistry, Browser SSE clients.
+- What the diagram should show: Admin creates/changes contest, service saves and publishes event, transactional listeners run after commit, exact-time scheduler reschedules/cancels tasks, fallback sync runs periodically, executor locks row and syncs persisted state, the SSE adapter publishes updates through the shared publisher and registry.
 - What the diagram must NOT include: Submission queue or Judge0 callback internals.
-- AI image-generation prompt: Create a clean architecture diagram for AuraC2 contest lifecycle. Show Admin React UI, ContestController, ContestService, ContestLifecycleService, ContestRepository/PostgreSQL, ContestUpdatedEvent, ContestTransitionScheduler, ContestStatusSyncScheduler, ContestStatusSyncService, ContestStatusSyncExecutor, and ContestStreamBroadcaster. Label manual transitions, auto transitions, row lock, event after commit, and SSE contest-update to browsers.
+- AI image-generation prompt: Create a clean architecture diagram for AuraC2 contest lifecycle. Show Admin React UI, ContestController, ContestService, ContestLifecycleService, ContestRepository/PostgreSQL, ContestUpdatedEvent, ContestTransitionScheduler, ContestStatusSyncScheduler, ContestStatusSyncService, ContestStatusSyncExecutor, ContestSseAdapter, SsePublisher, and ContestSseRegistry. Label manual transitions, auto transitions, row lock, event after commit, and SSE contest-update to browsers.
 - PlantUML:
 
 ```plantuml
@@ -522,7 +526,9 @@ component "ContestTransitionScheduler" as ETS
 component "ContestStatusSyncScheduler" as Fallback
 component "ContestStatusSyncService" as Sync
 component "ContestStatusSyncExecutor\nREQUIRES_NEW + row lock" as Exec
-component "ContestStreamBroadcaster" as SSE
+component "ContestSseAdapter" as SSE
+component "SsePublisher" as Publisher
+component "ContestSseRegistry" as Registry
 actor "Browser SSE Clients" as Clients
 Admin --> CC : manual create/start/pause/resume/end
 CC --> CS
@@ -536,7 +542,9 @@ Sync --> Exec
 Exec --> DB : SELECT FOR UPDATE
 Exec --> Event : AUTO_START / AUTO_END
 Event --> SSE : after commit
-SSE --> Clients : contest-update
+SSE --> Publisher : contest-update
+Publisher --> Registry
+Registry --> Clients : contest-update
 @enduml
 ```
 
