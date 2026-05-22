@@ -38,6 +38,16 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     Optional<Submission> findByIdWithContestProblemUser(@Param("id") Long id);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select submission from Submission submission
+            join fetch submission.contest
+            join fetch submission.problem
+            join fetch submission.user
+            where submission.id = :id
+            """)
+    Optional<Submission> findByIdWithContestProblemUserForUpdate(@Param("id") Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select submission from Submission submission where submission.id = :id")
     Optional<Submission> findByIdForUpdate(@Param("id") Long id);
 }

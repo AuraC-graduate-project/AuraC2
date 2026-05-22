@@ -17,6 +17,7 @@ import com.server.contestControl.submissionServer.repository.SubmissionRepositor
 import com.server.contestControl.submissionServer.sse.SubmissionSsePublisher;
 import com.server.contestControl.submissionServer.sse.SubmissionStreamEvent;
 import com.server.contestControl.submissionServer.sse.SubmissionStreamEventType;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +27,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -61,6 +64,14 @@ class SubmissionServiceValidationTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
         when(authentication.getName()).thenReturn("team1");
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
     }
 
     // ─── 1. Valid submission: problem belongs to active contest ─────────────────
@@ -177,6 +188,48 @@ class SubmissionServiceValidationTest {
     }
 
     // ─── Helpers ───────────────────────────────────────────────────────────────
+
+    @Test
+    void newSubmissionMessageIsPublishedOnlyAfterCommit() {
+        TransactionSynchronizationManager.initSynchronization();
+        stubValidSubmission();
+
+        SubmissionRequest request = new SubmissionRequest(ACTIVE_CONTEST_ID, PROBLEM_ID, "java", "code");
+        submissionService.submitCode(request);
+
+        verify(submissionProducer, never()).sendSubmission(any());
+
+        TransactionSynchronizationManager.getSynchronizations()
+                .forEach(TransactionSynchronization::afterCommit);
+
+        verify(submissionProducer).sendSubmission(1L);
+    }
+
+    @Test
+    void rollbackBeforeCommitDoesNotPublishSubmissionMessage() {
+        TransactionSynchronizationManager.initSynchronization();
+        stubValidSubmission();
+
+        SubmissionRequest request = new SubmissionRequest(ACTIVE_CONTEST_ID, PROBLEM_ID, "java", "code");
+        submissionService.submitCode(request);
+
+        TransactionSynchronizationManager.clearSynchronization();
+
+        verify(submissionProducer, never()).sendSubmission(any());
+    }
+
+    private void stubValidSubmission() {
+        Contest activeContest = contest(ACTIVE_CONTEST_ID);
+        Problem problem = problem(PROBLEM_ID, activeContest);
+        User user = user("team1");
+
+        when(contestService.getContestEntity()).thenReturn(activeContest);
+        when(problemService.getProblemEntity(PROBLEM_ID)).thenReturn(problem);
+        when(userRepository.findByUsername("team1")).thenReturn(Optional.of(user));
+        when(submissionRepository.save(any()))
+                .thenReturn(submission(1L, activeContest, problem, user, Verdict.PENDING));
+        when(submissionSsePublisher.buildEvent(any(), any())).thenReturn(dummyEvent());
+    }
 
     private Contest contest(Long id) {
         return Contest.builder().id(id).build();

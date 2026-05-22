@@ -14,6 +14,7 @@ import com.server.contestControl.submissionServer.sse.SubmissionStreamEventType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -93,7 +94,16 @@ public class Judge0CallbackService {
         }
 
         Long effectiveJudgeRunId = effectiveJudgeRunId(submission, judgeRunId);
-        recordJudgeResult(submission, effectiveJudgeRunId, testCaseNumber, verdict, response);
+        boolean recorded = recordJudgeResult(submission, effectiveJudgeRunId, testCaseNumber, verdict, response);
+        if (!recorded) {
+            log.info(
+                    "Ignoring duplicate Judge0 callback. submissionId={} judgeRunId={} testCaseNumber={}",
+                    submissionId,
+                    effectiveJudgeRunId,
+                    testCaseNumber
+            );
+            return ResponseEntity.ok("Duplicate callback ignored");
+        }
 
         long receivedCount = judgeResultRepository.countBySubmission_IdAndJudgeRunId(
                 submissionId,
@@ -156,29 +166,41 @@ public class Judge0CallbackService {
         );
     }
 
-    private void recordJudgeResult(
+    private boolean recordJudgeResult(
             Submission submission,
             Long judgeRunId,
             int testCaseNumber,
             Verdict verdict,
             Judge0Response response
     ) {
-        SubmissionJudgeResult result = judgeResultRepository
-                .findBySubmission_IdAndJudgeRunIdAndTestCaseNumber(
-                        submission.getId(),
-                        judgeRunId,
-                        testCaseNumber
-                )
-                .orElseGet(() -> SubmissionJudgeResult.builder()
-                        .submission(submission)
-                        .judgeRunId(judgeRunId)
-                        .testCaseNumber(testCaseNumber)
-                        .build());
+        if (judgeResultRepository.findBySubmission_IdAndJudgeRunIdAndTestCaseNumber(
+                submission.getId(),
+                judgeRunId,
+                testCaseNumber
+        ).isPresent()) {
+            return false;
+        }
 
+        SubmissionJudgeResult result = SubmissionJudgeResult.builder()
+                .submission(submission)
+                .judgeRunId(judgeRunId)
+                .testCaseNumber(testCaseNumber)
+                .build();
         result.setVerdict(verdict);
         result.setExecutionTime(response == null ? 0 : response.getTimeAsInt());
         result.setMemoryUsage(response == null ? 0 : response.getMemoryAsInt());
-        judgeResultRepository.save(result);
+        try {
+            judgeResultRepository.save(result);
+            return true;
+        } catch (DataIntegrityViolationException ex) {
+            log.info(
+                    "Duplicate Judge0 callback hit unique constraint. submissionId={} judgeRunId={} testCaseNumber={}",
+                    submission.getId(),
+                    judgeRunId,
+                    testCaseNumber
+            );
+            return false;
+        }
     }
 
     private Verdict finalVerdict(List<SubmissionJudgeResult> results) {

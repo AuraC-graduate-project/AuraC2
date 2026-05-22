@@ -51,16 +51,16 @@ This document is based on the current local codebase only. The instructor templa
 | Test-case update/delete | Planned / Future Work | No `PUT`, `PATCH`, or `DELETE` in `TestCaseController` | Test cases can be added and listed but not edited or deleted. | Mark missing. |
 | Difficulty handling | Implemented | `Difficulty`, `Difficulty.fromString`, `ProblemService.createProblem`, `CreateProblemModal` | Difficulty is stored as enum and selected in UI. | Include in data model. |
 | Time and memory limit fields | Partially Implemented | `Problem.timeLimit`, `Problem.memoryLimit`, `ProblemRequest`, `ProblemResponse`, `Judge0Service` | Limits are stored and displayed, but Judge0 request does not pass a CPU time limit or memory limit parameter. | Classify as metadata implemented, enforcement not implemented. |
-| Submission creation | Partially Implemented | `SubmissionController.submit`, `SubmissionService.submitCode`, `Submission` entity | Submissions are persisted and queued. Active contest is resolved server-side, but request `contestId` is ignored and selected problem is not verified to belong to the active contest. | Include validation gap in risks and requirement status. |
+| Submission creation | Implemented | `SubmissionController.submit`, `SubmissionService.submitCode`, `Submission` entity | Submissions are persisted after active contest/problem validation, then the RabbitMQ message is published only after the database transaction commits. | Include after-commit queue publish behavior in judging flow. |
 | Validation of running contest | Implemented | `SubmissionService.submitCode`, `ContestService.getContestEntity` | Submission requires `getContestEntity`, which finds an effective RUNNING contest or throws. | Include as implemented. |
 | Validation of authenticated user/team | Implemented | `SecurityConfiguration`, `SubmissionController`, `SecurityContextHolder` in `SubmissionService` | The controller allows TEAM and ADMIN, then uses the authenticated principal as the submission owner. | Include; note ADMIN can submit by policy. |
-| RabbitMQ submission queue | Implemented | `RabbitMQConfig`, `SubmissionProducer`, `SubmissionConsumer` | Submissions are sent to durable `submissionQueue` through direct exchange and consumed by `@RabbitListener`. | Include asynchronous judging architecture. |
+| RabbitMQ submission queue | Implemented | `RabbitMQConfig`, `SubmissionProducer`, `SubmissionConsumer` | Submissions are sent to durable `submissionQueue` through direct exchange after commit and consumed by `@RabbitListener`; the consumer locks the submission before claiming it to reduce duplicate dispatch risk. | Include asynchronous judging architecture and duplicate-message guard. |
 | Result queue | Partially Implemented | `RabbitMQConfig.RESULT_QUEUE`, `ResultProducer`, `ResultConsumer` | Queue/exchange/binding constants and beans exist, but producer and consumer classes are empty. | Mark as scaffolded only. |
 | Judge0 request dispatch | Implemented | `SubmissionConsumer.handleSubmission`, `Judge0Service.sendSingleTest`, `Judge0SubmissionDTO` | Consumer maps language, increments judge run, marks RUNNING, sends one Judge0 submission per test case with callback URL. | Include judging flow. |
 | Judge0 language mapping | Implemented | `LanguageMapper.convertLanguage` | Supports C, C++, Java, Python, JavaScript, and Go IDs. Unsupported language throws `IllegalArgumentException`. | Include supported language list and risk for unhandled unsupported language. |
-| Judge0 callback URL with run and test case | Implemented | `Judge0Service`, `CallbackHandler` | Callback URL includes `submissionId`, `judgeRunId`, and `testCaseNumber`. A legacy callback route also exists. | Include in stale callback protection diagram. |
-| Judge0 callback processing | Implemented | `Judge0CallbackService.handleJudge0Callback`, `SubmissionRepository.findByIdForUpdate` | Callback locks the submission, rejects stale or invalid callbacks, records terminal test-case results, and finalizes aggregate verdict when all expected tests arrive. | Include as implemented. |
-| Per-test-case result tracking | Implemented | `SubmissionJudgeResult`, `SubmissionJudgeResultRepository`, `Judge0CallbackService.recordJudgeResult` | Each test case result is stored with unique `(submission_id, judge_run_id, test_case_number)`. | Update ER and judging diagrams. |
+| Judge0 callback URL with run, test case, and signature | Implemented | `Judge0Service`, `Judge0CallbackSignatureService`, `CallbackHandler` | Callback URL includes `submissionId`, `judgeRunId`, `testCaseNumber`, and an HMAC signature query parameter. A signed legacy callback route also exists for run zero. | Include in stale callback and callback-security diagrams. |
+| Judge0 callback processing | Implemented | `CallbackHandler`, `Judge0CallbackService.handleJudge0Callback`, `SubmissionRepository.findByIdForUpdate` | Callback signature verification runs before state mutation; the service then locks the submission, rejects stale or invalid callbacks, records terminal test-case results, and finalizes aggregate verdict when all expected tests arrive. | Include as implemented. |
+| Per-test-case result tracking | Implemented | `SubmissionJudgeResult`, `SubmissionJudgeResultRepository`, `Judge0CallbackService.recordJudgeResult` | Each test case result is stored with unique `(submission_id, judge_run_id, test_case_number)`; duplicate callbacks are treated idempotently. | Update ER and judging diagrams. |
 | Aggregate verdict calculation | Implemented | `Judge0CallbackService.finalVerdict`, `Judge0CallbackServiceTest` | Final verdict is the earliest non-accepted test case by test-case number, or ACCEPTED if all are accepted. | Replace old callback-ordering limitation with current fix. |
 | Stale callback protection | Implemented | `Submission.judgeRunId`, `CallbackHandler`, `Judge0CallbackService.isStaleCallback`, `Judge0CallbackServiceTest.staleCallbackFromOlderRunIsIgnored` | Old callbacks are ignored if their judgeRunId does not match the current submission run. Legacy callbacks are stale once run id is greater than zero. | Include as implemented and explain why run tracking exists. |
 | Zero-test-case behavior | Partially Implemented | `SubmissionConsumer`, `Judge0CallbackService` | Callback service marks INTERNAL_ERROR if a callback arrives for zero tests, but consumer sets submission RUNNING and sends no callbacks when the problem has zero test cases. | Mark as risk; no proactive zero-test guard exists. |
@@ -175,8 +175,8 @@ The backend is best described as a modular monolith rather than separate microse
 | `/api/admin/rejudge/submissions` | POST | ADMIN | Backend implemented | `RejudgeController.rejudgeSubmissions` |
 | `/api/admin/rejudge/problem/{problemId}` | POST | ADMIN | Backend implemented | `RejudgeController.rejudgeProblem` |
 | `/api/admin/rejudge/contests/{contestId}` | POST | ADMIN | Backend implemented | `RejudgeController.rejudgeContest` |
-| `/api/callback/judge0/{submissionId}/{testCaseNumber}` | PUT | Public callback | Legacy route, stale after run id exists | `CallbackHandler.handleLegacyJudge0Callback` |
-| `/api/callback/judge0/{submissionId}/{judgeRunId}/{testCaseNumber}` | PUT | Public callback | Implemented | `CallbackHandler.handleJudge0Callback` |
+| `/api/callback/judge0/{submissionId}/{testCaseNumber}?signature=...` | PUT | Public callback, HMAC protected | Legacy signed route for run zero; stale after run id exists | `CallbackHandler.handleLegacyJudge0Callback` |
+| `/api/callback/judge0/{submissionId}/{judgeRunId}/{testCaseNumber}?signature=...` | PUT | Public callback, HMAC protected | Implemented; rejects missing or invalid signatures before state mutation | `CallbackHandler.handleJudge0Callback` |
 
 ## F. Updated Event / Listener / Scheduler List
 
@@ -195,9 +195,9 @@ The backend is best described as a modular monolith rather than separate microse
 
 | Flow | Status | Components | Notes |
 |---|---|---|---|
-| Submission queue | Implemented | `RabbitMQConfig.SUBMISSION_QUEUE`, `SubmissionProducer`, `SubmissionConsumer` | Stores only submission ID as message payload. |
+| Submission queue | Implemented | `RabbitMQConfig.SUBMISSION_QUEUE`, `SubmissionProducer`, `SubmissionConsumer` | Stores only submission ID as message payload. New submissions publish after commit; consumer uses a pessimistic lock before dispatch. |
 | Judge0 dispatch | Implemented | `SubmissionConsumer`, `LanguageMapper`, `Judge0Service` | Consumer sends one Judge0 request per test case. |
-| Judge0 callback processing | Implemented | `CallbackHandler`, `Judge0CallbackService`, `SubmissionJudgeResultRepository` | Callback writes per-case result and finalizes after all tests arrive. |
+| Judge0 callback processing | Implemented | `CallbackHandler`, `Judge0CallbackSignatureService`, `Judge0CallbackService`, `SubmissionJudgeResultRepository` | Callback verifies HMAC signature, writes each per-case result idempotently, and finalizes after all tests arrive. |
 | Rejudge republish | Implemented backend | `RejudgeService`, `SubmissionProducer`, `SubmissionConsumer` | Rejudge resets final submissions to `PENDING_REJUDGE` and republishes after commit. |
 | Result queue | Partially Implemented | `RabbitMQConfig.RESULT_QUEUE`, empty `ResultProducer`, empty `ResultConsumer` | Queue exists but no result notification flow is implemented. |
 | SSE contest updates | Implemented | `ContestUpdatedEvent`, `ContestStreamBroadcaster`, `ContestOverview` | Pushes contest lifecycle updates, not submission verdict updates. |
@@ -226,9 +226,9 @@ The backend is best described as a modular monolith rather than separate microse
 
 1. Email verification is no longer implemented despite verification exception classes and `/verify/**` security remnants.
 2. Admin bootstrap rotates the existing admin password on every startup, which is operationally sensitive and should be explained.
-3. Submission intake ignores request `contestId` and does not verify that `problemId` belongs to the currently running contest.
+3. New submission RabbitMQ publish failures after commit are logged, but the team response already contains the committed submission.
 4. Problem time and memory limits are stored but not passed to Judge0 for enforcement.
-5. If a submission has zero test cases, the consumer can mark it RUNNING and dispatch no Judge0 jobs.
+5. Zero-test-case submissions are marked `INTERNAL_ERROR`; this protects judging state but should still be prevented earlier by problem authoring validation.
 6. Unsupported language throws in the RabbitMQ consumer path without a user-facing validation response at submission time.
 7. Result queue is configured but producer/consumer are empty.
 8. Clarification backend exists, but frontend still uses mock/placeholder screens.

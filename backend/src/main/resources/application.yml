@@ -47,6 +47,8 @@ spring:
 judge0:
   url: ${JUDGE0_URL:https://ce.judge0.com/submissions?wait=false}
   callback: ${JUDGE0_CALLBACK_URL:http://localhost:8080/api/callback/judge0}
+  # Dev fallback keeps local runs simple. Override in production with JUDGE0_CALLBACK_SECRET.
+  callback-secret: ${JUDGE0_CALLBACK_SECRET:dev-only-change-me}
 
 contest:
   sync:

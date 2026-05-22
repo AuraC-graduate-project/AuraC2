@@ -368,17 +368,22 @@ end
 
 - Report section: 5.3 Activity Diagrams for Complicated Behaviors
 - Diagram type: Activity diagram
-- Purpose: Highlight the current fix for old callback-ordering and stale-callback issues.
-- Actors/components/swimlanes/entities: Judge0 API, CallbackHandler, Judge0CallbackService, SubmissionRepository row lock, SubmissionJudgeResultRepository, TestCaseRepository.
-- What the diagram should show: Callback received, submission row locked, stale `judgeRunId` rejected, invalid test case rejected, non-terminal statuses ignored, result upserted, count results for current run, wait if incomplete, aggregate earliest non-accepted result or accepted, store max execution time and memory.
+- Purpose: Highlight signed callback verification, stale-callback protection, idempotent per-case storage, and final verdict aggregation.
+- Actors/components/swimlanes/entities: Judge0 API, CallbackHandler, Judge0CallbackSignatureService, Judge0CallbackService, SubmissionRepository row lock, SubmissionJudgeResultRepository, TestCaseRepository.
+- What the diagram should show: Callback received with `submissionId`, `judgeRunId`, `testCaseNumber`, and `signature`; signature verified before state changes; submission row locked; stale `judgeRunId` rejected; invalid test case rejected; non-terminal statuses ignored; duplicate per-case result ignored; new result saved; count results for current run; wait if incomplete; aggregate earliest non-accepted result or accepted; store max execution time and memory.
 - What the diagram must NOT include: UI screen design or rejudge selection forms.
-- AI image-generation prompt: Create an activity diagram for AuraC2 Judge0 callback processing. Show callback with submissionId, judgeRunId, testCaseNumber; row lock on Submission; stale callback check; expected test count check; invalid test-case check; terminal verdict check; save or update SubmissionJudgeResult; count received results; if incomplete wait; if complete aggregate final verdict, max execution time, max memory, and save Submission.
+- AI image-generation prompt: Create an activity diagram for AuraC2 Judge0 callback processing. Show callback with submissionId, judgeRunId, testCaseNumber, and signature; signature verification before any state mutation; row lock on Submission; stale callback check; expected test count check; invalid test-case check; terminal verdict check; duplicate result ignored; new SubmissionJudgeResult saved; count received results; if incomplete wait; if complete aggregate final verdict, max execution time, max memory, and save Submission.
 - PlantUML:
 
 ```plantuml
 @startuml
 start
 :Judge0 callback arrives\nsubmissionId, judgeRunId, testCaseNumber;
+:CallbackHandler verifies\nHMAC signature;
+if (signature valid?) then (no)
+  :Reject callback;
+  stop
+endif
 :CallbackHandler delegates to\nJudge0CallbackService;
 :Lock Submission row;
 if (judgeRunId stale?) then (yes)
@@ -394,7 +399,11 @@ if (Judge0 status terminal?) then (no)
   :Wait for terminal callback;
   stop
 endif
-:Save or update SubmissionJudgeResult;
+if (Result already exists?) then (yes)
+  :Ignore duplicate callback;
+  stop
+endif
+:Save SubmissionJudgeResult;
 :Count results for current run;
 if (All expected results received?) then (no)
   :Keep submission RUNNING;
@@ -525,11 +534,11 @@ SSE --> Clients : contest-update
 
 - Report section: 6.1 Application Architecture Design / Context Diagram
 - Diagram type: Architecture flow diagram
-- Purpose: Show submission persistence, RabbitMQ, Judge0 dispatch, callback, and final result persistence.
-- Actors/components/swimlanes/entities: Team UI, SubmissionController, SubmissionService, SubmissionRepository/PostgreSQL, SubmissionProducer, RabbitMQ, SubmissionConsumer, TestCaseRepository, LanguageMapper, Judge0Service, Judge0 API, CallbackHandler, Judge0CallbackService, SubmissionJudgeResult.
-- What the diagram should show: Submission request, save PENDING row, publish submissionId, consume message, map language, increment judgeRunId, mark RUNNING, fetch test cases, send each test to Judge0 with callback URL, callback persists per-case result, aggregate final verdict.
+- Purpose: Show submission persistence, after-commit RabbitMQ publishing, Judge0 dispatch with signed callback URL, callback verification, and final result persistence.
+- Actors/components/swimlanes/entities: Team UI, SubmissionController, SubmissionService, SubmissionRepository/PostgreSQL, SubmissionProducer, RabbitMQ, SubmissionConsumer, TestCaseRepository, LanguageMapper, Judge0Service, Judge0CallbackSignatureService, Judge0 API, CallbackHandler, Judge0CallbackService, SubmissionJudgeResult.
+- What the diagram should show: Submission request, save PENDING row, publish submissionId only after commit, consume message, lock/claim submission, map language, increment judgeRunId, mark RUNNING, fetch test cases, send each test to Judge0 with signed callback URL, callback verifies signature, persists per-case result idempotently, aggregate final verdict.
 - What the diagram must NOT include: Contest lifecycle scheduler details or frontend admin screens.
-- AI image-generation prompt: Create a technical architecture diagram for AuraC2 asynchronous judging. Show Team React UI submitting code to SubmissionController and SubmissionService, PostgreSQL storing a PENDING Submission, SubmissionProducer publishing submissionId to RabbitMQ submissionQueue, SubmissionConsumer consuming it, fetching test cases, LanguageMapper, Judge0Service sending one request per test case to Judge0, Judge0 calling CallbackHandler, Judge0CallbackService storing SubmissionJudgeResult rows and updating final Submission verdict. Label judgeRunId and testCaseNumber.
+- AI image-generation prompt: Create a technical architecture diagram for AuraC2 asynchronous judging. Show Team React UI submitting code to SubmissionController and SubmissionService, PostgreSQL storing a PENDING Submission, SubmissionProducer publishing submissionId to RabbitMQ submissionQueue after commit, SubmissionConsumer consuming it with a row lock, fetching test cases, LanguageMapper, Judge0Service and Judge0CallbackSignatureService sending one request per test case to Judge0 with signed callback URL, Judge0 calling CallbackHandler, CallbackHandler verifying signature, Judge0CallbackService storing SubmissionJudgeResult rows idempotently and updating final Submission verdict. Label judgeRunId, testCaseNumber, and signature.
 - PlantUML:
 
 ```plantuml
@@ -544,6 +553,7 @@ component "SubmissionConsumer" as Consumer
 component "TestCaseRepository" as TCR
 component "LanguageMapper" as LM
 component "Judge0Service" as J0S
+component "Judge0CallbackSignatureService" as Sig
 cloud "Judge0 API" as J0
 component "CallbackHandler" as CB
 component "Judge0CallbackService" as CBS
@@ -551,16 +561,18 @@ database "SubmissionJudgeResult" as Results
 Team --> SC : POST /api/submissions
 SC --> SS
 SS --> DB : save PENDING submission
-SS --> MQ : publish submissionId
+SS --> MQ : after commit\npublish submissionId
 MQ --> Consumer : consume submissionId
-Consumer --> DB : increment judgeRunId\nmark RUNNING
+Consumer --> DB : lock, increment judgeRunId\nmark RUNNING
 Consumer --> TCR : fetch test cases
 Consumer --> LM : map language
 Consumer --> J0S : dispatch each test case
-J0S --> J0 : source, stdin,\nexpected output, callback URL
-J0 --> CB : callback with submissionId,\njudgeRunId, testCaseNumber
+J0S --> Sig : sign submissionId,\njudgeRunId, testCaseNumber
+J0S --> J0 : source, stdin,\nexpected output, signed callback URL
+J0 --> CB : callback with submissionId,\njudgeRunId, testCaseNumber,\nsignature
+CB --> Sig : verify signature
 CB --> CBS
-CBS --> Results : save per-case result
+CBS --> Results : save per-case result\nidempotently
 CBS --> DB : aggregate final verdict
 @enduml
 ```
