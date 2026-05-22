@@ -46,7 +46,7 @@ AuraC2, also referred to as Aura Contest Control, is a web-based programming con
 
 The current implementation is a real web application composed of a Spring Boot backend, a React frontend, PostgreSQL persistence, RabbitMQ asynchronous messaging, and Judge0 integration for code execution. The system is not only a static design proposal; it includes implemented authentication, contest lifecycle control, problem and test-case management, asynchronous judging, per-test-case result tracking, backend clarification handling, real-time contest lifecycle updates using server-sent events, and backend rejudge functionality.
 
-This report rebuilds the previous system analysis and design documentation so that it reflects the current local codebase. The codebase is treated as the source of truth. Features that exist only as frontend mock data or placeholders are not described as complete. Features that were previously planned but now have backend implementation are reclassified accordingly. Features that exist only as unused scaffolding or old exception remnants are identified as partial, future work, or deprecated.
+This report rebuilds the previous system analysis and design documentation so that it reflects the current local codebase. The codebase is treated as the source of truth. Features that exist only as placeholder UI or unused scaffolding are not described as complete. Features that were previously planned but now have backend implementation are reclassified accordingly. Features that exist only as unused scaffolding or old exception remnants are identified as partial, future work, or deprecated.
 
 # 2. Project Overview and Objectives
 
@@ -86,17 +86,16 @@ Current Status: Implemented as a modular monolith with external Judge0 dependenc
 
 | Module | Status | Description |
 |---|---|---|
-| Authentication and Security | Implemented | Handles login, administrator-protected team registration, JWT validation, refresh-token persistence, rotation, logout revocation, and cookie clearing. |
+| Authentication and Security | Implemented | Handles login, administrator-protected team registration, JWT validation, refresh-token persistence, rotation, logout revocation, cookie clearing, explicit route guards, and the guarded local/test-only `no-security` profile. |
 | Admin Bootstrap | Implemented | Creates or rotates the single admin account at startup and writes generated credentials to `admin-account.txt`; password rotation on every startup is operationally sensitive. |
 | Contest Lifecycle | Implemented | Supports creation, manual transitions, automatic transitions, pause/resume timing, and effective state resolution. |
 | Real-Time Contest Updates | Implemented | Uses SSE snapshot, contest-update events, heartbeat, and frontend fallback polling. |
-| Problem Management | Implemented for create/read | Supports contest-bound problem creation and retrieval. Update/delete are not implemented. |
-| Test-Case Management | Implemented for create/read | Supports public/private test-case visibility by role. Update/delete are not implemented. |
+| Problem Management | Implemented | Supports contest-bound problem creation, retrieval, update, and deletion with admin-only mutation endpoints. |
+| Test-Case Management | Implemented | Supports public/private test-case visibility by role and admin-only create/update/delete endpoints. |
 | Submission and Judging | Implemented with noted judging limitations | Supports submission persistence, after-commit RabbitMQ queueing, Judge0 dispatch, signed callbacks, per-case results, and final verdict calculation. |
-| Rejudge Backend | Implemented | Admin-only backend endpoints requeue selected/problem/contest submissions for rejudging. |
-| Clarification Backend | Implemented | Backend supports team questions and admin public/private replies. |
-| Clarification Frontend | Partially implemented | Team screen uses mock data; admin screen is a placeholder. |
-| Scoreboard Ranking | Planned / Future Work | Freeze metadata exists, but ranking/standings are not implemented. |
+| Rejudge Backend and UI | Implemented | Admin-only backend endpoints and admin UI requeue selected/problem/contest submissions for rejudging. |
+| Clarifications | Implemented | Backend and admin/team frontend support team questions, admin public/private replies, public answered clarifications, and clarification SSE updates. |
+| Scoreboard Ranking | Implemented | Public/admin snapshots, SSE streams, ICPC-style ranking, freeze behavior, and admin reveal controls are implemented. |
 | Security Monitoring | Planned / Future Work | UI placeholder exists, but no backend monitoring subsystem exists. |
 
 [Insert Figure 2 here: Backend Modular Architecture Diagram]
@@ -112,7 +111,7 @@ Current Status: Implemented as a single deployable Spring Boot application.
 
 The main objective of AuraC2 is to support controlled programming contests in a university environment. The administrator should be able to prepare contests, create problems, add test cases, manage team accounts, control contest lifecycle state, and review submissions. Team users should be able to authenticate, enter the contest workspace, choose a problem, write code, submit a solution, and review previous submissions.
 
-The target audience includes contest administrators, programming teams, instructors, and technical operators responsible for contest deployment. The current system emphasizes contest control, judging, and administrative workflows. Future versions should improve ranking, security monitoring, announcements, participation management, and offline operation.
+The target audience includes contest administrators, programming teams, instructors, and technical operators responsible for contest deployment. The current system emphasizes contest control, judging, scoreboard visibility, clarification handling, and administrative workflows. Future versions should improve reporting/export, security monitoring, announcements, participation management, and offline operation.
 
 ## 2.5 Current Scope vs Future Scope
 
@@ -159,25 +158,26 @@ The main difference is scope. AuraC2 does not currently implement online communi
 | FR-IMP-07 | Start, pause, resume, and end contests manually. | Administrator | `ContestController`, `ContestService.updateStatus`, `ContestOverview` | Implemented |
 | FR-IMP-08 | Automatically start and end contests based on effective state. | Backend System | `ContestTransitionScheduler`, `ContestStatusSyncScheduler`, `ContestStatusSyncExecutor` | Implemented |
 | FR-IMP-09 | Stream contest lifecycle changes to the admin UI. | Administrator, Backend | `ContestStreamController`, `ContestStreamBroadcaster`, `useContestStream` | Implemented |
-| FR-IMP-10 | Create and retrieve contest problems. | Administrator, Team | `ProblemController`, `ProblemService`, `ProblemsView`, `teamApi` | Implemented |
-| FR-IMP-11 | Add and retrieve test cases with public/private filtering. | Administrator, Team | `TestCaseController`, `TestCaseService`, `TestCasesPanel` | Implemented with visibility notes |
+| FR-IMP-10 | Create, retrieve, update, and delete contest problems. | Administrator, Team | `ProblemController`, `ProblemService`, `ProblemsView`, `teamApi` | Implemented |
+| FR-IMP-11 | Add, retrieve, update, and delete test cases with public/private filtering. | Administrator, Team | `TestCaseController`, `TestCaseService`, `TestCasesPanel` | Implemented with visibility notes |
 | FR-IMP-12 | Submit code for judging. | Team, Administrator | `SubmissionController`, `SubmissionService`, `CodeEditor` | Implemented with validation limitations |
 | FR-IMP-13 | Dispatch submissions asynchronously to Judge0. | Backend, RabbitMQ, Judge0 | `SubmissionProducer`, `SubmissionConsumer`, `Judge0Service` | Implemented |
 | FR-IMP-14 | Store per-test-case judging results. | Backend | `SubmissionJudgeResult`, `Judge0CallbackService` | Implemented |
 | FR-IMP-15 | Reject unsigned, invalid, stale, or duplicate Judge0 callbacks. | Backend, Judge0 | `Judge0CallbackSignatureService`, `judgeRunId`, `Judge0CallbackService.isStaleCallback`, `SubmissionJudgeResult` unique constraint | Implemented |
 | FR-IMP-16 | Review submission history. | Team, Administrator | `SubmissionController`, `SubmissionHistory`, `SubmissionsView` | Implemented |
-| FR-IMP-17 | Rejudge selected, problem, or contest submissions through backend endpoints. | Administrator | `RejudgeController`, `RejudgeService` | Implemented backend |
-| FR-IMP-18 | Submit and answer clarifications through backend endpoints. | Team, Administrator | `ClarificationController`, `ClarificationService`, `Clarification` | Implemented backend |
+| FR-IMP-17 | Rejudge selected, problem, or contest submissions through backend endpoints and admin UI. | Administrator | `RejudgeController`, `RejudgeService`, `RejudgeView` | Implemented |
+| FR-IMP-18 | Submit and answer clarifications through backend endpoints and admin/team UI. | Team, Administrator | `ClarificationController`, `ClarificationService`, `Clarification`, `ClarificationsView`, team `Clarifications` | Implemented |
+| FR-IMP-19 | View public/team and admin scoreboard snapshots and streams with freeze/reveal behavior. | Visitor, Team, Administrator | `ScoreboardController`, `AdminScoreboardController`, scoreboard UI | Implemented |
 
 ### Partially Implemented Requirements
 
 | ID | Requirement | Reason for partial status | Evidence |
 |---|---|---|---|
 | FR-PART-01 | Team contest workspace. | Team can load contest/problems, submit code, and view history, but problem statement presentation is minimal and no live verdict refresh was found. | `team/App.tsx`, `CodeEditor`, `SubmissionHistory` |
-| FR-PART-02 | Clarification feature end-to-end. | Backend exists, but team UI uses mock data and admin UI is placeholder. | `ClarificationController`, `Clarifications.tsx`, `admin/App.tsx` |
+| FR-PART-02 | Live verdict delivery. | Submissions persist verdicts, but no dedicated live result queue or verdict push flow was found. | `ResultProducer`, `ResultConsumer`, `SubmissionHistory` |
 | FR-PART-03 | Result notification queue. | Queue is configured, but producer and consumer are empty. | `RabbitMQConfig`, `ResultProducer`, `ResultConsumer` |
 | FR-PART-04 | Time and memory limits. | Problem fields exist, but Judge0 request does not pass enforcement parameters. | `Problem`, `Judge0SubmissionDTO`, `Judge0Service` |
-| FR-PART-05 | Rejudge feature end-to-end. | Backend exists; frontend controls are missing. | `RejudgeController`, `RejudgeService`, `SubmissionsView` |
+| FR-PART-05 | Contest report/export workflow. | Scoreboard and submissions exist, but no formal export/report endpoint was found. | `ScoreboardController`, `AdminController.getAllSubmissions` |
 | FR-PART-06 | Local/offline deployment. | Docker Compose supports local services, but Judge0 defaults to external Judge0 CE. | `docker-compose.yml`, `application.yml` |
 
 ### Planned / Future Work Requirements
@@ -185,12 +185,11 @@ The main difference is scope. AuraC2 does not currently implement online communi
 | ID | Requirement | Evidence for future status |
 |---|---|---|
 | FR-PLAN-01 | Announcements. | No announcement entity, controller, or UI workflow was found. |
-| FR-PLAN-02 | Announcements. | No announcement entity, service, endpoint, or screen was found. |
+| FR-PLAN-02 | Contest notification center. | No announcement entity, service, endpoint, or screen was found. |
 | FR-PLAN-03 | Security monitoring. | Admin screen is placeholder; no backend monitoring package exists. |
 | FR-PLAN-04 | Dashboard statistics. | `StatsPanel` uses dashes and tooltip "No endpoint yet." |
 | FR-PLAN-05 | Explicit contest participation/join workflow. | No membership table or join controller exists. |
-| FR-PLAN-06 | Problem update/delete and test-case update/delete. | Controllers contain create/read only. |
-| FR-PLAN-07 | Frontend rejudge controls. | No rejudge functions or UI actions were found in the admin frontend. |
+| FR-PLAN-06 | Advanced reporting/export. | No formal report export workflow was found. |
 
 ### Deprecated / Removed Requirements
 
@@ -202,14 +201,14 @@ The main difference is scope. AuraC2 does not currently implement online communi
 
 | Requirement | Current support | Status |
 |---|---|---|
-| Security | JWT authentication, BCrypt password encoding, method-level authorization for team registration, refresh-token hashing, revocation flag, token ownership checks, production-aware Secure cookie behavior, and shared `/auth` refresh-cookie path for refresh/logout. | Implemented |
+| Security | JWT authentication, BCrypt password encoding, route-level and method-level authorization, admin-only team registration, refresh-token hashing, revocation flag, token ownership checks, production-aware Secure cookie behavior, shared `/auth` refresh-cookie path for refresh/logout, signed Judge0 callbacks, and guarded `no-security` profile usage. | Implemented |
 | Reliability | Submissions are persisted before judging; scheduler fallback exists; row locks protect contest auto-sync and callback updates. | Implemented |
 | Performance | Judging is asynchronous through RabbitMQ, avoiding direct execution in the submission request. | Implemented |
 | Scalability | Queue-based judging can be extended with more consumers, though the backend remains a monolith. | Partially implemented |
 | Maintainability | Controllers, services, repositories, DTOs, entities, enums, events, schedulers, and UI components are separated. | Implemented |
-| Usability | Role-specific admin/team UI exists; some screens remain placeholders or mock-only. | Partially implemented |
+| Usability | Role-specific admin/team UI exists, including contest control, problem/test-case management, submissions, rejudge, scoreboard, and clarifications; quick statistics and security monitoring remain placeholders. | Partially implemented |
 | Data Integrity | Enums and foreign-key relationships model roles, contest status, verdicts, clarifications, and judging results. Row locks protect selected critical updates. | Implemented with validation gaps |
-| Extensibility | Package structure supports adding scoreboard, notifications, monitoring, and UI integrations. | Implemented as design capacity |
+| Extensibility | Package structure supports extending scoreboard reporting, notifications, monitoring, and additional UI integrations. | Implemented as design capacity |
 | Portability / Deployment Flexibility | Docker Compose supports local PostgreSQL/RabbitMQ/backend/frontend deployment. Judge0 needs explicit local configuration for full offline use. | Partially implemented |
 | Observability | Logging exists in lifecycle, scheduler, judging, rejudge, and SSE components, but no metrics dashboard or monitoring subsystem exists. | Partially implemented |
 
@@ -231,9 +230,9 @@ Current Status: Implemented except statistics and security monitor placeholders.
 Figure 5. Team Contest Workspace Use Case Diagram
 
 Purpose: To show team contest operations.  
-Description: A team can log in, view the active contest, select problems, write code, submit code, and view submission history. Clarification UI should be marked partial because the frontend is mock-only.  
+Description: A team can log in, view the active contest, select problems, write code, submit code, view submission history, view the scoreboard, submit clarifications, and view clarification answers.  
 Code Alignment: `team/App.tsx`, `ProblemSidebar`, `CodeEditor`, `SubmissionHistory`, `teamApi`, `Clarifications.tsx`.  
-Current Status: Implemented for contest workspace and submissions; partial for clarifications and live verdict updates.
+Current Status: Implemented for contest workspace, submissions, scoreboard, and clarifications; partial for live verdict updates.
 
 ## 5.2 Use Case Specifications
 
@@ -379,12 +378,12 @@ Current Status: Implemented backend; frontend missing.
 
 [Insert Figure 12 here: Clarification Backend vs Frontend Gap Diagram]
 
-Figure 12. Clarification Backend vs Frontend Gap Diagram
+Figure 12. Clarification Workflow Diagram
 
-Purpose: To explain why clarification is classified as partially implemented end-to-end.  
-Description: The backend supports team questions, admin replies, public/private reply scope, and public answered clarification retrieval, while the current team UI uses mock data and the admin clarification page is a placeholder.  
+Purpose: To explain the implemented clarification workflow.  
+Description: The backend supports team questions, admin replies, public/private reply scope, and public answered clarification retrieval. The admin and team frontend screens call the backend and subscribe to clarification SSE updates.  
 Code Alignment: `ClarificationController`, `ClarificationService`, `ClarificationRepository`, `Clarification`, `Clarifications.tsx`, `admin/App.tsx`.  
-Current Status: Backend implemented; frontend integration partial.
+Current Status: Implemented.
 
 # 6. Design Phase
 
@@ -392,9 +391,27 @@ Current Status: Backend implemented; frontend integration partial.
 
 AuraC2 follows a layered application design. The frontend presents role-specific user interfaces. The backend receives REST requests, validates security rules, performs business logic in services, persists data using repositories, and coordinates asynchronous judging and real-time updates.
 
-The authentication design is stateless for access tokens. Protected requests use a JWT access token in the `Authorization` header. Team account registration is exposed through the administrator workflow and protected at backend method level. Although `/auth/**` is broadly permitted at the URL filter level so authentication routes can be reached, `@PreAuthorize("hasRole('ADMIN')")` restricts the registration operation to administrators, and the JWT filter does not skip `/auth/register`.
+The authentication design is stateless for access tokens. Protected requests use a JWT access token in the `Authorization` header. Team account registration is exposed through the administrator workflow and protected at both route level and backend method level. The JWT filter does not skip `/auth/register`, so an administrator bearer token can populate the security context before `@PreAuthorize("hasRole('ADMIN')")` is evaluated.
 
 Refresh tokens are placed in an HTTP-only cookie and also persisted in the database by hash. The refresh cookie is scoped to `/auth`, allowing both `/auth/refresh` and `/auth/logout` to receive the same cookie. This allows the backend to revoke old refresh tokens, rotate refresh tokens, and clear the browser cookie consistently. In local development the cookie can remain non-secure, while production behavior uses the production flag to set the Secure attribute.
+
+Current route authorization map:
+
+| Endpoint group | Authorization behavior |
+|---|---|
+| `POST /auth/login`, `/auth/refresh`, `/auth/logout` | Public session endpoints; refresh/logout use the HTTP-only `/auth` cookie. |
+| `POST /auth/register` | Administrator-only route and method security. |
+| `GET /api/contest/active`, `/upcoming`, `/paused`, `/ended` | Public contest status reads. |
+| Contest mutation routes and `/api/contest/stream` | Administrator-only. |
+| Problem and test-case reads | `TEAM` or `ADMIN`. |
+| Problem and test-case create/update/delete | `ADMIN`. |
+| `/api/submissions/**` | `TEAM` or `ADMIN`; team detail access is owner-checked. |
+| `/api/admin/**` | `ADMIN`, including users, rejudge, and admin scoreboard/reveal controls. |
+| `/api/scoreboard/**` | Public scoreboard snapshot and stream. |
+| Clarifications | Public answered route, TEAM submit/my routes, ADMIN admin/reply routes. |
+| `/api/callback/judge0/**` | Externally reachable but HMAC-signature protected before state mutation. |
+
+The `no-security` profile remains available only as a local/test escape hatch. Startup fails if `no-security` is active by itself or with a production profile.
 
 The contest lifecycle design distinguishes persisted state from effective state. Persisted state is the database status. Effective state is the state the contest should have at the current time. Schedulers exist to reduce the delay between these two concepts. Exact-time scheduling attempts to transition at the precise start/end time, while the fallback scheduler periodically synchronizes eligible contests.
 
@@ -472,10 +489,10 @@ Current Status: Implemented.
 |---|---|---|
 | Authentication | Login, admin-protected team registration, refresh rotation, logout revocation, role authorization, production-aware refresh-cookie settings, and admin bootstrap. | Admin bootstrap password rotation remains operationally sensitive and should be reviewed. |
 | Contest lifecycle | Strong implementation with effective state, pause-aware time, schedulers, SSE. | No UI for status lock management discovered. |
-| Problems/test cases | Create and read exist. | Update/delete missing; limits not enforced by Judge0 request. |
+| Problems/test cases | Create, read, update, and delete exist. | Limits are stored but not enforced by Judge0 request. |
 | Judging | Queue, Judge0, signed callbacks, per-case results, live verdict push, and rejudge backend/UI exist. | Unsupported language still needs stronger submission-time validation. |
-| Clarifications | Backend complete for core workflow. | Frontend not wired. |
-| Scoreboard | Freeze metadata and penalty settings exist. | Ranking/standings not implemented. |
+| Clarifications | Backend and admin/team frontend workflow exist. | Remaining gap is workflow polish and operational policy around public/private replies. |
+| Scoreboard | Ranking, freeze, reveal, public/admin snapshots, and streams exist. | Formal export/reporting is not implemented. |
 | Monitoring | Device IP stored on refresh token. | No security monitoring subsystem. |
 | Participation | Teams represented as users. | No contest membership/join workflow. |
 
@@ -517,9 +534,10 @@ The admin interface contains:
 |---|---|---|
 | Contest Overview | Implemented | Contest buckets, lifecycle controls, SSE status, creation modal, freeze badge. |
 | Teams | Implemented | User list, team registration, username/password update, delete non-admin. |
-| Problems | Implemented for create/read | Problem list, details, creation modal, test-case panel. |
+| Problems | Implemented | Problem list, details, creation/update/delete actions, and test-case panel. |
 | Submissions | Implemented | Submission table, search/filter, code viewing. |
-| Clarifications | Placeholder | Backend exists but page is not wired. |
+| Rejudge | Implemented | Admin rejudge workflows for problem and contest scopes. |
+| Clarifications | Implemented | Admin clarification review, reply, filtering, and SSE refresh. |
 | Security Monitor | Placeholder | No backend monitoring endpoints. |
 | Quick Statistics | Placeholder | Static values; no aggregate endpoint. |
 
@@ -531,7 +549,7 @@ The team interface contains:
 | Problem Sidebar | Implemented | Problem list with solved/wrong/pending/unsolved status from submissions. |
 | Code Editor | Implemented | Language selector, starter code, local draft persistence, submit button. |
 | Submission History | Implemented | Shows team submissions for selected problem and allows viewing submitted code. |
-| Clarifications | Mock-only | Hardcoded rows and no backend integration. |
+| Clarifications | Implemented | Submit questions, view own/public answers, and receive SSE refresh. |
 
 ## 7.4 Screenshots
 
@@ -549,7 +567,7 @@ The team interface contains:
 
 [Insert Screenshot here: Team Submission History]
 
-[Insert Screenshot here: Placeholder Clarification/Security Pages, if instructor accepts honest limitations]
+[Insert Screenshot here: Clarifications and Security Monitor Pages]
 
 ## 7.5 Scenarios
 
@@ -598,9 +616,9 @@ Current backend behavior:
 5. Reply can be public or private.
 6. Public answered clarifications are visible through the public endpoint.
 
-Current frontend limitation:
+Current frontend behavior:
 
-The team clarification screen uses hardcoded data, and the admin clarification screen is a placeholder. Therefore, this scenario is backend-implemented but not end-to-end complete.
+The team clarification screen submits questions and reads own/public answers from the backend. The admin clarification screen reviews pending questions, sends public or private replies, and refreshes through clarification SSE.
 
 ## 7.6 Sample Reports
 
@@ -644,7 +662,7 @@ Recommended screenshots:
 7. Admin submissions screen.
 8. Team contest workspace.
 9. Team submission history.
-10. Clarification placeholder/mock screens, if included to document limitations.
+10. Clarification workflow screens and any remaining placeholder screens such as security monitoring, if included to document limitations.
 
 # Appendix C: CD / Deployment Package
 

@@ -20,7 +20,7 @@ This backend is organized into three main domains:
 
 ### 1. Authentication Server
 Handles:
-- registration
+- admin-protected team registration
 - login
 - JWT access token generation
 - refresh token rotation
@@ -65,7 +65,8 @@ Handles:
 | ICPC-style scoreboard / ranking | Implemented |
 | Real-time scoreboard SSE | Implemented |
 | Scoreboard freeze / reveal | Implemented |
-| Clarifications / announcements | Not implemented yet |
+| Clarifications | Implemented |
+| Announcements | Not implemented yet |
 | Real-time contest updates | Implemented |
 
 ---
@@ -264,23 +265,56 @@ Security is implemented with Spring Security using a custom JWT filter.
 
 ### Public routes
 The following categories are exposed publicly:
-- authentication routes under `/auth/**`
+- `POST /auth/login`
+- `POST /auth/refresh`
+- `POST /auth/logout`
 - Swagger / OpenAPI documentation
-- Judge0 callback endpoint
-- selected public contest status routes
+- `GET /api/contest/active`, `/upcoming`, `/paused`, and `/ended`
+- public scoreboard snapshot and stream routes under `/api/scoreboard/**`
+- public answered clarifications under `/api/clarifications/public/**`
+- Judge0 callback routes under `/api/callback/judge0/**`
+
+`POST /auth/register` is not public. It is protected by the security filter chain and by method-level `ADMIN` authorization, and the JWT filter intentionally processes bearer tokens on that route.
 
 ### Protected routes
 Role restrictions include:
 - contest mutation endpoints → `ADMIN`
-- problem/test case creation → `ADMIN`
+- problem/test case creation, update, and delete → `ADMIN`
 - submissions → `TEAM` or `ADMIN`
 - admin user management → `ADMIN`
+- admin scoreboard/reveal controls → `ADMIN`
+- clarification submission/my routes → `TEAM`
+- clarification admin reply/review routes → `ADMIN`
 
 The application is stateless:
 - CSRF disabled
 - form login disabled
 - HTTP basic disabled
 - session creation policy set to `STATELESS`
+
+### Route authorization map
+
+| Endpoint group | Access policy |
+|---|---|
+| `POST /auth/login`, `/auth/refresh`, `/auth/logout` | Public authentication/session endpoints; refresh/logout use the HTTP-only refresh cookie. |
+| `POST /auth/register` | `ADMIN` only; bearer JWT is processed before method security. |
+| `GET /api/contest/active`, `/upcoming`, `/paused`, `/ended` | Public contest read endpoints. |
+| `/api/contest/**` mutation routes and `/api/contest/stream` | `ADMIN` only. |
+| `GET /api/problems/**` | `TEAM` or `ADMIN`. |
+| `POST`, `PUT`, `DELETE /api/problems/**` | `ADMIN` only. |
+| `GET /api/testcases/**` | `TEAM` or `ADMIN`; service filters private cases for teams. |
+| `POST`, `PUT`, `DELETE /api/testcases/**` | `ADMIN` only. |
+| `/api/submissions/**` | `TEAM` or `ADMIN`; team access to submission details is owner-checked in the service. |
+| `/api/admin/**` | `ADMIN` only, including user management, rejudge, and admin scoreboard controls. |
+| `/api/scoreboard/**` | Public scoreboard snapshot and stream. |
+| `/api/clarifications/public/**` | Public answered clarifications. |
+| `/api/clarifications/my/**`, `POST /api/clarifications` | `TEAM` only. |
+| `/api/clarifications/admin/**` | `ADMIN` only. |
+| `/api/callback/judge0/**` | Externally reachable callback endpoint; requests must pass HMAC signature verification before state changes. |
+
+### no-security profile
+
+The `no-security` profile disables the main security filter chain and is only allowed together with a local development or test profile. Startup fails if `no-security` is active by itself or with `prod`.
 
 ---
 
@@ -380,10 +414,11 @@ Example body:
 ```json
 {
   "username": "team1",
-  "password": "123456",
-  "role": "TEAM"
+  "password": "123456"
 }
 ```
+
+This route is for administrators creating TEAM accounts. Anonymous users and TEAM users cannot register accounts.
 
 #### Login
 ```http
@@ -711,9 +746,6 @@ Instead of embedding compilers and sandboxes directly into the backend, the syst
 
 Based on the uploaded source, the following areas still look incomplete or early-stage:
 - result queue producer/consumer classes are still empty
-- no scoreboard implementation yet
-- no clarification / announcement module
-- no explicit per-test-case result entity yet
 - some exceptions are still generic `RuntimeException`
 - current config uses `ddl-auto: create-drop`, which is not suitable for production
 - current source tree does not show migration tooling
@@ -724,14 +756,11 @@ Based on the uploaded source, the following areas still look incomplete or early
 ## Suggested Next Milestones
 
 ### Contest Experience
-- scoreboard
-- ranking logic
-- freeze/unfreeze support
 - contest announcements
-- clarifications
+- richer scoreboard analytics and export/reporting
+- explicit contest participation/join workflow
 
 ### Judging Improvements
-- per-test-case result table
 - richer verdict history
 - retry and failure recovery logic
 - worker observability and metrics
