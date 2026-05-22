@@ -91,7 +91,7 @@ Current Status: Implemented as a modular monolith with external Judge0 dependenc
 | Contest Lifecycle | Implemented | Supports creation, manual transitions, automatic transitions, pause/resume timing, and effective state resolution. |
 | Real-Time Contest Updates | Implemented | Uses SSE snapshot, contest-update events, heartbeat, and frontend fallback polling. |
 | Problem Management | Implemented | Supports contest-bound problem creation, retrieval, update, and deletion with admin-only mutation endpoints. |
-| Test-Case Management | Implemented | Supports public/private test-case visibility by role and admin-only create/update/delete endpoints. |
+| Test-Case Management | Implemented | Supports admin-only private test-case management plus a separate TEAM-safe public/sample test-case endpoint. |
 | Submission and Judging | Implemented with noted judging limitations | Supports submission persistence, after-commit RabbitMQ queueing, Judge0 dispatch, signed callbacks, per-case results, and final verdict calculation. |
 | Rejudge Backend and UI | Implemented | Admin-only backend endpoints and admin UI requeue selected/problem/contest submissions for rejudging. |
 | Clarifications | Implemented | Backend and admin/team frontend support team questions, admin public/private replies, public answered clarifications, and clarification SSE updates. |
@@ -159,7 +159,7 @@ The main difference is scope. AuraC2 does not currently implement online communi
 | FR-IMP-08 | Automatically start and end contests based on effective state. | Backend System | `ContestTransitionScheduler`, `ContestStatusSyncScheduler`, `ContestStatusSyncExecutor` | Implemented |
 | FR-IMP-09 | Stream contest lifecycle changes to the admin UI. | Administrator, Backend | `ContestStreamController`, `ContestSseAdapter`, `ContestSseRegistry`, `useContestStream` | Implemented |
 | FR-IMP-10 | Create, retrieve, update, and delete contest problems. | Administrator, Team | `ProblemController`, `ProblemService`, `ProblemsView`, `teamApi` | Implemented |
-| FR-IMP-11 | Add, retrieve, update, and delete test cases with public/private filtering. | Administrator, Team | `TestCaseController`, `TestCaseService`, `TestCasesPanel` | Implemented with visibility notes |
+| FR-IMP-11 | Add, retrieve, update, and delete test cases while preventing TEAM access to private inputs or expected outputs. | Administrator, Team | `TestCaseController`, `TestCaseService`, `PublicTestCaseResponse`, `TestCasesPanel` | Implemented |
 | FR-IMP-12 | Submit code for judging. | Team, Administrator | `SubmissionController`, `SubmissionService`, `CodeEditor` | Implemented with judging limitations |
 | FR-IMP-13 | Dispatch submissions asynchronously to Judge0. | Backend, RabbitMQ, Judge0 | `SubmissionProducer`, `SubmissionConsumer`, `Judge0Service` | Implemented |
 | FR-IMP-14 | Store per-test-case judging results. | Backend | `SubmissionJudgeResult`, `Judge0CallbackService` | Implemented |
@@ -403,7 +403,8 @@ Current route authorization map:
 | `POST /auth/register` | Administrator-only route and method security. |
 | `GET /api/contest/active`, `/upcoming`, `/paused`, `/ended` | Public contest status reads. |
 | Contest mutation routes and `/api/contest/stream` | Administrator-only. |
-| Problem and test-case reads | `TEAM` or `ADMIN`. |
+| Problem reads and public/sample test-case reads | `TEAM` or `ADMIN`; TEAM test-case access is limited to `/api/testcases/public/problem/{problemId}`. |
+| All-test-case reads | `ADMIN` only through `/api/testcases/problem/{problemId}`. |
 | Problem and test-case create/update/delete | `ADMIN`. |
 | `/api/submissions/**` | `TEAM` or `ADMIN`; team detail access is owner-checked. |
 | `/api/admin/**` | `ADMIN`, including users, rejudge, and admin scoreboard/reveal controls. |
@@ -412,6 +413,8 @@ Current route authorization map:
 | `/api/callback/judge0/**` | Externally reachable but HMAC-signature protected before state mutation. |
 
 The `no-security` profile remains available only as a local/test escape hatch. Startup fails if `no-security` is active by itself or with a production profile.
+
+Test-case visibility is enforced by backend routes and service methods, not by frontend hiding. Administrators can list all test cases for a problem, including private input and expected output. TEAM users can only call the public/sample endpoint, which uses a repository query constrained to `isPublic = true`; direct access to the all-testcase route is forbidden for TEAM users.
 
 The contest lifecycle design distinguishes persisted state from effective state. Persisted state is the database status. Effective state is the state the contest should have at the current time. Schedulers exist to reduce the delay between these two concepts. Exact-time scheduling attempts to transition at the precise start/end time, while the fallback scheduler periodically synchronizes eligible contests.
 
@@ -444,7 +447,7 @@ Current Status: Implemented with judging limitations.
 Figure 15. Current ER Diagram
 
 Purpose: To represent the current persistent entities.  
-Description: The ER diagram should include `User`, `RefreshToken`, `Contest`, `Problem`, `TestCase`, `Clarification`, `Submission`, and `SubmissionJudgeResult`.  
+Description: The ER diagram should include `User`, `RefreshToken`, `Contest`, `Problem`, `TestCase`, `Clarification`, `Submission`, `SubmissionJudgeResult`, `ScoreboardRevealState`, and `ScoreboardRevealCell`.  
 Code Alignment: Entity classes under `authServer/entity`, `contestServer/entity`, and `submissionServer/entity`.  
 Current Status: Implemented.
 
@@ -466,8 +469,8 @@ Current Status: Implemented.
 Figure 17. Relational Schema Diagram
 
 Purpose: To show the logical database tables and foreign keys.  
-Description: The schema should include table names, primary keys, foreign keys, enum fields, and the unique constraint on `submission_judge_results`.  
-Code Alignment: JPA annotations in entity classes.  
+Description: The schema should include table names, primary keys, foreign keys, enum fields, useful lookup indexes, NOT NULL constraints for required fields, and unique constraints such as `submission_judge_results`.  
+Code Alignment: Flyway baseline migration and JPA annotations in entity classes.  
 Current Status: Implemented.
 
 ### Schema Notes
@@ -478,10 +481,12 @@ Current Status: Implemented.
 | `refresh_tokens` | Stores refresh-token metadata and hash, linked to users. |
 | `contests` | Stores lifecycle fields including persisted status, actual start, pause time, freeze settings, and penalty minutes. |
 | `problems` | Stores contest-bound problem metadata. |
-| `test_cases` | Stores problem test cases and public/private visibility. |
+| `test_cases` | Stores problem test cases and public/private visibility. Private rows remain admin/internal-only through API routing and service-level filtering. |
 | `clarifications` | Stores team questions, admin replies, reply scope, and status. |
 | `submissions` | Stores code, language, verdict, timing/memory aggregate values, and judge run. |
 | `submission_judge_results` | Stores per-test-case results for each judge run. |
+| `scoreboard_reveal_states` | Stores one reveal workflow state per contest. |
+| `scoreboard_reveal_cells` | Stores reveal queue cells with one row per reveal state, team, and problem. |
 
 ### Gap Analysis: Current System vs Intended Design
 
@@ -489,7 +494,7 @@ Current Status: Implemented.
 |---|---|---|
 | Authentication | Login, admin-protected team registration, refresh rotation, logout revocation, role authorization, production-aware refresh-cookie settings, and admin bootstrap. | Admin bootstrap password rotation remains operationally sensitive and should be reviewed. |
 | Contest lifecycle | Strong implementation with effective state, pause-aware time, schedulers, SSE. | No UI for status lock management discovered. |
-| Problems/test cases | Create, read, update, and delete exist. | Limits are stored but not enforced by Judge0 request. |
+| Problems/test cases | Create, read, update, and delete exist. TEAM users can only fetch public/sample test cases; private test cases remain available to Judge0 internally. | Problem authoring still needs operator discipline because expected-output judging depends on complete fixed tests. |
 | Judging | Queue, Judge0, signed callbacks, per-case results, live verdict push, and rejudge backend/UI exist. | Unsupported language still needs stronger submission-time validation. |
 | Clarifications | Backend and admin/team frontend workflow exist. | Remaining gap is workflow polish and operational policy around public/private replies. |
 | Scoreboard | Ranking, freeze, reveal, public/admin snapshots, and streams exist. | Formal export/reporting is not implemented. |
@@ -506,7 +511,7 @@ Current Status: Implemented.
 | Frontend | TypeScript, JavaScript, JSX/TSX |
 | Styling | CSS and component styles |
 | Configuration | YAML, Docker Compose YAML |
-| Database | PostgreSQL through JPA-generated schema |
+| Database | PostgreSQL with Flyway-managed baseline schema and JPA validation |
 
 ## 7.2 Tools Used
 
@@ -516,6 +521,7 @@ Current Status: Implemented.
 | Spring Security | Authentication and authorization |
 | Spring Data JPA | Repository and persistence abstraction |
 | PostgreSQL | Database |
+| Flyway | Database schema migrations and baseline schema management |
 | RabbitMQ | Asynchronous submission queue |
 | Judge0 | External code execution and judging |
 | React | Frontend UI |

@@ -3,6 +3,7 @@ package com.server.contestControl.contestServer.controller;
 import com.server.contestControl.contestServer.dto.testcase.TestCaseRequest;
 import com.server.contestControl.contestServer.dto.testcase.TestCaseResponse;
 import com.server.contestControl.contestServer.dto.testcase.TestCaseUpdateRequest;
+import com.server.contestControl.contestServer.dto.testcase.PublicTestCaseResponse;
 import jakarta.validation.Valid;
 import com.server.contestControl.contestServer.service.TestCaseService;
 import lombok.RequiredArgsConstructor;
@@ -45,10 +46,18 @@ public class TestCaseController {
     }
 
     @GetMapping("/problem/{problemId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TEAM')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<TestCaseResponse>> getTestCases(
             @PathVariable Long problemId
     ) {
-        return ResponseEntity.ok(testCaseService.getTestCases(problemId));
+        return ResponseEntity.ok(testCaseService.getAdminTestCases(problemId));
+    }
+
+    @GetMapping("/public/problem/{problemId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEAM')")
+    public ResponseEntity<List<PublicTestCaseResponse>> getPublicTestCases(
+            @PathVariable Long problemId
+    ) {
+        return ResponseEntity.ok(testCaseService.getPublicTestCases(problemId));
     }
 }

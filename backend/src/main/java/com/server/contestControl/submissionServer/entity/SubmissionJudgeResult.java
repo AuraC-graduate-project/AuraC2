@@ -15,6 +15,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.Index;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,7 +29,10 @@ import java.time.LocalDateTime;
         uniqueConstraints = @UniqueConstraint(
                 name = "uk_submission_judge_result_run_case",
                 columnNames = {"submission_id", "judge_run_id", "test_case_number"}
-        )
+        ),
+        indexes = {
+                @Index(name = "idx_submission_judge_results_submission_run", columnList = "submission_id, judge_run_id")
+        }
 )
 @Data
 @Builder
@@ -57,14 +61,16 @@ public class SubmissionJudgeResult {
     private Integer executionTime;
     private Integer memoryUsage;
 
+    @Column(name = "judge0_status_id")
     private Integer judge0StatusId;
 
-    @Column(length = 128)
+    @Column(name = "judge0_status_description", length = 128)
     private String judge0StatusDescription;
 
     @Column(length = 4096)
     private String diagnostic;
 
+    @Column(nullable = false)
     private LocalDateTime receivedAt;
 
     @PrePersist

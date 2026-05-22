@@ -203,6 +203,8 @@ Important fields:
 - expected output
 - visibility flag (`isPublic`)
 
+Private test cases are used by the judging pipeline but are not exposed through TEAM-facing APIs. TEAM users can only fetch public/sample test cases through the dedicated sample endpoint.
+
 ### Submission
 Represents a participant submission.
 
@@ -304,7 +306,8 @@ The application is stateless:
 | `/api/contest/**` mutation routes and `/api/contest/stream` | `ADMIN` only. |
 | `GET /api/problems/**` | `TEAM` or `ADMIN`. |
 | `POST`, `PUT`, `DELETE /api/problems/**` | `ADMIN` only. |
-| `GET /api/testcases/**` | `TEAM` or `ADMIN`; service filters private cases for teams. |
+| `GET /api/testcases/problem/{problemId}` | `ADMIN` only; returns all public and private test cases, including expected output. |
+| `GET /api/testcases/public/problem/{problemId}` | `TEAM` or `ADMIN`; returns only public/sample test cases. |
 | `POST`, `PUT`, `DELETE /api/testcases/**` | `ADMIN` only. |
 | `/api/submissions/**` | `TEAM` or `ADMIN`; team access to submission details is owner-checked in the service. |
 | `/api/admin/**` | `ADMIN` only, including user management, rejudge, and admin scoreboard controls. |
@@ -378,6 +381,8 @@ For each test case, the backend sends:
 - mapped language ID
 - stdin
 - expected output
+- CPU time limit when configured on the problem
+- memory limit when configured on the problem
 - signed callback URL
 
 Judge0 then calls back:
@@ -519,10 +524,17 @@ GET /api/problems/contest/{id}
 POST /api/testcases/{problemId}
 ```
 
-#### Get test cases for a problem
+#### Get all test cases for a problem (admin)
 ```http
 GET /api/testcases/problem/{problemId}
 ```
+
+#### Get public/sample test cases for a problem
+```http
+GET /api/testcases/public/problem/{problemId}
+```
+
+TEAM users should use the public/sample endpoint. It does not return private hidden test cases, private input, or private expected output.
 
 ---
 
@@ -624,6 +636,14 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
 
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
   rabbitmq:
     host: ${RABBIT_HOST}
     port: ${RABBIT_PORT}
@@ -647,6 +667,18 @@ judge0:
   callback: ${JUDGE0_CALLBACK_URL}
   callback-secret: ${JUDGE0_CALLBACK_SECRET}
 ```
+
+### Database migrations
+
+The normal application profile is migration-managed:
+- Flyway is enabled by default.
+- The baseline schema lives under `backend/src/main/resources/db/migration`.
+- Hibernate `ddl-auto` defaults to `validate`, so normal local/dev startup no longer drops and recreates tables.
+- Tests keep `ddl-auto: create-drop` with Flyway disabled through `backend/src/test/resources/application.yml`.
+
+For a clean local database, start PostgreSQL, create or reset the `authserver` database, then run the backend. Flyway applies the baseline migration automatically. To reset local data, drop and recreate only your local development database, then restart the backend.
+
+If you already have an existing non-empty local schema from old `create-drop` runs, either reset the database or explicitly use Flyway baseline settings for that local environment. Do not enable baseline-on-migrate casually in production without reviewing the existing schema.
 
 ---
 
@@ -672,12 +704,14 @@ At minimum, rotate:
 ## Running the Project
 
 ### Requirements
-- Java 17+
+- Java 21
 - PostgreSQL
 - RabbitMQ
 - Maven
 - internet access to reach Judge0
 - a public callback URL for Judge0 responses during local development
+
+`docker-compose.yml` currently runs PostgreSQL and RabbitMQ as active services. Backend and frontend service definitions are present but commented out; run them separately or uncomment/configure those services for a full Compose stack.
 
 ### Start RabbitMQ with Docker
 ```bash
@@ -749,8 +783,6 @@ Instead of embedding compilers and sandboxes directly into the backend, the syst
 Based on the uploaded source, the following areas still look incomplete or early-stage:
 - result queue producer/consumer classes are still empty
 - some exceptions are still generic `RuntimeException`
-- current config uses `ddl-auto: create-drop`, which is not suitable for production
-- current source tree does not show migration tooling
 - refresh token security is stronger than basic auth systems, but broader audit/session management can still be expanded
 
 ---
@@ -771,7 +803,6 @@ Based on the uploaded source, the following areas still look incomplete or early
 - externalized secrets
 - production profile
 - structured logging
-- database migrations
 - better exception taxonomy
 - deployment pipeline
 

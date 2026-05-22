@@ -117,10 +117,9 @@ export function getProblemsByContest(
 export async function getPublicTestCasesForProblem(
     problemId: number
 ): Promise<TestCaseResponse[]> {
-    const testCases = await apiFetch<TestCaseResponse[]>(
-        `/api/testcases/problem/${problemId}`
+    return apiFetch<TestCaseResponse[]>(
+        `/api/testcases/public/problem/${problemId}`
     );
-    return testCases.filter((testCase) => testCase.isPublic);
 }
 
 export async function getMySubmissions(

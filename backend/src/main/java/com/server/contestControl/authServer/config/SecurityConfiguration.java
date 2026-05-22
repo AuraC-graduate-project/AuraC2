@@ -72,7 +72,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/submissions/**").hasAnyRole("TEAM", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/problems/**").hasAnyRole("TEAM", "ADMIN")
                         .requestMatchers("/api/problems/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/testcases/**").hasAnyRole("TEAM", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/testcases/public/problem/**").hasAnyRole("TEAM", "ADMIN")
                         .requestMatchers("/api/testcases/**").hasRole("ADMIN")
                         .requestMatchers("/api/team/**").hasRole("TEAM")
 

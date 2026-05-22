@@ -16,6 +16,7 @@ import com.server.contestControl.contestServer.controller.TestCaseController;
 import com.server.contestControl.contestServer.dto.clarification.ClarificationResponse;
 import com.server.contestControl.contestServer.dto.contest.ContestResponse;
 import com.server.contestControl.contestServer.dto.problem.ProblemResponse;
+import com.server.contestControl.contestServer.dto.testcase.PublicTestCaseResponse;
 import com.server.contestControl.contestServer.dto.testcase.TestCaseResponse;
 import com.server.contestControl.contestServer.enums.ClarificationStatus;
 import com.server.contestControl.contestServer.scoreboard.controller.AdminScoreboardController;
@@ -61,6 +62,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @WebMvcTest(controllers = {
         AdminController.class,
@@ -101,6 +103,8 @@ class RouteAuthorizationSecurityTest {
         when(problemService.updateProblem(eq(1L), any())).thenReturn(problemResponse());
         when(testCaseService.addTestCase(eq(1L), any())).thenReturn(testCaseResponse());
         when(testCaseService.updateTestCase(eq(1L), any())).thenReturn(testCaseResponse());
+        when(testCaseService.getAdminTestCases(1L)).thenReturn(List.of(testCaseResponse()));
+        when(testCaseService.getPublicTestCases(1L)).thenReturn(List.of(publicTestCaseResponse()));
         when(rejudgeService.rejudgeProblem(1L)).thenReturn(rejudgeResponse());
         when(submissionService.getAllSubmissionsForUser(any())).thenReturn(List.of(submissionResponse()));
         when(scoreboardService.getPublicSnapshot(1L)).thenReturn(new ScoreboardSnapshot(null, List.of()));
@@ -282,6 +286,38 @@ class RouteAuthorizationSecurityTest {
     }
 
     @Test
+    void testCaseListingSeparatesAdminHiddenDataFromTeamSamples() throws Exception {
+        mockMvc.perform(get("/api/testcases/problem/1"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/testcases/public/problem/1"))
+                .andExpect(status().isUnauthorized());
+
+        mockBearerUser("team-token", "team", Role.TEAM);
+        mockMvc.perform(get("/api/testcases/problem/1")
+                        .header("Authorization", "Bearer team-token"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/testcases/99")
+                        .header("Authorization", "Bearer team-token"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/testcases/public/problem/1")
+                        .header("Authorization", "Bearer team-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].inputData").value("1 2"))
+                .andExpect(jsonPath("$[0].expectedOutput").value("3"))
+                .andExpect(jsonPath("$[0].isPublic").value(true));
+
+        verify(testCaseService).getPublicTestCases(1L);
+
+        mockBearerUser("admin-token", "admin", Role.ADMIN);
+        mockMvc.perform(get("/api/testcases/problem/1")
+                        .header("Authorization", "Bearer admin-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].expectedOutput").value("3"));
+
+        verify(testCaseService).getAdminTestCases(1L);
+    }
+
+    @Test
     void rejudgeEndpointsAreAdminOnly() throws Exception {
         mockMvc.perform(post("/api/admin/rejudge/problem/1"))
                 .andExpect(status().isUnauthorized());
@@ -421,6 +457,10 @@ class RouteAuthorizationSecurityTest {
 
     private TestCaseResponse testCaseResponse() {
         return new TestCaseResponse(1L, "1 2", "3", true);
+    }
+
+    private PublicTestCaseResponse publicTestCaseResponse() {
+        return new PublicTestCaseResponse(1L, 1L, "1 2", "3", true);
     }
 
     private RejudgeResponse rejudgeResponse() {

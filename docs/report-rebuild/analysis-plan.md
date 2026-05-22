@@ -48,10 +48,10 @@ This document is based on the current local codebase only. The instructor templa
 | Problem retrieval/listing | Implemented | `ProblemController.getProblem`, `ProblemController.getProblemsByContest`, `ProblemsView`, `teamApi.getProblemsByContest` | Admin and team users can retrieve problems by id and by contest. | Include as implemented. |
 | Problem update/delete | Implemented | `ProblemController.updateProblem`, `ProblemController.deleteProblem`, `ProblemService.updateProblem`, `ProblemService.deleteProblem`, `RouteAuthorizationSecurityTest` | Admin-only problem update and delete endpoints exist and are covered by route authorization tests. | Include as implemented admin content management. |
 | Test-case creation | Implemented | `TestCaseController.addTestCase`, `TestCaseService.addTestCase`, `AddTestCaseModal` | Admin can attach test cases to a problem. | Include as implemented. |
-| Test-case retrieval and visibility | Partially Implemented | `TestCaseController.getTestCases`, `TestCaseService.getTestCases`, `TestCaseResponse.fromPublicEntity` | Team users only receive public test cases, but public responses still include expected output. Private cases are hidden. There is no differentiated sample-only representation. | Explain accurately in requirements and limitations. |
+| Test-case retrieval and visibility | Implemented | `TestCaseController.getTestCases`, `TestCaseController.getPublicTestCases`, `TestCaseService.getAdminTestCases`, `TestCaseService.getPublicTestCases`, `PublicTestCaseResponse`, `RouteAuthorizationSecurityTest`, `TestCaseServiceTest` | Admin listing is admin-only and returns all test cases. TEAM users use `/api/testcases/public/problem/{problemId}`, which returns only public/sample test cases and never returns private input or expected output. | Explain admin/private vs team/sample API split. |
 | Test-case update/delete | Implemented | `TestCaseController.updateTestCase`, `TestCaseController.deleteTestCase`, `TestCaseService.updateTestCase`, `TestCaseService.deleteTestCase`, `RouteAuthorizationSecurityTest` | Admin-only test-case update and delete endpoints exist and are covered by route authorization tests. | Include as implemented admin content management. |
 | Difficulty handling | Implemented | `Difficulty`, `Difficulty.fromString`, `ProblemService.createProblem`, `CreateProblemModal` | Difficulty is stored as enum and selected in UI. | Include in data model. |
-| Time and memory limit fields | Partially Implemented | `Problem.timeLimit`, `Problem.memoryLimit`, `ProblemRequest`, `ProblemResponse`, `Judge0Service` | Limits are stored and displayed, but Judge0 request does not pass a CPU time limit or memory limit parameter. | Classify as metadata implemented, enforcement not implemented. |
+| Time and memory limit fields | Implemented | `Problem.timeLimit`, `Problem.memoryLimit`, `Judge0SubmissionDTO`, `Judge0Service`, `Judge0ServiceTest` | Limits are stored and passed to Judge0 as `cpu_time_limit` seconds and `memory_limit` KB when configured. | Describe as fixed-test Judge0 execution limits, not custom judging. |
 | Submission creation | Implemented | `SubmissionController.submit`, `SubmissionService.submitCode`, `Submission` entity | Submissions are persisted after active contest/problem validation, then the RabbitMQ message is published only after the database transaction commits. | Include after-commit queue publish behavior in judging flow. |
 | Validation of running contest | Implemented | `SubmissionService.submitCode`, `ContestService.getContestEntity` | Submission requires `getContestEntity`, which finds an effective RUNNING contest or throws. | Include as implemented. |
 | Validation of authenticated user/team | Implemented | `SecurityConfiguration`, `SubmissionController`, `SecurityContextHolder` in `SubmissionService` | The controller allows TEAM and ADMIN, then uses the authenticated principal as the submission owner. | Include; note ADMIN can submit by policy. |
@@ -64,7 +64,8 @@ This document is based on the current local codebase only. The instructor templa
 | Per-test-case result tracking | Implemented | `SubmissionJudgeResult`, `SubmissionJudgeResultRepository`, `Judge0CallbackService.recordJudgeResult` | Each test case result is stored with unique `(submission_id, judge_run_id, test_case_number)`; duplicate callbacks are treated idempotently. | Update ER and judging diagrams. |
 | Aggregate verdict calculation | Implemented | `Judge0CallbackService.finalVerdict`, `Judge0CallbackServiceTest` | Final verdict is the earliest non-accepted test case by test-case number, or ACCEPTED if all are accepted. | Replace old callback-ordering limitation with current fix. |
 | Stale callback protection | Implemented | `Submission.judgeRunId`, `CallbackHandler`, `Judge0CallbackService.isStaleCallback`, `Judge0CallbackServiceTest.staleCallbackFromOlderRunIsIgnored` | Old callbacks are ignored if their judgeRunId does not match the current submission run. Legacy callbacks are stale once run id is greater than zero. | Include as implemented and explain why run tracking exists. |
-| Zero-test-case behavior | Partially Implemented | `SubmissionConsumer`, `Judge0CallbackService` | Callback service marks INTERNAL_ERROR if a callback arrives for zero tests, but consumer sets submission RUNNING and sends no callbacks when the problem has zero test cases. | Mark as risk; no proactive zero-test guard exists. |
+| Zero-test-case behavior | Implemented | `SubmissionConsumer`, `SubmissionConsumerTest`, `Judge0CallbackService` | Consumer marks zero-test submissions `INTERNAL_ERROR` and publishes finalization instead of leaving them `RUNNING`; callback service also guards invalid zero-test callbacks. | Include as reliability behavior. |
+| Database migrations and schema hardening | Implemented | `backend/pom.xml`, `application.yml`, `db/migration/V1__baseline_schema.sql`, entity `@Table(indexes=...)` and nullability annotations, `SchemaMigrationDefinitionTest` | Flyway is enabled for normal startup, Hibernate defaults to `validate`, tests keep create-drop, and the baseline schema preserves important unique constraints while adding core indexes and NOT NULL constraints. | Update database design and ER/relational schema sections. |
 | Execution time and memory storage | Partially Implemented | `Judge0Response.getTimeAsInt`, `getMemoryAsInt`, `Judge0CallbackService.maxExecutionTime/maxMemoryUsage`, frontend submission views | Time is converted to milliseconds and maxed across cases. Memory is stored raw from Judge0 KB, while admin UI labels it as MB. | Include as implementation detail and unit-risk limitation. |
 | Team submission history | Implemented | `SubmissionController.getAllMySubmissions`, `getAllSubmissionByProblem`, `teamApi`, `SubmissionHistory` | Team can view all own submissions and problem-filtered submissions. | Include as implemented. |
 | Admin submission review | Implemented | `AdminController.getAllSubmissions`, `SubmissionsView` | Admin can list all submissions, search/filter, inspect code, and resolve user/problem labels. | Include as implemented. |
@@ -80,7 +81,7 @@ This document is based on the current local codebase only. The instructor templa
 | Quick statistics panel | Planned / Future Work | `StatsPanel` values are dashes with tooltip "No endpoint yet" | UI placeholders exist without backend aggregate endpoints. | Mark as placeholder. |
 | Announcements | Planned / Future Work | No announcement entity/controller/service/UI found | No implementation discovered. | Include only in future scope if desired. |
 | Notification/result dissemination | Partially Implemented | Empty `ResultProducer`, `ResultConsumer`, no frontend live verdict stream | Verdicts are persisted, but no result queue consumer/producer or push notification flow exists. | Classify as scaffold/future. |
-| LAN-first/offline operation | Partially Implemented | `docker-compose.yml`, `application.yml` default Judge0 URL | Docker Compose runs PostgreSQL, RabbitMQ, backend, and frontend locally, but Judge0 defaults to external `https://ce.judge0.com` unless configured otherwise. | Mark local deployment supported, full offline judging not guaranteed. |
+| LAN-first/offline operation | Partially Implemented | `docker-compose.yml`, `application.yml` default Judge0 URL | Docker Compose actively runs PostgreSQL and RabbitMQ. Backend/frontend compose services are present but commented out, and Judge0 defaults to external `https://ce.judge0.com` unless configured otherwise. | Mark local infrastructure supported, full offline stack not guaranteed. |
 | Contest participation/join workflow | Planned / Future Work | No Team entity, contest_membership table, participation controller, or join UI | Teams are users with `TEAM` role and see the active contest; there is no explicit enrollment per contest. | Mark future work or out of current scope. |
 | Placeholder UI surfaces | Partially Implemented | `StatsPanel`, security monitor placeholder | Quick statistics and security monitoring are still placeholder surfaces. Clarifications are wired to backend APIs. | Call out remaining placeholders without misclassifying clarifications. |
 
@@ -113,7 +114,7 @@ The backend is best described as a modular monolith rather than separate microse
 | Contest scheduling | `ContestTransitionScheduler`, `ContestStatusSyncScheduler`, `ContestStatusSyncService`, `ContestStatusSyncExecutor` | Exact-time auto transition scheduling, fallback periodic sync, row-locked status updates, startup recovery. |
 | SSE real-time updates | `ContestStreamController`, `ContestSseAdapter`, `ContestSseRegistry`, `ContestStreamSnapshot`, `SseHeartbeatScheduler`, `useContestStream`, `ContestOverview` | Initial snapshot, lifecycle update broadcast, heartbeat, emitter cleanup, frontend bucket placement and fallback polling. |
 | Problem management | `ProblemController`, `ProblemService`, `ProblemRepository`, problem DTOs | Admin problem create/update/delete and role-protected problem retrieval. |
-| Test-case management | `TestCaseController`, `TestCaseService`, `TestCaseRepository`, test-case DTOs | Admin test-case create/update/delete and role-filtered public/private test-case listing. |
+| Test-case management | `TestCaseController`, `TestCaseService`, `TestCaseRepository`, `TestCaseResponse`, `PublicTestCaseResponse` | Admin test-case create/update/delete/listing and separate TEAM-safe public/sample listing. |
 | Clarifications | `ClarificationController`, `ClarificationService`, `ClarificationRepository`, clarification entity/enums/DTOs, `ClarificationsView`, team `Clarifications` | Team clarification submission, admin reply, public/private answer visibility, and admin/team frontend integration. |
 | Submission management | `SubmissionController`, `SubmissionService`, `SubmissionRepository`, `Submission` | Store submissions, retrieve team/admin histories, enforce owner read access for individual submission. |
 | Judging | `RabbitMQConfig`, `SubmissionProducer`, `SubmissionConsumer`, `Judge0Service`, `LanguageMapper`, `CallbackHandler`, `Judge0CallbackService` | Queue submissions, dispatch per test case to Judge0, process callbacks, persist per-test-case results, aggregate verdict. |
@@ -129,8 +130,8 @@ The backend is best described as a modular monolith rather than separate microse
 | `User` | `id`, `username`, `password`, account flags, `role` | One user has many `RefreshToken`; user also relates to submissions and clarifications. | There is no separate Team entity. A team is a `User` with role `TEAM`. |
 | `RefreshToken` | `id`, `tokenHash`, `deviceIp`, `createdAt`, `expiresAt`, `revoked` | Many refresh tokens belong to one user. | Token hash is stored after JWT refresh token is generated. |
 | `Contest` | `id`, `title`, `startTime`, `durationMinutes`, `actualStartTime`, `pausedAt`, `totalPauseMillis`, `description`, `status`, `statusLocked`, `scoreboardFreezeMinutes`, `penaltyMinutes` | One contest has many problems, submissions, and clarifications. | Supports persisted vs effective lifecycle state. |
-| `Problem` | `id`, `title`, `description`, `timeLimit`, `memoryLimit`, `difficulty` | Many problems belong to one contest; one problem has many test cases and submissions. | Time/memory limits are metadata; Judge0 request does not enforce them yet. |
-| `TestCase` | `id`, `inputData`, `expectedOutput`, `isPublic` | Many test cases belong to one problem. | Public/private visibility is applied by filtering in service. |
+| `Problem` | `id`, `title`, `description`, `timeLimit`, `memoryLimit`, `difficulty` | Many problems belong to one contest; one problem has many test cases and submissions. | Time/memory limits are passed to Judge0 for fixed-test execution. |
+| `TestCase` | `id`, `inputData`, `expectedOutput`, `isPublic` | Many test cases belong to one problem. | Private cases remain internal/admin-only; TEAM users only receive public/sample cases. |
 | `Clarification` | `id`, `question`, `createdAt`, `standardReply`, `reply`, `repliedAt`, `status`, `replyType` | Belongs to contest, optional problem, user, and optional admin user who replied. | Backend and admin/team frontend workflows are wired. |
 | `Submission` | `id`, `code`, `language`, `verdict`, `createdAt`, `executionTime`, `memoryUsage`, `judgeRunId` | Belongs to contest, problem, and user. Has many `SubmissionJudgeResult` rows conceptually. | `judgeRunId` enables rejudge and stale callback protection. |
 | `SubmissionJudgeResult` | `id`, `judgeRunId`, `testCaseNumber`, `verdict`, `executionTime`, `memoryUsage`, `receivedAt` | Many results belong to one submission. | Unique constraint on submission/run/test-case. No direct `TestCase` relation; result refers to test case number. |
@@ -166,7 +167,8 @@ The backend is best described as a modular monolith rather than separate microse
 | `/api/testcases/{problemId}` | POST | ADMIN | Implemented | `TestCaseController.addTestCase` |
 | `/api/testcases/{id}` | PUT | ADMIN | Implemented | `TestCaseController.updateTestCase`, `TestCaseService.updateTestCase` |
 | `/api/testcases/{id}` | DELETE | ADMIN | Implemented | `TestCaseController.deleteTestCase`, `TestCaseService.deleteTestCase` |
-| `/api/testcases/problem/{problemId}` | GET | ADMIN or TEAM | Implemented with filtering | `TestCaseController.getTestCases`, `TestCaseService` |
+| `/api/testcases/problem/{problemId}` | GET | ADMIN | Implemented | `TestCaseController.getTestCases`, `TestCaseService.getAdminTestCases` |
+| `/api/testcases/public/problem/{problemId}` | GET | ADMIN or TEAM | Implemented for public samples only | `TestCaseController.getPublicTestCases`, `TestCaseService.getPublicTestCases` |
 | `/api/scoreboard/contests/{contestId}` | GET | Public | Implemented | `ScoreboardController`, `ScoreboardService` |
 | `/api/scoreboard/contests/{contestId}/stream` | GET SSE | Public | Implemented | `ScoreboardStreamController`, `ScoreboardSseAdapter`, `ScoreboardSsePublisher` |
 | `/api/admin/scoreboard/contests/{contestId}` | GET | ADMIN | Implemented | `AdminScoreboardController` |
@@ -237,17 +239,16 @@ The backend is best described as a modular monolith rather than separate microse
 1. Email verification is no longer implemented despite verification exception classes and `/verify/**` security remnants.
 2. Admin bootstrap rotates the existing admin password on every startup, which is operationally sensitive and should be explained.
 3. New submission RabbitMQ publish failures after commit are logged, but the team response already contains the committed submission.
-4. Problem time and memory limits are stored but not passed to Judge0 for enforcement.
-5. Zero-test-case submissions are marked `INTERNAL_ERROR`; this protects judging state but should still be prevented earlier by problem authoring validation.
-6. Unsupported language throws in the RabbitMQ consumer path without a user-facing validation response at submission time.
-7. Result queue is configured but producer/consumer are empty.
-8. Clarifications are wired end-to-end; remaining risk is workflow polish and operator review around public/private reply behavior.
-9. Rejudge backend and admin UI exist; publish failures are logged after commit but not reflected in `RejudgeResponse`.
-10. Memory is stored from Judge0 in KB, while admin UI labels memory as MB.
-11. Scoreboard ranking, freeze, reveal, public/admin snapshots, and streams are implemented; remaining risk is broader contest-report/export coverage.
-12. Security Monitor and Quick Statistics are placeholders.
-13. There is no explicit contest participation/join workflow or team-contest membership model.
-14. Team workspace does not appear to poll or subscribe for verdict changes after submission.
+4. Zero-test-case submissions are marked `INTERNAL_ERROR`; this protects judging state but should still be prevented earlier by problem authoring validation.
+5. Unsupported language throws in the RabbitMQ consumer path without a user-facing validation response at submission time.
+6. Result queue is configured but producer/consumer are empty.
+7. Clarifications are wired end-to-end; remaining risk is workflow polish and operator review around public/private reply behavior.
+8. Rejudge backend and admin UI exist; publish failures are logged after commit but not reflected in `RejudgeResponse`.
+9. Memory is stored from Judge0 in KB, while admin UI labels memory as MB.
+10. Scoreboard ranking, freeze, reveal, public/admin snapshots, and streams are implemented; remaining risk is broader contest-report/export coverage.
+11. Security Monitor and Quick Statistics are placeholders.
+12. There is no explicit contest participation/join workflow or team-contest membership model.
+13. Team workspace does not appear to poll or subscribe for verdict changes after submission.
 15. Test-case public response includes expected output for public tests. This may be acceptable for sample tests, but the report should distinguish sample/public tests from hidden tests.
 16. There are duplicate exception packages under `contestServer.exception` and `contestServer.exceptions`, which may confuse documentation and maintenance.
 
@@ -326,7 +327,7 @@ Large old diagrams should be split by subsystem. No diagram should combine authe
 
 ## M. Old Report Sections That Must Be Replaced
 
-1. Any ER section claiming only six persistent entities must be replaced. Current code has eight main entities: `User`, `RefreshToken`, `Contest`, `Problem`, `TestCase`, `Clarification`, `Submission`, and `SubmissionJudgeResult`.
+1. Any ER section claiming only six persistent entities must be replaced. Current code includes `User`, `RefreshToken`, `Contest`, `Problem`, `TestCase`, `Clarification`, `Submission`, `SubmissionJudgeResult`, `ScoreboardRevealState`, and `ScoreboardRevealCell`.
 2. Any claim that clarifications are only planned or frontend-only must be updated: backend and admin/team frontend workflows are wired.
 3. Any claim that callback ordering remains unresolved must be replaced: per-test-case results and `judgeRunId` now address stale callbacks and out-of-order results.
 4. Any submission workflow that lacks rejudge must be replaced with the current rejudge backend flow.
@@ -335,6 +336,8 @@ Large old diagrams should be split by subsystem. No diagram should combine authe
 7. Any old statement that treats the scoreboard as unimplemented must be replaced: ranking, freeze, reveal, public/admin snapshots, and streams are implemented.
 8. Any statement that security monitoring is implemented must be replaced with placeholder/future-work status.
 9. Any statement that the system is fully LAN/offline must be qualified because Judge0 defaults to an external URL.
+10. Any statement that the normal profile still uses `ddl-auto: create-drop` must be replaced: Flyway is now enabled and the default is schema validation.
+11. Any statement that TEAM users can call the all-testcase endpoint must be replaced with the separate public/sample endpoint.
 
 ## N. Old Diagrams That Should Be Discarded or Split
 

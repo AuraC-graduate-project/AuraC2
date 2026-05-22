@@ -177,6 +177,34 @@ class SubmissionConsumerTest {
     }
 
     @Test
+    void privateTestCasesRemainAvailableToInternalJudging() {
+        Problem problem = Problem.builder().id(10L).build();
+        Submission submission = Submission.builder()
+                .id(40L)
+                .problem(problem)
+                .verdict(Verdict.PENDING)
+                .judgeRunId(0L)
+                .language("java")
+                .code("class Main {}")
+                .build();
+
+        TestCase hiddenCase = TestCase.builder()
+                .id(400L)
+                .inputData("hidden-input")
+                .expectedOutput("hidden-output")
+                .isPublic(false)
+                .build();
+
+        when(submissionRepository.findByIdWithContestProblemUserForUpdate(40L)).thenReturn(Optional.of(submission));
+        when(testCaseRepository.findByProblemId(10L)).thenReturn(List.of(hiddenCase));
+
+        submissionConsumer.handleSubmission(40L);
+
+        verify(judge0Service).sendSingleTest(eq(submission), eq(hiddenCase), eq(1), anyInt());
+        assertThat(submission.getVerdict()).isEqualTo(Verdict.RUNNING);
+    }
+
+    @Test
     void consumerMarksZeroTestCaseProblemInternalErrorAndPublishesFinalEvent() {
         Contest contest = Contest.builder().id(20L).build();
         Problem problem = Problem.builder().id(10L).contest(contest).build();
