@@ -9,7 +9,7 @@ Use these prompts after Phase 1 review to generate small, focused diagrams. All 
 - Purpose: Show the major runtime actors and external systems around AuraC2.
 - Actors/components/swimlanes/entities: Admin/Team browser, React frontend, Spring Boot backend, PostgreSQL, RabbitMQ, Judge0 API, SSE clients, Judge0 callback endpoint.
 - What the diagram should show: Browser-to-frontend usage, frontend REST calls to backend, backend SSE stream to browser, backend JPA persistence, RabbitMQ submission queue, backend Judge0 requests, and Judge0 callback into backend.
-- What the diagram must NOT include: Individual controllers, DTOs, all database tables, or future-only systems such as scoreboard ranking and security monitoring.
+- What the diagram must NOT include: Individual controllers, DTOs, all database tables, or future-only systems such as security monitoring and report export.
 - AI image-generation prompt: Create a clean academic system context diagram for AuraC2, a university programming contest control system. Use simple boxes and labeled arrows. Show Browser/React Frontend, Spring Boot Backend, PostgreSQL Database, RabbitMQ, Judge0 API, SSE clients, REST API, submission queue, and Judge0 callback endpoint. Use a formal blue-gray palette, readable labels, and no decorative elements.
 - PlantUML:
 
@@ -85,9 +85,9 @@ cloud "Judge0" as J0
 - Diagram type: Four-column scope/status diagram
 - Purpose: Visually distinguish implemented, partially implemented, planned/future, and deprecated/removed features.
 - Actors/components/swimlanes/entities: Implemented scope, partial scope, future scope, deprecated/removed scope.
-- What the diagram should show: Implemented: login, admin-protected team registration, refresh rotation/logout revocation, admin bootstrap, user admin, contest lifecycle, SSE contest updates, problem/test-case creation, submission queue, Judge0 callback, per-case results, backend rejudge, backend clarifications. Partial: team workspace completeness, frontend clarifications, result queue, time/memory enforcement, rejudge UI, local/offline deployment. Future: scoreboard ranking, announcements, security monitor, statistics endpoints, participation/join workflow, full LAN-first Judge0. Removed: email verification.
+- What the diagram should show: Implemented: login, admin-protected team registration, refresh rotation/logout revocation, admin bootstrap, user admin, contest lifecycle, SSE contest updates, problem/test-case create/update/delete, submission queue, Judge0 callback, per-case results, rejudge backend/UI, clarifications backend/UI, scoreboard ranking/freeze/reveal. Partial: team workspace polish, result queue, time/memory enforcement, local/offline deployment. Future: announcements, security monitor, statistics endpoints, participation/join workflow, report/export workflow, full LAN-first Judge0. Removed: email verification.
 - What the diagram must NOT include: Detailed code paths, class names, or unverified features.
-- AI image-generation prompt: Create a clean status diagram for AuraC2 with four labeled groups: Implemented, Partially Implemented, Planned/Future Work, Deprecated/Removed. Include concise feature chips. Make clear that registration is admin-protected, logout revocation is implemented, scoreboard freeze metadata is implemented, and full scoreboard ranking remains future work. Use formal academic styling and avoid clutter.
+- AI image-generation prompt: Create a clean status diagram for AuraC2 with four labeled groups: Implemented, Partially Implemented, Planned/Future Work, Deprecated/Removed. Include concise feature chips. Make clear that registration is admin-protected, logout revocation is implemented, clarifications are wired, rejudge UI exists, and scoreboard ranking/freeze/reveal are implemented. Use formal academic styling and avoid clutter.
 - PlantUML:
 
 ```plantuml
@@ -95,16 +95,16 @@ cloud "Judge0" as J0
 left to right direction
 rectangle "Implemented" as I {
   rectangle "Auth login\nAdmin-protected team registration\nRefresh rotation\nLogout revocation"
-  rectangle "Contest lifecycle\nSSE updates\nProblem and test-case create/read"
+  rectangle "Contest lifecycle\nSSE updates\nProblem and test-case CRUD"
   rectangle "Submission queue\nJudge0 callbacks\nPer-test-case results"
-  rectangle "Backend rejudge\nBackend clarifications\nScoreboard freeze metadata"
+  rectangle "Rejudge backend/UI\nClarifications backend/UI\nScoreboard ranking/freeze/reveal"
 }
 rectangle "Partially Implemented" as P {
-  rectangle "Team workspace polish\nFrontend clarifications\nResult queue scaffold"
-  rectangle "Time/memory enforcement\nRejudge UI\nLocal/offline Judge0 setup"
+  rectangle "Team workspace polish\nResult queue scaffold"
+  rectangle "Time/memory enforcement\nLocal/offline Judge0 setup"
 }
 rectangle "Planned / Future Work" as F {
-  rectangle "Scoreboard ranking\nAnnouncements\nSecurity monitor\nStatistics endpoints\nParticipation workflow"
+  rectangle "Announcements\nSecurity monitor\nStatistics endpoints\nParticipation workflow\nReport/export workflow"
 }
 rectangle "Deprecated / Removed" as R {
   rectangle "Email verification workflow"
@@ -121,9 +121,9 @@ F -[hidden]-> R
 - Diagram type: UML use case diagram
 - Purpose: Show administrator operations currently implemented or partially implemented.
 - Actors/components/swimlanes/entities: Administrator, AuraC2 backend.
-- What the diagram should show: Manage team accounts, register team account, create contest, view contest buckets, start/pause/resume/end contest, force end with jury override, create problem, add test case, review submissions, call backend rejudge endpoints, view clarification placeholder as partial.
+- What the diagram should show: Manage team accounts, register team account, create contest, view contest buckets, start/pause/resume/end contest, force end with jury override, create/update/delete problems, create/update/delete test cases, review submissions, use rejudge controls, view/administer clarifications, manage admin scoreboard reveal controls.
 - What the diagram must NOT include: Scoreboard ranking, security monitoring implementation, announcements, or team-only actions.
-- AI image-generation prompt: Create a small UML use case diagram for AuraC2 contest administration. Actor: Administrator. Use cases: Manage Team Accounts, Register Team Account, Create Contest, View Contest Buckets, Start Contest, Pause Contest, Resume Contest, End Contest, Force End With Jury Override, Create Problem, Add Test Case, Review Submissions, Backend Rejudge. Mark Clarifications UI, Statistics, and Security Monitor as partial or future. Keep it readable and academic.
+- AI image-generation prompt: Create a small UML use case diagram for AuraC2 contest administration. Actor: Administrator. Use cases: Manage Team Accounts, Register Team Account, Create Contest, View Contest Buckets, Start Contest, Pause Contest, Resume Contest, End Contest, Force End With Jury Override, Manage Problems, Manage Test Cases, Review Submissions, Rejudge, Answer Clarifications, and Manage Scoreboard Reveal. Mark only Statistics and Security Monitor as partial or future. Keep it readable and academic.
 - PlantUML:
 
 ```plantuml
@@ -140,11 +140,12 @@ rectangle "AuraC2" {
   usecase "Resume Contest" as UC7
   usecase "End Contest" as UC8
   usecase "Force End\nJury Override" as UC9
-  usecase "Create Problem" as UC10
-  usecase "Add Test Case" as UC11
+  usecase "Manage Problems" as UC10
+  usecase "Manage Test Cases" as UC11
   usecase "Review Submissions" as UC12
-  usecase "Backend Rejudge" as UC13
-  usecase "Clarifications UI\npartial" as UC14
+  usecase "Rejudge" as UC13
+  usecase "Answer Clarifications" as UC14
+  usecase "Manage Scoreboard Reveal" as UC15
 }
 Admin --> UC1
 Admin --> UC2
@@ -160,6 +161,7 @@ Admin --> UC11
 Admin --> UC12
 Admin --> UC13
 Admin --> UC14
+Admin --> UC15
 @enduml
 ```
 
@@ -167,11 +169,11 @@ Admin --> UC14
 
 - Report section: 5.1 Use Case Diagrams
 - Diagram type: UML use case diagram
-- Purpose: Show current team capabilities and partial/mock capabilities.
+- Purpose: Show current team capabilities.
 - Actors/components/swimlanes/entities: Team User, AuraC2 backend/frontend.
-- What the diagram should show: Log in, view active contest, view problem list, select problem, write code, save local draft, submit code, view own submission history, view submitted code, view mock clarification UI, and backend clarification capability not fully wired in UI.
+- What the diagram should show: Log in, view active contest, view problem list, select problem, write code, save local draft, submit code, view own submission history, view submitted code, view public/team scoreboard, submit clarifications, and view own/public clarification answers.
 - What the diagram must NOT include: Admin user management or rejudge as a team action.
-- AI image-generation prompt: Create a UML use case diagram for AuraC2 team workspace. Actor: Team User. Include implemented use cases for login, view active contest, view problems, select problem, write code, local draft persistence, submit code, view own submission history, and view submitted code. Show clarification use cases with a dashed boundary labeled partial because backend exists but frontend is mock/not wired.
+- AI image-generation prompt: Create a UML use case diagram for AuraC2 team workspace. Actor: Team User. Include implemented use cases for login, view active contest, view problems, select problem, write code, local draft persistence, submit code, view own submission history, view submitted code, view scoreboard, submit clarifications, and view clarification answers.
 - PlantUML:
 
 ```plantuml
@@ -188,7 +190,9 @@ rectangle "AuraC2 Team Workspace" {
   usecase "Submit Code" as T7
   usecase "View Own Submission History" as T8
   usecase "View Submitted Code" as T9
-  usecase "Clarifications\npartial UI" as T10
+  usecase "View Scoreboard" as T10
+  usecase "Submit Clarification" as T11
+  usecase "View Clarification Answers" as T12
 }
 Team --> T1
 Team --> T2
@@ -199,7 +203,9 @@ T5 ..> T6 : includes
 Team --> T7
 Team --> T8
 Team --> T9
-Team ..> T10 : partial
+Team --> T10
+Team --> T11
+Team --> T12
 @enduml
 ```
 
@@ -208,10 +214,10 @@ Team ..> T10 : partial
 - Report section: 5.3 Activity Diagrams for Complicated Behaviors
 - Diagram type: Activity diagram with swimlanes
 - Purpose: Explain login, admin-protected registration, access-token usage, refresh-token rotation, and logout revocation.
-- Actors/components/swimlanes/entities: Visitor/Admin/Team, React frontend, AuthController/AuthFacade, Login/Register/Refresh/Logout services, RefreshToken table, JwtAuthFilter.
-- What the diagram should show: Admin-authenticated team registration, login request, password validation, access token issue, refresh cookie creation at `/auth`, protected request with Bearer token, 401/refresh flow, old refresh-token revocation, new cookie issue, logout receiving `/auth` cookie, server-side revocation, cookie clearing.
+- Actors/components/swimlanes/entities: Visitor/Admin/Team, React frontend, SecurityConfiguration, JwtAuthFilter, AuthController/AuthFacade, Login/Register/Refresh/Logout services, RefreshToken table.
+- What the diagram should show: Admin-authenticated team registration, route-level ADMIN registration guard, JWT filter processing `/auth/register`, method security, login request, password validation, access token issue, refresh cookie creation at `/auth`, protected request with Bearer token, 401/refresh flow, old refresh-token revocation, new cookie issue, logout receiving `/auth` cookie, server-side revocation, cookie clearing, and no-security profile allowed only in local/test.
 - What the diagram must NOT include: Contest lifecycle, RabbitMQ, Judge0, or unrelated admin functions.
-- AI image-generation prompt: Create a formal activity diagram with swimlanes for AuraC2 authentication. Show Administrator registering team accounts through a method-level protected backend operation, then show normal login, JWT access token, HTTP-only refresh_token cookie scoped to /auth, persisted refresh-token hash, refresh rotation, revoked-token check, and logout that receives the same /auth cookie and revokes it. Include a note that /auth/** is URL-permitted but /auth/register is restricted by @PreAuthorize. Keep labels readable.
+- AI image-generation prompt: Create a formal activity diagram with swimlanes for AuraC2 authentication. Show Administrator registering team accounts through route-level ADMIN authorization and method-level protection, then show normal login, JWT access token, HTTP-only refresh_token cookie scoped to /auth, persisted refresh-token hash, refresh rotation, revoked-token check, and logout that receives the same /auth cookie and revokes it. Include notes that JwtAuthFilter does not skip /auth/register and that the no-security profile is guarded for local/test only. Keep labels readable.
 - PlantUML:
 
 ```plantuml
@@ -222,6 +228,8 @@ start
 :Submit new team account;
 |React Frontend|
 :POST /auth/register\nwith Bearer access token;
+|SecurityConfiguration|
+:Require ADMIN for\nPOST /auth/register;
 |JwtAuthFilter|
 :Authenticate bearer token\nfor /auth/register;
 |AuthController|
@@ -257,6 +265,10 @@ endif
 :Validate and revoke refresh token;
 :Clear security context;
 :Clear refresh cookie\nusing Path=/auth;
+note right
+no-security profile is rejected
+outside dev/local/test.
+end note
 stop
 @enduml
 ```
@@ -420,17 +432,17 @@ stop
 
 - Report section: 5.3 Activity Diagrams for Complicated Behaviors
 - Diagram type: Activity diagram
-- Purpose: Show backend rejudge behavior and frontend limitation.
-- Actors/components/swimlanes/entities: Administrator/API client, RejudgeController, RejudgeService, SubmissionRepository, SubmissionProducer, RabbitMQ, SubmissionConsumer, Judge0 callback flow.
-- What the diagram should show: Admin/API chooses selected submissions/problem/contest, service validates scope, selects submissions, skips active verdicts, sets final submissions to `PENDING_REJUDGE`, clears aggregate execution/memory, saves, publishes after commit, consumer increments `judgeRunId` and reuses Judge0 flow, stale old callbacks rejected.
-- What the diagram must NOT include: A completed rejudge UI button, because no admin frontend integration was found.
-- AI image-generation prompt: Create an AuraC2 backend rejudge workflow diagram. Show Administrator/API client calling RejudgeController for selected submissions, problem, or contest. RejudgeService validates request, loads submissions, skips PENDING/PENDING_REJUDGE/RUNNING, sets eligible submissions to PENDING_REJUDGE, clears aggregate metrics, saves, publishes submission IDs after transaction commit, RabbitMQ consumer reuses the Judge0 judging flow, increments judgeRunId, and old callbacks are rejected. Add a note: frontend rejudge controls are future work.
+- Purpose: Show rejudge backend and admin UI behavior.
+- Actors/components/swimlanes/entities: Administrator, RejudgeView, RejudgeController, RejudgeService, SubmissionRepository, SubmissionProducer, RabbitMQ, SubmissionConsumer, Judge0 callback flow.
+- What the diagram should show: Admin chooses problem/contest rejudge or force rejudge in the UI, service validates scope, selects submissions, skips active verdicts unless force is used, sets eligible submissions to `PENDING_REJUDGE`, clears aggregate execution/memory, saves, publishes after commit, consumer increments `judgeRunId` and reuses Judge0 flow, stale old callbacks rejected.
+- What the diagram must NOT include: Team rejudge access.
+- AI image-generation prompt: Create an AuraC2 rejudge workflow diagram. Show Administrator using RejudgeView to call RejudgeController for problem or contest scope. RejudgeService validates request, loads submissions, skips PENDING/PENDING_REJUDGE/RUNNING unless force is requested, sets eligible submissions to PENDING_REJUDGE, clears aggregate metrics, saves, publishes submission IDs after transaction commit, RabbitMQ consumer reuses the Judge0 judging flow, increments judgeRunId, and old callbacks are rejected.
 - PlantUML:
 
 ```plantuml
 @startuml
 start
-:Administrator/API client\ncalls rejudge endpoint;
+:Administrator uses RejudgeView\nto call rejudge endpoint;
 :RejudgeController validates ADMIN access;
 :RejudgeService resolves selected\nsubmissions/problem/contest;
 :Skip PENDING, PENDING_REJUDGE,\nand RUNNING submissions;
@@ -450,15 +462,15 @@ stop
 @enduml
 ```
 
-## Figure 12 - Clarification Backend vs Frontend Gap Diagram
+## Figure 12 - Clarification Workflow Diagram
 
 - Report section: 5.3 Activity Diagrams for Complicated Behaviors
-- Diagram type: Gap/status component diagram
-- Purpose: Show why clarifications are classified as partially implemented end-to-end.
-- Actors/components/swimlanes/entities: Team User, Administrator, ClarificationController, ClarificationService, ClarificationRepository, Clarification entity, Team Clarifications UI, Admin Placeholder UI.
-- What the diagram should show: Backend supports team submit, team fetch own/public, admin fetch, admin reply, and public answered fetch. Frontend team screen uses mock data and console logging; admin screen is placeholder.
+- Diagram type: Component interaction diagram
+- Purpose: Show the implemented clarification workflow.
+- Actors/components/swimlanes/entities: Team User, Administrator, Team Clarifications UI, Admin ClarificationsView, ClarificationController, ClarificationService, ClarificationRepository, Clarification SSE stream.
+- What the diagram should show: Team UI submits and fetches own/public clarifications; admin UI fetches pending/all clarifications, replies publicly or privately, and both sides receive clarification SSE refresh events.
 - What the diagram must NOT include: Scoreboard, submission judging, or future announcements.
-- AI image-generation prompt: Create a clear gap diagram for AuraC2 clarifications. Left side labeled Implemented Backend: ClarificationController, ClarificationService, ClarificationRepository, Clarification entity, endpoints for team submit, team fetch, admin fetch, admin reply, public answered clarifications. Right side labeled Frontend Gap: team Clarifications component uses hardcoded mock data and console logging; admin Clarifications page is a placeholder. Show overall status: partially implemented end-to-end.
+- AI image-generation prompt: Create a clear workflow diagram for AuraC2 clarifications. Show Team Clarifications UI submitting questions and fetching own/public answers, Admin ClarificationsView fetching pending/all questions and sending public/private replies, ClarificationController and ClarificationService persisting to ClarificationRepository, and SSE updates refreshing both UIs.
 - PlantUML:
 
 ```plantuml
@@ -466,25 +478,23 @@ stop
 left to right direction
 actor "Team User" as Team
 actor Administrator as Admin
-rectangle "Implemented Backend" as Backend {
+rectangle "Frontend" as Frontend {
+  [Team Clarifications UI]
+  [Admin ClarificationsView]
+}
+rectangle "Backend" as Backend {
   [ClarificationController]
   [ClarificationService]
   database "ClarificationRepository\nClarification table" as CDB
+  [Clarification SSE Stream]
 }
-rectangle "Frontend Gap" as Frontend {
-  [Team Clarifications UI\nmock data]
-  [Admin Clarifications Page\nplaceholder]
-}
-Team --> [ClarificationController] : submit / fetch own
-Admin --> [ClarificationController] : fetch / reply
+[Team Clarifications UI] --> [ClarificationController] : submit / fetch own/public
+[Admin ClarificationsView] --> [ClarificationController] : fetch / reply
 [ClarificationController] --> [ClarificationService]
 [ClarificationService] --> CDB
-Team ..> [Team Clarifications UI\nmock data] : not wired to API
-Admin ..> [Admin Clarifications Page\nplaceholder] : not wired to API
-note bottom
-Overall status: backend implemented;
-end-to-end UI integration is partial.
-end note
+[ClarificationService] --> [Clarification SSE Stream] : publish update
+[Clarification SSE Stream] ..> [Team Clarifications UI] : refresh
+[Clarification SSE Stream] ..> [Admin ClarificationsView] : refresh
 @enduml
 ```
 

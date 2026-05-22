@@ -35,11 +35,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         final String path = request.getServletPath();
 
-        // ✅ Skip endpoints that must work without access token
-        // (keep this list in sync with SecurityConfiguration permitAll)
+        // Skip endpoints that are intentionally public or use refresh cookies
+        // instead of bearer-token authentication.
         if (path.equals("/auth/login")
                 || path.equals("/auth/refresh")
                 || path.equals("/auth/logout")
+                || path.equals("/")
+                || path.equals("/index.html")
+                || path.equals("/favicon.ico")
+                || path.equals("/error")
+                || path.startsWith("/assets/")
                 || path.startsWith("/verify/")
                 || path.startsWith("/v3/api-docs/")
                 || path.startsWith("/swagger-ui/")
@@ -49,7 +54,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 || path.equals("/api/contest/active")
                 || path.equals("/api/contest/upcoming")
                 || path.equals("/api/contest/paused")
-                || path.equals("/api/contest/ended")) {
+                || path.equals("/api/contest/ended")
+                || path.startsWith("/api/scoreboard/")
+                || path.startsWith("/api/clarifications/public/")) {
 
             filterChain.doFilter(request, response);
             return;
