@@ -1,6 +1,7 @@
 import "../../test/setup";
 import { render, screen } from "@testing-library/react";
 import { ScoreboardView } from "./ScoreboardView";
+import { ThemeProvider } from "../../components/ThemeProvider";
 import { scoreboardSnapshot, revealResponse } from "../../test/scoreboardFixtures";
 import {
   getAdminScoreboard,
@@ -45,7 +46,11 @@ describe("ScoreboardView", () => {
     );
     vi.mocked(getScoreboardRevealState).mockResolvedValue(revealResponse());
 
-    render(<ScoreboardView contestId={1} />);
+    render(
+      <ThemeProvider>
+        <ScoreboardView contestId={1} />
+      </ThemeProvider>
+    );
 
     expect(await screen.findByText("ICPC Local")).toBeInTheDocument();
     expect(screen.getByText("Admin live")).toBeInTheDocument();

@@ -5,6 +5,7 @@ import com.server.contestControl.authServer.repository.UserRepository;
 import com.server.contestControl.authServer.service.jwt.core.JwtService;
 import com.server.contestControl.contestServer.entity.Contest;
 import com.server.contestControl.contestServer.entity.Problem;
+import com.server.contestControl.contestServer.exception.ContestNotFoundException;
 import com.server.contestControl.contestServer.service.ContestService;
 import com.server.contestControl.contestServer.service.ProblemService;
 import com.server.contestControl.submissionServer.dto.SubmissionRequest;
@@ -13,6 +14,7 @@ import com.server.contestControl.submissionServer.entity.Submission;
 import com.server.contestControl.submissionServer.enums.Verdict;
 import com.server.contestControl.submissionServer.exceptions.InvalidSubmissionRequestException;
 import com.server.contestControl.submissionServer.queue.submission.SubmissionProducer;
+import com.server.contestControl.submissionServer.repository.SubmissionJudgeResultRepository;
 import com.server.contestControl.submissionServer.repository.SubmissionRepository;
 import com.server.contestControl.submissionServer.sse.SubmissionSsePublisher;
 import com.server.contestControl.submissionServer.sse.SubmissionStreamEvent;
@@ -25,12 +27,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -48,6 +52,7 @@ class SubmissionServiceValidationTest {
     @Mock private ProblemService problemService;
     @Mock private UserRepository userRepository;
     @Mock private SubmissionSsePublisher submissionSsePublisher;
+    @Mock private SubmissionJudgeResultRepository judgeResultRepository;
 
     @InjectMocks
     private SubmissionService submissionService;
@@ -63,7 +68,7 @@ class SubmissionServiceValidationTest {
     void setUp() {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
-        when(authentication.getName()).thenReturn("team1");
+        lenient().when(authentication.getName()).thenReturn("team1");
     }
 
     @AfterEach
@@ -95,6 +100,26 @@ class SubmissionServiceValidationTest {
 
         assertThat(response).isNotNull();
         verify(submissionProducer).sendSubmission(any());
+    }
+
+    @Test
+    void submissionBeforeContestStartIsRejectedWhenNoContestIsEffectivelyRunning() {
+        assertNoActiveContestRejectsSubmission();
+    }
+
+    @Test
+    void submissionDuringPausedContestIsRejectedWhenNoContestIsEffectivelyRunning() {
+        assertNoActiveContestRejectsSubmission();
+    }
+
+    @Test
+    void submissionAfterContestEndIsRejectedWhenNoContestIsEffectivelyRunning() {
+        assertNoActiveContestRejectsSubmission();
+    }
+
+    @Test
+    void submissionAtExactEndBoundaryIsRejectedWhenEffectiveStateHasEnded() {
+        assertNoActiveContestRejectsSubmission();
     }
 
     // ─── 2. Problem belongs to different contest → rejected ────────────────────
@@ -218,6 +243,66 @@ class SubmissionServiceValidationTest {
         verify(submissionProducer, never()).sendSubmission(any());
     }
 
+    @Test
+    void teamCanAccessOwnSubmissionById() {
+        setRole("ROLE_TEAM");
+        Contest contest = contest(ACTIVE_CONTEST_ID);
+        Problem problem = problem(PROBLEM_ID, contest);
+        User owner = user("team1");
+        Submission submission = submission(7L, contest, problem, owner, Verdict.ACCEPTED);
+
+        when(submissionRepository.findById(7L)).thenReturn(Optional.of(submission));
+        when(userRepository.findByUsername("team1")).thenReturn(Optional.of(owner));
+        when(judgeResultRepository.findBySubmission_IdAndJudgeRunIdOrderByTestCaseNumberAsc(7L, 0L))
+                .thenReturn(List.of());
+
+        SubmissionResponse response = submissionService.getSubmissionById(7L);
+
+        assertThat(response.id()).isEqualTo(7L);
+        assertThat(response.userId()).isEqualTo(owner.getId());
+    }
+
+    @Test
+    void teamCannotAccessAnotherTeamsSubmissionById() {
+        setRole("ROLE_TEAM");
+        Contest contest = contest(ACTIVE_CONTEST_ID);
+        Problem problem = problem(PROBLEM_ID, contest);
+        User currentTeam = user("team1");
+        User otherTeam = User.builder().id(2L).username("team2").build();
+        Submission submission = submission(8L, contest, problem, otherTeam, Verdict.ACCEPTED);
+
+        when(submissionRepository.findById(8L)).thenReturn(Optional.of(submission));
+        when(userRepository.findByUsername("team1")).thenReturn(Optional.of(currentTeam));
+
+        assertThatThrownBy(() -> submissionService.getSubmissionById(8L))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Submission not found");
+
+        verify(judgeResultRepository, never())
+                .findBySubmission_IdAndJudgeRunIdOrderByTestCaseNumberAsc(any(), any());
+    }
+
+    @Test
+    void adminCanAccessAnyTeamSubmissionById() {
+        when(authentication.getName()).thenReturn("admin");
+        setRole("ROLE_ADMIN");
+        Contest contest = contest(ACTIVE_CONTEST_ID);
+        Problem problem = problem(PROBLEM_ID, contest);
+        User admin = User.builder().id(100L).username("admin").build();
+        User otherTeam = User.builder().id(2L).username("team2").build();
+        Submission submission = submission(9L, contest, problem, otherTeam, Verdict.ACCEPTED);
+
+        when(submissionRepository.findById(9L)).thenReturn(Optional.of(submission));
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
+        when(judgeResultRepository.findBySubmission_IdAndJudgeRunIdOrderByTestCaseNumberAsc(9L, 0L))
+                .thenReturn(List.of());
+
+        SubmissionResponse response = submissionService.getSubmissionById(9L);
+
+        assertThat(response.id()).isEqualTo(9L);
+        assertThat(response.userId()).isEqualTo(otherTeam.getId());
+    }
+
     private void stubValidSubmission() {
         Contest activeContest = contest(ACTIVE_CONTEST_ID);
         Problem problem = problem(PROBLEM_ID, activeContest);
@@ -229,6 +314,23 @@ class SubmissionServiceValidationTest {
         when(submissionRepository.save(any()))
                 .thenReturn(submission(1L, activeContest, problem, user, Verdict.PENDING));
         when(submissionSsePublisher.buildEvent(any(), any())).thenReturn(dummyEvent());
+    }
+
+    private void assertNoActiveContestRejectsSubmission() {
+        User user = user("team1");
+        when(userRepository.findByUsername("team1")).thenReturn(Optional.of(user));
+        when(contestService.getContestEntity())
+                .thenThrow(new ContestNotFoundException("No active contest found"));
+
+        SubmissionRequest request = new SubmissionRequest(ACTIVE_CONTEST_ID, PROBLEM_ID, "java", "code");
+
+        assertThatThrownBy(() -> submissionService.submitCode(request))
+                .isInstanceOf(ContestNotFoundException.class)
+                .hasMessageContaining("No active contest found");
+
+        verify(problemService, never()).getProblemEntity(any());
+        verify(submissionRepository, never()).save(any());
+        verify(submissionProducer, never()).sendSubmission(any());
     }
 
     private Contest contest(Long id) {
@@ -266,5 +368,9 @@ class SubmissionServiceValidationTest {
                 Verdict.PENDING, 0L, null, null,
                 LocalDateTime.now(), LocalDateTime.now()
         );
+    }
+
+    private void setRole(String authority) {
+        doReturn(List.of(new SimpleGrantedAuthority(authority))).when(authentication).getAuthorities();
     }
 }

@@ -51,6 +51,21 @@ class SseEmitterRegistryTest {
         assertThat(emitter.completeCalled).isTrue();
     }
 
+    @Test
+    void keepAliveReachesBroadcastAndTargetedEmitters() {
+        SseEmitterRegistry registry = new SseEmitterRegistry();
+        TestSseEmitter broadcastEmitter = TestSseEmitter.working();
+        TestSseEmitter targetedEmitter = TestSseEmitter.working();
+        registry.register(broadcastEmitter);
+        registry.register(1L, targetedEmitter);
+
+        registry.keepAliveAll(pingEvent());
+
+        assertThat(broadcastEmitter.sendCount).isEqualTo(1);
+        assertThat(targetedEmitter.sendCount).isEqualTo(1);
+        assertThat(registry.activeCount()).isEqualTo(2);
+    }
+
     private SseEmitter.SseEventBuilder pingEvent() {
         return SseEmitter.event().name("ping").data("ping");
     }
@@ -60,6 +75,7 @@ class SseEmitterRegistryTest {
         private boolean completeCalled;
         private boolean failCompletion;
         private Runnable timeoutCallback;
+        private int sendCount;
 
         private TestSseEmitter(Exception sendFailure) {
             this.sendFailure = sendFailure;
@@ -81,6 +97,7 @@ class SseEmitterRegistryTest {
             if (sendFailure instanceof RuntimeException runtimeException) {
                 throw runtimeException;
             }
+            sendCount++;
         }
 
         @Override

@@ -144,6 +144,61 @@ class ContestStatusSyncServiceTest {
             assertThat(result).isEqualTo(1);
             verify(eventPublisher).publishEvent(any(ContestUpdatedEvent.class));
         }
+
+        @Test
+        @DisplayName("should continue scanning candidates when the first candidate is not ready")
+        void shouldContinueScanningWhenFirstCandidateDoesNotTransition() {
+            when(contestRepository.findSyncCandidates(any()))
+                    .thenReturn(List.of(upcomingContest, runningContest));
+            when(syncExecutor.syncContestStatus(eq(upcomingContest.getId()), any()))
+                    .thenReturn(Optional.empty());
+            when(syncExecutor.syncContestStatus(eq(runningContest.getId()), any()))
+                    .thenReturn(Optional.of(ContestStatus.ENDED));
+
+            ContestResponse snapshot = ContestResponse.builder()
+                    .id(runningContest.getId())
+                    .title("Running Contest")
+                    .status(ContestStatus.ENDED.name())
+                    .build();
+            when(contestService.buildResponseForId(runningContest.getId()))
+                    .thenReturn(Optional.of(snapshot));
+
+            int result = syncService.syncAllEligibleContests();
+
+            assertThat(result).isEqualTo(1);
+            verify(syncExecutor).syncContestStatus(eq(upcomingContest.getId()), any());
+            verify(syncExecutor).syncContestStatus(eq(runningContest.getId()), any());
+            verify(eventPublisher).publishEvent(any(ContestUpdatedEvent.class));
+        }
+
+        @Test
+        @DisplayName("should sync and publish every eligible candidate transition in one pass")
+        void shouldSyncEveryEligibleCandidateTransition() {
+            when(contestRepository.findSyncCandidates(any()))
+                    .thenReturn(List.of(upcomingContest, runningContest));
+            when(syncExecutor.syncContestStatus(eq(upcomingContest.getId()), any()))
+                    .thenReturn(Optional.of(ContestStatus.RUNNING));
+            when(syncExecutor.syncContestStatus(eq(runningContest.getId()), any()))
+                    .thenReturn(Optional.of(ContestStatus.ENDED));
+
+            when(contestService.buildResponseForId(upcomingContest.getId()))
+                    .thenReturn(Optional.of(ContestResponse.builder()
+                            .id(upcomingContest.getId())
+                            .title("Upcoming Contest")
+                            .status(ContestStatus.RUNNING.name())
+                            .build()));
+            when(contestService.buildResponseForId(runningContest.getId()))
+                    .thenReturn(Optional.of(ContestResponse.builder()
+                            .id(runningContest.getId())
+                            .title("Running Contest")
+                            .status(ContestStatus.ENDED.name())
+                            .build()));
+
+            int result = syncService.syncAllEligibleContests();
+
+            assertThat(result).isEqualTo(2);
+            verify(eventPublisher, times(2)).publishEvent(any(ContestUpdatedEvent.class));
+        }
     }
 
     @Nested

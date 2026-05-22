@@ -20,7 +20,7 @@ This backend is organized into three main domains:
 
 ### 1. Authentication Server
 Handles:
-- registration
+- admin-protected team registration
 - login
 - JWT access token generation
 - refresh token rotation
@@ -65,7 +65,8 @@ Handles:
 | ICPC-style scoreboard / ranking | Implemented |
 | Real-time scoreboard SSE | Implemented |
 | Scoreboard freeze / reveal | Implemented |
-| Clarifications / announcements | Not implemented yet |
+| Clarifications | Implemented |
+| Announcements | Not implemented yet |
 | Real-time contest updates | Implemented |
 
 ---
@@ -130,6 +131,8 @@ AuraC2 now includes a real-time ICPC-style scoreboard with admin and public/team
 - Admin reveal endpoints: `/api/admin/scoreboard/contests/{contestId}/reveal/*`
 
 Every finalized submission publishes a scoreboard domain event. Accepted submissions immediately recalculate solved counts, penalties, first-to-solve cells, ranks, and row-level SSE updates. Public/team streams respect freeze and reveal state; admin streams remain live.
+
+Contest timing and scoreboard visibility are pause-aware. Submissions are accepted only while an effective `RUNNING` contest exists; upcoming, paused, and ended contests reject new submissions, and the exact effective end instant is treated as ended. ICPC penalties count wrong attempts before the first accepted submission according to the configured contest penalty, while wrong attempts after the first accepted submission do not add penalty. Public frozen scoreboards hide cells at or after the freeze boundary until reveal; admin views remain live.
 
 Full API, SSE, scoring, reveal, testing, and migration details are in [`docs/scoreboard-feature-documentation.md`](docs/scoreboard-feature-documentation.md).
 
@@ -264,23 +267,56 @@ Security is implemented with Spring Security using a custom JWT filter.
 
 ### Public routes
 The following categories are exposed publicly:
-- authentication routes under `/auth/**`
+- `POST /auth/login`
+- `POST /auth/refresh`
+- `POST /auth/logout`
 - Swagger / OpenAPI documentation
-- Judge0 callback endpoint
-- selected public contest status routes
+- `GET /api/contest/active`, `/upcoming`, `/paused`, and `/ended`
+- public scoreboard snapshot and stream routes under `/api/scoreboard/**`
+- public answered clarifications under `/api/clarifications/public/**`
+- Judge0 callback routes under `/api/callback/judge0/**`
+
+`POST /auth/register` is not public. It is protected by the security filter chain and by method-level `ADMIN` authorization, and the JWT filter intentionally processes bearer tokens on that route.
 
 ### Protected routes
 Role restrictions include:
 - contest mutation endpoints → `ADMIN`
-- problem/test case creation → `ADMIN`
+- problem/test case creation, update, and delete → `ADMIN`
 - submissions → `TEAM` or `ADMIN`
 - admin user management → `ADMIN`
+- admin scoreboard/reveal controls → `ADMIN`
+- clarification submission/my routes → `TEAM`
+- clarification admin reply/review routes → `ADMIN`
 
 The application is stateless:
 - CSRF disabled
 - form login disabled
 - HTTP basic disabled
 - session creation policy set to `STATELESS`
+
+### Route authorization map
+
+| Endpoint group | Access policy |
+|---|---|
+| `POST /auth/login`, `/auth/refresh`, `/auth/logout` | Public authentication/session endpoints; refresh/logout use the HTTP-only refresh cookie. |
+| `POST /auth/register` | `ADMIN` only; bearer JWT is processed before method security. |
+| `GET /api/contest/active`, `/upcoming`, `/paused`, `/ended` | Public contest read endpoints. |
+| `/api/contest/**` mutation routes and `/api/contest/stream` | `ADMIN` only. |
+| `GET /api/problems/**` | `TEAM` or `ADMIN`. |
+| `POST`, `PUT`, `DELETE /api/problems/**` | `ADMIN` only. |
+| `GET /api/testcases/**` | `TEAM` or `ADMIN`; service filters private cases for teams. |
+| `POST`, `PUT`, `DELETE /api/testcases/**` | `ADMIN` only. |
+| `/api/submissions/**` | `TEAM` or `ADMIN`; team access to submission details is owner-checked in the service. |
+| `/api/admin/**` | `ADMIN` only, including user management, rejudge, and admin scoreboard controls. |
+| `/api/scoreboard/**` | Public scoreboard snapshot and stream. |
+| `/api/clarifications/public/**` | Public answered clarifications. |
+| `/api/clarifications/my/**`, `POST /api/clarifications` | `TEAM` only. |
+| `/api/clarifications/admin/**` | `ADMIN` only. |
+| `/api/callback/judge0/**` | Externally reachable callback endpoint; requests must pass HMAC signature verification before state changes. |
+
+### no-security profile
+
+The `no-security` profile disables the main security filter chain and is only allowed together with a local development or test profile. Startup fails if `no-security` is active by itself or with `prod`.
 
 ---
 
@@ -342,8 +378,6 @@ For each test case, the backend sends:
 - mapped language ID
 - stdin
 - expected output
-- problem time limit as Judge0 `cpu_time_limit` in seconds, when configured
-- problem memory limit as Judge0 `memory_limit` in KB, when configured
 - signed callback URL
 
 Judge0 then calls back:
@@ -357,7 +391,6 @@ The callback handler:
 - resolves the submission
 - maps Judge0 status to internal verdict
 - stores execution time and memory usage
-- stores safe per-test-case audit details, including Judge0 status id/description and truncated diagnostic text
 - stores one result per submission, judge run, and test case
 - waits until all test case callbacks for the current judge run are received
 - calculates the final verdict from the completed run, so out-of-order callbacks cannot mark a submission accepted early
@@ -383,10 +416,11 @@ Example body:
 ```json
 {
   "username": "team1",
-  "password": "123456",
-  "role": "TEAM"
+  "password": "123456"
 }
 ```
+
+This route is for administrators creating TEAM accounts. Anonymous users and TEAM users cannot register accounts.
 
 #### Login
 ```http
@@ -714,8 +748,6 @@ Instead of embedding compilers and sandboxes directly into the backend, the syst
 
 Based on the uploaded source, the following areas still look incomplete or early-stage:
 - result queue producer/consumer classes are still empty
-- advanced output comparison policies are not implemented; judging still uses Judge0 `expected_output`
-- announcements are not implemented
 - some exceptions are still generic `RuntimeException`
 - current config uses `ddl-auto: create-drop`, which is not suitable for production
 - current source tree does not show migration tooling
@@ -726,14 +758,12 @@ Based on the uploaded source, the following areas still look incomplete or early
 ## Suggested Next Milestones
 
 ### Contest Experience
-- scoreboard
-- ranking logic
-- freeze/unfreeze support
 - contest announcements
-- clarifications
+- richer scoreboard analytics and export/reporting
+- explicit contest participation/join workflow
 
 ### Judging Improvements
-- richer verdict history and operator-facing diagnostics
+- richer verdict history
 - retry and failure recovery logic
 - worker observability and metrics
 

@@ -152,9 +152,88 @@ class ScoreboardCalculatorTest {
         assertThat(cell.pendingCount()).isEqualTo(1);
     }
 
+    @Test
+    void wrongAttemptsAfterAcceptedSubmissionDoNotChangePenaltyOrAttempts() {
+        List<ScoreboardRow> rows = calculator.calculateRows(
+                contest,
+                List.of(problemA),
+                List.of(alpha),
+                List.of(
+                        submission(1L, alpha, problemA, Verdict.WRONG_ANSWER, 5),
+                        submission(2L, alpha, problemA, Verdict.ACCEPTED, 30),
+                        submission(3L, alpha, problemA, Verdict.WRONG_ANSWER, 35),
+                        submission(4L, alpha, problemA, Verdict.TLE, 40)
+                ),
+                Set.of(),
+                Set.of()
+        );
+
+        ScoreboardRow row = rows.getFirst();
+        ScoreboardProblemCell cell = cell(row, problemA.getId());
+
+        assertThat(row.solvedCount()).isEqualTo(1);
+        assertThat(row.totalPenalty()).isEqualTo(50);
+        assertThat(cell.attempts()).isEqualTo(2);
+        assertThat(cell.wrongAttempts()).isEqualTo(1);
+        assertThat(cell.penalty()).isEqualTo(50);
+    }
+
+    @Test
+    void compilationErrorCountsAsPenaltyButInternalErrorDoesNot() {
+        List<ScoreboardRow> rows = calculator.calculateRows(
+                contest,
+                List.of(problemA),
+                List.of(alpha),
+                List.of(
+                        submission(1L, alpha, problemA, Verdict.COMPILATION_ERROR, 10),
+                        submission(2L, alpha, problemA, Verdict.INTERNAL_ERROR, 12),
+                        submission(3L, alpha, problemA, Verdict.ACCEPTED, 20)
+                ),
+                Set.of(),
+                Set.of()
+        );
+
+        ScoreboardProblemCell cell = cell(rows.getFirst(), problemA.getId());
+
+        assertThat(rows.getFirst().totalPenalty()).isEqualTo(40);
+        assertThat(cell.wrongAttempts()).isEqualTo(1);
+        assertThat(cell.attempts()).isEqualTo(2);
+    }
+
+    @Test
+    void teamsWithNoSolvesRemainRankedWithZeroPenalty() {
+        User charlie = team(300L, "charlie");
+
+        List<ScoreboardRow> rows = calculator.calculateRows(
+                contest,
+                List.of(problemA),
+                List.of(alpha, beta, charlie),
+                List.of(
+                        submission(1L, alpha, problemA, Verdict.ACCEPTED, 15),
+                        submission(2L, beta, problemA, Verdict.WRONG_ANSWER, 10)
+                ),
+                Set.of(),
+                Set.of()
+        );
+
+        assertThat(rows).extracting(ScoreboardRow::teamName)
+                .containsExactly("alpha", "beta", "charlie");
+        assertThat(rowFor(rows, beta).rank()).isEqualTo(2);
+        assertThat(rowFor(rows, charlie).rank()).isEqualTo(2);
+        assertThat(rowFor(rows, beta).totalPenalty()).isZero();
+        assertThat(rowFor(rows, charlie).solvedCount()).isZero();
+    }
+
     private ScoreboardProblemCell cell(ScoreboardRow row, Long problemId) {
         return row.problemCells().stream()
                 .filter(candidate -> candidate.problemId().equals(problemId))
+                .findFirst()
+                .orElseThrow();
+    }
+
+    private ScoreboardRow rowFor(List<ScoreboardRow> rows, User team) {
+        return rows.stream()
+                .filter(row -> row.teamId().equals(team.getId()))
                 .findFirst()
                 .orElseThrow();
     }

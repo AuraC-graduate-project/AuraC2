@@ -61,6 +61,115 @@ class ContestServiceTest {
     }
 
     @Test
+    @DisplayName("manual start should stamp actualStartTime and publish MANUAL_START event")
+    void manualStartShouldStampActualStartTimeAndPublishEvent() {
+        when(contestRepository.findById(upcomingContest.getId())).thenReturn(Optional.of(upcomingContest));
+        when(contestRepository.existsByStatus(ContestStatus.RUNNING)).thenReturn(false);
+        when(contestLifecycleService.resolveEffectiveState(any(), any())).thenReturn(ContestStatus.RUNNING);
+
+        ContestResponse response = contestService.updateStatus(upcomingContest.getId(), ContestStatus.RUNNING);
+
+        assertThat(response.getStatus()).isEqualTo(ContestStatus.RUNNING.name());
+        assertThat(upcomingContest.getStatus()).isEqualTo(ContestStatus.RUNNING);
+        assertThat(upcomingContest.getActualStartTime()).isNotNull();
+        assertThat(upcomingContest.getPausedAt()).isNull();
+
+        ArgumentCaptor<ContestUpdatedEvent> eventCaptor = ArgumentCaptor.forClass(ContestUpdatedEvent.class);
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().reason()).isEqualTo(ContestUpdatedEvent.Reason.MANUAL_START);
+    }
+
+    @Test
+    @DisplayName("manual pause should stamp pausedAt and publish MANUAL_PAUSE event")
+    void manualPauseShouldStampPausedAtAndPublishEvent() {
+        upcomingContest.setStatus(ContestStatus.RUNNING);
+        upcomingContest.setActualStartTime(Instant.now().minus(30, ChronoUnit.MINUTES));
+        when(contestRepository.findById(upcomingContest.getId())).thenReturn(Optional.of(upcomingContest));
+        when(contestLifecycleService.resolveEffectiveState(any(), any())).thenReturn(ContestStatus.PAUSED);
+
+        contestService.updateStatus(upcomingContest.getId(), ContestStatus.PAUSED);
+
+        assertThat(upcomingContest.getStatus()).isEqualTo(ContestStatus.PAUSED);
+        assertThat(upcomingContest.getPausedAt()).isNotNull();
+
+        ArgumentCaptor<ContestUpdatedEvent> eventCaptor = ArgumentCaptor.forClass(ContestUpdatedEvent.class);
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().reason()).isEqualTo(ContestUpdatedEvent.Reason.MANUAL_PAUSE);
+    }
+
+    @Test
+    @DisplayName("resume should accumulate pause time, clear pausedAt, and publish MANUAL_RESUME event")
+    void resumeShouldAccumulatePauseTimeAndPublishEvent() {
+        upcomingContest.setStatus(ContestStatus.PAUSED);
+        upcomingContest.setActualStartTime(Instant.now().minus(90, ChronoUnit.MINUTES));
+        upcomingContest.setPausedAt(Instant.now().minus(60, ChronoUnit.SECONDS));
+        upcomingContest.setTotalPauseMillis(30_000L);
+        when(contestRepository.findById(upcomingContest.getId())).thenReturn(Optional.of(upcomingContest));
+        when(contestLifecycleService.resolveEffectiveState(any(), any())).thenReturn(ContestStatus.RUNNING);
+
+        contestService.updateStatus(upcomingContest.getId(), ContestStatus.RUNNING);
+
+        assertThat(upcomingContest.getStatus()).isEqualTo(ContestStatus.RUNNING);
+        assertThat(upcomingContest.getPausedAt()).isNull();
+        assertThat(upcomingContest.getTotalPauseMillis()).isBetween(90_000L, 95_000L);
+
+        ArgumentCaptor<ContestUpdatedEvent> eventCaptor = ArgumentCaptor.forClass(ContestUpdatedEvent.class);
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().reason()).isEqualTo(ContestUpdatedEvent.Reason.MANUAL_RESUME);
+    }
+
+    @Test
+    @DisplayName("manual end without jury override should reject before effective end")
+    void manualEndWithoutJuryOverrideShouldRejectBeforeEffectiveEnd() {
+        upcomingContest.setStatus(ContestStatus.RUNNING);
+        upcomingContest.setActualStartTime(Instant.now().minus(30, ChronoUnit.MINUTES));
+        when(contestRepository.findById(upcomingContest.getId())).thenReturn(Optional.of(upcomingContest));
+        when(contestLifecycleService.resolveEffectiveEndTime(any(), any()))
+                .thenReturn(Instant.now().plus(30, ChronoUnit.MINUTES));
+
+        assertThatThrownBy(() -> contestService.updateStatus(
+                upcomingContest.getId(),
+                ContestStatus.ENDED,
+                false
+        )).isInstanceOf(InvalidContestStateException.class)
+                .hasMessageContaining("jury override");
+
+        verify(contestRepository, never()).save(any());
+        verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    @DisplayName("manual end with jury override should accept early end")
+    void manualEndWithJuryOverrideShouldAcceptEarlyEnd() {
+        upcomingContest.setStatus(ContestStatus.RUNNING);
+        upcomingContest.setActualStartTime(Instant.now().minus(30, ChronoUnit.MINUTES));
+        when(contestRepository.findById(upcomingContest.getId())).thenReturn(Optional.of(upcomingContest));
+        when(contestLifecycleService.resolveEffectiveState(any(), any())).thenReturn(ContestStatus.ENDED);
+
+        contestService.updateStatus(upcomingContest.getId(), ContestStatus.ENDED, true);
+
+        assertThat(upcomingContest.getStatus()).isEqualTo(ContestStatus.ENDED);
+
+        ArgumentCaptor<ContestUpdatedEvent> eventCaptor = ArgumentCaptor.forClass(ContestUpdatedEvent.class);
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().reason()).isEqualTo(ContestUpdatedEvent.Reason.MANUAL_END);
+    }
+
+    @Test
+    @DisplayName("ended contests should reject further lifecycle transitions")
+    void endedContestShouldRejectFurtherTransitions() {
+        upcomingContest.setStatus(ContestStatus.ENDED);
+        when(contestRepository.findById(upcomingContest.getId())).thenReturn(Optional.of(upcomingContest));
+
+        assertThatThrownBy(() -> contestService.updateStatus(upcomingContest.getId(), ContestStatus.RUNNING))
+                .isInstanceOf(InvalidContestStateException.class)
+                .hasMessageContaining("Invalid contest status transition");
+
+        verify(contestRepository, never()).save(any());
+        verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
     @DisplayName("updateContestDetails should save editable fields and publish UPDATED event")
     void shouldUpdateUpcomingContestAndPublishUpdatedEvent() {
         Instant newStart = Instant.now().plus(2, ChronoUnit.HOURS);

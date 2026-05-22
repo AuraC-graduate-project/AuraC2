@@ -70,6 +70,11 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/contest/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/submissions/**").hasAnyRole("TEAM", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/problems/**").hasAnyRole("TEAM", "ADMIN")
+                        .requestMatchers("/api/problems/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/testcases/**").hasAnyRole("TEAM", "ADMIN")
+                        .requestMatchers("/api/testcases/**").hasRole("ADMIN")
+                        .requestMatchers("/api/team/**").hasRole("TEAM")
 
                         .requestMatchers("/api/clarifications/public/**").permitAll()
                         .requestMatchers("/api/clarifications/my/stream/**").hasRole("TEAM")
