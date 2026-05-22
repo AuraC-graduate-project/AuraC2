@@ -18,6 +18,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 import java.util.Optional;
@@ -220,6 +222,42 @@ class Judge0CallbackServiceTest {
 
         assertThat(submission.getVerdict()).isEqualTo(Verdict.RUNNING);
         verify(judgeResultRepository, never()).save(any());
+        verify(submissionRepository, never()).save(submission);
+    }
+
+    @Test
+    void duplicateCallbackForExistingResultIsIdempotent() {
+        Submission submission = runningSubmission();
+        SubmissionJudgeResult existingResult = result(submission, 1, Verdict.ACCEPTED);
+
+        when(submissionRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(submission));
+        when(testCaseRepository.countByProblemId(10L)).thenReturn(1);
+        when(judgeResultRepository.findBySubmission_IdAndJudgeRunIdAndTestCaseNumber(1L, 7L, 1))
+                .thenReturn(Optional.of(existingResult));
+
+        ResponseEntity<?> response = callbackService.handleJudge0Callback(1L, 7L, 1, judge0Response(4));
+
+        assertThat(response.getBody()).isEqualTo("Duplicate callback ignored");
+        assertThat(submission.getVerdict()).isEqualTo(Verdict.RUNNING);
+        verify(judgeResultRepository, never()).save(any(SubmissionJudgeResult.class));
+        verify(submissionRepository, never()).save(submission);
+    }
+
+    @Test
+    void duplicateCallbackUniqueConstraintRaceIsIdempotent() {
+        Submission submission = runningSubmission();
+
+        when(submissionRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(submission));
+        when(testCaseRepository.countByProblemId(10L)).thenReturn(1);
+        when(judgeResultRepository.findBySubmission_IdAndJudgeRunIdAndTestCaseNumber(1L, 7L, 1))
+                .thenReturn(Optional.empty());
+        when(judgeResultRepository.save(any(SubmissionJudgeResult.class)))
+                .thenThrow(new DataIntegrityViolationException("duplicate"));
+
+        ResponseEntity<?> response = callbackService.handleJudge0Callback(1L, 7L, 1, judge0Response(3));
+
+        assertThat(response.getBody()).isEqualTo("Duplicate callback ignored");
+        assertThat(submission.getVerdict()).isEqualTo(Verdict.RUNNING);
         verify(submissionRepository, never()).save(submission);
     }
 

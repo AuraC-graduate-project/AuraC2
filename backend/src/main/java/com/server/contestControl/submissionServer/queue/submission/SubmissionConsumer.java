@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -39,8 +40,9 @@ public class SubmissionConsumer {
     private final ApplicationEventPublisher eventPublisher;
 
     @RabbitListener(queues = RabbitMQConfig.SUBMISSION_QUEUE)
+    @Transactional
     public void handleSubmission(Long submissionId) {
-        Submission submission = submissionRepository.findByIdWithContestProblemUser(submissionId)
+        Submission submission = submissionRepository.findByIdWithContestProblemUserForUpdate(submissionId)
                 .orElseThrow(() -> new RuntimeException("Submission not found"));
 
         if (!QUEUEABLE_VERDICTS.contains(submission.getVerdict())) {

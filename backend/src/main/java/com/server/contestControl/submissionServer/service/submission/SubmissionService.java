@@ -25,6 +25,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @Transactional(readOnly = true)
 public class SubmissionService {
 
@@ -81,17 +83,18 @@ public class SubmissionService {
                 .verdict(Verdict.PENDING)
                 .build();
 
-        submissionRepository.save(submission);
-
-        submissionProducer.sendSubmission(submission.getId());
+        Submission savedSubmission = submissionRepository.save(submission);
 
         // Capture event data while the entity is fully loaded inside this transaction,
         // then publish after commit so the frontend reads the committed state.
         SubmissionStreamEvent createdEvent =
-                submissionSsePublisher.buildEvent(SubmissionStreamEventType.CREATED, submission);
-        publishAfterCommit(() -> submissionSsePublisher.dispatch(createdEvent));
+                submissionSsePublisher.buildEvent(SubmissionStreamEventType.CREATED, savedSubmission);
+        publishAfterCommit(() -> {
+            publishSubmission(savedSubmission.getId());
+            submissionSsePublisher.dispatch(createdEvent);
+        });
 
-        return SubmissionResponse.fromEntity(submission);
+        return SubmissionResponse.fromEntity(savedSubmission);
     }
 
     public SubmissionResponse getSubmissionById(Long id) {
@@ -167,6 +170,16 @@ public class SubmissionService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return auth != null && auth.getAuthorities().stream()
                 .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+    }
+
+    private void publishSubmission(Long submissionId) {
+        try {
+            submissionProducer.sendSubmission(submissionId);
+        } catch (RuntimeException ex) {
+            // The submission is already committed at this point; make the failure visible
+            // without rolling back the user's accepted submission.
+            log.error("Failed to publish committed submission to RabbitMQ. submissionId={}", submissionId, ex);
+        }
     }
 
     private void publishAfterCommit(Runnable task) {

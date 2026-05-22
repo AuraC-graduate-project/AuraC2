@@ -73,7 +73,7 @@ class SubmissionConsumerTest {
                 .expectedOutput("1")
                 .build();
 
-        when(submissionRepository.findByIdWithContestProblemUser(1L)).thenReturn(Optional.of(submission));
+        when(submissionRepository.findByIdWithContestProblemUserForUpdate(1L)).thenReturn(Optional.of(submission));
         when(testCaseRepository.findByProblemId(10L)).thenReturn(List.of(tc));
 
         submissionConsumer.handleSubmission(1L);
@@ -105,7 +105,7 @@ class SubmissionConsumerTest {
                 .expectedOutput("2")
                 .build();
 
-        when(submissionRepository.findByIdWithContestProblemUser(2L)).thenReturn(Optional.of(submission));
+        when(submissionRepository.findByIdWithContestProblemUserForUpdate(2L)).thenReturn(Optional.of(submission));
         when(testCaseRepository.findByProblemId(10L)).thenReturn(List.of(tc));
 
         submissionConsumer.handleSubmission(2L);
@@ -129,7 +129,7 @@ class SubmissionConsumerTest {
                 .code("class Main {}")
                 .build();
 
-        when(submissionRepository.findByIdWithContestProblemUser(3L)).thenReturn(Optional.of(submission));
+        when(submissionRepository.findByIdWithContestProblemUserForUpdate(3L)).thenReturn(Optional.of(submission));
 
         submissionConsumer.handleSubmission(3L);
 
@@ -156,7 +156,7 @@ class SubmissionConsumerTest {
                 .expectedOutput("3")
                 .build();
 
-        when(submissionRepository.findByIdWithContestProblemUser(4L)).thenReturn(Optional.of(submission));
+        when(submissionRepository.findByIdWithContestProblemUserForUpdate(4L)).thenReturn(Optional.of(submission));
         when(testCaseRepository.findByProblemId(10L)).thenReturn(List.of(tc));
         doThrow(new RuntimeException("sse failed"))
                 .when(submissionSsePublisher)
@@ -185,7 +185,7 @@ class SubmissionConsumerTest {
                 .code("class Main {}")
                 .build();
 
-        when(submissionRepository.findByIdWithContestProblemUser(5L)).thenReturn(Optional.of(submission));
+        when(submissionRepository.findByIdWithContestProblemUserForUpdate(5L)).thenReturn(Optional.of(submission));
         when(testCaseRepository.findByProblemId(10L)).thenReturn(List.of());
 
         submissionConsumer.handleSubmission(5L);
@@ -195,5 +195,36 @@ class SubmissionConsumerTest {
         verify(submissionSsePublisher).publish(eq(SubmissionStreamEventType.FINALIZED), eq(submission));
         verify(eventPublisher).publishEvent(any(SubmissionFinalizedEvent.class));
         verify(judge0Service, never()).sendSingleTest(any(), any(), anyInt(), anyInt());
+    }
+
+    @Test
+    void duplicateQueueMessageDoesNotDispatchSameSubmissionTwice() {
+        Problem problem = Problem.builder().id(10L).build();
+        Submission submission = Submission.builder()
+                .id(6L)
+                .problem(problem)
+                .verdict(Verdict.PENDING)
+                .judgeRunId(0L)
+                .language("java")
+                .code("class Main {}")
+                .build();
+
+        TestCase tc = TestCase.builder()
+                .id(103L)
+                .inputData("4")
+                .expectedOutput("4")
+                .build();
+
+        when(submissionRepository.findByIdWithContestProblemUserForUpdate(6L))
+                .thenReturn(Optional.of(submission))
+                .thenReturn(Optional.of(submission));
+        when(testCaseRepository.findByProblemId(10L)).thenReturn(List.of(tc));
+
+        submissionConsumer.handleSubmission(6L);
+        submissionConsumer.handleSubmission(6L);
+
+        assertThat(submission.getVerdict()).isEqualTo(Verdict.RUNNING);
+        assertThat(submission.getJudgeRunId()).isEqualTo(1L);
+        verify(judge0Service).sendSingleTest(eq(submission), eq(tc), eq(1), anyInt());
     }
 }

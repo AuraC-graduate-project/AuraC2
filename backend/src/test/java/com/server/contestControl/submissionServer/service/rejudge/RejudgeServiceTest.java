@@ -13,12 +13,15 @@ import com.server.contestControl.submissionServer.exceptions.InvalidRejudgeReque
 import com.server.contestControl.submissionServer.queue.submission.SubmissionProducer;
 import com.server.contestControl.submissionServer.repository.SubmissionRepository;
 import com.server.contestControl.submissionServer.sse.SubmissionSsePublisher;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 
@@ -51,6 +54,13 @@ class RejudgeServiceTest {
 
     @InjectMocks
     private RejudgeService rejudgeService;
+
+    @AfterEach
+    void tearDown() {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
 
     @Test
     void rejudgeSelectedSubmissionsQueuesOnlyFinalVerdicts() {
@@ -201,6 +211,23 @@ class RejudgeServiceTest {
         assertThat(running.getJudgeRunId()).isEqualTo(6L);
         assertThat(running.getExecutionTime()).isNull();
         assertThat(running.getMemoryUsage()).isNull();
+    }
+
+    @Test
+    void rejudgePublishAfterCommitBehaviorIsPreserved() {
+        TransactionSynchronizationManager.initSynchronization();
+        Submission accepted = submission(1L, Verdict.ACCEPTED);
+
+        when(submissionRepository.findAllById(List.of(1L))).thenReturn(List.of(accepted));
+
+        rejudgeService.rejudgeSelectedSubmissions(List.of(1L));
+
+        verify(submissionProducer, never()).sendSubmission(1L);
+
+        TransactionSynchronizationManager.getSynchronizations()
+                .forEach(TransactionSynchronization::afterCommit);
+
+        verify(submissionProducer).sendSubmission(1L);
     }
 
     private Submission submission(Long id, Verdict verdict) {
