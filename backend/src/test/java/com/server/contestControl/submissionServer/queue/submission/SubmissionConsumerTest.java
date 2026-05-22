@@ -7,14 +7,17 @@ import com.server.contestControl.contestServer.entity.Problem;
 import com.server.contestControl.contestServer.entity.TestCase;
 import com.server.contestControl.contestServer.repository.TestCaseRepository;
 import com.server.contestControl.submissionServer.entity.Submission;
+import com.server.contestControl.submissionServer.entity.SubmissionJudgeResult;
 import com.server.contestControl.submissionServer.enums.Verdict;
 import com.server.contestControl.submissionServer.event.SubmissionFinalizedEvent;
+import com.server.contestControl.submissionServer.repository.SubmissionJudgeResultRepository;
 import com.server.contestControl.submissionServer.repository.SubmissionRepository;
 import com.server.contestControl.submissionServer.service.judge.Judge0Service;
 import com.server.contestControl.submissionServer.sse.SubmissionSsePublisher;
 import com.server.contestControl.submissionServer.sse.SubmissionStreamEventType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -27,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -49,6 +53,9 @@ class SubmissionConsumerTest {
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
+
+    @Mock
+    private SubmissionJudgeResultRepository judgeResultRepository;
 
     @InjectMocks
     private SubmissionConsumer submissionConsumer;
@@ -226,5 +233,56 @@ class SubmissionConsumerTest {
         assertThat(submission.getVerdict()).isEqualTo(Verdict.RUNNING);
         assertThat(submission.getJudgeRunId()).isEqualTo(1L);
         verify(judge0Service).sendSingleTest(eq(submission), eq(tc), eq(1), anyInt());
+    }
+
+    @Test
+    void judge0DispatchFailureMarksSubmissionInternalErrorAndStoresAuditResult() {
+        Contest contest = Contest.builder().id(20L).build();
+        Problem problem = Problem.builder().id(10L).contest(contest).build();
+        User team = User.builder().id(30L).username("team30").role(Role.TEAM).build();
+        Submission submission = Submission.builder()
+                .id(7L)
+                .contest(contest)
+                .problem(problem)
+                .user(team)
+                .verdict(Verdict.PENDING)
+                .judgeRunId(0L)
+                .language("java")
+                .code("class Main {}")
+                .build();
+
+        TestCase first = TestCase.builder().id(201L).inputData("1").expectedOutput("1").build();
+        TestCase second = TestCase.builder().id(202L).inputData("2").expectedOutput("2").build();
+
+        when(submissionRepository.findByIdWithContestProblemUserForUpdate(7L)).thenReturn(Optional.of(submission));
+        when(testCaseRepository.findByProblemId(10L)).thenReturn(List.of(first, second));
+        doAnswer(invocation -> {
+            TestCase dispatchedCase = invocation.getArgument(1);
+            if (dispatchedCase == second) {
+                throw new RuntimeException("judge0 down");
+            }
+            return null;
+        })
+                .when(judge0Service)
+                .sendSingleTest(eq(submission), any(TestCase.class), anyInt(), anyInt());
+
+        submissionConsumer.handleSubmission(7L);
+
+        assertThat(submission.getVerdict()).isEqualTo(Verdict.INTERNAL_ERROR);
+        assertThat(submission.getExecutionTime()).isZero();
+        assertThat(submission.getMemoryUsage()).isZero();
+        ArgumentCaptor<SubmissionJudgeResult> resultCaptor =
+                ArgumentCaptor.forClass(SubmissionJudgeResult.class);
+        verify(judgeResultRepository).save(resultCaptor.capture());
+        SubmissionJudgeResult result = resultCaptor.getValue();
+        assertThat(result.getJudgeRunId()).isEqualTo(1L);
+        assertThat(result.getTestCaseNumber()).isEqualTo(2);
+        assertThat(result.getVerdict()).isEqualTo(Verdict.INTERNAL_ERROR);
+        assertThat(result.getJudge0StatusDescription()).isEqualTo("Judge0 dispatch failed");
+        assertThat(result.getDiagnostic()).contains("judge0 down");
+        verify(judge0Service).sendSingleTest(eq(submission), eq(first), eq(1), anyInt());
+        verify(judge0Service).sendSingleTest(eq(submission), eq(second), eq(2), anyInt());
+        verify(submissionSsePublisher).publish(eq(SubmissionStreamEventType.FINALIZED), eq(submission));
+        verify(eventPublisher).publishEvent(any(SubmissionFinalizedEvent.class));
     }
 }

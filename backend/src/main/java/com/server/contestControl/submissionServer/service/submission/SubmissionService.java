@@ -13,9 +13,11 @@ import com.server.contestControl.contestServer.service.ProblemService;
 import com.server.contestControl.submissionServer.dto.SubmissionRequest;
 import com.server.contestControl.submissionServer.dto.SubmissionResponse;
 import com.server.contestControl.submissionServer.entity.Submission;
+import com.server.contestControl.submissionServer.entity.SubmissionJudgeResult;
 import com.server.contestControl.submissionServer.enums.Verdict;
 import com.server.contestControl.submissionServer.exceptions.InvalidSubmissionRequestException;
 import com.server.contestControl.submissionServer.queue.submission.SubmissionProducer;
+import com.server.contestControl.submissionServer.repository.SubmissionJudgeResultRepository;
 import com.server.contestControl.submissionServer.repository.SubmissionRepository;
 import com.server.contestControl.submissionServer.sse.SubmissionSsePublisher;
 import com.server.contestControl.submissionServer.sse.SubmissionStreamEvent;
@@ -46,6 +48,7 @@ public class SubmissionService {
     private final ProblemService problemService;
     private final UserRepository userRepository;
     private final SubmissionSsePublisher submissionSsePublisher;
+    private final SubmissionJudgeResultRepository judgeResultRepository;
 
     @Transactional
     public SubmissionResponse submitCode(SubmissionRequest request) {
@@ -106,7 +109,7 @@ public class SubmissionService {
             throw new RuntimeException("Submission not found");
         }
 
-        return SubmissionResponse.fromEntity(submission);
+        return SubmissionResponse.fromEntity(submission, currentJudgeResults(submission));
     }
 
     public List<SubmissionResponse> getAllSubmissionByProblem(
@@ -127,7 +130,7 @@ public class SubmissionService {
                 );
 
         return submissions.stream()
-                .map(SubmissionResponse::fromEntity)
+                .map(submission -> SubmissionResponse.fromEntity(submission, currentJudgeResults(submission)))
                 .toList();
     }
 
@@ -138,7 +141,7 @@ public class SubmissionService {
 
         return submissions
                 .stream()
-                .map(SubmissionResponse::fromEntity)
+                .map(submission -> SubmissionResponse.fromEntity(submission, currentJudgeResults(submission)))
                 .toList();
     }
 
@@ -152,8 +155,20 @@ public class SubmissionService {
 
         return submissionRepository.getAllByUser_id(user.getId())
                 .stream()
-                .map(SubmissionResponse::fromEntity)
+                .map(submission -> SubmissionResponse.fromEntity(submission, currentJudgeResults(submission)))
                 .toList();
+    }
+
+    private List<SubmissionJudgeResult> currentJudgeResults(Submission submission) {
+        Long judgeRunId = submission.getJudgeRunId();
+        if (submission.getId() == null || judgeRunId == null) {
+            return List.of();
+        }
+
+        return judgeResultRepository.findBySubmission_IdAndJudgeRunIdOrderByTestCaseNumberAsc(
+                submission.getId(),
+                judgeRunId
+        );
     }
 
     private User getCurrentUser() {

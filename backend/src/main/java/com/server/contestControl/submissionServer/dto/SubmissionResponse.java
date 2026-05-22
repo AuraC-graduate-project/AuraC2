@@ -1,10 +1,13 @@
 package com.server.contestControl.submissionServer.dto;
 
 import com.server.contestControl.submissionServer.entity.Submission;
+import com.server.contestControl.submissionServer.entity.SubmissionJudgeResult;
 import com.server.contestControl.submissionServer.enums.Verdict;
 
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.Comparator;
+import java.util.List;
 
 public record SubmissionResponse(
         Long id,
@@ -17,9 +20,15 @@ public record SubmissionResponse(
         Verdict verdict,
         Instant createdAt,
         Integer executionTime,
-        Integer memoryUsage
+        Integer memoryUsage,
+        Long judgeRunId,
+        List<SubmissionJudgeResultResponse> judgeResults
 ) {
     public static SubmissionResponse fromEntity(Submission submission) {
+        return fromEntity(submission, List.of());
+    }
+
+    public static SubmissionResponse fromEntity(Submission submission, List<SubmissionJudgeResult> judgeResults) {
         return new SubmissionResponse(
                 submission.getId(),
                 submission.getContest().getId(),
@@ -33,7 +42,14 @@ public record SubmissionResponse(
                         ? null
                         : submission.getCreatedAt().atZone(ZoneId.systemDefault()).toInstant(),
                 submission.getExecutionTime(),
-                submission.getMemoryUsage()
+                submission.getMemoryUsage(),
+                submission.getJudgeRunId(),
+                judgeResults == null
+                        ? List.of()
+                        : judgeResults.stream()
+                                .sorted(Comparator.comparing(SubmissionJudgeResult::getTestCaseNumber))
+                                .map(SubmissionJudgeResultResponse::fromEntity)
+                                .toList()
         );
     }
 
