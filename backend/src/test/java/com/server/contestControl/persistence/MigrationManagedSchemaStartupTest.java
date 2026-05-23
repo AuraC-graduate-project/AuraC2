@@ -59,8 +59,11 @@ class MigrationManagedSchemaStartupTest {
                 String.class
         );
 
-        assertThat(versions).containsSequence("1", "2", "3");
+        assertThat(versions).containsSequence("1", "2", "3", "4");
         assertThat(tableExists("problems")).isTrue();
+        assertThat(tableExists("reference_solutions")).isTrue();
+        assertThat(tableExists("generated_test_batches")).isTrue();
+        assertThat(tableExists("counterexamples")).isTrue();
         assertThat(columnExists("problems", "compare_policy")).isTrue();
         assertThat(columnExists("problems", "validation_mode")).isTrue();
         assertThat(columnExists("problems", "validator_source_hash")).isTrue();

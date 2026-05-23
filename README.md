@@ -63,6 +63,7 @@ Handles:
 | Judge0 callback handling | Implemented |
 | Problem-level compare policies | Implemented for exact, normalized text, token-normalized, and float-tolerance fixed outputs |
 | Custom output validators | Implemented through Judge0-sandboxed checker execution for multiple valid outputs |
+| Reference-solution oracle and generated tests | Implemented as an admin-triggered deterministic extension with counterexample promotion |
 | Per-test-case final aggregated tracking | Implemented for judge runs |
 | ICPC-style scoreboard / ranking | Implemented |
 | Real-time scoreboard SSE | Implemented |
@@ -200,6 +201,8 @@ Important fields:
 - floating-point absolute/relative epsilon when `FLOAT_TOLERANCE` is used
 - validation mode (`BUILTIN_COMPARE_POLICY` or `CUSTOM_VALIDATOR`)
 - validator language ID, enabled flag, and validator source hash when a custom validator is configured
+
+Reference solutions, input generators, input validators, generated test batches, and counterexamples are stored in separate admin-only oracle tables rather than being exposed through problem responses.
 
 ### TestCase
 Represents an input/output pair linked to a problem.
@@ -425,7 +428,9 @@ The callback handler:
 ### Important note
 The current implementation is functional but still intentionally deterministic.
 It supports exact Judge0 `expected_output`, normalized text, token-normalized output, numeric token comparison with absolute/relative epsilon, and Judge0-sandboxed custom output validators for multiple valid outputs.
-Generated tests, reference-solution oracles, input generators/validators, interactive judging, and ML verdicts are not implemented.
+It also includes an admin-triggered reference-solution oracle and generated-test extension. Administrators can configure a reference solution, input generator, and optional input validator, all executed through Judge0 with bounded resources. The generator receives a deterministic seed/test-number stdin contract, the validator may accept or reject generated input, and the reference solution produces the stored reference output. When a selected submission is evaluated against generated cases, mismatches are stored as counterexamples. Counterexamples affect official contest judging only after an administrator promotes one into a hidden official `TestCase` and runs rejudge.
+
+Generated tests do not prove correctness for all inputs. Interactive judging and ML verdicts are not implemented, and ML is not used in the verdict path.
 
 That means the system already supports real execution flow, but there is still room to evolve toward more detailed judging analytics.
 
@@ -649,6 +654,22 @@ POST /api/admin/rejudge/problem/{problemId}
 POST /api/admin/rejudge/contests/{contestId}
 ```
 
+### Admin Oracle / Generated Test Endpoints
+
+All oracle endpoints require the `ADMIN` role and are under `/api/admin/oracle/**`. Source code for reference solutions, input generators, and input validators is accepted only through admin configuration requests and is not exposed to TEAM users.
+
+```http
+POST /api/admin/oracle/problems/{problemId}/reference-solution
+POST /api/admin/oracle/problems/{problemId}/input-generator
+POST /api/admin/oracle/problems/{problemId}/input-validator
+POST /api/admin/oracle/problems/{problemId}/generated-batches
+GET  /api/admin/oracle/problems/{problemId}/generated-batches
+GET  /api/admin/oracle/problems/{problemId}/counterexamples
+POST /api/admin/oracle/counterexamples/{counterexampleId}/promote
+```
+
+Generated batches store hidden generated input and reference output for admin review. Promoting a counterexample creates a private official test case with `isPublic=false`; existing rejudge endpoints can then be used to apply that new hidden test to submissions.
+
 ---
 
 ## Configuration
@@ -703,6 +724,9 @@ judge0:
   validator:
     cpu-time-limit-seconds: ${JUDGE0_VALIDATOR_CPU_TIME_LIMIT_SECONDS}
     memory-limit-kilobytes: ${JUDGE0_VALIDATOR_MEMORY_LIMIT_KILOBYTES}
+  oracle:
+    cpu-time-limit-seconds: ${JUDGE0_ORACLE_CPU_TIME_LIMIT_SECONDS}
+    memory-limit-kilobytes: ${JUDGE0_ORACLE_MEMORY_LIMIT_KILOBYTES}
 ```
 
 ### Database migrations
@@ -821,6 +845,8 @@ Based on the uploaded source, the following areas still look incomplete or early
 - result queue producer/consumer classes are still empty
 - some exceptions are still generic `RuntimeException`
 - refresh token security is stronger than basic auth systems, but broader audit/session management can still be expanded
+- generated-test oracle workflows are admin/backend-only; no polished admin UI for configuring reference solutions, generators, validators, or reviewing counterexamples is documented here
+- generated tests improve bug discovery but do not prove correctness, and interactive judging/ML verdicts remain unsupported
 
 ---
 

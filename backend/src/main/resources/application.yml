@@ -58,6 +58,9 @@ judge0:
   validator:
     cpu-time-limit-seconds: ${JUDGE0_VALIDATOR_CPU_TIME_LIMIT_SECONDS:2.0}
     memory-limit-kilobytes: ${JUDGE0_VALIDATOR_MEMORY_LIMIT_KILOBYTES:131072}
+  oracle:
+    cpu-time-limit-seconds: ${JUDGE0_ORACLE_CPU_TIME_LIMIT_SECONDS:2.0}
+    memory-limit-kilobytes: ${JUDGE0_ORACLE_MEMORY_LIMIT_KILOBYTES:131072}
 
 contest:
   sync:

@@ -14,6 +14,11 @@ import com.server.contestControl.contestServer.exceptions.InvalidDifficultyExcep
 import com.server.contestControl.contestServer.exceptions.InvalidValidatorConfigurationException;
 import com.server.contestControl.contestServer.exceptions.ProblemDeletionConflictException;
 import com.server.contestControl.contestServer.exceptions.ProblemNotFoundException;
+import com.server.contestControl.contestServer.oracle.repository.CounterexampleRepository;
+import com.server.contestControl.contestServer.oracle.repository.GeneratedTestBatchRepository;
+import com.server.contestControl.contestServer.oracle.repository.InputGeneratorRepository;
+import com.server.contestControl.contestServer.oracle.repository.InputValidatorRepository;
+import com.server.contestControl.contestServer.oracle.repository.ReferenceSolutionRepository;
 import com.server.contestControl.contestServer.repository.ClarificationRepository;
 import com.server.contestControl.contestServer.repository.ContestRepository;
 import com.server.contestControl.contestServer.repository.ProblemRepository;
@@ -42,6 +47,11 @@ public class ProblemService {
     private final SubmissionRepository submissionRepository;
     private final TestCaseRepository testCaseRepository;
     private final ScoreboardRevealCellRepository scoreboardRevealCellRepository;
+    private final GeneratedTestBatchRepository generatedTestBatchRepository;
+    private final CounterexampleRepository counterexampleRepository;
+    private final ReferenceSolutionRepository referenceSolutionRepository;
+    private final InputGeneratorRepository inputGeneratorRepository;
+    private final InputValidatorRepository inputValidatorRepository;
 
     @Transactional
     public ProblemResponse createProblem(ProblemRequest request) {
@@ -153,7 +163,16 @@ public class ProblemService {
         if (clarificationRepository.existsByProblem_Id(id)) {
             throw new ProblemDeletionConflictException(id, "clarifications reference this problem");
         }
+        if (generatedTestBatchRepository.existsByProblem_Id(id)) {
+            throw new ProblemDeletionConflictException(id, "generated oracle tests exist");
+        }
+        if (counterexampleRepository.existsByProblem_Id(id)) {
+            throw new ProblemDeletionConflictException(id, "counterexamples exist");
+        }
 
+        referenceSolutionRepository.deleteByProblem_Id(id);
+        inputGeneratorRepository.deleteByProblem_Id(id);
+        inputValidatorRepository.deleteByProblem_Id(id);
         testCaseRepository.deleteByProblem_Id(id);
         problemRepository.delete(problem);
     }

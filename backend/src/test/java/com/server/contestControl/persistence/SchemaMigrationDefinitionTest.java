@@ -82,7 +82,8 @@ class SchemaMigrationDefinitionTest {
         assertThat(migrationNames).containsExactly(
                 "V1__baseline_schema.sql",
                 "V2__problem_compare_policy.sql",
-                "V3__problem_custom_validators.sql"
+                "V3__problem_custom_validators.sql",
+                "V4__reference_oracle_generated_tests.sql"
         );
         assertThat(migrationNames).noneMatch(name -> name.startsWith("V1_1"));
     }
@@ -99,6 +100,22 @@ class SchemaMigrationDefinitionTest {
         assertThat(migration).contains("chk_problems_validation_mode");
         assertThat(migration).contains("'CUSTOM_VALIDATOR'");
         assertThat(migration).contains("chk_problems_validator_enabled_config");
+    }
+
+    @Test
+    void oracleMigrationAddsReferenceGenerationCounterexampleTables() throws IOException {
+        String migration = readProjectFile("src/main/resources/db/migration/V4__reference_oracle_generated_tests.sql");
+
+        assertThat(migration).contains("CREATE TABLE reference_solutions");
+        assertThat(migration).contains("CREATE TABLE input_generators");
+        assertThat(migration).contains("CREATE TABLE input_validators");
+        assertThat(migration).contains("CREATE TABLE generated_test_batches");
+        assertThat(migration).contains("CREATE TABLE generated_test_cases");
+        assertThat(migration).contains("CREATE TABLE counterexamples");
+        assertThat(migration).contains("idx_reference_solutions_problem_active");
+        assertThat(migration).contains("idx_generated_test_batches_problem_created");
+        assertThat(migration).contains("idx_counterexamples_problem_created");
+        assertThat(migration).contains("uk_generated_test_case_batch_number");
     }
 
     @Test

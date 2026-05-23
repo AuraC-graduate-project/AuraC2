@@ -11,6 +11,11 @@ import com.server.contestControl.contestServer.enums.ValidationMode;
 import com.server.contestControl.contestServer.exceptions.InvalidComparePolicyException;
 import com.server.contestControl.contestServer.exceptions.InvalidValidatorConfigurationException;
 import com.server.contestControl.contestServer.exceptions.ProblemDeletionConflictException;
+import com.server.contestControl.contestServer.oracle.repository.CounterexampleRepository;
+import com.server.contestControl.contestServer.oracle.repository.GeneratedTestBatchRepository;
+import com.server.contestControl.contestServer.oracle.repository.InputGeneratorRepository;
+import com.server.contestControl.contestServer.oracle.repository.InputValidatorRepository;
+import com.server.contestControl.contestServer.oracle.repository.ReferenceSolutionRepository;
 import com.server.contestControl.contestServer.repository.ClarificationRepository;
 import com.server.contestControl.contestServer.repository.ContestRepository;
 import com.server.contestControl.contestServer.repository.ProblemRepository;
@@ -41,6 +46,11 @@ class ProblemServiceTest {
     @Mock private SubmissionRepository submissionRepository;
     @Mock private TestCaseRepository testCaseRepository;
     @Mock private ScoreboardRevealCellRepository scoreboardRevealCellRepository;
+    @Mock private GeneratedTestBatchRepository generatedTestBatchRepository;
+    @Mock private CounterexampleRepository counterexampleRepository;
+    @Mock private ReferenceSolutionRepository referenceSolutionRepository;
+    @Mock private InputGeneratorRepository inputGeneratorRepository;
+    @Mock private InputValidatorRepository inputValidatorRepository;
 
     @InjectMocks
     private ProblemService problemService;
@@ -255,6 +265,9 @@ class ProblemServiceTest {
 
         problemService.deleteProblem(10L);
 
+        verify(referenceSolutionRepository).deleteByProblem_Id(10L);
+        verify(inputGeneratorRepository).deleteByProblem_Id(10L);
+        verify(inputValidatorRepository).deleteByProblem_Id(10L);
         verify(testCaseRepository).deleteByProblem_Id(10L);
         verify(problemRepository).delete(problem);
     }
@@ -290,6 +303,28 @@ class ProblemServiceTest {
         assertThatThrownBy(() -> problemService.deleteProblem(10L))
                 .isInstanceOf(ProblemDeletionConflictException.class)
                 .hasMessageContaining("clarifications");
+    }
+
+    @Test
+    void deleteProblemRejectsProblemWithGeneratedOracleTests() {
+        Problem problem = Problem.builder().id(10L).contest(Contest.builder().id(1L).build()).build();
+        when(problemRepository.findById(10L)).thenReturn(Optional.of(problem));
+        when(generatedTestBatchRepository.existsByProblem_Id(10L)).thenReturn(true);
+
+        assertThatThrownBy(() -> problemService.deleteProblem(10L))
+                .isInstanceOf(ProblemDeletionConflictException.class)
+                .hasMessageContaining("generated oracle tests");
+    }
+
+    @Test
+    void deleteProblemRejectsProblemWithCounterexamples() {
+        Problem problem = Problem.builder().id(10L).contest(Contest.builder().id(1L).build()).build();
+        when(problemRepository.findById(10L)).thenReturn(Optional.of(problem));
+        when(counterexampleRepository.existsByProblem_Id(10L)).thenReturn(true);
+
+        assertThatThrownBy(() -> problemService.deleteProblem(10L))
+                .isInstanceOf(ProblemDeletionConflictException.class)
+                .hasMessageContaining("counterexamples");
     }
 
     private ProblemRequest baseRequest(String comparePolicy) {
