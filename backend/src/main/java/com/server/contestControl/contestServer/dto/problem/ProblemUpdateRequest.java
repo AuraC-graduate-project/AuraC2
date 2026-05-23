@@ -32,5 +32,13 @@ public class ProblemUpdateRequest {
 
     private Double floatRelativeEpsilon;
 
+    private String validationMode;
+
+    private Integer validatorLanguageId;
+
+    private String validatorSource;
+
+    private Boolean validatorEnabled;
+
     private String balloonColor;
 }

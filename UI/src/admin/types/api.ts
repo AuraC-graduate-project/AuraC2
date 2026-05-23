@@ -69,6 +69,13 @@ export interface ProblemRequest {
   timeLimit: number;
   memoryLimit: number;
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
+  comparePolicy: ComparePolicy;
+  floatAbsoluteEpsilon?: number | null;
+  floatRelativeEpsilon?: number | null;
+  validationMode?: ValidationMode;
+  validatorEnabled?: boolean;
+  validatorLanguageId?: number | null;
+  validatorSource?: string;
   balloonColor: string;
 }
 
@@ -78,8 +85,25 @@ export interface ProblemUpdateRequest {
   timeLimit: number;
   memoryLimit: number;
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
+  comparePolicy: ComparePolicy;
+  floatAbsoluteEpsilon?: number | null;
+  floatRelativeEpsilon?: number | null;
+  validationMode?: ValidationMode;
+  validatorEnabled?: boolean;
+  validatorLanguageId?: number | null;
+  validatorSource?: string;
   balloonColor: string;
 }
+
+export type ComparePolicy =
+  | 'EXACT'
+  | 'NORMALIZED_TEXT'
+  | 'TOKEN_NORMALIZED'
+  | 'FLOAT_TOLERANCE';
+
+export type ValidationMode =
+  | 'BUILTIN_COMPARE_POLICY'
+  | 'CUSTOM_VALIDATOR';
 
 export interface ProblemResponse {
   id: number;
@@ -89,6 +113,13 @@ export interface ProblemResponse {
   timeLimit: number;
   memoryLimit: number;
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
+  comparePolicy: ComparePolicy;
+  floatAbsoluteEpsilon: number | null;
+  floatRelativeEpsilon: number | null;
+  validationMode: ValidationMode;
+  validatorEnabled: boolean;
+  validatorLanguageId: number | null;
+  validatorSourceHash: string | null;
   balloonColor: string;
 }
 

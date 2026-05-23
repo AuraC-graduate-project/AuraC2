@@ -11,6 +11,7 @@ import com.server.contestControl.submissionServer.event.SubmissionFinalizedEvent
 import com.server.contestControl.submissionServer.repository.SubmissionJudgeResultRepository;
 import com.server.contestControl.submissionServer.repository.SubmissionRepository;
 import com.server.contestControl.submissionServer.service.compare.OutputComparator;
+import com.server.contestControl.submissionServer.service.validator.CustomValidatorService;
 import com.server.contestControl.submissionServer.sse.SubmissionSsePublisher;
 import com.server.contestControl.submissionServer.sse.SubmissionStreamEvent;
 import com.server.contestControl.submissionServer.sse.SubmissionStreamEventType;
@@ -39,6 +40,7 @@ public class Judge0CallbackService {
     private final SubmissionSsePublisher submissionSsePublisher;
     private final ApplicationEventPublisher eventPublisher;
     private final OutputComparator outputComparator;
+    private final CustomValidatorService customValidatorService;
 
     @Transactional
     public ResponseEntity<?> handleJudge0Callback(
@@ -281,7 +283,11 @@ public class Judge0CallbackService {
             Judge0Response response
     ) {
         ComparePolicy comparePolicy = effectiveComparePolicy(submission);
-        if (comparePolicy == ComparePolicy.EXACT || executionVerdict != Verdict.ACCEPTED) {
+        if (executionVerdict != Verdict.ACCEPTED) {
+            return new ComparisonVerdict(executionVerdict, null);
+        }
+
+        if (!submission.getProblem().hasActiveCustomValidator() && comparePolicy == ComparePolicy.EXACT) {
             return new ComparisonVerdict(executionVerdict, null);
         }
 
@@ -291,6 +297,15 @@ public class Judge0CallbackService {
         }
 
         TestCase testCase = testCases.get(testCaseNumber - 1);
+        if (submission.getProblem().hasActiveCustomValidator()) {
+            CustomValidatorService.ValidatorResult validatorResult = customValidatorService.validate(
+                    submission.getProblem(),
+                    testCase,
+                    response == null ? null : response.getDecodedStdout()
+            );
+            return new ComparisonVerdict(validatorResult.verdict(), validatorResult.diagnostic());
+        }
+
         OutputComparator.ComparisonResult comparison = outputComparator.compare(
                 comparePolicy,
                 testCase.getExpectedOutput(),

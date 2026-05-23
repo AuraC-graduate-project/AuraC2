@@ -2,9 +2,11 @@ package com.server.contestControl.contestServer.entity;
 
 import com.server.contestControl.contestServer.enums.Difficulty;
 import com.server.contestControl.contestServer.enums.ComparePolicy;
+import com.server.contestControl.contestServer.enums.ValidationMode;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -56,6 +58,30 @@ public class Problem {
     private Double floatRelativeEpsilon;
 
     @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "validation_mode", nullable = false, length = 32)
+    private ValidationMode validationMode = ValidationMode.BUILTIN_COMPARE_POLICY;
+
+    @Column(name = "validator_language_id")
+    private Integer validatorLanguageId;
+
+    @Column(name = "validator_source", columnDefinition = "TEXT")
+    private String validatorSource;
+
+    @Column(name = "validator_source_hash", length = 64)
+    private String validatorSourceHash;
+
+    @Builder.Default
+    @Column(name = "validator_enabled", nullable = false)
+    private Boolean validatorEnabled = false;
+
+    @Column(name = "validator_created_at")
+    private LocalDateTime validatorCreatedAt;
+
+    @Column(name = "validator_updated_at")
+    private LocalDateTime validatorUpdatedAt;
+
+    @Builder.Default
     @Column(name = "balloon_color", nullable = false, length = 7)
     private String balloonColor = "#2563EB";
 
@@ -68,5 +94,15 @@ public class Problem {
         if (comparePolicy == null) {
             comparePolicy = ComparePolicy.EXACT;
         }
+        if (validationMode == null) {
+            validationMode = ValidationMode.BUILTIN_COMPARE_POLICY;
+        }
+        if (validatorEnabled == null) {
+            validatorEnabled = false;
+        }
+    }
+
+    public boolean hasActiveCustomValidator() {
+        return validationMode == ValidationMode.CUSTOM_VALIDATOR && Boolean.TRUE.equals(validatorEnabled);
     }
 }

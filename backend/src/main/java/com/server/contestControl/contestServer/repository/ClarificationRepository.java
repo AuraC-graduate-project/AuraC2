@@ -39,5 +39,7 @@ public interface ClarificationRepository extends JpaRepository<Clarification, Lo
             ClarificationStatus status
     );
 
+    boolean existsByProblem_Id(Long problemId);
+
     void deleteAllByProblem_Id(Long problemId);
 }

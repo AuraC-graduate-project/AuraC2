@@ -12,6 +12,7 @@ import { submitCode } from "../services/teamApi";
 import { useCodeDraft } from "../../hooks/useCodeDraft";
 import { decodeJwtSubject } from "../../auth/jwt";
 import { getStoredToken } from "../../auth/tokenStore";
+import { SUPPORTED_JUDGE0_LANGUAGES } from "../../constants/judge0Languages";
 
 const STARTER_CODE: Record<string, (title: string) => string> = {
   c: (title) => `#include <stdio.h>
@@ -87,14 +88,7 @@ func main() {
 `,
 };
 
-const languageOptions = [
-  { value: "c", label: "C" },
-  { value: "cpp", label: "C++" },
-  { value: "java", label: "Java" },
-  { value: "python", label: "Python" },
-  { value: "javascript", label: "JavaScript" },
-  { value: "go", label: "Go" },
-];
+const languageOptions = SUPPORTED_JUDGE0_LANGUAGES;
 
 const TAB_INDENT = "    ";
 
