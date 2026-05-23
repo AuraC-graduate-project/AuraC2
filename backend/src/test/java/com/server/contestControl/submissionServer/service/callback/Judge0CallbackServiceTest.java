@@ -4,6 +4,8 @@ import com.server.contestControl.authServer.entity.User;
 import com.server.contestControl.authServer.enums.Role;
 import com.server.contestControl.contestServer.entity.Contest;
 import com.server.contestControl.contestServer.entity.Problem;
+import com.server.contestControl.contestServer.entity.TestCase;
+import com.server.contestControl.contestServer.enums.ComparePolicy;
 import com.server.contestControl.contestServer.repository.TestCaseRepository;
 import com.server.contestControl.submissionServer.dto.Judge0Response;
 import com.server.contestControl.submissionServer.entity.Submission;
@@ -11,12 +13,14 @@ import com.server.contestControl.submissionServer.entity.SubmissionJudgeResult;
 import com.server.contestControl.submissionServer.enums.Verdict;
 import com.server.contestControl.submissionServer.repository.SubmissionJudgeResultRepository;
 import com.server.contestControl.submissionServer.repository.SubmissionRepository;
+import com.server.contestControl.submissionServer.service.compare.OutputComparator;
 import com.server.contestControl.submissionServer.sse.SubmissionSsePublisher;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -49,6 +53,9 @@ class Judge0CallbackServiceTest {
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
+
+    @Spy
+    private OutputComparator outputComparator = new OutputComparator();
 
     @InjectMocks
     private Judge0CallbackService callbackService;
@@ -273,6 +280,79 @@ class Judge0CallbackServiceTest {
     }
 
     @Test
+    void tokenNormalizedPolicyComparesStdoutOnBackendAndAccepts() {
+        Submission submission = runningSubmission(ComparePolicy.TOKEN_NORMALIZED);
+        TestCase testCase = TestCase.builder()
+                .id(100L)
+                .expectedOutput("1 2 3")
+                .build();
+        SubmissionJudgeResult acceptedResult = result(submission, 1, Verdict.ACCEPTED);
+
+        when(submissionRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(submission));
+        when(testCaseRepository.countByProblemId(10L)).thenReturn(1);
+        when(testCaseRepository.findByProblemIdOrderByIdAsc(10L)).thenReturn(List.of(testCase));
+        when(judgeResultRepository.findBySubmission_IdAndJudgeRunIdAndTestCaseNumber(1L, 7L, 1))
+                .thenReturn(Optional.empty());
+        when(judgeResultRepository.countBySubmission_IdAndJudgeRunId(1L, 7L)).thenReturn(1L);
+        when(judgeResultRepository.findBySubmission_IdAndJudgeRunId(1L, 7L)).thenReturn(List.of(acceptedResult));
+
+        callbackService.handleJudge0Callback(1L, 7L, 1, judge0Response(3, "Accepted", "1\n2\t3"));
+
+        ArgumentCaptor<SubmissionJudgeResult> resultCaptor =
+                ArgumentCaptor.forClass(SubmissionJudgeResult.class);
+        verify(judgeResultRepository).save(resultCaptor.capture());
+        assertThat(resultCaptor.getValue().getVerdict()).isEqualTo(Verdict.ACCEPTED);
+        assertThat(resultCaptor.getValue().getDiagnostic()).isNull();
+        assertThat(submission.getVerdict()).isEqualTo(Verdict.ACCEPTED);
+    }
+
+    @Test
+    void normalizedPolicyMismatchMapsSuccessfulExecutionToWrongAnswer() {
+        Submission submission = runningSubmission(ComparePolicy.NORMALIZED_TEXT);
+        TestCase testCase = TestCase.builder()
+                .id(100L)
+                .expectedOutput("expected")
+                .build();
+        SubmissionJudgeResult wrongAnswerResult = result(submission, 1, Verdict.WRONG_ANSWER);
+        wrongAnswerResult.setDiagnostic("Output mismatch under NORMALIZED_TEXT compare policy");
+
+        when(submissionRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(submission));
+        when(testCaseRepository.countByProblemId(10L)).thenReturn(1);
+        when(testCaseRepository.findByProblemIdOrderByIdAsc(10L)).thenReturn(List.of(testCase));
+        when(judgeResultRepository.findBySubmission_IdAndJudgeRunIdAndTestCaseNumber(1L, 7L, 1))
+                .thenReturn(Optional.empty());
+        when(judgeResultRepository.countBySubmission_IdAndJudgeRunId(1L, 7L)).thenReturn(1L);
+        when(judgeResultRepository.findBySubmission_IdAndJudgeRunId(1L, 7L)).thenReturn(List.of(wrongAnswerResult));
+
+        callbackService.handleJudge0Callback(1L, 7L, 1, judge0Response(3, "Accepted", "actual"));
+
+        ArgumentCaptor<SubmissionJudgeResult> resultCaptor =
+                ArgumentCaptor.forClass(SubmissionJudgeResult.class);
+        verify(judgeResultRepository).save(resultCaptor.capture());
+        assertThat(resultCaptor.getValue().getVerdict()).isEqualTo(Verdict.WRONG_ANSWER);
+        assertThat(resultCaptor.getValue().getDiagnostic()).isEqualTo("Output mismatch under NORMALIZED_TEXT compare policy");
+        assertThat(submission.getVerdict()).isEqualTo(Verdict.WRONG_ANSWER);
+    }
+
+    @Test
+    void executionErrorsBypassBackendOutputComparison() {
+        Submission submission = runningSubmission(ComparePolicy.TOKEN_NORMALIZED);
+        SubmissionJudgeResult compileResult = result(submission, 1, Verdict.COMPILATION_ERROR);
+
+        when(submissionRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(submission));
+        when(testCaseRepository.countByProblemId(10L)).thenReturn(1);
+        when(judgeResultRepository.findBySubmission_IdAndJudgeRunIdAndTestCaseNumber(1L, 7L, 1))
+                .thenReturn(Optional.empty());
+        when(judgeResultRepository.countBySubmission_IdAndJudgeRunId(1L, 7L)).thenReturn(1L);
+        when(judgeResultRepository.findBySubmission_IdAndJudgeRunId(1L, 7L)).thenReturn(List.of(compileResult));
+
+        callbackService.handleJudge0Callback(1L, 7L, 1, judge0Response(6, "Compilation Error", "matching output"));
+
+        verify(outputComparator, never()).compare(any(), any(), any(), any(), any());
+        assertThat(submission.getVerdict()).isEqualTo(Verdict.COMPILATION_ERROR);
+    }
+
+    @Test
     void callbackForAlreadyFinalizedSubmissionIsIgnored() {
         Submission submission = runningSubmission();
         submission.setVerdict(Verdict.INTERNAL_ERROR);
@@ -323,8 +403,13 @@ class Judge0CallbackServiceTest {
     }
 
     private Submission runningSubmission() {
+        return runningSubmission(null);
+    }
+
+    private Submission runningSubmission(ComparePolicy comparePolicy) {
         Problem problem = Problem.builder()
                 .id(10L)
+                .comparePolicy(comparePolicy)
                 .build();
 
         return Submission.builder()
@@ -361,11 +446,16 @@ class Judge0CallbackServiceTest {
     }
 
     private Judge0Response judge0Response(int statusId, String description) {
+        return judge0Response(statusId, description, null);
+    }
+
+    private Judge0Response judge0Response(int statusId, String description, String stdout) {
         Judge0Response response = new Judge0Response();
         Judge0Response.Status status = new Judge0Response.Status();
         status.setId(statusId);
         status.setDescription(description);
         response.setStatus(status);
+        response.setStdout(stdout);
         response.setTime("0.010");
         response.setMemory(1024);
         return response;

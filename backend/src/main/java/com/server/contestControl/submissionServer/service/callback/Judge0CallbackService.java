@@ -1,5 +1,7 @@
 package com.server.contestControl.submissionServer.service.callback;
 
+import com.server.contestControl.contestServer.entity.TestCase;
+import com.server.contestControl.contestServer.enums.ComparePolicy;
 import com.server.contestControl.contestServer.repository.TestCaseRepository;
 import com.server.contestControl.submissionServer.dto.Judge0Response;
 import com.server.contestControl.submissionServer.entity.Submission;
@@ -8,6 +10,7 @@ import com.server.contestControl.submissionServer.enums.Verdict;
 import com.server.contestControl.submissionServer.event.SubmissionFinalizedEvent;
 import com.server.contestControl.submissionServer.repository.SubmissionJudgeResultRepository;
 import com.server.contestControl.submissionServer.repository.SubmissionRepository;
+import com.server.contestControl.submissionServer.service.compare.OutputComparator;
 import com.server.contestControl.submissionServer.sse.SubmissionSsePublisher;
 import com.server.contestControl.submissionServer.sse.SubmissionStreamEvent;
 import com.server.contestControl.submissionServer.sse.SubmissionStreamEventType;
@@ -35,6 +38,7 @@ public class Judge0CallbackService {
     private final SubmissionJudgeResultRepository judgeResultRepository;
     private final SubmissionSsePublisher submissionSsePublisher;
     private final ApplicationEventPublisher eventPublisher;
+    private final OutputComparator outputComparator;
 
     @Transactional
     public ResponseEntity<?> handleJudge0Callback(
@@ -93,7 +97,8 @@ public class Judge0CallbackService {
             return ResponseEntity.badRequest().body("Invalid test case number");
         }
 
-        Verdict verdict = toVerdict(response);
+        ComparisonVerdict comparisonVerdict = applyComparePolicy(submission, testCaseNumber, toVerdict(response), response);
+        Verdict verdict = comparisonVerdict.verdict();
         if (!isTerminalVerdict(verdict)) {
             log.info(
                     "Ignoring non-terminal Judge0 callback. submissionId={} judgeRunId={} testCaseNumber={} verdict={}",
@@ -106,7 +111,14 @@ public class Judge0CallbackService {
         }
 
         Long effectiveJudgeRunId = effectiveJudgeRunId(submission, judgeRunId);
-        boolean recorded = recordJudgeResult(submission, effectiveJudgeRunId, testCaseNumber, verdict, response);
+        boolean recorded = recordJudgeResult(
+                submission,
+                effectiveJudgeRunId,
+                testCaseNumber,
+                verdict,
+                response,
+                comparisonVerdict.diagnostic()
+        );
         if (!recorded) {
             log.info(
                     "Ignoring duplicate Judge0 callback. submissionId={} judgeRunId={} testCaseNumber={}",
@@ -183,7 +195,8 @@ public class Judge0CallbackService {
             Long judgeRunId,
             int testCaseNumber,
             Verdict verdict,
-            Judge0Response response
+            Judge0Response response,
+            String diagnostic
     ) {
         if (judgeResultRepository.findBySubmission_IdAndJudgeRunIdAndTestCaseNumber(
                 submission.getId(),
@@ -208,11 +221,12 @@ public class Judge0CallbackService {
                 ? null
                 : Judge0AuditUtil.safeStatusDescription(response.getStatus().getDescription()));
         result.setDiagnostic(response == null
-                ? null
+                ? Judge0AuditUtil.firstSafeDiagnostic(diagnostic)
                 : Judge0AuditUtil.firstSafeDiagnostic(
-                        response.getCompileOutput(),
-                        response.getMessage(),
-                        response.getStderr()
+                        diagnostic,
+                response.getDecodedCompileOutput(),
+                response.getDecodedMessage(),
+                response.getDecodedStderr()
                 ));
         try {
             judgeResultRepository.save(result);
@@ -260,6 +274,46 @@ public class Judge0CallbackService {
         return Verdict.fromJudge0Status(response.getStatus().getId());
     }
 
+    private ComparisonVerdict applyComparePolicy(
+            Submission submission,
+            int testCaseNumber,
+            Verdict executionVerdict,
+            Judge0Response response
+    ) {
+        ComparePolicy comparePolicy = effectiveComparePolicy(submission);
+        if (comparePolicy == ComparePolicy.EXACT || executionVerdict != Verdict.ACCEPTED) {
+            return new ComparisonVerdict(executionVerdict, null);
+        }
+
+        List<TestCase> testCases = testCaseRepository.findByProblemIdOrderByIdAsc(submission.getProblem().getId());
+        if (testCaseNumber < 1 || testCaseNumber > testCases.size()) {
+            return new ComparisonVerdict(Verdict.INTERNAL_ERROR, "Missing test case for backend comparison");
+        }
+
+        TestCase testCase = testCases.get(testCaseNumber - 1);
+        OutputComparator.ComparisonResult comparison = outputComparator.compare(
+                comparePolicy,
+                testCase.getExpectedOutput(),
+                response == null ? null : response.getDecodedStdout(),
+                submission.getProblem().getFloatAbsoluteEpsilon(),
+                submission.getProblem().getFloatRelativeEpsilon()
+        );
+
+        if (comparison.matches()) {
+            return new ComparisonVerdict(Verdict.ACCEPTED, null);
+        }
+
+        return new ComparisonVerdict(Verdict.WRONG_ANSWER, comparison.diagnostic());
+    }
+
+    private ComparePolicy effectiveComparePolicy(Submission submission) {
+        if (submission.getProblem() == null || submission.getProblem().getComparePolicy() == null) {
+            return ComparePolicy.EXACT;
+        }
+
+        return submission.getProblem().getComparePolicy();
+    }
+
     private boolean isTerminalVerdict(Verdict verdict) {
         return verdict != Verdict.PENDING
                 && verdict != Verdict.PENDING_REJUDGE
@@ -300,5 +354,8 @@ public class Judge0CallbackService {
                 task.run();
             }
         });
+    }
+
+    private record ComparisonVerdict(Verdict verdict, String diagnostic) {
     }
 }

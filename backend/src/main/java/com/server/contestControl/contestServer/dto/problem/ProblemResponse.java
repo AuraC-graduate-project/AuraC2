@@ -15,6 +15,9 @@ public class ProblemResponse {
     private Integer timeLimit;
     private Integer memoryLimit;
     private String difficulty;
+    private String comparePolicy;
+    private Double floatAbsoluteEpsilon;
+    private Double floatRelativeEpsilon;
     private Long contestId;
     private String balloonColor;
 
@@ -29,7 +32,10 @@ public class ProblemResponse {
                 .description(problem.getDescription())
                 .timeLimit(problem.getTimeLimit())
                 .memoryLimit(problem.getMemoryLimit())
-                .difficulty(problem.getDifficulty().name()) // enum → String
+                .difficulty(problem.getDifficulty().name())
+                .comparePolicy(problem.getComparePolicy().name())
+                .floatAbsoluteEpsilon(problem.getFloatAbsoluteEpsilon())
+                .floatRelativeEpsilon(problem.getFloatRelativeEpsilon())
                 .contestId(problem.getContest().getId())
                 .balloonColor(problemIndex >= 0
                         ? ProblemBalloonColors.valueOrFallback(problem.getBalloonColor(), problemIndex)

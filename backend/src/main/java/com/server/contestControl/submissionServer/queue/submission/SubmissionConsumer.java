@@ -58,7 +58,7 @@ public class SubmissionConsumer {
             return;
         }
 
-        List<TestCase> testCases = testCaseRepository.findByProblemId(submission.getProblem().getId());
+        List<TestCase> testCases = testCaseRepository.findByProblemIdOrderByIdAsc(submission.getProblem().getId());
         int languageId;
         try {
             languageId = convertLanguage(submission.getLanguage());

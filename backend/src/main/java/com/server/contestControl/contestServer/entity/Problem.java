@@ -1,6 +1,7 @@
 package com.server.contestControl.contestServer.entity;
 
 import com.server.contestControl.contestServer.enums.Difficulty;
+import com.server.contestControl.contestServer.enums.ComparePolicy;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -44,9 +45,28 @@ public class Problem {
     private Difficulty difficulty;
 
     @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "compare_policy", nullable = false, length = 32)
+    private ComparePolicy comparePolicy = ComparePolicy.EXACT;
+
+    @Column(name = "float_absolute_epsilon")
+    private Double floatAbsoluteEpsilon;
+
+    @Column(name = "float_relative_epsilon")
+    private Double floatRelativeEpsilon;
+
+    @Builder.Default
     @Column(name = "balloon_color", nullable = false, length = 7)
     private String balloonColor = "#2563EB";
 
     @OneToMany(mappedBy = "problem", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<TestCase> testCases;
+
+    @PrePersist
+    @PreUpdate
+    public void applyDefaults() {
+        if (comparePolicy == null) {
+            comparePolicy = ComparePolicy.EXACT;
+        }
+    }
 }
