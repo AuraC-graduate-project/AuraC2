@@ -52,6 +52,20 @@ class SchemaMigrationDefinitionTest {
         assertThat(migration).contains("CONSTRAINT fk_test_cases_problem");
     }
 
+    @Test
+    void comparePolicyMigrationAddsProblemPolicyColumnsAndConstraints() throws IOException {
+        String migration = readProjectFile("src/main/resources/db/migration/V2__problem_compare_policy.sql");
+
+        assertThat(migration).contains("compare_policy VARCHAR(32) NOT NULL DEFAULT 'EXACT'");
+        assertThat(migration).contains("float_absolute_epsilon DOUBLE PRECISION");
+        assertThat(migration).contains("float_relative_epsilon DOUBLE PRECISION");
+        assertThat(migration).contains("chk_problems_compare_policy");
+        assertThat(migration).contains("'NORMALIZED_TEXT'");
+        assertThat(migration).contains("'TOKEN_NORMALIZED'");
+        assertThat(migration).contains("'FLOAT_TOLERANCE'");
+        assertThat(migration).contains("chk_problems_float_tolerance_has_epsilon");
+    }
+
     private String readProjectFile(String relativePath) throws IOException {
         Path cwd = Path.of("").toAbsolutePath();
         Path direct = cwd.resolve(relativePath);

@@ -81,7 +81,7 @@ class SubmissionConsumerTest {
                 .build();
 
         when(submissionRepository.findByIdWithContestProblemUserForUpdate(1L)).thenReturn(Optional.of(submission));
-        when(testCaseRepository.findByProblemId(10L)).thenReturn(List.of(tc));
+        when(testCaseRepository.findByProblemIdOrderByIdAsc(10L)).thenReturn(List.of(tc));
 
         submissionConsumer.handleSubmission(1L);
 
@@ -113,7 +113,7 @@ class SubmissionConsumerTest {
                 .build();
 
         when(submissionRepository.findByIdWithContestProblemUserForUpdate(2L)).thenReturn(Optional.of(submission));
-        when(testCaseRepository.findByProblemId(10L)).thenReturn(List.of(tc));
+        when(testCaseRepository.findByProblemIdOrderByIdAsc(10L)).thenReturn(List.of(tc));
 
         submissionConsumer.handleSubmission(2L);
 
@@ -164,7 +164,7 @@ class SubmissionConsumerTest {
                 .build();
 
         when(submissionRepository.findByIdWithContestProblemUserForUpdate(4L)).thenReturn(Optional.of(submission));
-        when(testCaseRepository.findByProblemId(10L)).thenReturn(List.of(tc));
+        when(testCaseRepository.findByProblemIdOrderByIdAsc(10L)).thenReturn(List.of(tc));
         doThrow(new RuntimeException("sse failed"))
                 .when(submissionSsePublisher)
                 .publish(eq(SubmissionStreamEventType.RUNNING), eq(submission));
@@ -196,7 +196,7 @@ class SubmissionConsumerTest {
                 .build();
 
         when(submissionRepository.findByIdWithContestProblemUserForUpdate(40L)).thenReturn(Optional.of(submission));
-        when(testCaseRepository.findByProblemId(10L)).thenReturn(List.of(hiddenCase));
+        when(testCaseRepository.findByProblemIdOrderByIdAsc(10L)).thenReturn(List.of(hiddenCase));
 
         submissionConsumer.handleSubmission(40L);
 
@@ -221,7 +221,7 @@ class SubmissionConsumerTest {
                 .build();
 
         when(submissionRepository.findByIdWithContestProblemUserForUpdate(5L)).thenReturn(Optional.of(submission));
-        when(testCaseRepository.findByProblemId(10L)).thenReturn(List.of());
+        when(testCaseRepository.findByProblemIdOrderByIdAsc(10L)).thenReturn(List.of());
 
         submissionConsumer.handleSubmission(5L);
 
@@ -253,7 +253,7 @@ class SubmissionConsumerTest {
         when(submissionRepository.findByIdWithContestProblemUserForUpdate(6L))
                 .thenReturn(Optional.of(submission))
                 .thenReturn(Optional.of(submission));
-        when(testCaseRepository.findByProblemId(10L)).thenReturn(List.of(tc));
+        when(testCaseRepository.findByProblemIdOrderByIdAsc(10L)).thenReturn(List.of(tc));
 
         submissionConsumer.handleSubmission(6L);
         submissionConsumer.handleSubmission(6L);
@@ -283,7 +283,7 @@ class SubmissionConsumerTest {
         TestCase second = TestCase.builder().id(202L).inputData("2").expectedOutput("2").build();
 
         when(submissionRepository.findByIdWithContestProblemUserForUpdate(7L)).thenReturn(Optional.of(submission));
-        when(testCaseRepository.findByProblemId(10L)).thenReturn(List.of(first, second));
+        when(testCaseRepository.findByProblemIdOrderByIdAsc(10L)).thenReturn(List.of(first, second));
         doAnswer(invocation -> {
             TestCase dispatchedCase = invocation.getArgument(1);
             if (dispatchedCase == second) {

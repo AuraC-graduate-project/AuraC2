@@ -5,8 +5,10 @@ import com.server.contestControl.contestServer.dto.problem.ProblemResponse;
 import com.server.contestControl.contestServer.dto.problem.ProblemUpdateRequest;
 import com.server.contestControl.contestServer.entity.Contest;
 import com.server.contestControl.contestServer.entity.Problem;
+import com.server.contestControl.contestServer.enums.ComparePolicy;
 import com.server.contestControl.contestServer.enums.Difficulty;
 import com.server.contestControl.contestServer.exceptions.ContestNotFoundException;
+import com.server.contestControl.contestServer.exceptions.InvalidComparePolicyException;
 import com.server.contestControl.contestServer.exceptions.InvalidDifficultyException;
 import com.server.contestControl.contestServer.exceptions.ProblemNotFoundException;
 import com.server.contestControl.contestServer.repository.ClarificationRepository;
@@ -48,6 +50,12 @@ public class ProblemService {
                 .difficulty(parseDifficulty(request.getDifficulty()))
                 .balloonColor(ProblemBalloonColors.normalizeOrFallback(request.getBalloonColor(), nextProblemIndex))
                 .build();
+        applyCompareSettings(
+                problem,
+                parseComparePolicyOrDefault(request.getComparePolicy()),
+                request.getFloatAbsoluteEpsilon(),
+                request.getFloatRelativeEpsilon()
+        );
 
         problemRepository.save(problem);
 
@@ -64,6 +72,18 @@ public class ProblemService {
         problem.setTimeLimit(request.getTimeLimit());
         problem.setMemoryLimit(request.getMemoryLimit());
         problem.setDifficulty(parseDifficulty(request.getDifficulty()));
+        ComparePolicy comparePolicy = parseComparePolicyOrExisting(request.getComparePolicy(), problem.getComparePolicy());
+        Double floatAbsoluteEpsilon = request.getFloatAbsoluteEpsilon();
+        Double floatRelativeEpsilon = request.getFloatRelativeEpsilon();
+        if (comparePolicy == ComparePolicy.FLOAT_TOLERANCE) {
+            floatAbsoluteEpsilon = floatAbsoluteEpsilon == null
+                    ? problem.getFloatAbsoluteEpsilon()
+                    : floatAbsoluteEpsilon;
+            floatRelativeEpsilon = floatRelativeEpsilon == null
+                    ? problem.getFloatRelativeEpsilon()
+                    : floatRelativeEpsilon;
+        }
+        applyCompareSettings(problem, comparePolicy, floatAbsoluteEpsilon, floatRelativeEpsilon);
         if (request.getBalloonColor() != null && !request.getBalloonColor().isBlank()) {
             problem.setBalloonColor(ProblemBalloonColors.normalize(request.getBalloonColor()));
         }
@@ -76,16 +96,7 @@ public class ProblemService {
         Problem problem = problemRepository.findById(id)
                 .orElseThrow(() -> new ProblemNotFoundException(id));
 
-        return ProblemResponse.builder()
-                .id(problem.getId())
-                .title(problem.getTitle())
-                .description(problem.getDescription())
-                .timeLimit(problem.getTimeLimit())
-                .memoryLimit(problem.getMemoryLimit())
-                .difficulty(problem.getDifficulty().name())
-                .contestId(problem.getContest().getId())
-                .balloonColor(ProblemBalloonColors.valueOrFallback(problem.getBalloonColor(), problemIndex(problem)))
-                .build();
+        return ProblemResponse.from(problem, problemIndex(problem));
     }
 
 
@@ -127,6 +138,80 @@ public class ProblemService {
         } catch (IllegalArgumentException ex) {
             throw new InvalidDifficultyException(value);
         }
+    }
+
+    private ComparePolicy parseComparePolicyOrDefault(String value) {
+        return parseComparePolicy(value, ComparePolicy.EXACT);
+    }
+
+    private ComparePolicy parseComparePolicyOrExisting(String value, ComparePolicy existing) {
+        return parseComparePolicy(value, existing == null ? ComparePolicy.EXACT : existing);
+    }
+
+    private ComparePolicy parseComparePolicy(String value, ComparePolicy fallback) {
+        if (value == null || value.isBlank()) {
+            return fallback;
+        }
+
+        try {
+            return ComparePolicy.fromString(value);
+        } catch (IllegalArgumentException ex) {
+            throw new InvalidComparePolicyException(
+                    "Invalid compare policy: " + value
+                            + ". Valid values: EXACT, NORMALIZED_TEXT, TOKEN_NORMALIZED, FLOAT_TOLERANCE"
+            );
+        }
+    }
+
+    private void applyCompareSettings(
+            Problem problem,
+            ComparePolicy comparePolicy,
+            Double floatAbsoluteEpsilon,
+            Double floatRelativeEpsilon
+    ) {
+        validateEpsilon("floatAbsoluteEpsilon", floatAbsoluteEpsilon);
+        validateEpsilon("floatRelativeEpsilon", floatRelativeEpsilon);
+
+        if (comparePolicy != ComparePolicy.FLOAT_TOLERANCE
+                && (floatAbsoluteEpsilon != null || floatRelativeEpsilon != null)) {
+            throw new InvalidComparePolicyException(
+                    "Floating-point epsilon values are only valid for FLOAT_TOLERANCE compare policy"
+            );
+        }
+
+        if (comparePolicy == ComparePolicy.FLOAT_TOLERANCE
+                && !hasPositiveEpsilon(floatAbsoluteEpsilon, floatRelativeEpsilon)) {
+            throw new InvalidComparePolicyException(
+                    "FLOAT_TOLERANCE requires a positive absolute or relative epsilon"
+            );
+        }
+
+        problem.setComparePolicy(comparePolicy);
+        problem.setFloatAbsoluteEpsilon(
+                comparePolicy == ComparePolicy.FLOAT_TOLERANCE ? floatAbsoluteEpsilon : null
+        );
+        problem.setFloatRelativeEpsilon(
+                comparePolicy == ComparePolicy.FLOAT_TOLERANCE ? floatRelativeEpsilon : null
+        );
+    }
+
+    private void validateEpsilon(String field, Double value) {
+        if (value == null) {
+            return;
+        }
+
+        if (!Double.isFinite(value) || value < 0) {
+            throw new InvalidComparePolicyException(field + " must be a finite non-negative number");
+        }
+    }
+
+    private boolean hasPositiveEpsilon(Double... values) {
+        for (Double value : values) {
+            if (value != null && value > 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private int problemIndex(Problem problem) {

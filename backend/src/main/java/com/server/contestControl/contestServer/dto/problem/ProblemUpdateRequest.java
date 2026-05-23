@@ -26,5 +26,11 @@ public class ProblemUpdateRequest {
     @NotBlank
     private String difficulty;   // EASY, MEDIUM, HARD
 
+    private String comparePolicy;
+
+    private Double floatAbsoluteEpsilon;
+
+    private Double floatRelativeEpsilon;
+
     private String balloonColor;
 }

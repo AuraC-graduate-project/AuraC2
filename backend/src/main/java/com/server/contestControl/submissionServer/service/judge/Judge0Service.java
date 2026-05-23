@@ -1,6 +1,7 @@
 package com.server.contestControl.submissionServer.service.judge;
 
 import com.server.contestControl.contestServer.entity.TestCase;
+import com.server.contestControl.contestServer.enums.ComparePolicy;
 import com.server.contestControl.submissionServer.dto.Judge0SubmissionDTO;
 import com.server.contestControl.submissionServer.entity.Submission;
 import com.server.contestControl.submissionServer.service.callback.Judge0CallbackSignatureService;
@@ -34,7 +35,7 @@ public class Judge0Service {
                 submission.getCode(),
                 languageId,
                 tc.getInputData(),
-                tc.getExpectedOutput(),
+                expectedOutputForJudge0(submission, tc),
                 buildSignedCallbackUrl(submission, testCaseNumber),
                 toJudge0CpuTimeLimitSeconds(submission.getProblem().getTimeLimit()),
                 toJudge0MemoryLimitKilobytes(submission.getProblem().getMemoryLimit())
@@ -67,6 +68,16 @@ public class Judge0Service {
         }
 
         return Math.multiplyExact(memoryLimitMegabytes, 1024);
+    }
+
+    String expectedOutputForJudge0(Submission submission, TestCase testCase) {
+        if (submission.getProblem() == null
+                || submission.getProblem().getComparePolicy() == null
+                || submission.getProblem().getComparePolicy() == ComparePolicy.EXACT) {
+            return testCase.getExpectedOutput();
+        }
+
+        return null;
     }
 
     String buildSignedCallbackUrl(Submission submission, int testCaseNumber) {
