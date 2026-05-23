@@ -18,6 +18,10 @@ public class ProblemResponse {
     private String comparePolicy;
     private Double floatAbsoluteEpsilon;
     private Double floatRelativeEpsilon;
+    private String validationMode;
+    private Boolean validatorEnabled;
+    private Integer validatorLanguageId;
+    private String validatorSourceHash;
     private Long contestId;
     private String balloonColor;
 
@@ -36,6 +40,10 @@ public class ProblemResponse {
                 .comparePolicy(problem.getComparePolicy().name())
                 .floatAbsoluteEpsilon(problem.getFloatAbsoluteEpsilon())
                 .floatRelativeEpsilon(problem.getFloatRelativeEpsilon())
+                .validationMode(problem.getValidationMode().name())
+                .validatorEnabled(problem.getValidatorEnabled())
+                .validatorLanguageId(problem.getValidatorLanguageId())
+                .validatorSourceHash(problem.getValidatorSourceHash())
                 .contestId(problem.getContest().getId())
                 .balloonColor(problemIndex >= 0
                         ? ProblemBalloonColors.valueOrFallback(problem.getBalloonColor(), problemIndex)

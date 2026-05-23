@@ -19,6 +19,7 @@ import com.server.contestControl.contestServer.dto.problem.ProblemResponse;
 import com.server.contestControl.contestServer.dto.testcase.PublicTestCaseResponse;
 import com.server.contestControl.contestServer.dto.testcase.TestCaseResponse;
 import com.server.contestControl.contestServer.enums.ClarificationStatus;
+import com.server.contestControl.contestServer.exceptions.ProblemDeletionConflictException;
 import com.server.contestControl.contestServer.scoreboard.controller.AdminScoreboardController;
 import com.server.contestControl.contestServer.scoreboard.controller.ScoreboardController;
 import com.server.contestControl.contestServer.scoreboard.dto.ScoreboardRevealResponse;
@@ -55,6 +56,7 @@ import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -101,6 +103,8 @@ class RouteAuthorizationSecurityTest {
         when(contestService.updateContestDetails(eq(1L), any())).thenReturn(contestResponse());
         when(problemService.createProblem(any())).thenReturn(problemResponse());
         when(problemService.updateProblem(eq(1L), any())).thenReturn(problemResponse());
+        when(problemService.getProblem(1L)).thenReturn(problemResponse());
+        when(problemService.getAllProblems(1L)).thenReturn(List.of(problemResponse()));
         when(testCaseService.addTestCase(eq(1L), any())).thenReturn(testCaseResponse());
         when(testCaseService.updateTestCase(eq(1L), any())).thenReturn(testCaseResponse());
         when(testCaseService.getAdminTestCases(1L)).thenReturn(List.of(testCaseResponse()));
@@ -239,6 +243,36 @@ class RouteAuthorizationSecurityTest {
         mockMvc.perform(delete("/api/problems/1")
                         .header("Authorization", "Bearer admin-token"))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void teamProblemResponsesDoNotExposeValidatorSource() throws Exception {
+        mockBearerUser("team-token", "team", Role.TEAM);
+
+        mockMvc.perform(get("/api/problems/1")
+                        .header("Authorization", "Bearer team-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.validationMode").value("CUSTOM_VALIDATOR"))
+                .andExpect(jsonPath("$.validatorSourceHash").value("a".repeat(64)))
+                .andExpect(jsonPath("$.validatorSource").doesNotExist());
+
+        mockMvc.perform(get("/api/problems/contest/1")
+                        .header("Authorization", "Bearer team-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].validatorSource").doesNotExist());
+    }
+
+    @Test
+    void problemDeleteConflictReturnsCleanConflictForAdmin() throws Exception {
+        doThrow(new ProblemDeletionConflictException(1L, "submissions or judging history exist"))
+                .when(problemService).deleteProblem(1L);
+
+        mockBearerUser("admin-token", "admin", Role.ADMIN);
+        mockMvc.perform(delete("/api/problems/1")
+                        .header("Authorization", "Bearer admin-token"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error").value("ProblemDeletionConflictException"))
+                .andExpect(jsonPath("$.message").value("Problem with ID '1' cannot be deleted: submissions or judging history exist"));
     }
 
     @Test
@@ -452,6 +486,10 @@ class RouteAuthorizationSecurityTest {
                 .timeLimit(1000)
                 .memoryLimit(128)
                 .difficulty("EASY")
+                .validationMode("CUSTOM_VALIDATOR")
+                .validatorEnabled(true)
+                .validatorLanguageId(71)
+                .validatorSourceHash("a".repeat(64))
                 .build();
     }
 

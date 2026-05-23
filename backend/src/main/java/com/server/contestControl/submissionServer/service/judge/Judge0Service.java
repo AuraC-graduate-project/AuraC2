@@ -71,6 +71,10 @@ public class Judge0Service {
     }
 
     String expectedOutputForJudge0(Submission submission, TestCase testCase) {
+        if (submission.getProblem() != null && submission.getProblem().hasActiveCustomValidator()) {
+            return null;
+        }
+
         if (submission.getProblem() == null
                 || submission.getProblem().getComparePolicy() == null
                 || submission.getProblem().getComparePolicy() == ComparePolicy.EXACT) {

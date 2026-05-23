@@ -61,6 +61,8 @@ Handles:
 | RabbitMQ submission dispatch | Implemented |
 | Judge0 submission sending | Implemented |
 | Judge0 callback handling | Implemented |
+| Problem-level compare policies | Implemented for exact, normalized text, token-normalized, and float-tolerance fixed outputs |
+| Custom output validators | Implemented through Judge0-sandboxed checker execution for multiple valid outputs |
 | Per-test-case final aggregated tracking | Implemented for judge runs |
 | ICPC-style scoreboard / ranking | Implemented |
 | Real-time scoreboard SSE | Implemented |
@@ -194,6 +196,10 @@ Important fields:
 - time limit
 - memory limit
 - difficulty
+- compare policy (`EXACT`, `NORMALIZED_TEXT`, `TOKEN_NORMALIZED`, `FLOAT_TOLERANCE`)
+- floating-point absolute/relative epsilon when `FLOAT_TOLERANCE` is used
+- validation mode (`BUILTIN_COMPARE_POLICY` or `CUSTOM_VALIDATOR`)
+- validator language ID, enabled flag, and validator source hash when a custom validator is configured
 
 ### TestCase
 Represents an input/output pair linked to a problem.
@@ -380,10 +386,24 @@ For each test case, the backend sends:
 - source code
 - mapped language ID
 - stdin
-- expected output
+- expected output for `EXACT` problems
 - CPU time limit when configured on the problem
 - memory limit when configured on the problem
 - signed callback URL
+
+`EXACT` is the default for existing and newly omitted problem settings, preserving the original Judge0
+`expected_output` path. For `NORMALIZED_TEXT`, `TOKEN_NORMALIZED`, and `FLOAT_TOLERANCE`, the backend omits
+Judge0 `expected_output`, waits for successful execution, then compares Judge0 `stdout` to the hidden
+`TestCase.expectedOutput` server-side. Execution errors such as compilation errors, runtime errors, TLE, and
+Judge0 internal errors are not converted into output-comparison failures.
+
+Problems can also use `validationMode: CUSTOM_VALIDATOR` for deterministic multiple-valid-output checking.
+In that mode, the team program still executes in Judge0 first. Only if that execution succeeds does the backend
+send a separate checker program to Judge0 with a length-prefixed contract containing the hidden test input,
+hidden expected output, and team stdout. The checker must print a first nonblank decision line of `ACCEPT`
+or `REJECT`/`WRONG_ANSWER`. Checker crashes, timeouts, invalid output, or Judge0 dispatch failures become
+`INTERNAL_ERROR`, never `ACCEPTED`. Validator source is accepted only through admin problem create/update
+payloads and is not exposed in problem responses.
 
 Judge0 then calls back:
 
@@ -395,14 +415,17 @@ The callback handler:
 - verifies the HMAC signature before changing submission state
 - resolves the submission
 - maps Judge0 status to internal verdict
+- applies the problem compare policy when backend-side comparison is required
+- invokes a configured custom validator through Judge0 after successful team execution
 - stores execution time and memory usage
 - stores one result per submission, judge run, and test case
 - waits until all test case callbacks for the current judge run are received
 - calculates the final verdict from the completed run, so out-of-order callbacks cannot mark a submission accepted early
 
 ### Important note
-The current implementation is functional but still early-stage.  
-It uses Judge0 `expected_output` comparison only; normalized comparison, floating-point tolerance, custom checkers, generated tests, and interactive judging are not implemented.
+The current implementation is functional but still intentionally deterministic.
+It supports exact Judge0 `expected_output`, normalized text, token-normalized output, numeric token comparison with absolute/relative epsilon, and Judge0-sandboxed custom output validators for multiple valid outputs.
+Generated tests, reference-solution oracles, input generators/validators, interactive judging, and ML verdicts are not implemented.
 
 That means the system already supports real execution flow, but there is still room to evolve toward more detailed judging analytics.
 
@@ -504,6 +527,17 @@ GET /api/contest/ended
 ```http
 POST /api/problems
 ```
+
+Problem create/update payloads accept `comparePolicy`. Omitted values default to `EXACT`. `FLOAT_TOLERANCE`
+requires at least one positive epsilon field: `floatAbsoluteEpsilon` or `floatRelativeEpsilon`.
+They also accept optional custom-validator configuration for administrators:
+- `validationMode`: `BUILTIN_COMPARE_POLICY` or `CUSTOM_VALIDATOR`
+- `validatorEnabled`
+- `validatorLanguageId`
+- `validatorSource`
+
+Problem responses return validator mode, enabled state, language ID, and source hash, but never return
+`validatorSource`.
 
 #### Get one problem
 ```http
@@ -666,6 +700,9 @@ judge0:
   url: ${JUDGE0_URL}
   callback: ${JUDGE0_CALLBACK_URL}
   callback-secret: ${JUDGE0_CALLBACK_SECRET}
+  validator:
+    cpu-time-limit-seconds: ${JUDGE0_VALIDATOR_CPU_TIME_LIMIT_SECONDS}
+    memory-limit-kilobytes: ${JUDGE0_VALIDATOR_MEMORY_LIMIT_KILOBYTES}
 ```
 
 ### Database migrations

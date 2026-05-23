@@ -6,6 +6,7 @@ import com.server.contestControl.contestServer.entity.Contest;
 import com.server.contestControl.contestServer.entity.Problem;
 import com.server.contestControl.contestServer.entity.TestCase;
 import com.server.contestControl.contestServer.enums.ComparePolicy;
+import com.server.contestControl.contestServer.enums.ValidationMode;
 import com.server.contestControl.contestServer.repository.TestCaseRepository;
 import com.server.contestControl.submissionServer.dto.Judge0Response;
 import com.server.contestControl.submissionServer.entity.Submission;
@@ -14,6 +15,7 @@ import com.server.contestControl.submissionServer.enums.Verdict;
 import com.server.contestControl.submissionServer.repository.SubmissionJudgeResultRepository;
 import com.server.contestControl.submissionServer.repository.SubmissionRepository;
 import com.server.contestControl.submissionServer.service.compare.OutputComparator;
+import com.server.contestControl.submissionServer.service.validator.CustomValidatorService;
 import com.server.contestControl.submissionServer.sse.SubmissionSsePublisher;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -56,6 +58,9 @@ class Judge0CallbackServiceTest {
 
     @Spy
     private OutputComparator outputComparator = new OutputComparator();
+
+    @Mock
+    private CustomValidatorService customValidatorService;
 
     @InjectMocks
     private Judge0CallbackService callbackService;
@@ -349,7 +354,100 @@ class Judge0CallbackServiceTest {
         callbackService.handleJudge0Callback(1L, 7L, 1, judge0Response(6, "Compilation Error", "matching output"));
 
         verify(outputComparator, never()).compare(any(), any(), any(), any(), any());
+        verify(customValidatorService, never()).validate(any(), any(), any());
         assertThat(submission.getVerdict()).isEqualTo(Verdict.COMPILATION_ERROR);
+    }
+
+    @Test
+    void customValidatorAcceptsAlternativeOutputAfterSuccessfulExecution() {
+        Submission submission = runningSubmissionWithCustomValidator();
+        TestCase testCase = TestCase.builder()
+                .id(100L)
+                .inputData("4")
+                .expectedOutput("YES")
+                .build();
+        SubmissionJudgeResult acceptedResult = result(submission, 1, Verdict.ACCEPTED);
+
+        when(submissionRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(submission));
+        when(testCaseRepository.countByProblemId(10L)).thenReturn(1);
+        when(testCaseRepository.findByProblemIdOrderByIdAsc(10L)).thenReturn(List.of(testCase));
+        when(customValidatorService.validate(submission.getProblem(), testCase, "Y\n"))
+                .thenReturn(CustomValidatorService.ValidatorResult.accepted());
+        when(judgeResultRepository.findBySubmission_IdAndJudgeRunIdAndTestCaseNumber(1L, 7L, 1))
+                .thenReturn(Optional.empty());
+        when(judgeResultRepository.countBySubmission_IdAndJudgeRunId(1L, 7L)).thenReturn(1L);
+        when(judgeResultRepository.findBySubmission_IdAndJudgeRunId(1L, 7L)).thenReturn(List.of(acceptedResult));
+
+        callbackService.handleJudge0Callback(1L, 7L, 1, judge0Response(3, "Accepted", "Y\n"));
+
+        ArgumentCaptor<SubmissionJudgeResult> resultCaptor =
+                ArgumentCaptor.forClass(SubmissionJudgeResult.class);
+        verify(judgeResultRepository).save(resultCaptor.capture());
+        assertThat(resultCaptor.getValue().getVerdict()).isEqualTo(Verdict.ACCEPTED);
+        assertThat(submission.getVerdict()).isEqualTo(Verdict.ACCEPTED);
+        verify(outputComparator, never()).compare(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void customValidatorRejectsInvalidOutputAsWrongAnswer() {
+        Submission submission = runningSubmissionWithCustomValidator();
+        TestCase testCase = TestCase.builder()
+                .id(100L)
+                .inputData("4")
+                .expectedOutput("YES")
+                .build();
+        SubmissionJudgeResult wrongAnswerResult = result(submission, 1, Verdict.WRONG_ANSWER);
+        wrongAnswerResult.setDiagnostic("Custom validator rejected output");
+
+        when(submissionRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(submission));
+        when(testCaseRepository.countByProblemId(10L)).thenReturn(1);
+        when(testCaseRepository.findByProblemIdOrderByIdAsc(10L)).thenReturn(List.of(testCase));
+        when(customValidatorService.validate(submission.getProblem(), testCase, "NO\n"))
+                .thenReturn(CustomValidatorService.ValidatorResult.wrongAnswer("Custom validator rejected output"));
+        when(judgeResultRepository.findBySubmission_IdAndJudgeRunIdAndTestCaseNumber(1L, 7L, 1))
+                .thenReturn(Optional.empty());
+        when(judgeResultRepository.countBySubmission_IdAndJudgeRunId(1L, 7L)).thenReturn(1L);
+        when(judgeResultRepository.findBySubmission_IdAndJudgeRunId(1L, 7L)).thenReturn(List.of(wrongAnswerResult));
+
+        callbackService.handleJudge0Callback(1L, 7L, 1, judge0Response(3, "Accepted", "NO\n"));
+
+        ArgumentCaptor<SubmissionJudgeResult> resultCaptor =
+                ArgumentCaptor.forClass(SubmissionJudgeResult.class);
+        verify(judgeResultRepository).save(resultCaptor.capture());
+        assertThat(resultCaptor.getValue().getVerdict()).isEqualTo(Verdict.WRONG_ANSWER);
+        assertThat(resultCaptor.getValue().getDiagnostic()).isEqualTo("Custom validator rejected output");
+        assertThat(submission.getVerdict()).isEqualTo(Verdict.WRONG_ANSWER);
+    }
+
+    @Test
+    void customValidatorFailureMapsSuccessfulExecutionToInternalError() {
+        Submission submission = runningSubmissionWithCustomValidator();
+        TestCase testCase = TestCase.builder()
+                .id(100L)
+                .inputData("4")
+                .expectedOutput("YES")
+                .build();
+        SubmissionJudgeResult internalResult = result(submission, 1, Verdict.INTERNAL_ERROR);
+        internalResult.setDiagnostic("Custom validator produced invalid decision");
+
+        when(submissionRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(submission));
+        when(testCaseRepository.countByProblemId(10L)).thenReturn(1);
+        when(testCaseRepository.findByProblemIdOrderByIdAsc(10L)).thenReturn(List.of(testCase));
+        when(customValidatorService.validate(submission.getProblem(), testCase, "Y\n"))
+                .thenReturn(CustomValidatorService.ValidatorResult.internalError("Custom validator produced invalid decision"));
+        when(judgeResultRepository.findBySubmission_IdAndJudgeRunIdAndTestCaseNumber(1L, 7L, 1))
+                .thenReturn(Optional.empty());
+        when(judgeResultRepository.countBySubmission_IdAndJudgeRunId(1L, 7L)).thenReturn(1L);
+        when(judgeResultRepository.findBySubmission_IdAndJudgeRunId(1L, 7L)).thenReturn(List.of(internalResult));
+
+        callbackService.handleJudge0Callback(1L, 7L, 1, judge0Response(3, "Accepted", "Y\n"));
+
+        ArgumentCaptor<SubmissionJudgeResult> resultCaptor =
+                ArgumentCaptor.forClass(SubmissionJudgeResult.class);
+        verify(judgeResultRepository).save(resultCaptor.capture());
+        assertThat(resultCaptor.getValue().getVerdict()).isEqualTo(Verdict.INTERNAL_ERROR);
+        assertThat(resultCaptor.getValue().getDiagnostic()).isEqualTo("Custom validator produced invalid decision");
+        assertThat(submission.getVerdict()).isEqualTo(Verdict.INTERNAL_ERROR);
     }
 
     @Test
@@ -410,6 +508,27 @@ class Judge0CallbackServiceTest {
         Problem problem = Problem.builder()
                 .id(10L)
                 .comparePolicy(comparePolicy)
+                .build();
+
+        return Submission.builder()
+                .id(1L)
+                .contest(contest())
+                .problem(problem)
+                .user(team())
+                .verdict(Verdict.RUNNING)
+                .judgeRunId(7L)
+                .build();
+    }
+
+    private Submission runningSubmissionWithCustomValidator() {
+        Problem problem = Problem.builder()
+                .id(10L)
+                .comparePolicy(ComparePolicy.EXACT)
+                .validationMode(ValidationMode.CUSTOM_VALIDATOR)
+                .validatorEnabled(true)
+                .validatorLanguageId(71)
+                .validatorSource("checker")
+                .validatorSourceHash("a".repeat(64))
                 .build();
 
         return Submission.builder()

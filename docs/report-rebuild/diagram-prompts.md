@@ -85,7 +85,7 @@ cloud "Judge0" as J0
 - Diagram type: Four-column scope/status diagram
 - Purpose: Visually distinguish implemented, partially implemented, planned/future, and deprecated/removed features.
 - Actors/components/swimlanes/entities: Implemented scope, partial scope, future scope, deprecated/removed scope.
-- What the diagram should show: Implemented: login, admin-protected team registration, refresh rotation/logout revocation, admin bootstrap, user admin, contest lifecycle, SSE contest updates, problem/test-case create/update/delete, submission queue, Judge0 callback, per-case results, rejudge backend/UI, clarifications backend/UI, scoreboard ranking/freeze/reveal. Partial: team workspace polish, result queue, time/memory enforcement, local/offline deployment. Future: announcements, security monitor, statistics endpoints, participation/join workflow, report/export workflow, full LAN-first Judge0. Removed: email verification.
+- What the diagram should show: Implemented: login, admin-protected team registration, refresh rotation/logout revocation, admin bootstrap, user admin, contest lifecycle, SSE contest updates, problem/test-case create/update/delete, deterministic compare policies, custom output validators, submission queue, Judge0 callback, per-case results, rejudge backend/UI, clarifications backend/UI, scoreboard ranking/freeze/reveal. Partial: team workspace polish, result queue, local/offline deployment. Future: announcements, security monitor, statistics endpoints, participation/join workflow, report/export workflow, reference oracles/generators/interactive judging/ML verdicts, full LAN-first Judge0. Removed: email verification.
 - What the diagram must NOT include: Detailed code paths, class names, or unverified features.
 - AI image-generation prompt: Create a clean status diagram for AuraC2 with four labeled groups: Implemented, Partially Implemented, Planned/Future Work, Deprecated/Removed. Include concise feature chips. Make clear that registration is admin-protected, logout revocation is implemented, clarifications are wired, rejudge UI exists, and scoreboard ranking/freeze/reveal are implemented. Use formal academic styling and avoid clutter.
 - PlantUML:
@@ -96,12 +96,12 @@ left to right direction
 rectangle "Implemented" as I {
   rectangle "Auth login\nAdmin-protected team registration\nRefresh rotation\nLogout revocation"
   rectangle "Contest lifecycle\nSSE updates\nProblem and test-case CRUD"
-  rectangle "Submission queue\nJudge0 callbacks\nPer-test-case results"
+  rectangle "Compare policies\nCustom validators\nSubmission queue\nJudge0 callbacks\nPer-test-case results"
   rectangle "Rejudge backend/UI\nClarifications backend/UI\nScoreboard ranking/freeze/reveal"
 }
 rectangle "Partially Implemented" as P {
   rectangle "Team workspace polish\nResult queue scaffold"
-  rectangle "Time/memory enforcement\nLocal/offline Judge0 setup"
+  rectangle "Local/offline Judge0 setup"
 }
 rectangle "Planned / Future Work" as F {
   rectangle "Announcements\nSecurity monitor\nStatistics endpoints\nParticipation workflow\nReport/export workflow"
@@ -384,11 +384,14 @@ end
 
 - Report section: 5.3 Activity Diagrams for Complicated Behaviors
 - Diagram type: Activity diagram
-- Purpose: Highlight signed callback verification, stale-callback protection, idempotent per-case storage, and final verdict aggregation.
-- Actors/components/swimlanes/entities: Judge0 API, CallbackHandler, Judge0CallbackSignatureService, Judge0CallbackService, SubmissionRepository row lock, SubmissionJudgeResultRepository, TestCaseRepository.
-- What the diagram should show: Callback received with `submissionId`, `judgeRunId`, `testCaseNumber`, and `signature`; signature verified before state changes; submission row locked; stale `judgeRunId` rejected; invalid test case rejected; non-terminal statuses ignored; duplicate per-case result ignored; new result saved; count results for current run; wait if incomplete; aggregate earliest non-accepted result or accepted; store max execution time and memory.
-- What the diagram must NOT include: UI screen design or rejudge selection forms.
-- AI image-generation prompt: Create an activity diagram for AuraC2 Judge0 callback processing. Show callback with submissionId, judgeRunId, testCaseNumber, and signature; signature verification before any state mutation; row lock on Submission; stale callback check; expected test count check; invalid test-case check; terminal verdict check; duplicate result ignored; new SubmissionJudgeResult saved; count received results; if incomplete wait; if complete aggregate final verdict, max execution time, max memory, and save Submission.
+- Purpose: Highlight signed callback verification, stale-callback protection, deterministic compare policy handling, idempotent per-case storage, and final verdict aggregation.
+- Description: Shows how a signed Judge0 callback becomes a terminal per-test-case result, including built-in compare policies and custom validator execution.
+- Code alignment: `CallbackHandler`, `Judge0CallbackSignatureService`, `Judge0CallbackService`, `OutputComparator`, `CustomValidatorService`, `SubmissionJudgeResultRepository`.
+- Current status: Implemented.
+- Actors/components/swimlanes/entities: Judge0 API, CallbackHandler, Judge0CallbackSignatureService, Judge0CallbackService, OutputComparator, CustomValidatorService, SubmissionRepository row lock, SubmissionJudgeResultRepository, TestCaseRepository.
+- What the diagram should show: Callback received with `submissionId`, `judgeRunId`, `testCaseNumber`, and `signature`; signature verified before state changes; submission row locked; stale `judgeRunId` rejected; invalid test case rejected; non-terminal statuses ignored; execution errors bypass comparison/validation; exact built-in policy uses Judge0 verdict; non-exact policies compare Judge0 `stdout` to hidden `expectedOutput`; custom validators run through Judge0 after successful execution and return accept/reject/internal error; duplicate per-case result ignored; new result saved; count results for current run; wait if incomplete; aggregate earliest non-accepted result or accepted; store max execution time and memory.
+- What the diagram must NOT include: UI screen design, rejudge selection forms, local host script execution, reference oracles, generated tests, interactive judging, or ML verdicts.
+- AI image-generation prompt: Create an activity diagram for AuraC2 Judge0 callback processing. Show callback with submissionId, judgeRunId, testCaseNumber, and signature; signature verification before any state mutation; row lock on Submission; stale callback check; expected test count check; invalid test-case check; terminal verdict check; exact policy using Judge0 status; non-exact deterministic policy comparing stdout with hidden expected output using OutputComparator; custom validator policy sending hidden input, hidden expected output, and team stdout to a Judge0-sandboxed checker; duplicate result ignored; new SubmissionJudgeResult saved; count received results; if incomplete wait; if complete aggregate final verdict, max execution time, max memory, and save Submission.
 - PlantUML:
 
 ```plantuml
@@ -414,6 +417,24 @@ endif
 if (Judge0 status terminal?) then (no)
   :Wait for terminal callback;
   stop
+endif
+if (execution accepted?) then (yes)
+  if (active custom validator?) then (yes)
+    :Run checker through Judge0\nwith hidden input,\nexpected output, and stdout;
+    :Use checker decision;
+  elseif (built-in policy non-exact?) then (yes)
+    :Load hidden TestCase.expectedOutput;
+    :OutputComparator compares\nstdout with expected output;
+    if (comparison matches?) then (no)
+      :Use WRONG_ANSWER verdict;
+    else (yes)
+      :Use ACCEPTED verdict;
+    endif
+  else (EXACT)
+    :Use Judge0 verdict;
+  endif
+else (execution error)
+  :Use Judge0-mapped verdict;
 endif
 if (Result already exists?) then (yes)
   :Ignore duplicate callback;
@@ -552,11 +573,14 @@ Registry --> Clients : contest-update
 
 - Report section: 6.1 Application Architecture Design / Context Diagram
 - Diagram type: Architecture flow diagram
-- Purpose: Show submission persistence, after-commit RabbitMQ publishing, Judge0 dispatch with signed callback URL, callback verification, and final result persistence.
-- Actors/components/swimlanes/entities: Team UI, SubmissionController, SubmissionService, SubmissionRepository/PostgreSQL, SubmissionProducer, RabbitMQ, SubmissionConsumer, TestCaseRepository, LanguageMapper, Judge0Service, Judge0CallbackSignatureService, Judge0 API, CallbackHandler, Judge0CallbackService, SubmissionJudgeResult.
-- What the diagram should show: Submission request, save PENDING row, publish submissionId only after commit, consume message, lock/claim submission, map language, increment judgeRunId, mark RUNNING, fetch test cases, send each test to Judge0 with signed callback URL, callback verifies signature, persists per-case result idempotently, aggregate final verdict.
-- What the diagram must NOT include: Contest lifecycle scheduler details or frontend admin screens.
-- AI image-generation prompt: Create a technical architecture diagram for AuraC2 asynchronous judging. Show Team React UI submitting code to SubmissionController and SubmissionService, PostgreSQL storing a PENDING Submission, SubmissionProducer publishing submissionId to RabbitMQ submissionQueue after commit, SubmissionConsumer consuming it with a row lock, fetching test cases, LanguageMapper, Judge0Service and Judge0CallbackSignatureService sending one request per test case to Judge0 with signed callback URL, Judge0 calling CallbackHandler, CallbackHandler verifying signature, Judge0CallbackService storing SubmissionJudgeResult rows idempotently and updating final Submission verdict. Label judgeRunId, testCaseNumber, and signature.
+- Purpose: Show submission persistence, after-commit RabbitMQ publishing, Judge0 dispatch with signed callback URL, compare-policy handling, callback verification, and final result persistence.
+- Description: Shows the implemented judging pipeline, including built-in compare policy and custom validator branches.
+- Code alignment: `SubmissionService`, `SubmissionProducer`, `SubmissionConsumer`, `Judge0Service`, `Judge0CallbackService`, `OutputComparator`, `CustomValidatorService`.
+- Current status: Implemented.
+- Actors/components/swimlanes/entities: Team UI, SubmissionController, SubmissionService, SubmissionRepository/PostgreSQL, SubmissionProducer, RabbitMQ, SubmissionConsumer, TestCaseRepository, LanguageMapper, Judge0Service, Judge0CallbackSignatureService, Judge0 API, CallbackHandler, Judge0CallbackService, OutputComparator, CustomValidatorService, SubmissionJudgeResult.
+- What the diagram should show: Submission request, save PENDING row, publish submissionId only after commit, consume message, lock/claim submission, map language, increment judgeRunId, mark RUNNING, fetch test cases, send each test to Judge0 with signed callback URL, use `expected_output` only for EXACT built-in policy, omit `expected_output` for non-exact policies and active custom validators, callback verifies signature, backend comparator handles non-exact successful executions, custom validator service submits checker code to Judge0 with hidden input/expected output/team stdout, persists per-case result idempotently, aggregate final verdict.
+- What the diagram must NOT include: Contest lifecycle scheduler details, frontend admin screens, local host script execution, generated tests, reference oracles, interactive protocols, or ML verdicts.
+- AI image-generation prompt: Create a technical architecture diagram for AuraC2 asynchronous judging. Show Team React UI submitting code to SubmissionController and SubmissionService, PostgreSQL storing a PENDING Submission, SubmissionProducer publishing submissionId to RabbitMQ submissionQueue after commit, SubmissionConsumer consuming it with a row lock, fetching test cases and problem compare/validation policy, LanguageMapper, Judge0Service and Judge0CallbackSignatureService sending one request per test case to Judge0 with signed callback URL. Show exact built-in policy sending expected_output, non-exact policies and custom-validator problems omitting expected_output. Show Judge0 calling CallbackHandler, CallbackHandler verifying signature, Judge0CallbackService storing SubmissionJudgeResult rows idempotently, OutputComparator comparing stdout for non-exact built-ins, and CustomValidatorService sending checker code to Judge0 for custom validators. Label judgeRunId, testCaseNumber, signature, and no ML verdict.
 - PlantUML:
 
 ```plantuml
@@ -575,6 +599,8 @@ component "Judge0CallbackSignatureService" as Sig
 cloud "Judge0 API" as J0
 component "CallbackHandler" as CB
 component "Judge0CallbackService" as CBS
+component "OutputComparator" as OC
+component "CustomValidatorService" as CVS
 database "SubmissionJudgeResult" as Results
 Team --> SC : POST /api/submissions
 SC --> SS
@@ -582,14 +608,18 @@ SS --> DB : save PENDING submission
 SS --> MQ : after commit\npublish submissionId
 MQ --> Consumer : consume submissionId
 Consumer --> DB : lock, increment judgeRunId\nmark RUNNING
-Consumer --> TCR : fetch test cases
+Consumer --> TCR : fetch test cases\nand validation policy
 Consumer --> LM : map language
 Consumer --> J0S : dispatch each test case
 J0S --> Sig : sign submissionId,\njudgeRunId, testCaseNumber
-J0S --> J0 : source, stdin,\nexpected output, signed callback URL
+J0S --> J0 : EXACT built-in: source, stdin,\nexpected_output, signed callback URL
+J0S --> J0 : non-exact/custom: source, stdin,\nsigned callback URL
 J0 --> CB : callback with submissionId,\njudgeRunId, testCaseNumber,\nsignature
 CB --> Sig : verify signature
 CB --> CBS
+CBS --> OC : non-exact built-in:\ncompare stdout to hidden expectedOutput
+CBS --> CVS : custom validator:\nrun checker through Judge0
+CVS --> J0 : checker source + length-prefixed\ninput, expected, stdout
 CBS --> Results : save per-case result\nidempotently
 CBS --> DB : aggregate final verdict
 @enduml
@@ -601,9 +631,12 @@ CBS --> DB : aggregate final verdict
 - Diagram type: ER diagram
 - Purpose: Represent the current persistent model accurately.
 - Actors/components/swimlanes/entities: User, RefreshToken, Contest, Problem, TestCase, Clarification, Submission, SubmissionJudgeResult, ScoreboardRevealState, ScoreboardRevealCell.
-- What the diagram should show: One User to many RefreshToken; Contest to many Problem; Problem to many TestCase; User/Contest/Problem to Submission; Submission to many SubmissionJudgeResult; Contest/User/optional Problem/admin User to Clarification; Contest to one ScoreboardRevealState; reveal state to many reveal cells; reveal cells link to team User and Problem.
+- Description: Shows the current persistent entities and relationships, including compare-policy and custom-validator columns on `Problem`.
+- Code alignment: JPA entities under `contestServer.entity`, `authServer.entity`, `submissionServer.entity`, scoreboard entities, and Flyway migrations `V1`-`V3`.
+- Current status: Implemented.
+- What the diagram should show: One User to many RefreshToken; Contest to many Problem; Problem includes comparePolicy, optional float epsilon fields, validationMode, validatorLanguageId, validatorSourceHash, and validatorEnabled; Problem to many TestCase; User/Contest/Problem to Submission; Submission to many SubmissionJudgeResult; Contest/User/optional Problem/admin User to Clarification; Contest to one ScoreboardRevealState; reveal state to many reveal cells; reveal cells link to team User and Problem.
 - What the diagram must NOT include: SecurityAlert, Team entity, contest-membership table, Announcement entity, or a generic future Scoreboard table unless added in future code.
-- AI image-generation prompt: Create a readable ER diagram for the current AuraC2 database. Entities: User, RefreshToken, Contest, Problem, TestCase, Clarification, Submission, SubmissionJudgeResult, ScoreboardRevealState, and ScoreboardRevealCell. Show primary keys, important fields, cardinalities, and the note that Team is represented by User.role = TEAM. Show TestCase visibility as admin/internal for private cases and public/sample for TEAM users. Do not include future-only tables such as SecurityAlert, Announcement, or ContestMembership.
+- AI image-generation prompt: Create a readable ER diagram for the current AuraC2 database. Entities: User, RefreshToken, Contest, Problem, TestCase, Clarification, Submission, SubmissionJudgeResult, ScoreboardRevealState, and ScoreboardRevealCell. Show primary keys, important fields including Problem comparePolicy, float epsilon fields, validationMode, validatorLanguageId, validatorSourceHash, and validatorEnabled, cardinalities, and the note that Team is represented by User.role = TEAM. Show TestCase visibility as admin/internal for private cases and public/sample for TEAM users. Do not include future-only tables such as SecurityAlert, Announcement, or ContestMembership.
 - PlantUML:
 
 ```plantuml
@@ -643,6 +676,13 @@ entity Problem {
   timeLimit
   memoryLimit
   difficulty
+  comparePolicy
+  floatAbsoluteEpsilon
+  floatRelativeEpsilon
+  validationMode
+  validatorLanguageId
+  validatorSourceHash
+  validatorEnabled
 }
 entity TestCase {
   * id
@@ -768,9 +808,12 @@ end note
 - Diagram type: Logical database schema diagram
 - Purpose: Provide implementation-level table names and important columns.
 - Actors/components/swimlanes/entities: `users`, `refresh_tokens`, `contests`, `problems`, `test_cases`, `clarifications`, `submissions`, `submission_judge_results`, `scoreboard_reveal_states`, `scoreboard_reveal_cells`.
-- What the diagram should show: Tables, primary keys, foreign keys, enum-as-string fields, important NOT NULL columns, indexes for lookup paths, and unique constraints.
+- Description: Shows table-level implementation columns, including validator configuration fields added to `problems`.
+- Code alignment: Flyway migrations `V1__baseline_schema.sql`, `V2__problem_compare_policy.sql`, and `V3__problem_custom_validators.sql`.
+- Current status: Implemented.
+- What the diagram should show: Tables, primary keys, foreign keys, enum-as-string fields including `problems.compare_policy` and `problems.validation_mode`, important NOT NULL columns, indexes for lookup paths, and unique constraints.
 - What the diagram must NOT include: Unimplemented tables such as announcements, security alerts, contest membership, or generic scoreboard snapshots.
-- AI image-generation prompt: Create a relational schema diagram for AuraC2 using actual table names: users, refresh_tokens, contests, problems, test_cases, clarifications, submissions, submission_judge_results, scoreboard_reveal_states, and scoreboard_reveal_cells. Show primary keys, foreign keys, enum string fields, useful indexes, NOT NULL required fields, and unique constraints such as users.username, submission_judge_results submission_id plus judge_run_id plus test_case_number, scoreboard_reveal_states contest_id, and scoreboard_reveal_cells reveal_state_id plus team_id plus problem_id. Keep the diagram compact and readable.
+- AI image-generation prompt: Create a relational schema diagram for AuraC2 using actual table names: users, refresh_tokens, contests, problems, test_cases, clarifications, submissions, submission_judge_results, scoreboard_reveal_states, and scoreboard_reveal_cells. Show primary keys, foreign keys, enum string fields including problems.compare_policy and problems.validation_mode, float epsilon columns, validator configuration columns, useful indexes, NOT NULL required fields, and unique constraints such as users.username, submission_judge_results submission_id plus judge_run_id plus test_case_number, scoreboard_reveal_states contest_id, and scoreboard_reveal_cells reveal_state_id plus team_id plus problem_id. Keep the diagram compact and readable.
 - PlantUML:
 
 ```plantuml
@@ -804,7 +847,16 @@ entity problems {
   * id : bigint
   contest_id : bigint <<FK>>
   title : varchar
+  time_limit : int <<not null>>
+  memory_limit : int <<not null>>
   difficulty : varchar
+  compare_policy : varchar <<not null>>
+  float_absolute_epsilon : double
+  float_relative_epsilon : double
+  validation_mode : varchar <<not null>>
+  validator_language_id : int
+  validator_source_hash : varchar
+  validator_enabled : boolean <<not null>>
 }
 entity test_cases {
   * id : bigint

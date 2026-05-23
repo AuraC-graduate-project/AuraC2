@@ -4,12 +4,27 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Checkbox } from "./ui/checkbox";
+import { Textarea } from "./ui/textarea";
 import { RichTextEditor } from "./RichTextEditor";
 import { richTextToPlainText, sanitizeRichText } from "../../components/richText";
 import { updateProblem } from "../services/api";
 import { ProblemResponse, ProblemUpdateRequest } from "../types/api";
 import { BALLOON_COLOR_PRESETS, DEFAULT_BALLOON_COLOR, isBalloonColor, normalizeBalloonColor } from "../utils/balloonColors";
+import { DEFAULT_VALIDATOR_LANGUAGE_ID, SUPPORTED_JUDGE0_LANGUAGES } from "../../constants/judge0Languages";
 import { toast } from "sonner";
+
+const COMPARE_POLICIES = [
+  { value: "EXACT", label: "Exact" },
+  { value: "NORMALIZED_TEXT", label: "Normalized text" },
+  { value: "TOKEN_NORMALIZED", label: "Token normalized" },
+  { value: "FLOAT_TOLERANCE", label: "Float tolerance" },
+] as const;
+
+const VALIDATION_MODES = [
+  { value: "BUILTIN_COMPARE_POLICY", label: "Built-in compare policy" },
+  { value: "CUSTOM_VALIDATOR", label: "Custom validator" },
+] as const;
 
 interface EditProblemModalProps {
   open: boolean;
@@ -31,6 +46,13 @@ export function EditProblemModal({
     timeLimit: problem.timeLimit,
     memoryLimit: problem.memoryLimit,
     difficulty: problem.difficulty,
+    comparePolicy: problem.comparePolicy ?? "EXACT",
+    floatAbsoluteEpsilon: problem.floatAbsoluteEpsilon ?? null,
+    floatRelativeEpsilon: problem.floatRelativeEpsilon ?? null,
+    validationMode: problem.validationMode ?? "BUILTIN_COMPARE_POLICY",
+    validatorEnabled: problem.validatorEnabled ?? true,
+    validatorLanguageId: problem.validatorLanguageId ?? DEFAULT_VALIDATOR_LANGUAGE_ID,
+    validatorSource: "",
     balloonColor: problem.balloonColor ?? DEFAULT_BALLOON_COLOR,
   });
 
@@ -42,6 +64,13 @@ export function EditProblemModal({
       timeLimit: problem.timeLimit,
       memoryLimit: problem.memoryLimit,
       difficulty: problem.difficulty,
+      comparePolicy: problem.comparePolicy ?? "EXACT",
+      floatAbsoluteEpsilon: problem.floatAbsoluteEpsilon ?? null,
+      floatRelativeEpsilon: problem.floatRelativeEpsilon ?? null,
+      validationMode: problem.validationMode ?? "BUILTIN_COMPARE_POLICY",
+      validatorEnabled: problem.validatorEnabled ?? true,
+      validatorLanguageId: problem.validatorLanguageId ?? DEFAULT_VALIDATOR_LANGUAGE_ID,
+      validatorSource: "",
       balloonColor: problem.balloonColor ?? DEFAULT_BALLOON_COLOR,
     });
   }, [open, problem]);
@@ -66,13 +95,43 @@ export function EditProblemModal({
       return;
     }
 
+    const usesCustomValidator = formData.validationMode === "CUSTOM_VALIDATOR";
+
+    if (
+      !usesCustomValidator &&
+      formData.comparePolicy === "FLOAT_TOLERANCE" &&
+      (Number(formData.floatAbsoluteEpsilon ?? 0) <= 0 && Number(formData.floatRelativeEpsilon ?? 0) <= 0)
+    ) {
+      toast.error("Float tolerance requires a positive epsilon");
+      return;
+    }
+    if (usesCustomValidator && formData.validatorEnabled !== false) {
+      if (!formData.validatorLanguageId || formData.validatorLanguageId <= 0) {
+        toast.error("Custom validator requires a validator language");
+        return;
+      }
+      if (!problem.validatorSourceHash && !formData.validatorSource?.trim()) {
+        toast.error("Custom validator source is required when enabling a validator without existing source");
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       const balloonColor = normalizeBalloonColor(formData.balloonColor);
+      const validatorSource = formData.validatorSource?.trim();
       const updated = await updateProblem(problem.id, {
         ...formData,
         title: formData.title.trim(),
         description: sanitizedDescription,
+        floatAbsoluteEpsilon:
+          !usesCustomValidator && formData.comparePolicy === "FLOAT_TOLERANCE" ? formData.floatAbsoluteEpsilon ?? null : null,
+        floatRelativeEpsilon:
+          !usesCustomValidator && formData.comparePolicy === "FLOAT_TOLERANCE" ? formData.floatRelativeEpsilon ?? null : null,
+        validationMode: formData.validationMode,
+        validatorEnabled: usesCustomValidator ? formData.validatorEnabled !== false : undefined,
+        validatorLanguageId: usesCustomValidator ? formData.validatorLanguageId ?? null : undefined,
+        validatorSource: usesCustomValidator && validatorSource ? validatorSource : undefined,
         balloonColor,
       });
       toast.success("Problem updated successfully");
@@ -87,6 +146,7 @@ export function EditProblemModal({
 
   const normalizedBalloonColor = normalizeBalloonColor(formData.balloonColor);
   const colorInputValue = isBalloonColor(formData.balloonColor) ? normalizedBalloonColor : DEFAULT_BALLOON_COLOR;
+  const usesCustomValidator = formData.validationMode === "CUSTOM_VALIDATOR";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -176,6 +236,169 @@ export function EditProblemModal({
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-problem-validation-mode">Validation Mode</Label>
+              <Select
+                value={formData.validationMode}
+                onValueChange={(value: ProblemUpdateRequest["validationMode"]) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    validationMode: value,
+                    comparePolicy: value === "CUSTOM_VALIDATOR" ? "EXACT" : prev.comparePolicy,
+                    floatAbsoluteEpsilon: value === "CUSTOM_VALIDATOR" ? null : prev.floatAbsoluteEpsilon,
+                    floatRelativeEpsilon: value === "CUSTOM_VALIDATOR" ? null : prev.floatRelativeEpsilon,
+                    validatorLanguageId:
+                      value === "CUSTOM_VALIDATOR"
+                        ? prev.validatorLanguageId ?? DEFAULT_VALIDATOR_LANGUAGE_ID
+                        : prev.validatorLanguageId,
+                  }))
+                }
+              >
+                <SelectTrigger id="edit-problem-validation-mode">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {VALIDATION_MODES.map((mode) => (
+                    <SelectItem key={mode.value} value={mode.value}>
+                      {mode.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {!usesCustomValidator && (
+              <div className="space-y-2">
+              <Label htmlFor="edit-problem-compare-policy">Compare Policy</Label>
+              <Select
+                value={formData.comparePolicy}
+                onValueChange={(value: ProblemUpdateRequest["comparePolicy"]) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    comparePolicy: value,
+                    floatAbsoluteEpsilon:
+                      value === "FLOAT_TOLERANCE" ? prev.floatAbsoluteEpsilon ?? 0.000001 : null,
+                    floatRelativeEpsilon:
+                      value === "FLOAT_TOLERANCE" ? prev.floatRelativeEpsilon ?? null : null,
+                  }))
+                }
+              >
+                <SelectTrigger id="edit-problem-compare-policy">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {COMPARE_POLICIES.map((policy) => (
+                    <SelectItem key={policy.value} value={policy.value}>
+                      {policy.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              </div>
+            )}
+
+            {!usesCustomValidator && formData.comparePolicy === "FLOAT_TOLERANCE" && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-problem-float-absolute-epsilon">Absolute Epsilon</Label>
+                  <Input
+                    id="edit-problem-float-absolute-epsilon"
+                    type="number"
+                    min="0"
+                    step="any"
+                    value={formData.floatAbsoluteEpsilon ?? ""}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        floatAbsoluteEpsilon: e.target.value === "" ? null : Number(e.target.value),
+                      }))
+                    }
+                    className="h-10"
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-problem-float-relative-epsilon">Relative Epsilon</Label>
+                  <Input
+                    id="edit-problem-float-relative-epsilon"
+                    type="number"
+                    min="0"
+                    step="any"
+                    value={formData.floatRelativeEpsilon ?? ""}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        floatRelativeEpsilon: e.target.value === "" ? null : Number(e.target.value),
+                      }))
+                    }
+                    className="h-10"
+                    disabled={isSubmitting}
+                  />
+                </div>
+              </div>
+            )}
+
+            {usesCustomValidator && (
+              <div className="space-y-4 rounded-md border border-slate-200 p-4">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="edit-problem-validator-enabled"
+                    checked={formData.validatorEnabled !== false}
+                    onCheckedChange={(checked) =>
+                      setFormData((prev) => ({ ...prev, validatorEnabled: checked === true }))
+                    }
+                    disabled={isSubmitting}
+                  />
+                  <Label htmlFor="edit-problem-validator-enabled">Enable custom validator</Label>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-problem-validator-language-id">Validator Language</Label>
+                  <Select
+                    value={String(formData.validatorLanguageId ?? DEFAULT_VALIDATOR_LANGUAGE_ID)}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        validatorLanguageId: Number(value),
+                      }))
+                    }
+                    disabled={isSubmitting}
+                  >
+                    <SelectTrigger id="edit-problem-validator-language-id">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SUPPORTED_JUDGE0_LANGUAGES.map((language) => (
+                        <SelectItem key={language.value} value={String(language.judge0LanguageId)}>
+                          {language.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-slate-500">
+                    Validator code will be executed through Judge0 using the selected language.
+                  </p>
+                </div>
+                {problem.validatorSourceHash && (
+                  <p className="rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                    Existing validator source is hidden. Paste new source only if you want to replace it.
+                  </p>
+                )}
+                <div className="space-y-2">
+                  <Label htmlFor="edit-problem-validator-source">Validator Source</Label>
+                  <Textarea
+                    id="edit-problem-validator-source"
+                    value={formData.validatorSource ?? ""}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, validatorSource: e.target.value }))
+                    }
+                    className="min-h-48 font-mono text-sm"
+                    placeholder="Paste checker source code"
+                    disabled={isSubmitting}
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="edit-problem-balloon-color">Balloon Color</Label>

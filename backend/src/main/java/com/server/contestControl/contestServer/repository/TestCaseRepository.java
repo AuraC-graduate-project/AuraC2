@@ -11,4 +11,6 @@ public interface TestCaseRepository extends JpaRepository<TestCase, Long> {
     List<TestCase> findByProblemIdAndIsPublicTrueOrderByIdAsc(Long problemId);
 
     int countByProblemId(Long id);
+
+    long deleteByProblem_Id(Long problemId);
 }

@@ -9,8 +9,25 @@ export type ProblemRequest = {
   timeLimit: number;
   memoryLimit: number;
   difficulty: "EASY" | "MEDIUM" | "HARD";
+  comparePolicy: ComparePolicy;
+  floatAbsoluteEpsilon?: number | null;
+  floatRelativeEpsilon?: number | null;
+  validationMode?: ValidationMode;
+  validatorEnabled?: boolean;
+  validatorLanguageId?: number | null;
+  validatorSource?: string;
   balloonColor: string;
 };
+
+export type ComparePolicy =
+  | "EXACT"
+  | "NORMALIZED_TEXT"
+  | "TOKEN_NORMALIZED"
+  | "FLOAT_TOLERANCE";
+
+export type ValidationMode =
+  | "BUILTIN_COMPARE_POLICY"
+  | "CUSTOM_VALIDATOR";
 
 export type ProblemResponse = {
   id: number;
@@ -19,6 +36,13 @@ export type ProblemResponse = {
   timeLimit: number;
   memoryLimit: number;
   difficulty: string;
+  comparePolicy: ComparePolicy;
+  floatAbsoluteEpsilon: number | null;
+  floatRelativeEpsilon: number | null;
+  validationMode: ValidationMode;
+  validatorEnabled: boolean;
+  validatorLanguageId: number | null;
+  validatorSourceHash: string | null;
   contestId: number;
   balloonColor: string;
 };

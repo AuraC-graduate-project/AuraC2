@@ -15,5 +15,7 @@ public interface ScoreboardRevealCellRepository extends JpaRepository<Scoreboard
 
     long countByRevealState_IdAndRevealedTrue(Long revealStateId);
 
+    boolean existsByProblem_Id(Long problemId);
+
     void deleteByRevealState_Id(Long revealStateId);
 }

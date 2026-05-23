@@ -30,6 +30,7 @@ spring:
     enabled: ${SPRING_FLYWAY_ENABLED:true}
     locations: classpath:db/migration
     baseline-on-migrate: ${SPRING_FLYWAY_BASELINE_ON_MIGRATE:false}
+    baseline-version: ${SPRING_FLYWAY_BASELINE_VERSION:0}
 
   rabbitmq:
     host: ${SPRING_RABBITMQ_HOST:localhost}
@@ -54,6 +55,9 @@ judge0:
   callback: ${JUDGE0_CALLBACK_URL:http://localhost:8080/api/callback/judge0}
   # Dev fallback keeps local runs simple. Override in production with JUDGE0_CALLBACK_SECRET.
   callback-secret: ${JUDGE0_CALLBACK_SECRET:dev-only-change-me}
+  validator:
+    cpu-time-limit-seconds: ${JUDGE0_VALIDATOR_CPU_TIME_LIMIT_SECONDS:2.0}
+    memory-limit-kilobytes: ${JUDGE0_VALIDATOR_MEMORY_LIMIT_KILOBYTES:131072}
 
 contest:
   sync:
