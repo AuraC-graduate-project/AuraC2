@@ -10,6 +10,14 @@ import com.server.contestControl.contestServer.entity.TestCase;
 import com.server.contestControl.contestServer.enums.ContestStatus;
 import com.server.contestControl.contestServer.enums.Difficulty;
 import com.server.contestControl.contestServer.exceptions.ProblemDeletionConflictException;
+import com.server.contestControl.contestServer.oracle.entity.InputGenerator;
+import com.server.contestControl.contestServer.oracle.entity.InputValidator;
+import com.server.contestControl.contestServer.oracle.entity.ReferenceSolution;
+import com.server.contestControl.contestServer.oracle.repository.CounterexampleRepository;
+import com.server.contestControl.contestServer.oracle.repository.GeneratedTestBatchRepository;
+import com.server.contestControl.contestServer.oracle.repository.InputGeneratorRepository;
+import com.server.contestControl.contestServer.oracle.repository.InputValidatorRepository;
+import com.server.contestControl.contestServer.oracle.repository.ReferenceSolutionRepository;
 import com.server.contestControl.contestServer.repository.ClarificationRepository;
 import com.server.contestControl.contestServer.repository.ContestRepository;
 import com.server.contestControl.contestServer.repository.ProblemRepository;
@@ -45,6 +53,11 @@ class ProblemDeletionPersistenceTest {
     @Autowired private ScoreboardRevealCellRepository scoreboardRevealCellRepository;
     @Autowired private ScoreboardRevealStateRepository scoreboardRevealStateRepository;
     @Autowired private UserRepository userRepository;
+    @Autowired private GeneratedTestBatchRepository generatedTestBatchRepository;
+    @Autowired private CounterexampleRepository counterexampleRepository;
+    @Autowired private ReferenceSolutionRepository referenceSolutionRepository;
+    @Autowired private InputGeneratorRepository inputGeneratorRepository;
+    @Autowired private InputValidatorRepository inputValidatorRepository;
 
     private ProblemService problemService;
 
@@ -56,7 +69,12 @@ class ProblemDeletionPersistenceTest {
                 clarificationRepository,
                 submissionRepository,
                 testCaseRepository,
-                scoreboardRevealCellRepository
+                scoreboardRevealCellRepository,
+                generatedTestBatchRepository,
+                counterexampleRepository,
+                referenceSolutionRepository,
+                inputGeneratorRepository,
+                inputValidatorRepository
         );
     }
 
@@ -74,6 +92,40 @@ class ProblemDeletionPersistenceTest {
 
         assertThat(problemRepository.findById(problem.getId())).isEmpty();
         assertThat(testCaseRepository.findById(testCase.getId())).isEmpty();
+    }
+
+    @Test
+    void deletesProblemWithOnlyOracleConfigurationAndNoGeneratedHistory() {
+        Problem problem = problem();
+        referenceSolutionRepository.save(ReferenceSolution.builder()
+                .problem(problem)
+                .languageId(54)
+                .source("reference")
+                .sourceHash("a".repeat(64))
+                .active(true)
+                .build());
+        inputGeneratorRepository.save(InputGenerator.builder()
+                .problem(problem)
+                .languageId(71)
+                .source("generator")
+                .sourceHash("b".repeat(64))
+                .active(true)
+                .defaultTestCount(1)
+                .build());
+        inputValidatorRepository.save(InputValidator.builder()
+                .problem(problem)
+                .languageId(71)
+                .source("validator")
+                .sourceHash("c".repeat(64))
+                .active(true)
+                .build());
+
+        assertThatNoException().isThrownBy(() -> problemService.deleteProblem(problem.getId()));
+
+        assertThat(problemRepository.findById(problem.getId())).isEmpty();
+        assertThat(referenceSolutionRepository.findByProblem_IdOrderByUpdatedAtDescIdDesc(problem.getId())).isEmpty();
+        assertThat(inputGeneratorRepository.findByProblem_IdOrderByUpdatedAtDescIdDesc(problem.getId())).isEmpty();
+        assertThat(inputValidatorRepository.findByProblem_IdOrderByUpdatedAtDescIdDesc(problem.getId())).isEmpty();
     }
 
     @Test

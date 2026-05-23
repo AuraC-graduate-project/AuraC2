@@ -38,13 +38,14 @@ Figure 13. Contest Lifecycle Architecture Diagram
 Figure 14. Submission and Asynchronous Judging Architecture Diagram  
 Figure 15. Current ER Diagram  
 Figure 16. Submission Judging Mini ER Diagram  
-Figure 17. Relational Schema Diagram
+Figure 17. Relational Schema Diagram  
+Figure 18. Hybrid Deterministic Oracle and Generated Tests Diagram
 
 # 1. Introduction
 
 AuraC2, also referred to as Aura Contest Control, is a web-based programming contest management system designed for university competitive programming environments. The system supports two main roles: administrators who prepare and control contests, and team users who participate in active contests by reading problems, writing code, submitting solutions, and reviewing submission history.
 
-The current implementation is a real web application composed of a Spring Boot backend, a React frontend, PostgreSQL persistence, RabbitMQ asynchronous messaging, and Judge0 integration for code execution. The system is not only a static design proposal; it includes implemented authentication, contest lifecycle control, problem and test-case management, asynchronous judging, deterministic problem-level compare policies, Judge0-sandboxed custom output validators, per-test-case result tracking, backend/frontend clarification handling, real-time contest lifecycle updates using server-sent events, and backend/admin rejudge functionality.
+The current implementation is a real web application composed of a Spring Boot backend, a React frontend, PostgreSQL persistence, RabbitMQ asynchronous messaging, and Judge0 integration for code execution. The system is not only a static design proposal; it includes implemented authentication, contest lifecycle control, problem and test-case management, asynchronous judging, deterministic problem-level compare policies, Judge0-sandboxed custom output validators, an admin reference-solution oracle UI for generated tests and counterexample promotion, per-test-case result tracking, backend/frontend clarification handling, real-time contest lifecycle updates using server-sent events, and backend/admin rejudge functionality.
 
 This report rebuilds the previous system analysis and design documentation so that it reflects the current local codebase. The codebase is treated as the source of truth. Features that exist only as placeholder UI or unused scaffolding are not described as complete. Features that were previously planned but now have backend implementation are reclassified accordingly. Features that exist only as unused scaffolding or old exception remnants are identified as partial, future work, or deprecated.
 
@@ -117,7 +118,7 @@ The target audience includes contest administrators, programming teams, instruct
 
 | Category | Features |
 |---|---|
-| Implemented | Login, administrator-protected team registration, refresh-token rotation, logout refresh-token revocation, production-aware refresh-cookie flags, admin bootstrap, role-based authorization, user management, contest creation, manual lifecycle controls, automatic lifecycle synchronization, SSE contest updates, problem creation/listing, deterministic compare policies, Judge0-sandboxed custom output validators, test-case creation/listing, submission persistence, after-commit RabbitMQ judging, Judge0 time/memory limits, signed Judge0 callbacks, per-test-case results, stale callback protection, backend/admin rejudge, backend/frontend clarifications, scoreboard ranking, freeze, and reveal. |
+| Implemented | Login, administrator-protected team registration, refresh-token rotation, logout refresh-token revocation, production-aware refresh-cookie flags, admin bootstrap, role-based authorization, user management, contest creation, manual lifecycle controls, automatic lifecycle synchronization, SSE contest updates, problem creation/listing, deterministic compare policies, Judge0-sandboxed custom output validators, admin reference-solution oracle UI and generated counterexamples, test-case creation/listing, submission persistence, after-commit RabbitMQ judging, Judge0 time/memory limits, signed Judge0 callbacks, per-test-case results, stale callback protection, backend/admin rejudge, backend/frontend clarifications, scoreboard ranking, freeze, and reveal. |
 | Partially Implemented | Team workspace completeness, result queue, local/offline deployment. |
 | Planned / Future Work | Announcements, full security monitoring, statistics endpoints, explicit contest participation/join workflow, full LAN-first Judge0 deployment. |
 | Deprecated / Removed | Email verification workflow. Only exception classes and security allow-list remnants remain. |
@@ -166,6 +167,7 @@ The main difference is scope. AuraC2 does not currently implement online communi
 | FR-IMP-15 | Reject unsigned, invalid, stale, or duplicate Judge0 callbacks. | Backend, Judge0 | `Judge0CallbackSignatureService`, `judgeRunId`, `Judge0CallbackService.isStaleCallback`, `SubmissionJudgeResult` unique constraint | Implemented |
 | FR-IMP-16 | Configure deterministic problem compare policies. | Administrator | `ComparePolicy`, `Problem`, `ProblemService`, `OutputComparator`, admin problem modals | Implemented |
 | FR-IMP-17 | Configure deterministic custom output validators for multiple valid outputs. | Administrator, Judge0 | `ValidationMode`, `Problem.validator*`, `CustomValidatorService`, `Judge0CallbackService` | Implemented |
+| FR-IMP-18 | Configure and run deterministic reference-solution oracle generated tests. | Administrator, Judge0 | `OracleAdminController`, `OracleService`, `ReferenceSolution`, `InputGenerator`, `InputValidator`, `GeneratedTestBatch`, `Counterexample`, `OraclePanel` | Implemented backend/admin UI |
 | FR-IMP-18 | Review submission history. | Team, Administrator | `SubmissionController`, `SubmissionHistory`, `SubmissionsView` | Implemented |
 | FR-IMP-19 | Rejudge selected, problem, or contest submissions through backend endpoints and admin UI. | Administrator | `RejudgeController`, `RejudgeService`, `RejudgeView` | Implemented |
 | FR-IMP-19 | Submit and answer clarifications through backend endpoints and admin/team UI. | Team, Administrator | `ClarificationController`, `ClarificationService`, `Clarification`, `ClarificationsView`, team `Clarifications` | Implemented |
@@ -191,7 +193,7 @@ The main difference is scope. AuraC2 does not currently implement online communi
 | FR-PLAN-04 | Dashboard statistics. | `StatsPanel` uses dashes and tooltip "No endpoint yet." |
 | FR-PLAN-05 | Explicit contest participation/join workflow. | No membership table or join controller exists. |
 | FR-PLAN-06 | Advanced reporting/export. | No formal report export workflow was found. |
-| FR-PLAN-07 | Reference-solution oracle, generated tests, input generators/validators, interactive problems, or ML verdicts. | No oracle, generator, interactive protocol, or ML verdict path exists. Custom output validators are implemented separately through Judge0 sandboxing. |
+| FR-PLAN-07 | Interactive problems or ML verdicts. | No interactive protocol or ML verdict path exists. Reference-solution generated testing is implemented as a deterministic admin extension and does not prove general correctness. |
 
 ### Deprecated / Removed Requirements
 
@@ -449,8 +451,8 @@ Current Status: Implemented with judging limitations.
 Figure 15. Current ER Diagram
 
 Purpose: To represent the current persistent entities.  
-Description: The ER diagram should include `User`, `RefreshToken`, `Contest`, `Problem`, `TestCase`, `Clarification`, `Submission`, `SubmissionJudgeResult`, `ScoreboardRevealState`, and `ScoreboardRevealCell`.  
-Code Alignment: Entity classes under `authServer/entity`, `contestServer/entity`, and `submissionServer/entity`.  
+Description: The ER diagram should include `User`, `RefreshToken`, `Contest`, `Problem`, `TestCase`, `Clarification`, `Submission`, `SubmissionJudgeResult`, `ScoreboardRevealState`, `ScoreboardRevealCell`, and the oracle entities for reference solutions, input generators, input validators, generated test batches/cases, and counterexamples.  
+Code Alignment: Entity classes under `authServer/entity`, `contestServer/entity`, `contestServer/oracle/entity`, and `submissionServer/entity`.  
 Current Status: Implemented.
 
 ### Submission Judging Mini ER Diagram
@@ -471,9 +473,20 @@ Current Status: Implemented.
 Figure 17. Relational Schema Diagram
 
 Purpose: To show the logical database tables and foreign keys.  
-Description: The schema should include table names, primary keys, foreign keys, enum fields, useful lookup indexes, NOT NULL constraints for required fields, and unique constraints such as `submission_judge_results`.  
-Code Alignment: Flyway baseline migration and JPA annotations in entity classes.  
+Description: The schema should include table names, primary keys, foreign keys, enum fields, useful lookup indexes, NOT NULL constraints for required fields, unique constraints such as `submission_judge_results`, and the Phase 8 oracle/generated-test tables.  
+Code Alignment: Flyway migrations `V1` through `V5` and JPA annotations in entity classes.  
 Current Status: Implemented.
+
+### Hybrid Deterministic Oracle and Generated Tests
+
+[Insert Figure 18 here: Hybrid Deterministic Oracle and Generated Tests Diagram]
+
+Figure 18. Hybrid Deterministic Oracle and Generated Tests Diagram
+
+Purpose: To show how generated tests and reference outputs are produced deterministically without using ML as a judge.  
+Description: Admin-configured reference solutions, input generators, and optional input validators are executed through Judge0. The primary workflow generates candidate inputs without requiring any team submission; valid generated inputs and reference outputs can be promoted into hidden official `TestCase` rows. A secondary counterexample-search workflow can run one selected submission against generated candidates; deterministic compare policy or custom validator logic stores counterexamples on mismatch. Admin promotion creates a hidden official test case, after which normal rejudge can apply the new test.  
+Code Alignment: `OracleAdminController`, `OracleService`, `OracleJudge0ExecutionService`, `OraclePanel`, `GeneratedTestBatch`, `GeneratedTestCase`, `Counterexample`, `TestCase`.  
+Current Status: Implemented backend/admin UI. Generated tests do not prove correctness and do not replace official fixed tests.
 
 ### Schema Notes
 
@@ -489,6 +502,12 @@ Current Status: Implemented.
 | `submission_judge_results` | Stores per-test-case results for each judge run. |
 | `scoreboard_reveal_states` | Stores one reveal workflow state per contest. |
 | `scoreboard_reveal_cells` | Stores reveal queue cells with one row per reveal state, team, and problem. |
+| `reference_solutions` | Stores admin-configured reference programs by hash/language; source remains admin-only. |
+| `input_generators` | Stores admin-configured generators run through Judge0 with deterministic seed/test-number input. |
+| `input_validators` | Stores optional admin-configured validators for generated input acceptance. |
+| `generated_test_batches` | Stores generated-test run metadata, source hashes, seed, and counters. |
+| `generated_test_cases` | Stores generated hidden inputs and reference outputs before any optional promotion. |
+| `counterexamples` | Stores deterministic mismatches for admin review and optional promotion to hidden official test cases. |
 
 ### Gap Analysis: Current System vs Intended Design
 
@@ -497,7 +516,7 @@ Current Status: Implemented.
 | Authentication | Login, admin-protected team registration, refresh rotation, logout revocation, role authorization, production-aware refresh-cookie settings, and admin bootstrap. | Admin bootstrap password rotation remains operationally sensitive and should be reviewed. |
 | Contest lifecycle | Strong implementation with effective state, pause-aware time, schedulers, SSE. | No UI for status lock management discovered. |
 | Problems/test cases | Create, read, update, and delete exist. TEAM users can only fetch public/sample test cases; private test cases remain available to Judge0 and backend comparison internally. | Problem authoring still needs operator discipline because fixed-output judging depends on complete tests. |
-| Judging | Queue, Judge0, signed callbacks, exact/normalized/token/float-tolerance fixed-output policies, Judge0-sandboxed custom output validators, per-case results, live verdict push, and rejudge backend/UI exist. | Unsupported language still needs stronger submission-time validation. Generated tests, reference oracles, input generators/validators, interactive judging, and ML verdicts are not implemented. |
+| Judging | Queue, Judge0, signed callbacks, exact/normalized/token/float-tolerance fixed-output policies, Judge0-sandboxed custom output validators, admin generated test preparation with reference-solution oracle, counterexample search, promotion to hidden tests, per-case results, live verdict push, and rejudge backend/UI exist. | Unsupported language still needs stronger submission-time validation. Generated tests do not prove correctness; interactive judging and ML verdicts are not implemented. |
 | Clarifications | Backend and admin/team frontend workflow exist. | Remaining gap is workflow polish and operational policy around public/private replies. |
 | Scoreboard | Ranking, freeze, reveal, public/admin snapshots, and streams exist. | Formal export/reporting is not implemented. |
 | Monitoring | Device IP stored on refresh token. | No security monitoring subsystem. |

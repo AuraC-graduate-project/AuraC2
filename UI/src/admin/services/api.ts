@@ -21,6 +21,12 @@ import {
   ReplyRequest,
   ScoreboardRevealResponse,
   ScoreboardSnapshot,
+  CounterexampleResponse,
+  GeneratedTestBatchRequest,
+  GeneratedTestBatchResponse,
+  GeneratedTestPromotionRequest,
+  OracleProgramRequest,
+  OracleProgramResponse,
 } from "../types/api";
 
 /**
@@ -524,4 +530,100 @@ export async function logout(): Promise<void> {
     noRetry: true,
   });
   setAccessToken(null);
+}
+
+// -----------------------------
+// Admin / Hybrid oracle
+// -----------------------------
+
+export async function configureReferenceSolution(
+  problemId: number,
+  data: OracleProgramRequest
+): Promise<OracleProgramResponse> {
+  return apiFetch<OracleProgramResponse>(`/api/admin/oracle/problems/${problemId}/reference-solution`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getReferenceSolutions(problemId: number): Promise<OracleProgramResponse[]> {
+  return apiFetch<OracleProgramResponse[]>(`/api/admin/oracle/problems/${problemId}/reference-solutions`);
+}
+
+export async function configureInputGenerator(
+  problemId: number,
+  data: OracleProgramRequest
+): Promise<OracleProgramResponse> {
+  return apiFetch<OracleProgramResponse>(`/api/admin/oracle/problems/${problemId}/input-generator`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getInputGenerators(problemId: number): Promise<OracleProgramResponse[]> {
+  return apiFetch<OracleProgramResponse[]>(`/api/admin/oracle/problems/${problemId}/input-generators`);
+}
+
+export async function configureInputValidator(
+  problemId: number,
+  data: OracleProgramRequest
+): Promise<OracleProgramResponse> {
+  return apiFetch<OracleProgramResponse>(`/api/admin/oracle/problems/${problemId}/input-validator`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getInputValidators(problemId: number): Promise<OracleProgramResponse[]> {
+  return apiFetch<OracleProgramResponse[]>(`/api/admin/oracle/problems/${problemId}/input-validators`);
+}
+
+export async function createGeneratedTestBatch(
+  problemId: number,
+  data: GeneratedTestBatchRequest
+): Promise<GeneratedTestBatchResponse> {
+  return apiFetch<GeneratedTestBatchResponse>(`/api/admin/oracle/problems/${problemId}/generated-batches`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getGeneratedTestBatches(problemId: number): Promise<GeneratedTestBatchResponse[]> {
+  return apiFetch<GeneratedTestBatchResponse[]>(`/api/admin/oracle/problems/${problemId}/generated-batches`);
+}
+
+export async function getCounterexamples(problemId: number): Promise<CounterexampleResponse[]> {
+  return apiFetch<CounterexampleResponse[]>(`/api/admin/oracle/problems/${problemId}/counterexamples`);
+}
+
+export async function promoteCounterexample(counterexampleId: number): Promise<TestCaseResponse> {
+  return apiFetch<TestCaseResponse>(`/api/admin/oracle/counterexamples/${counterexampleId}/promote`, {
+    method: "POST",
+  });
+}
+
+export async function promoteGeneratedTestCase(generatedTestCaseId: number): Promise<TestCaseResponse> {
+  return apiFetch<TestCaseResponse>(`/api/admin/oracle/generated-test-cases/${generatedTestCaseId}/promote`, {
+    method: "POST",
+  });
+}
+
+export async function promoteSelectedGeneratedTestCases(
+  data: GeneratedTestPromotionRequest
+): Promise<TestCaseResponse[]> {
+  return apiFetch<TestCaseResponse[]>("/api/admin/oracle/generated-test-cases/promote-selected", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function promoteAllValidGeneratedTestCases(batchId: number): Promise<TestCaseResponse[]> {
+  return apiFetch<TestCaseResponse[]>(`/api/admin/oracle/generated-batches/${batchId}/promote-valid`, {
+    method: "POST",
+  });
 }

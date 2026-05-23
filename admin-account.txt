@@ -1,6 +1,6 @@
 AuraC2 bootstrap admin account
-Generated at: 2026-05-23T08:08:30.469843600Z
+Generated at: 2026-05-23T14:36:49.694648800Z
 Username: admin
-Password: 76c07940-2493-413b-a9b6-a9cc723640dd
+Password: ba3f27e7-e183-4d37-845a-bf04c7cb591e
 
 Delete this file after storing the credentials safely.

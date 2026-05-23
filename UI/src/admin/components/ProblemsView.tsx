@@ -6,6 +6,7 @@ import { Plus, ChevronRight, Pencil, Search, Timer, Database, Trash2, AlertTrian
 import { CreateProblemModal } from './CreateProblemModal';
 import { TestCasesPanel } from './TestCasesPanel';
 import { EditProblemModal } from './EditProblemModal';
+import { OraclePanel } from './OraclePanel';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -455,6 +456,16 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
           problemId={selectedProblem.id} 
           problemTitle={selectedProblem.title}
         />
+      )}
+
+      {selectedContestNumericId && selectedProblem && (
+        <div className="mt-6">
+          <OraclePanel
+            problemId={selectedProblem.id}
+            problemTitle={selectedProblem.title}
+            contestId={selectedContestNumericId}
+          />
+        </div>
       )}
 
       {selectedContestNumericId && selectedProblem && (

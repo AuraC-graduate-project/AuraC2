@@ -20,6 +20,11 @@ import com.server.contestControl.contestServer.dto.testcase.PublicTestCaseRespon
 import com.server.contestControl.contestServer.dto.testcase.TestCaseResponse;
 import com.server.contestControl.contestServer.enums.ClarificationStatus;
 import com.server.contestControl.contestServer.exceptions.ProblemDeletionConflictException;
+import com.server.contestControl.contestServer.oracle.controller.OracleAdminController;
+import com.server.contestControl.contestServer.oracle.dto.CounterexampleResponse;
+import com.server.contestControl.contestServer.oracle.dto.GeneratedTestBatchResponse;
+import com.server.contestControl.contestServer.oracle.dto.OracleProgramResponse;
+import com.server.contestControl.contestServer.oracle.service.OracleService;
 import com.server.contestControl.contestServer.scoreboard.controller.AdminScoreboardController;
 import com.server.contestControl.contestServer.scoreboard.controller.ScoreboardController;
 import com.server.contestControl.contestServer.scoreboard.dto.ScoreboardRevealResponse;
@@ -75,7 +80,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         RejudgeController.class,
         ScoreboardController.class,
         AdminScoreboardController.class,
-        ClarificationController.class
+        ClarificationController.class,
+        OracleAdminController.class
 })
 @Import({SecurityConfiguration.class, JwtAuthFilter.class})
 class RouteAuthorizationSecurityTest {
@@ -96,6 +102,7 @@ class RouteAuthorizationSecurityTest {
     @MockBean private ScoreboardRevealService revealService;
     @MockBean private ScoreboardSseAdapter scoreboardSseAdapter;
     @MockBean private ClarificationService clarificationService;
+    @MockBean private OracleService oracleService;
 
     @BeforeEach
     void setUp() {
@@ -118,6 +125,15 @@ class RouteAuthorizationSecurityTest {
         when(clarificationService.replyClarification(eq(1L), any(), any())).thenReturn(clarificationResponse());
         when(clarificationService.fetchPublicClarifications(1L)).thenReturn(List.of(clarificationResponse()));
         when(userService.getAllUsers()).thenReturn(List.of());
+        when(oracleService.configureReferenceSolution(eq(1L), any(), eq("admin"))).thenReturn(oracleProgramResponse());
+        when(oracleService.configureInputGenerator(eq(1L), any(), eq("admin"))).thenReturn(oracleProgramResponse());
+        when(oracleService.configureInputValidator(eq(1L), any(), eq("admin"))).thenReturn(oracleProgramResponse());
+        when(oracleService.createGeneratedTestBatch(eq(1L), any(), eq("admin"))).thenReturn(generatedBatchResponse());
+        when(oracleService.counterexamples(1L)).thenReturn(List.of(counterexampleResponse()));
+        when(oracleService.promoteGeneratedTestCase(1L)).thenReturn(testCaseResponse());
+        when(oracleService.promoteGeneratedTestCases(any())).thenReturn(List.of(testCaseResponse()));
+        when(oracleService.promoteAllValidGeneratedTestCases(1L)).thenReturn(List.of(testCaseResponse()));
+        when(oracleService.promoteCounterexample(1L)).thenReturn(testCaseResponse());
     }
 
     @Test
@@ -368,6 +384,65 @@ class RouteAuthorizationSecurityTest {
     }
 
     @Test
+    void oracleGeneratedDataAndCounterexamplesAreAdminOnly() throws Exception {
+        mockMvc.perform(post("/api/admin/oracle/problems/1/reference-solution")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(oracleProgramRequestJson()))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/admin/oracle/problems/1/generated-batches")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(generatedBatchRequestJson()))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/admin/oracle/problems/1/counterexamples"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/admin/oracle/generated-test-cases/1/promote"))
+                .andExpect(status().isUnauthorized());
+
+        mockBearerUser("team-token", "team", Role.TEAM);
+        mockMvc.perform(post("/api/admin/oracle/problems/1/reference-solution")
+                        .header("Authorization", "Bearer team-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(oracleProgramRequestJson()))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/admin/oracle/problems/1/counterexamples")
+                        .header("Authorization", "Bearer team-token"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/admin/oracle/generated-batches/1/promote-valid")
+                        .header("Authorization", "Bearer team-token"))
+                .andExpect(status().isForbidden());
+
+        mockBearerUser("admin-token", "admin", Role.ADMIN);
+        mockMvc.perform(post("/api/admin/oracle/problems/1/reference-solution")
+                        .header("Authorization", "Bearer admin-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(oracleProgramRequestJson()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sourceHash").value("a".repeat(64)));
+        mockMvc.perform(post("/api/admin/oracle/problems/1/generated-batches")
+                        .header("Authorization", "Bearer admin-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(generatedBatchRequestJson()))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/admin/oracle/problems/1/counterexamples")
+                        .header("Authorization", "Bearer admin-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].generatedInput").value("4\n"));
+        mockMvc.perform(post("/api/admin/oracle/generated-test-cases/1/promote")
+                        .header("Authorization", "Bearer admin-token"))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/admin/oracle/generated-test-cases/promote-selected")
+                        .header("Authorization", "Bearer admin-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"generatedTestCaseIds":[1]}
+                                """))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/admin/oracle/generated-batches/1/promote-valid")
+                        .header("Authorization", "Bearer admin-token"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void submissionEndpointsRequireAuthenticationAndTeamsCanReadOwnHistory() throws Exception {
         mockMvc.perform(get("/api/submissions/my/all"))
                 .andExpect(status().isUnauthorized());
@@ -517,6 +592,49 @@ class RouteAuthorizationSecurityTest {
         return new ClarificationResponse(1L, 1L, null, null, "Question?", null, null, ClarificationStatus.PENDING, null, LocalDateTime.now(), null, "team");
     }
 
+    private OracleProgramResponse oracleProgramResponse() {
+        return new OracleProgramResponse(1L, 1L, 54, "a".repeat(64), true, null, Instant.now(), Instant.now());
+    }
+
+    private GeneratedTestBatchResponse generatedBatchResponse() {
+        return new GeneratedTestBatchResponse(
+                1L,
+                1L,
+                123L,
+                "a".repeat(64),
+                "b".repeat(64),
+                "COMPLETED",
+                1,
+                1,
+                0,
+                1,
+                null,
+                Instant.now(),
+                Instant.now(),
+                List.of()
+        );
+    }
+
+    private CounterexampleResponse counterexampleResponse() {
+        return new CounterexampleResponse(
+                1L,
+                1L,
+                1L,
+                1L,
+                0L,
+                "4\n",
+                "YES\n",
+                "NO\n",
+                null,
+                "NORMALIZED_TEXT",
+                "BUILTIN_COMPARE_POLICY",
+                "Output mismatch",
+                false,
+                null,
+                Instant.now()
+        );
+    }
+
     private String contestRequestJson() {
         return """
                 {
@@ -596,6 +714,26 @@ class RouteAuthorizationSecurityTest {
                   "standardReply": "NO_COMMENT",
                   "reply": null,
                   "replyType": "PUBLIC"
+                }
+                """;
+    }
+
+    private String oracleProgramRequestJson() {
+        return """
+                {
+                  "languageId": 54,
+                  "source": "int main(){}",
+                  "active": true
+                }
+                """;
+    }
+
+    private String generatedBatchRequestJson() {
+        return """
+                {
+                  "testCount": 1,
+                  "seed": 123,
+                  "submissionId": 1
                 }
                 """;
     }
