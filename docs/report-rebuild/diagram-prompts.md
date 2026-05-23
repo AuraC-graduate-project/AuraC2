@@ -7,8 +7,11 @@ Use these prompts after Phase 1 review to generate small, focused diagrams. All 
 - Report section: 2.2 Current System Architecture
 - Diagram type: C4-style system context diagram
 - Purpose: Show the major runtime actors and external systems around AuraC2.
+- Description: Shows the browser frontend, Spring Boot backend, PostgreSQL, RabbitMQ, Judge0, REST calls, SSE streams, queue dispatch, and signed Judge0 callback path.
+- Code alignment: `UI/src/App.tsx`, `backend/src/main/java/com/server/contestControl`, `RabbitMQConfig`, `Judge0Service`, `ContestStreamController`, `SubmissionStreamController`, and `docker-compose.yml`.
+- Current status: Implemented.
 - Actors/components/swimlanes/entities: Admin/Team browser, React frontend, Spring Boot backend, PostgreSQL, RabbitMQ, Judge0 API, SSE clients, Judge0 callback endpoint.
-- What the diagram should show: Browser-to-frontend usage, frontend REST calls to backend, backend SSE stream to browser, backend JPA persistence, RabbitMQ submission queue, backend Judge0 requests, and Judge0 callback into backend.
+- What the diagram should show: Browser-to-frontend usage, frontend REST calls to backend, backend SSE streams to browser for contest/submission/clarification/scoreboard updates, backend JPA persistence, RabbitMQ submission queue, backend Judge0 requests, and Judge0 callback into backend.
 - What the diagram must NOT include: Individual controllers, DTOs, all database tables, or future-only systems such as security monitoring and report export.
 - AI image-generation prompt: Create a clean academic system context diagram for AuraC2, a university programming contest control system. Use simple boxes and labeled arrows. Show Browser/React Frontend, Spring Boot Backend, PostgreSQL Database, RabbitMQ, Judge0 API, SSE clients, REST API, submission queue, and Judge0 callback endpoint. Use a formal blue-gray palette, readable labels, and no decorative elements.
 - PlantUML:
@@ -24,7 +27,7 @@ queue "RabbitMQ\nsubmissionQueue" as MQ
 cloud "Judge0 API" as J0
 Browser --> FE : Uses web UI
 FE --> BE : REST API
-BE --> FE : SSE stream\nsnapshot, contest-update, heartbeat
+BE --> FE : SSE streams\ncontest, submission, clarification, scoreboard
 BE --> DB : JPA repositories
 BE --> MQ : Publish submissionId
 MQ --> BE : Consume submissionId
@@ -38,8 +41,11 @@ J0 --> BE : Callback\n/api/callback/judge0
 - Report section: 2.3 Main Modules
 - Diagram type: Component/module diagram
 - Purpose: Show the current Spring Boot modular monolith package structure.
+- Description: Shows the `authServer`, `contestServer`, and `submissionServer` package responsibilities inside one Spring Boot process.
+- Code alignment: Backend package tree under `backend/src/main/java/com/server/contestControl`.
+- Current status: Implemented.
 - Actors/components/swimlanes/entities: `authServer`, `contestServer`, `submissionServer`, Spring Security, PostgreSQL, RabbitMQ, Judge0.
-- What the diagram should show: Authentication controllers/services/entities/repositories/filter/config; contest controllers/services/entities/repositories/events/schedulers/SSE/problems/test cases/clarifications; submission controllers/services/entities/repositories/queues/Judge0 callbacks/per-test-case results/rejudge.
+- What the diagram should show: Authentication controllers/services/entities/repositories/filter/config; contest controllers/services/entities/repositories/events/schedulers/SSE/problems/test cases/clarifications; submission controllers/services/entities/repositories/queues/Judge0 callbacks/per-test-case results/submission SSE/rejudge.
 - What the diagram must NOT include: Frontend component hierarchy or every DTO class.
 - AI image-generation prompt: Create a modular backend architecture diagram for AuraC2 as a Spring Boot modular monolith. Show three main packages: authServer, contestServer, and submissionServer. Inside each package show only major responsibilities: controllers, services, entities, repositories, filters/config for auth; contest lifecycle, events, schedulers, SSE, problems, test cases, clarifications for contest; submissions, RabbitMQ, Judge0 callbacks, per-test-case results, and rejudge for submission. Add PostgreSQL, RabbitMQ, and Judge0 as external dependencies. Keep it compact and academic.
 - PlantUML:
@@ -84,8 +90,11 @@ cloud "Judge0" as J0
 - Report section: 2.5 Current Scope vs Future Scope
 - Diagram type: Four-column scope/status diagram
 - Purpose: Visually distinguish implemented, partially implemented, planned/future, and deprecated/removed features.
+- Description: Groups the current feature map into implemented, partially implemented, planned/future, and deprecated/removed scope.
+- Code alignment: Feature classification in `docs/report-rebuild/analysis-plan.md`, backend controllers/services/entities/tests, and UI components under `UI/src`.
+- Current status: Implemented as documentation classification; individual feature statuses vary by group.
 - Actors/components/swimlanes/entities: Implemented scope, partial scope, future scope, deprecated/removed scope.
-- What the diagram should show: Implemented: login, admin-protected team registration, refresh rotation/logout revocation, admin bootstrap, user admin, contest lifecycle, SSE contest updates, problem/test-case create/update/delete, deterministic compare policies, custom output validators, admin reference-solution oracle/generated counterexample UI, submission queue, Judge0 callback, per-case results, rejudge backend/UI, clarifications backend/UI, scoreboard ranking/freeze/reveal. Partial: team workspace polish, result queue, local/offline deployment. Future: announcements, security monitor, statistics endpoints, participation/join workflow, report/export workflow, interactive judging/ML verdicts, full LAN-first Judge0. Removed: email verification.
+- What the diagram should show: Implemented: login, admin-protected team registration, refresh rotation/logout revocation, admin bootstrap, user admin, contest lifecycle, SSE contest/submission/clarification/scoreboard updates, problem/test-case create/update/delete, deterministic compare policies, custom output validators, admin reference-solution oracle/generated counterexample UI, submission queue, Judge0 callback, per-case results, rejudge backend/UI, clarifications backend/UI, scoreboard ranking/freeze/reveal. Partial: team workspace polish, result queue scaffold, local/offline deployment. Future: announcements, security monitor, statistics endpoints, participation/join workflow, report/export workflow, interactive judging/ML verdicts, full LAN-first Judge0. Removed: email verification.
 - What the diagram must NOT include: Detailed code paths, class names, or unverified features.
 - AI image-generation prompt: Create a clean status diagram for AuraC2 with four labeled groups: Implemented, Partially Implemented, Planned/Future Work, Deprecated/Removed. Include concise feature chips. Make clear that registration is admin-protected, logout revocation is implemented, clarifications are wired, rejudge UI exists, and scoreboard ranking/freeze/reveal are implemented. Use formal academic styling and avoid clutter.
 - PlantUML:
@@ -121,6 +130,9 @@ F -[hidden]-> R
 - Report section: 5.1 Use Case Diagrams
 - Diagram type: UML use case diagram
 - Purpose: Show administrator operations currently implemented or partially implemented.
+- Description: Shows administrator actions for accounts, contests, problems, test cases, submissions, rejudge, clarifications, and scoreboard reveal controls.
+- Code alignment: `AdminController`, `ContestController`, `ProblemController`, `TestCaseController`, `RejudgeController`, `ClarificationController`, `AdminScoreboardController`, and admin UI components.
+- Current status: Implemented, except statistics/security-monitor placeholders excluded from implemented use cases.
 - Actors/components/swimlanes/entities: Administrator, AuraC2 backend.
 - What the diagram should show: Manage team accounts, register team account, create contest, view contest buckets, start/pause/resume/end contest, force end with jury override, create/update/delete problems, create/update/delete test cases, review submissions, use rejudge controls, view/administer clarifications, manage admin scoreboard reveal controls.
 - What the diagram must NOT include: Scoreboard ranking, security monitoring implementation, announcements, or team-only actions.
@@ -171,10 +183,13 @@ Admin --> UC15
 - Report section: 5.1 Use Case Diagrams
 - Diagram type: UML use case diagram
 - Purpose: Show current team capabilities.
+- Description: Shows team workspace actions for login, contest/problem access, code drafts, submissions, live submission updates, scoreboard viewing, and clarifications.
+- Code alignment: `TeamWorkspace`, `CodeEditor`, `ProblemSidebar`, `SubmissionHistory`, `useSubmissionStream`, `Scoreboard`, `Clarifications`, and team API services.
+- Current status: Implemented with remaining problem-statement polish limitations.
 - Actors/components/swimlanes/entities: Team User, AuraC2 backend/frontend.
-- What the diagram should show: Log in, view active contest, view problem list, select problem, write code, save local draft, submit code, view own submission history, view submitted code, view public/team scoreboard, submit clarifications, and view own/public clarification answers.
+- What the diagram should show: Log in, view active contest, view problem list, select problem, write code, save local draft, submit code, receive live submission updates, view own submission history, view submitted code, view public/team scoreboard, submit clarifications, and view own/public clarification answers.
 - What the diagram must NOT include: Admin user management or rejudge as a team action.
-- AI image-generation prompt: Create a UML use case diagram for AuraC2 team workspace. Actor: Team User. Include implemented use cases for login, view active contest, view problems, select problem, write code, local draft persistence, submit code, view own submission history, view submitted code, view scoreboard, submit clarifications, and view clarification answers.
+- AI image-generation prompt: Create a UML use case diagram for AuraC2 team workspace. Actor: Team User. Include implemented use cases for login, view active contest, view problems, select problem, write code, local draft persistence, submit code, receive live submission updates, view own submission history, view submitted code, view scoreboard, submit clarifications, and view clarification answers.
 - PlantUML:
 
 ```plantuml
@@ -189,11 +204,12 @@ rectangle "AuraC2 Team Workspace" {
   usecase "Write Code" as T5
   usecase "Save Local Draft" as T6
   usecase "Submit Code" as T7
-  usecase "View Own Submission History" as T8
-  usecase "View Submitted Code" as T9
-  usecase "View Scoreboard" as T10
-  usecase "Submit Clarification" as T11
-  usecase "View Clarification Answers" as T12
+  usecase "Receive Live Submission Updates" as T8
+  usecase "View Own Submission History" as T9
+  usecase "View Submitted Code" as T10
+  usecase "View Scoreboard" as T11
+  usecase "Submit Clarification" as T12
+  usecase "View Clarification Answers" as T13
 }
 Team --> T1
 Team --> T2
@@ -207,6 +223,7 @@ Team --> T9
 Team --> T10
 Team --> T11
 Team --> T12
+Team --> T13
 @enduml
 ```
 
@@ -215,6 +232,9 @@ Team --> T12
 - Report section: 5.3 Activity Diagrams for Complicated Behaviors
 - Diagram type: Activity diagram with swimlanes
 - Purpose: Explain login, admin-protected registration, access-token usage, refresh-token rotation, and logout revocation.
+- Description: Shows administrator-protected team registration, login, access-token use, refresh rotation, logout revocation, and guarded no-security behavior.
+- Code alignment: `AuthController`, `AuthFacade`, `LoginService`, `RegistrationService`, `RefreshTokenService`, `LogoutService`, `JwtAuthFilter`, `SecurityConfiguration`, `CookieUtil`, and frontend auth/http utilities.
+- Current status: Implemented.
 - Actors/components/swimlanes/entities: Visitor/Admin/Team, React frontend, SecurityConfiguration, JwtAuthFilter, AuthController/AuthFacade, Login/Register/Refresh/Logout services, RefreshToken table.
 - What the diagram should show: Admin-authenticated team registration, route-level ADMIN registration guard, JWT filter processing `/auth/register`, method security, login request, password validation, access token issue, refresh cookie creation at `/auth`, protected request with Bearer token, 401/refresh flow, old refresh-token revocation, new cookie issue, logout receiving `/auth` cookie, server-side revocation, cookie clearing, and no-security profile allowed only in local/test.
 - What the diagram must NOT include: Contest lifecycle, RabbitMQ, Judge0, or unrelated admin functions.
@@ -279,6 +299,9 @@ stop
 - Report section: 5.3 Activity Diagrams for Complicated Behaviors
 - Diagram type: Conceptual state/data diagram
 - Purpose: Preserve the distinction between database status and computed current status.
+- Description: Shows persisted contest timing/status fields, lifecycle resolver inputs, and computed effective state/end/freeze outputs.
+- Code alignment: `Contest`, `ContestLifecycleService`, `ContestService.toResponse`, `ContestResponse`, and lifecycle tests.
+- Current status: Implemented.
 - Actors/components/swimlanes/entities: Contest row fields, current time, `ContestLifecycleService`, response DTO.
 - What the diagram should show: Persisted fields `status`, `startTime`, `durationMinutes`, `actualStartTime`, `pausedAt`, `totalPauseMillis`, `statusLocked`, `scoreboardFreezeMinutes`, and `penaltyMinutes`; inputs to effective state resolver; outputs `effectiveState`, `remainingMillis`, `effectiveEndTime`, `scoreboardFrozen`.
 - What the diagram must NOT include: UI buttons, RabbitMQ, or Judge0.
@@ -309,6 +332,9 @@ end note
 - Report section: 5.3 Activity Diagrams for Complicated Behaviors
 - Diagram type: Activity diagram
 - Purpose: Explain why both scheduler mechanisms exist.
+- Description: Shows exact transition scheduling, fallback periodic synchronization, row locking, persisted-state updates, and transition events.
+- Code alignment: `ContestTransitionScheduler`, `ContestStatusSyncScheduler`, `ContestStatusSyncService`, `ContestStatusSyncExecutor`, and `ContestRepository.findByIdWithLock`.
+- Current status: Implemented.
 - Actors/components/swimlanes/entities: `ContestUpdatedEvent`, `ContestTransitionScheduler`, `TaskScheduler`, `ContestStatusSyncScheduler`, `ContestStatusSyncService`, `ContestStatusSyncExecutor`, `ContestRepository`.
 - What the diagram should show: Event schedules exact next transition, task fires at start/end time, fallback scheduler periodically calls same sync service, sync executor locks row, checks effective state, updates persisted status, and publishes auto event.
 - What the diagram must NOT include: Problem/test-case data or submission judging internals.
@@ -344,6 +370,9 @@ stop
 - Report section: 5.3 Activity Diagrams for Complicated Behaviors
 - Diagram type: Sequence diagram
 - Purpose: Show snapshot, incremental update, heartbeat, cleanup, REST fallback, and polling fallback.
+- Description: Shows frontend SSE connection, backend emitter registration, snapshot/update events, heartbeat, cleanup, REST fallback, and polling fallback.
+- Code alignment: `ContestStreamController`, `ContestSseRegistry`, `ContestSseAdapter`, `SseHeartbeatScheduler`, `useContestStream`, and `ContestOverview`.
+- Current status: Implemented.
 - Actors/components/swimlanes/entities: `ContestOverview`, `useContestStream`, `EventSource`, `ContestStreamController`, `ContestSseRegistry`, `ContestSseAdapter`, `SseHeartbeatScheduler`, `ContestService`, REST contest endpoints.
 - What the diagram should show: EventSource connects, backend sends snapshot, frontend hydrates buckets, emitter is registered, `ContestUpdatedEvent` triggers the SSE adapter, frontend places contest in the correct bucket, named `ping` heartbeat keeps the connection alive, failure cleanup, REST hydration after no snapshot, and polling when closed.
 - What the diagram must NOT include: Judge0, RabbitMQ, or database schema.
@@ -459,6 +488,9 @@ stop
 - Report section: 5.3 Activity Diagrams for Complicated Behaviors
 - Diagram type: Activity diagram
 - Purpose: Show rejudge backend and admin UI behavior.
+- Description: Shows admin-triggered rejudge scope selection, eligibility filtering, after-commit republish, new judgeRunId dispatch, and stale callback rejection.
+- Code alignment: `RejudgeView`, `RejudgeController`, `RejudgeService`, `SubmissionRepository`, `SubmissionProducer`, `SubmissionConsumer`, and callback services.
+- Current status: Implemented.
 - Actors/components/swimlanes/entities: Administrator, RejudgeView, RejudgeController, RejudgeService, SubmissionRepository, SubmissionProducer, RabbitMQ, SubmissionConsumer, Judge0 callback flow.
 - What the diagram should show: Admin chooses problem/contest rejudge or force rejudge in the UI, service validates scope, selects submissions, skips active verdicts unless force is used, sets eligible submissions to `PENDING_REJUDGE`, clears aggregate execution/memory, saves, publishes after commit, consumer increments `judgeRunId` and reuses Judge0 flow, stale old callbacks rejected.
 - What the diagram must NOT include: Team rejudge access.
@@ -493,6 +525,9 @@ stop
 - Report section: 5.3 Activity Diagrams for Complicated Behaviors
 - Diagram type: Component interaction diagram
 - Purpose: Show the implemented clarification workflow.
+- Description: Shows team clarification submission, own/public answer retrieval, admin review/reply, persistence, and SSE refresh.
+- Code alignment: `ClarificationController`, `ClarificationService`, `ClarificationRepository`, `ClarificationsView`, team `Clarifications`, and `useClarificationStream`.
+- Current status: Implemented.
 - Actors/components/swimlanes/entities: Team User, Administrator, Team Clarifications UI, Admin ClarificationsView, ClarificationController, ClarificationService, ClarificationRepository, Clarification SSE stream.
 - What the diagram should show: Team UI submits and fetches own/public clarifications; admin UI fetches pending/all clarifications, replies publicly or privately, and both sides receive clarification SSE refresh events.
 - What the diagram must NOT include: Scoreboard, submission judging, or future announcements.
@@ -529,6 +564,9 @@ rectangle "Backend" as Backend {
 - Report section: 6.1 Application Architecture Design / Context Diagram
 - Diagram type: Component interaction diagram
 - Purpose: Show how contest lifecycle writes, events, schedulers, row locking, and SSE cooperate.
+- Description: Shows contest writes, domain events, after-commit listeners, exact/fallback scheduling, row-locked persisted status synchronization, and SSE publication.
+- Code alignment: `ContestController`, `ContestService`, `ContestLifecycleService`, `ContestTransitionScheduler`, `ContestStatusSyncScheduler`, `ContestStatusSyncExecutor`, `ContestSseAdapter`, and `ContestSseRegistry`.
+- Current status: Implemented.
 - Actors/components/swimlanes/entities: Admin UI, ContestController, ContestService, ContestLifecycleService, ContestRepository/PostgreSQL, ContestUpdatedEvent, ContestTransitionScheduler, ContestStatusSyncScheduler, ContestStatusSyncService, ContestStatusSyncExecutor, ContestSseAdapter, SsePublisher, ContestSseRegistry, Browser SSE clients.
 - What the diagram should show: Admin creates/changes contest, service saves and publishes event, transactional listeners run after commit, exact-time scheduler reschedules/cancels tasks, fallback sync runs periodically, executor locks row and syncs persisted state, the SSE adapter publishes updates through the shared publisher and registry.
 - What the diagram must NOT include: Submission queue or Judge0 callback internals.
@@ -806,6 +844,9 @@ end note
 - Report section: 6.2 Data Architecture Design
 - Diagram type: Mini ER diagram
 - Purpose: Focus on per-test-case result tracking and rejudge.
+- Description: Shows the submission-to-result structure used for per-test-case verdict tracking, duplicate callback idempotency, and rejudge run separation.
+- Code alignment: `Submission`, `SubmissionJudgeResult`, `SubmissionJudgeResultRepository`, `Judge0CallbackService`, and Flyway `submission_judge_results` table definition.
+- Current status: Implemented.
 - Actors/components/swimlanes/entities: Submission, SubmissionJudgeResult, Problem, TestCase.
 - What the diagram should show: Submission has `judgeRunId`; each result has `judgeRunId`, `testCaseNumber`, verdict, time, memory; unique constraint on `(submission_id, judge_run_id, test_case_number)`; TestCase is not directly referenced by foreign key.
 - What the diagram must NOT include: User account or contest lifecycle details unless needed for foreign-key context.

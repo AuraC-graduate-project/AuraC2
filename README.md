@@ -1,940 +1,218 @@
-# AuraC² Backend — Online Programming Contest Control System
+# AuraC2 - Aura Contest Control
 
-AuraC² is the backend of an online programming contest platform designed for university-level competitive programming contests.  
-It provides the core infrastructure for:
+AuraC2 is a university programming contest-control system. It combines a Spring Boot backend, a React/Vite frontend, PostgreSQL persistence, RabbitMQ queueing, and Judge0 execution to support ICPC-style contest administration and team submissions.
 
-- authentication and role-based access control
-- contest lifecycle management
-- problem and test case management
-- asynchronous code submission processing
-- Judge0-based remote execution
-- persistent submission tracking
+The current implementation is a modular monolith: backend packages are organized by domain (`authServer`, `contestServer`, `submissionServer`, and shared utilities), but they run in one Spring Boot application and share one database.
 
-The system is designed to grow beyond a simple CRUD backend into a real contest-control platform with clear separation between authentication, contest management, and submission execution pipelines.
+## Current Source Of Truth
 
----
+Use these active files for current implementation documentation:
 
-## Overview
+- `README.md`
+- `UI/README.md`
+- `docs/report-rebuild/analysis-plan.md`
+- `docs/report-rebuild/report-draft-google-docs.md`
+- `docs/report-rebuild/diagram-prompts.md`
 
-This backend is organized into three main domains:
+Historical reports, old feature writeups, task prompts, and duplicate PDFs are archived under `docs/archive/`. Archived files are historical source material only and should not be treated as current implementation truth.
 
-### 1. Authentication Server
-Handles:
-- admin-protected team registration
-- login
-- JWT access token generation
-- refresh token rotation
-- logout
-- role-based authorization
+## Technology Stack
 
-### 2. Contest Server
-Handles:
-- contest creation
-- contest status transitions
-- problem management
-- test case management
-- admin user management
-
-### 3. Submission Server
-Handles:
-- code submissions
-- RabbitMQ-based asynchronous dispatch
-- Judge0 execution requests
-- callback processing
-- verdict persistence
-
----
-
-## Current Feature Status
-
-| Feature | Status |
+| Layer | Current implementation |
 |---|---|
-| User registration | Implemented |
-| Login with JWT access token | Implemented |
-| Refresh token via cookie | Implemented |
-| Logout + token revocation | Implemented |
-| Role-based authorization | Implemented |
-| Contest creation and status transitions | Implemented |
-| Problem management | Implemented |
-| Test case management | Implemented |
-| Submission entity and persistence | Implemented |
-| RabbitMQ submission dispatch | Implemented |
-| Judge0 submission sending | Implemented |
-| Judge0 callback handling | Implemented |
-| Problem-level compare policies | Implemented for exact, normalized text, token-normalized, and float-tolerance fixed outputs |
-| Custom output validators | Implemented through Judge0-sandboxed checker execution for multiple valid outputs |
-| Reference-solution oracle and generated tests | Implemented as an admin-triggered deterministic extension with counterexample promotion |
-| Per-test-case final aggregated tracking | Implemented for judge runs |
-| ICPC-style scoreboard / ranking | Implemented |
-| Real-time scoreboard SSE | Implemented |
-| Scoreboard freeze / reveal | Implemented |
-| Clarifications | Implemented |
-| Announcements | Not implemented yet |
-| Real-time contest updates | Implemented |
-
----
-
-## Architecture
-
-The codebase is split into domain-oriented packages:
-
-```text
-src/main/java/com/server/contestControl
-├── authServer
-│   ├── config
-│   ├── controller
-│   ├── dto
-│   ├── entity
-│   ├── enums
-│   ├── exception
-│   ├── filter
-│   ├── repository
-│   ├── service
-│   └── util
-│
-├── contestServer
-│   ├── controller
-│   ├── dto
-│   ├── entity
-│   ├── enums
-│   ├── repository
-│   ├── scoreboard
-│   └── service
-│
-├── submissionServer
-│   ├── config
-│   ├── controller
-│   ├── dto
-│   ├── entity
-│   ├── enums
-│   ├── queue
-│   │   ├── submission
-│   │   └── result
-│   ├── repository
-│   ├── service
-│   └── util
-│
-└── JwtAuthServerApplication.java
-```
-
-This separation makes the project easier to reason about as it grows:
-- **authServer** owns identity and token logic
-- **contestServer** owns contest-related business rules
-- **contestServer.scoreboard** owns deterministic ICPC scoring, freeze/reveal state, and scoreboard SSE
-- **submissionServer** owns asynchronous judging flow
-
-## Real-Time Scoreboard
-
-AuraC2 now includes a real-time ICPC-style scoreboard with admin and public/team views.
-
-- Public/team snapshot: `GET /api/scoreboard/contests/{contestId}`
-- Admin snapshot: `GET /api/admin/scoreboard/contests/{contestId}`
-- Public/team stream: `GET /api/scoreboard/contests/{contestId}/stream`
-- Admin stream: `GET /api/admin/scoreboard/contests/{contestId}/stream`
-- Admin reveal endpoints: `/api/admin/scoreboard/contests/{contestId}/reveal/*`
-
-Every finalized submission publishes a scoreboard domain event. Accepted submissions immediately recalculate solved counts, penalties, first-to-solve cells, ranks, and row-level SSE updates. Public/team streams respect freeze and reveal state; admin streams remain live.
-
-Contest timing and scoreboard visibility are pause-aware. Submissions are accepted only while an effective `RUNNING` contest exists; upcoming, paused, and ended contests reject new submissions, and the exact effective end instant is treated as ended. ICPC penalties count wrong attempts before the first accepted submission according to the configured contest penalty, while wrong attempts after the first accepted submission do not add penalty. Public frozen scoreboards hide cells at or after the freeze boundary until reveal; admin views remain live.
-
-Full API, SSE, scoring, reveal, testing, and migration details are in [`docs/scoreboard-feature-documentation.md`](docs/scoreboard-feature-documentation.md).
-
----
-
-## Core Domain Model
-
-### User
-Represents a platform user authenticated through Spring Security.
-
-Important fields:
-- `id`
-- `username`
-- `password`
-- `role`
-- refresh token collection
-
-Current roles include:
-- `ADMIN`
-- `TEAM`
-
-### RefreshToken
-Stored in the database instead of trusting refresh tokens blindly on the client side.
-
-Important fields:
-- token hash
-- device IP
-- creation / expiration timestamps
-- revoked flag
-- owning user
-
-This allows:
-- revocation
-- rotation
-- stronger control over session lifecycle
-
-### Contest
-Represents a programming contest.
-
-Important fields:
-- title
-- description
-- start time
-- duration
-- status
-
-Current contest statuses:
-- `UPCOMING`
-- `RUNNING`
-- `PAUSED`
-- `ENDED`
-
-### Problem
-Represents a contest problem linked to a specific contest.
-
-Important fields:
-- title
-- description
-- time limit
-- memory limit
-- difficulty
-- compare policy (`EXACT`, `NORMALIZED_TEXT`, `TOKEN_NORMALIZED`, `FLOAT_TOLERANCE`)
-- floating-point absolute/relative epsilon when `FLOAT_TOLERANCE` is used
-- validation mode (`BUILTIN_COMPARE_POLICY` or `CUSTOM_VALIDATOR`)
-- validator language ID, enabled flag, and validator source hash when a custom validator is configured
-
-Reference solutions, input generators, input validators, generated test batches, and counterexamples are stored in separate admin-only oracle tables rather than being exposed through problem responses.
-
-### TestCase
-Represents an input/output pair linked to a problem.
-
-Important fields:
-- input data
-- expected output
-- visibility flag (`isPublic`)
-
-Private test cases are used by the judging pipeline but are not exposed through TEAM-facing APIs. TEAM users can only fetch public/sample test cases through the dedicated sample endpoint.
-
-### Submission
-Represents a participant submission.
-
-Important fields:
-- contest
-- problem
-- user
-- source code
-- language
-- verdict
-- execution time
-- memory usage
-- creation timestamp
-
-Current verdict flow begins with `PENDING`, then moves through asynchronous execution states such as `RUNNING`, and finally reaches a final verdict.
-
----
-
-## Authentication Flow
-
-The authentication design is more mature than a basic “login and return token” flow.
-
-### Registration
-A user can register with:
-- username
-- password
-- role
-
-The password is encoded before persistence.
-
-### Login
-On successful login:
-- credentials are validated
-- an access token is generated
-- a refresh token is generated
-- the refresh token is hashed and stored in the database
-- the refresh token is returned in an HTTP cookie
-
-### Refresh
-When the client requests token refresh:
-- the refresh token is extracted from the cookie
-- it is validated
-- ownership and revocation are checked
-- the old refresh token is revoked
-- a new access token + refresh token pair is issued
-
-This gives you **refresh token rotation**, which is stronger than naive long-lived session handling.
-
-### Logout
-On logout:
-- the refresh token is extracted
-- validated
-- revoked
-- removed from the cookie
-- security context is cleared
-
----
-
-## Security Model
-
-Security is implemented with Spring Security using a custom JWT filter.
-
-### Public routes
-The following categories are exposed publicly:
-- `POST /auth/login`
-- `POST /auth/refresh`
-- `POST /auth/logout`
-- Swagger / OpenAPI documentation
-- `GET /api/contest/active`, `/upcoming`, `/paused`, and `/ended`
-- public scoreboard snapshot and stream routes under `/api/scoreboard/**`
-- public answered clarifications under `/api/clarifications/public/**`
-- Judge0 callback routes under `/api/callback/judge0/**`
-
-`POST /auth/register` is not public. It is protected by the security filter chain and by method-level `ADMIN` authorization, and the JWT filter intentionally processes bearer tokens on that route.
-
-### Protected routes
-Role restrictions include:
-- contest mutation endpoints → `ADMIN`
-- problem/test case creation, update, and delete → `ADMIN`
-- submissions → `TEAM` or `ADMIN`
-- admin user management → `ADMIN`
-- admin scoreboard/reveal controls → `ADMIN`
-- clarification submission/my routes → `TEAM`
-- clarification admin reply/review routes → `ADMIN`
-
-The application is stateless:
-- CSRF disabled
-- form login disabled
-- HTTP basic disabled
-- session creation policy set to `STATELESS`
-
-### Route authorization map
-
-| Endpoint group | Access policy |
-|---|---|
-| `POST /auth/login`, `/auth/refresh`, `/auth/logout` | Public authentication/session endpoints; refresh/logout use the HTTP-only refresh cookie. |
-| `POST /auth/register` | `ADMIN` only; bearer JWT is processed before method security. |
-| `GET /api/contest/active`, `/upcoming`, `/paused`, `/ended` | Public contest read endpoints. |
-| `/api/contest/**` mutation routes and `/api/contest/stream` | `ADMIN` only. |
-| `GET /api/problems/**` | `TEAM` or `ADMIN`. |
-| `POST`, `PUT`, `DELETE /api/problems/**` | `ADMIN` only. |
-| `GET /api/testcases/problem/{problemId}` | `ADMIN` only; returns all public and private test cases, including expected output. |
-| `GET /api/testcases/public/problem/{problemId}` | `TEAM` or `ADMIN`; returns only public/sample test cases. |
-| `POST`, `PUT`, `DELETE /api/testcases/**` | `ADMIN` only. |
-| `/api/submissions/**` | `TEAM` or `ADMIN`; team access to submission details is owner-checked in the service. |
-| `/api/admin/**` | `ADMIN` only, including user management, rejudge, and admin scoreboard controls. |
-| `/api/scoreboard/**` | Public scoreboard snapshot and stream. |
-| `/api/clarifications/public/**` | Public answered clarifications. |
-| `/api/clarifications/my/**`, `POST /api/clarifications` | `TEAM` only. |
-| `/api/clarifications/admin/**` | `ADMIN` only. |
-| `/api/callback/judge0/**` | Externally reachable callback endpoint; requests must pass HMAC signature verification before state changes. |
-
-### no-security profile
-
-The `no-security` profile disables the main security filter chain and is only allowed together with a local development or test profile. Startup fails if `no-security` is active by itself or with `prod`.
-
----
-
-## Submission Pipeline
-
-This is the most important architectural part of the system.
-
-AuraC² does not execute code synchronously inside the request thread.  
-Instead, it uses **RabbitMQ** to decouple submission intake from execution.
-
-### Flow
-
-1. A user submits source code through `/api/submissions`
-2. The submission is saved in PostgreSQL
-3. After the database transaction commits, the submission ID is published to RabbitMQ
-4. A RabbitMQ consumer loads the submission
-5. All test cases for the problem are fetched
-6. Each test case is sent to Judge0 asynchronously
-7. Judge0 calls back the backend for each test case result
-8. The backend updates the submission verdict, execution time, and memory usage
-
-This design prevents the API from blocking while external execution is happening.
-
----
-
-## Why RabbitMQ is justified here
-
-RabbitMQ is not used as decoration.  
-It solves a real architectural problem in contest systems.
-
-### Without RabbitMQ
-The request thread would need to:
-- receive the code
-- send execution requests
-- wait on external processing
-- manage execution timing issues
-
-That becomes fragile and hard to scale.
-
-### With RabbitMQ
-The backend can:
-- persist the submission immediately
-- return quickly
-- process execution asynchronously
-- isolate execution pressure from API responsiveness
-- prepare for future scaling into separate workers
-
-Even on one server, this is still a meaningful design because asynchronous judging is a naturally queued workload.
-
----
-
-## Judge0 Integration
-
-Judge0 integration is already present in the uploaded source.
-
-### Current behavior
-For each test case, the backend sends:
-- source code
-- mapped language ID
-- stdin
-- expected output for `EXACT` problems
-- CPU time limit when configured on the problem
-- memory limit when configured on the problem
-- signed callback URL
-
-`EXACT` is the default for existing and newly omitted problem settings, preserving the original Judge0
-`expected_output` path. For `NORMALIZED_TEXT`, `TOKEN_NORMALIZED`, and `FLOAT_TOLERANCE`, the backend omits
-Judge0 `expected_output`, waits for successful execution, then compares Judge0 `stdout` to the hidden
-`TestCase.expectedOutput` server-side. Execution errors such as compilation errors, runtime errors, TLE, and
-Judge0 internal errors are not converted into output-comparison failures.
-
-Problems can also use `validationMode: CUSTOM_VALIDATOR` for deterministic multiple-valid-output checking.
-In that mode, the team program still executes in Judge0 first. Only if that execution succeeds does the backend
-send a separate checker program to Judge0 with a length-prefixed contract containing the hidden test input,
-hidden expected output, and team stdout. The checker must print a first nonblank decision line of `ACCEPT`
-or `REJECT`/`WRONG_ANSWER`. Checker crashes, timeouts, invalid output, or Judge0 dispatch failures become
-`INTERNAL_ERROR`, never `ACCEPTED`. Validator source is accepted only through admin problem create/update
-payloads and is not exposed in problem responses.
-
-Judge0 then calls back:
-
-```text
-/api/callback/judge0/{submissionId}/{judgeRunId}/{testCaseNumber}?signature=...
-```
-
-The callback handler:
-- verifies the HMAC signature before changing submission state
-- resolves the submission
-- maps Judge0 status to internal verdict
-- applies the problem compare policy when backend-side comparison is required
-- invokes a configured custom validator through Judge0 after successful team execution
-- stores execution time and memory usage
-- stores one result per submission, judge run, and test case
-- waits until all test case callbacks for the current judge run are received
-- calculates the final verdict from the completed run, so out-of-order callbacks cannot mark a submission accepted early
-
-### Important note
-The current implementation is functional but still intentionally deterministic.
-It supports exact Judge0 `expected_output`, normalized text, token-normalized output, numeric token comparison with absolute/relative epsilon, and Judge0-sandboxed custom output validators for multiple valid outputs.
-It also includes an admin-triggered reference-solution oracle and generated-test extension. Administrators can configure a reference solution, input generator, and optional input validator, all executed through Judge0 with bounded resources. The generator receives a deterministic seed/test-number stdin contract, the validator may accept or reject generated input, and the reference solution produces the stored reference output.
-
-The primary Phase 8 workflow is pre-contest test preparation: admins generate candidate tests without any team submission, review generated input/reference output, then promote selected or all valid generated cases into official hidden `TestCase` records. Normal submissions are then judged against those promoted hidden tests through the existing judging pipeline. The secondary workflow is counterexample search: admins may enter a specific submission ID to run that submission against generated candidates and store concrete failing inputs as counterexamples. Counterexamples can also be promoted into hidden official tests.
-
-Generated tests do not prove correctness for all inputs. Interactive judging and ML verdicts are not implemented, and ML is not used in the verdict path.
-
-That means the system already supports real execution flow, but there is still room to evolve toward more detailed judging analytics.
-
----
-
-## REST API Summary
-
-### Authentication
-
-#### Register
-```http
-POST /auth/register
-```
-
-Example body:
-```json
-{
-  "username": "team1",
-  "password": "123456"
-}
-```
-
-This route is for administrators creating TEAM accounts. Anonymous users and TEAM users cannot register accounts.
-
-#### Login
-```http
-POST /auth/login
-```
-
-Example body:
-```json
-{
-  "username": "team1",
-  "password": "123456"
-}
-```
-
-#### Refresh token
-```http
-POST /auth/refresh
-```
-
-Uses the refresh token from cookie.
-
-#### Logout
-```http
-POST /auth/logout
-```
-
----
+| Backend | Spring Boot 3.4.x, Java 21 |
+| Frontend | React 18, TypeScript, Vite, Tailwind |
+| Database | PostgreSQL |
+| Migrations | Flyway V1-V5 with Hibernate schema validation |
+| Queue | RabbitMQ submission queue |
+| Judge | Judge0 API and signed callback endpoint |
+| Auth | JWT access tokens and HTTP-only refresh-token cookie flow |
+| Real-time updates | Server-sent events for contest, submissions, clarifications, and scoreboard |
+
+## Implemented Features
+
+### Authentication And Roles
+
+- Login with JWT access token.
+- Refresh-token persistence, rotation, logout revocation, and cookie clearing.
+- Administrator-protected team registration.
+- `ADMIN` and `TEAM` roles with route-level and method-level authorization.
+- Guarded `no-security` profile for local/test use only.
 
 ### Contest Management
 
-#### Create contest
-```http
-POST /api/contest
-```
-
-#### Start contest
-```http
-PUT /api/contest/{id}/start
-```
-
-#### Pause contest
-```http
-PUT /api/contest/{id}/pause
-```
-
-#### End contest
-```http
-PUT /api/contest/{id}/end
-```
-
-#### Get running contest
-```http
-GET /api/contest/active
-```
-
-#### Get upcoming contest
-```http
-GET /api/contest/upcoming
-```
-
-#### Get paused contest
-```http
-GET /api/contest/paused
-```
-
-#### Get ended contests
-```http
-GET /api/contest/ended
-```
-
----
-
-### Problem Management
-
-#### Create problem
-```http
-POST /api/problems
-```
-
-Problem create/update payloads accept `comparePolicy`. Omitted values default to `EXACT`. `FLOAT_TOLERANCE`
-requires at least one positive epsilon field: `floatAbsoluteEpsilon` or `floatRelativeEpsilon`.
-They also accept optional custom-validator configuration for administrators:
-- `validationMode`: `BUILTIN_COMPARE_POLICY` or `CUSTOM_VALIDATOR`
-- `validatorEnabled`
-- `validatorLanguageId`
-- `validatorSource`
-
-Problem responses return validator mode, enabled state, language ID, and source hash, but never return
-`validatorSource`.
-
-#### Get one problem
-```http
-GET /api/problems/{id}
-```
-
-#### Get all contest problems
-```http
-GET /api/problems/contest/{id}
-```
-
----
-
-### Test Case Management
-
-#### Add test case
-```http
-POST /api/testcases/{problemId}
-```
-
-#### Get all test cases for a problem (admin)
-```http
-GET /api/testcases/problem/{problemId}
-```
-
-#### Get public/sample test cases for a problem
-```http
-GET /api/testcases/public/problem/{problemId}
-```
-
-TEAM users should use the public/sample endpoint. It does not return private hidden test cases, private input, or private expected output.
-
----
-
-### Submission Management
-
-#### Submit code
-```http
-POST /api/submissions
-```
-
-#### Get one submission
-```http
-GET /api/submissions/{id}
-```
-
-#### Get my submissions for a problem
-```http
-GET /api/submissions/my?problemID={id}
-```
-
-#### Get all my submissions
-```http
-GET /api/submissions/my/all
-```
-
----
-
-### Admin Endpoints
-
-#### Get all users
-```http
-GET /api/admin/users
-```
-
-#### Update username
-```http
-PUT /api/admin/users/{userId}/name
-```
-
-#### Update password
-```http
-PUT /api/admin/users/{userId}/password
-```
-
-#### Delete user
-```http
-DELETE /api/admin/users/{userId}
-```
-
-#### Get all submissions
-```http
-GET /api/admin/users/submissions
-```
-
-### Admin Rejudge Endpoints
-
-All rejudge endpoints require the `ADMIN` role. Rejudge reuses the normal RabbitMQ submission queue and Judge0 callback flow.
-
-#### Rejudge selected submissions
-```http
-POST /api/admin/rejudge/submissions
-```
-
-Example body:
-```json
-{
-  "submissionIds": [1, 2, 3]
-}
-```
-
-#### Rejudge all submissions for a problem
-```http
-POST /api/admin/rejudge/problem/{problemId}
-```
-
-#### Rejudge all submissions in a contest
-```http
-POST /api/admin/rejudge/contests/{contestId}
-```
-
-### Admin Oracle / Generated Test Endpoints
-
-All oracle endpoints require the `ADMIN` role and are under `/api/admin/oracle/**`. Source code for reference solutions, input generators, and input validators is accepted only through admin configuration requests and is not exposed to TEAM users.
-
-The admin Problems view includes a Hybrid Oracle and Generated Tests panel with two workflows:
-- Test Preparation: configure programs, generate candidate tests, and promote generated cases into official hidden tests.
-- Counterexample Search: optionally analyze one existing submission and store concrete failing inputs for review/promotion.
-
-```http
-POST /api/admin/oracle/problems/{problemId}/reference-solution
-POST /api/admin/oracle/problems/{problemId}/input-generator
-POST /api/admin/oracle/problems/{problemId}/input-validator
-POST /api/admin/oracle/problems/{problemId}/generated-batches
-GET  /api/admin/oracle/problems/{problemId}/generated-batches
-GET  /api/admin/oracle/problems/{problemId}/counterexamples
-POST /api/admin/oracle/generated-test-cases/{generatedTestCaseId}/promote
-POST /api/admin/oracle/generated-test-cases/promote-selected
-POST /api/admin/oracle/generated-batches/{batchId}/promote-valid
-POST /api/admin/oracle/counterexamples/{counterexampleId}/promote
-```
-
-Generated batches store hidden generated input and reference output for admin review. Batch status is `COMPLETED`, `PARTIAL`, or `FAILED` depending on how many requested generated cases became valid generated tests. Promoting a generated case or counterexample creates a private official test case with `isPublic=false`; existing rejudge endpoints can then be used to apply that new hidden test to existing submissions.
-
----
-
-## Configuration
-
-The uploaded source includes configuration for:
-- PostgreSQL
-- RabbitMQ
-- Gmail SMTP
-- JWT secrets
-- Judge0 endpoint
-- Swagger UI
-
-### Example application.yml shape
-
-```yaml
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/authserver
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
-
-  jpa:
-    hibernate:
-      ddl-auto: validate
-
-  rabbitmq:
-    host: ${RABBIT_HOST}
-    port: ${RABBIT_PORT}
-    username: ${RABBIT_USERNAME}
-    password: ${RABBIT_PASSWORD}
-
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${SMTP_EMAIL}
-    password: ${SMTP_PASS}
-
-jwt:
-  access-secret: ${JWT_ACCESS_SECRET}
-  refresh-secret: ${JWT_REFRESH_SECRET}
-  expiration: 900000
-  refresh-expiration: 604800000
-
-judge0:
-  url: ${JUDGE0_URL}
-  callback: ${JUDGE0_CALLBACK_URL}
-  callback-secret: ${JUDGE0_CALLBACK_SECRET}
-  validator:
-    cpu-time-limit-seconds: ${JUDGE0_VALIDATOR_CPU_TIME_LIMIT_SECONDS}
-    memory-limit-kilobytes: ${JUDGE0_VALIDATOR_MEMORY_LIMIT_KILOBYTES}
-  oracle:
-    cpu-time-limit-seconds: ${JUDGE0_ORACLE_CPU_TIME_LIMIT_SECONDS}
-    memory-limit-kilobytes: ${JUDGE0_ORACLE_MEMORY_LIMIT_KILOBYTES}
-```
-
-### Database migrations
-
-The normal application profile is migration-managed:
-- Flyway is enabled by default.
-- The baseline schema lives under `backend/src/main/resources/db/migration`.
-- Hibernate `ddl-auto` defaults to `validate`, so normal local/dev startup no longer drops and recreates tables.
-- Tests keep `ddl-auto: create-drop` with Flyway disabled through `backend/src/test/resources/application.yml`.
-
-For a clean local database, start PostgreSQL, create or reset the `authserver` database, then run the backend. Flyway applies the baseline migration automatically. To reset local data, drop and recreate only your local development database, then restart the backend.
-
-If you already have an existing non-empty local schema from old `create-drop` runs, either reset the database or explicitly use Flyway baseline settings for that local environment. Do not enable baseline-on-migrate casually in production without reviewing the existing schema.
-
----
-
-## Important Security Note
-
-The uploaded `application.yml` contains real-looking secrets and credentials.  
-These should **not** remain committed in a public repository.
-
-Move them to:
-- environment variables
-- `.env`
-- Docker secrets
-- deployment platform secret storage
-
-At minimum, rotate:
-- database password
-- SMTP app password
-- JWT secrets
-- any exposed public callback URLs
-
----
-
-## Running the Project
-
-### Requirements
+- Contest create/update and public status buckets for active, upcoming, paused, and ended contests.
+- Manual start, pause, resume, and end.
+- Jury override for early end.
+- Effective state calculation using schedule, actual start time, pause time, and duration.
+- Exact-time transition scheduler plus fallback synchronization.
+- Contest lifecycle SSE with snapshot, update, heartbeat, and frontend fallback polling.
+
+### Problems And Test Cases
+
+- Admin problem create/read/update/delete.
+- Admin test-case create/read/update/delete.
+- Hidden/private test cases remain admin/internal only.
+- TEAM users can fetch only public/sample test cases through the public sample endpoint.
+- Private inputs and expected outputs are not exposed to TEAM APIs.
+- Problem deletion is blocked when submissions, clarifications, scoreboard reveal cells, or generated oracle history depend on the problem.
+
+### Submissions And Judging
+
+- Submission creation validates authenticated user, active running contest, and problem membership.
+- New submission messages are published to RabbitMQ only after the database transaction commits.
+- RabbitMQ consumer locks/claims queueable submissions to reduce duplicate dispatch.
+- Judge0 receives one request per test case.
+- Judge0 callback URLs include `submissionId`, `judgeRunId`, `testCaseNumber`, and an HMAC signature.
+- Missing or invalid callback signatures are rejected before state changes.
+- `judgeRunId` protects rejudge runs from stale callbacks.
+- Per-test-case `SubmissionJudgeResult` rows are stored idempotently with a unique `(submission_id, judge_run_id, test_case_number)` constraint.
+- Zero-test submissions become `INTERNAL_ERROR` rather than remaining `RUNNING`.
+- Final verdict aggregation waits for expected terminal results and uses the earliest non-accepted test case by test-case number.
+
+### Compare Policies
+
+Problem-level compare policies are implemented:
+
+- `EXACT`: default. Keeps the Judge0 `expected_output` path for backward compatibility.
+- `NORMALIZED_TEXT`: backend compares decoded Judge0 stdout with normalized text handling.
+- `TOKEN_NORMALIZED`: backend compares whitespace-separated tokens.
+- `FLOAT_TOLERANCE`: backend compares numeric tokens with absolute and relative epsilon values.
+
+Execution errors bypass output comparison. Hidden expected output is not exposed to TEAM users.
+
+### Custom Output Validators
+
+Problems can use `CUSTOM_VALIDATOR` mode for deterministic special checking:
+
+- Validator source/configuration is admin-only.
+- Validator code is executed through Judge0, not inside the backend JVM or host shell.
+- The checker receives hidden input, reference output, and team output through a bounded contract.
+- Checker crashes, timeouts, invalid output, or Judge0 failures map to a safe internal judging error.
+- Interactive problems are not supported.
+
+### Reference Oracle And Generated Tests
+
+AuraC2 includes an admin-only deterministic hybrid judging extension:
+
+1. Test Preparation:
+   - Admin configures a reference solution, input generator, and optional input validator.
+   - Generator, validator, and reference solution execution go through Judge0.
+   - Generated cases are candidates until promoted.
+   - Admin can promote one, selected, or all valid generated cases to official hidden `TestCase` records.
+   - Promoted hidden tests are used by normal future submissions and rejudge.
+
+2. Counterexample Search:
+   - Admin may run generated tests against one existing submission.
+   - Mismatches store concrete counterexamples with generated input, reference output, team output, and diagnostics.
+   - Admin can promote counterexamples to hidden official test cases.
+
+Generated tests help discover bugs but do not prove correctness. ML is not used as a verdict source.
+
+### Rejudge
+
+- Admin can rejudge selected submissions, all submissions for a problem, or all submissions for a contest.
+- Force rejudge is supported for active or final submissions.
+- Rejudge publish happens after commit.
+- Old results are superseded by a new `judgeRunId`; stale callbacks are ignored.
+- Admin UI includes rejudge workflows.
+
+### Scoreboard And Clarifications
+
+- ICPC-style scoreboard ranking with solved counts, penalties, first-to-solve cells, public/admin snapshots, and SSE.
+- Freeze and reveal workflows are implemented with admin reveal controls.
+- Clarifications are wired in backend and frontend:
+  - TEAM users can submit questions and view own/public answers.
+  - ADMIN users can review and reply publicly or privately.
+  - Clarification SSE refreshes admin/team views.
+
+## Known Limitations
+
+- Announcements are not implemented.
+- Security monitoring is a placeholder UI without backend support.
+- Dashboard statistics endpoints are not implemented.
+- Result queue classes exist as scaffold, but verdict delivery currently uses submission SSE rather than a result queue.
+- There is no explicit contest participation/join workflow; teams are users with role `TEAM`.
+- Full LAN/offline deployment requires an explicitly configured local Judge0 instance.
+- Interactive problems are not supported.
+- ML is never used to judge submissions.
+- Generated tests and counterexamples are deterministic aids, not mathematical proof of correctness.
+
+## Local Development
+
+### Prerequisites
+
 - Java 21
-- PostgreSQL
-- RabbitMQ
 - Maven
-- internet access to reach Judge0
-- a public callback URL for Judge0 responses during local development
+- Node.js and npm
+- Docker Desktop, if using Docker for PostgreSQL/RabbitMQ
+- Judge0 access. For public Judge0 callbacks from local development, use a tunnel such as ngrok and set `JUDGE0_CALLBACK_URL`.
 
-`docker-compose.yml` currently runs PostgreSQL and RabbitMQ as active services. Backend and frontend service definitions are present but commented out; run them separately or uncomment/configure those services for a full Compose stack.
+### Start Infrastructure
 
-### Start RabbitMQ with Docker
+The checked-in `docker-compose.yml` actively runs PostgreSQL and RabbitMQ. Backend and frontend service definitions are present but commented out.
+
+Create a local `.env` from `.env.example` or set the required `POSTGRES_*` and `RABBITMQ_*` variables before starting Compose.
+
 ```bash
-docker run -d \
-  --hostname rabbit \
-  --name rabbitmq \
-  -p 5672:5672 \
-  -p 15672:15672 \
-  rabbitmq:3-management
+docker compose up -d
 ```
 
-RabbitMQ dashboard:
-```text
-http://localhost:15672
-```
+PostgreSQL listens on `localhost:5432`, and RabbitMQ listens on `localhost:5672` with the management UI on `localhost:15672`.
 
-Default credentials:
-```text
-guest / guest
-```
+### Run Backend
 
-### Expose local callback endpoint
-Because Judge0 needs to call your backend, local development usually requires a public tunnel such as ngrok.
-The callback endpoint remains externally reachable, but callbacks are accepted only when the URL contains a valid HMAC signature generated by the backend.
-
-Example:
 ```bash
-ngrok http 8080
+mvn -f backend/pom.xml spring-boot:run
 ```
 
-Then configure:
-```yaml
-judge0:
-  callback: https://your-ngrok-url/api/callback/judge0
-  callback-secret: ${JUDGE0_CALLBACK_SECRET}
-```
+Important environment variables:
 
-### Run the application
+- `SPRING_DATASOURCE_URL`
+- `SPRING_DATASOURCE_USERNAME`
+- `SPRING_DATASOURCE_PASSWORD`
+- `SPRING_RABBITMQ_HOST`
+- `JUDGE0_URL`
+- `JUDGE0_CALLBACK_URL`
+- `JUDGE0_CALLBACK_SECRET`
+- `JWT_ACCESS_SECRET`
+- `JWT_REFRESH_SECRET`
+
+The default profile is `dev`. Normal startup uses Flyway migrations and `spring.jpa.hibernate.ddl-auto=validate` by default. Do not rely on `create-drop` for normal development.
+
+### Run Frontend
+
 ```bash
-mvn spring-boot:run
+cd UI
+npm install
+npm run dev
 ```
 
----
+Open the URL printed by Vite.
 
-## Design Decisions Reflected in the Code
+## Database Migrations
 
-### 1. Domain separation over one giant package
-Authentication, contest logic, and submission execution are split into separate domains.  
-This reduces coupling and makes future extension cleaner.
+Flyway migrations are under `backend/src/main/resources/db/migration`:
 
-### 2. JWT access token + refresh token rotation
-The project does not rely on a single forever-valid token.  
-Refresh tokens are persisted, hashed, and revocable.
+- `V1__baseline_schema.sql`
+- `V2__problem_compare_policy.sql`
+- `V3__problem_custom_validators.sql`
+- `V4__reference_oracle_generated_tests.sql`
+- `V5__generated_test_batch_partial_status.sql`
 
-### 3. Database-backed truth + queue-based execution dispatch
-Submissions are stored before execution dispatch.  
-RabbitMQ is used for delivery, not as the only source of truth.
+Manual repair scripts, if any, belong outside `db/migration` and are not part of the official forward-only migration history.
 
-### 4. Role-aware API design
-Administrative actions are separated from team actions through method-level and route-level authorization.
+To reset a local development database intentionally, stop the application, reset the PostgreSQL volume or schema, then restart so Flyway can apply V1-V5 from a clean state. This is a local reset operation, not the normal startup workflow.
 
-### 5. External execution through Judge0
-Instead of embedding compilers and sandboxes directly into the backend, the system delegates code execution to Judge0, reducing infrastructure complexity in this phase.
+## Verification Commands
 
----
-
-## Current Limitations
-
-Based on the uploaded source, the following areas still look incomplete or early-stage:
-- result queue producer/consumer classes are still empty
-- some exceptions are still generic `RuntimeException`
-- refresh token security is stronger than basic auth systems, but broader audit/session management can still be expanded
-- generated-test oracle workflows now have a minimal admin UI, but the experience can still be expanded with richer batch filtering and code-editor ergonomics
-- generated tests improve bug discovery but do not prove correctness, and interactive judging/ML verdicts remain unsupported
-
----
-
-## Suggested Next Milestones
-
-### Contest Experience
-- contest announcements
-- richer scoreboard analytics and export/reporting
-- explicit contest participation/join workflow
-
-### Judging Improvements
-- richer verdict history
-- retry and failure recovery logic
-- worker observability and metrics
-
-### Security & Production Readiness
-- externalized secrets
-- production profile
-- structured logging
-- better exception taxonomy
-- deployment pipeline
-
-### Platform Growth
-- WebSocket live updates
-- team registration workflow
-- plagiarism detection integration
-- multi-contest history
-- organization / university-level administration
-
----
-
-## Project Positioning
-
-AuraC² is already beyond a basic student CRUD project.
-
-What makes it stronger is not just the number of entities, but the fact that it already includes:
-- stateless JWT security
-- refresh token lifecycle handling
-- role-based API protection
-- contest state management
-- asynchronous submission dispatch
-- real external judge integration
-- callback-driven verdict updates
-
-That makes it a solid foundation for a real online judge system rather than a mock academic prototype.
-
----
-
-## Disclaimer
-
-This README is based on the uploaded source tree provided in this review.  
-If your repository also contains additional root files such as:
-- `pom.xml`
-- Docker Compose
-- frontend code
-- deployment configs
-- migration scripts
-
-then the final README can be refined further to document those parts precisely.
-
-
----
-
-## IntelliJ / Project Structure
-
-Open the repository root so you can see:
-
-```text
-AuraC2/
-├── UI/
-├── backend/
-└── docs/
+```bash
+mvn -q -f backend/pom.xml -DskipTests compile
+mvn -q -f backend/pom.xml test
+cd UI
+npm run build
 ```
 
-Then import the backend with Maven:
+## Fair Comparison Note
 
-1. Open the root folder in IntelliJ.
-2. Right-click `backend/pom.xml`.
-3. Choose **Add as Maven Project**.
-4. Use **JDK 21** to match the Maven configuration.
-
-If IntelliJ still shows old module names, delete `.idea` and any `*.iml` files, then reopen the project.
+AuraC2 should be described as a university contest-control system with selected ICPC-style features. Mature systems such as DOMjudge and PC2 remain broader contest infrastructure projects. AuraC2 documentation should not claim superiority over DOMjudge or imply unsupported features such as interactive judging, proof of correctness, or ML-based verdicts.
