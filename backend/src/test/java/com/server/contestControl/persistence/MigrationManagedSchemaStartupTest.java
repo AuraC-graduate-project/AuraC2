@@ -59,7 +59,7 @@ class MigrationManagedSchemaStartupTest {
                 String.class
         );
 
-        assertThat(versions).containsSequence("1", "2", "3", "4");
+        assertThat(versions).containsSequence("1", "2", "3", "4", "5");
         assertThat(tableExists("problems")).isTrue();
         assertThat(tableExists("reference_solutions")).isTrue();
         assertThat(tableExists("generated_test_batches")).isTrue();
@@ -79,8 +79,17 @@ class MigrationManagedSchemaStartupTest {
                     .defaultSchema(existingSchema)
                     .createSchemas(true)
                     .locations("classpath:db/migration")
+                    .target("3")
                     .load();
             flyway.migrate();
+
+            Flyway.configure()
+                    .dataSource(baseJdbcUrl(), username(), password())
+                    .schemas(existingSchema)
+                    .defaultSchema(existingSchema)
+                    .locations("classpath:db/migration")
+                    .load()
+                    .migrate();
 
             Flyway.configure()
                     .dataSource(baseJdbcUrl(), username(), password())

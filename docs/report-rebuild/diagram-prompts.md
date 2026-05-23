@@ -85,7 +85,7 @@ cloud "Judge0" as J0
 - Diagram type: Four-column scope/status diagram
 - Purpose: Visually distinguish implemented, partially implemented, planned/future, and deprecated/removed features.
 - Actors/components/swimlanes/entities: Implemented scope, partial scope, future scope, deprecated/removed scope.
-- What the diagram should show: Implemented: login, admin-protected team registration, refresh rotation/logout revocation, admin bootstrap, user admin, contest lifecycle, SSE contest updates, problem/test-case create/update/delete, deterministic compare policies, custom output validators, backend/admin reference-solution oracle and generated counterexamples, submission queue, Judge0 callback, per-case results, rejudge backend/UI, clarifications backend/UI, scoreboard ranking/freeze/reveal. Partial: team workspace polish, result queue, local/offline deployment, oracle admin UI polish. Future: announcements, security monitor, statistics endpoints, participation/join workflow, report/export workflow, interactive judging/ML verdicts, full LAN-first Judge0. Removed: email verification.
+- What the diagram should show: Implemented: login, admin-protected team registration, refresh rotation/logout revocation, admin bootstrap, user admin, contest lifecycle, SSE contest updates, problem/test-case create/update/delete, deterministic compare policies, custom output validators, admin reference-solution oracle/generated counterexample UI, submission queue, Judge0 callback, per-case results, rejudge backend/UI, clarifications backend/UI, scoreboard ranking/freeze/reveal. Partial: team workspace polish, result queue, local/offline deployment. Future: announcements, security monitor, statistics endpoints, participation/join workflow, report/export workflow, interactive judging/ML verdicts, full LAN-first Judge0. Removed: email verification.
 - What the diagram must NOT include: Detailed code paths, class names, or unverified features.
 - AI image-generation prompt: Create a clean status diagram for AuraC2 with four labeled groups: Implemented, Partially Implemented, Planned/Future Work, Deprecated/Removed. Include concise feature chips. Make clear that registration is admin-protected, logout revocation is implemented, clarifications are wired, rejudge UI exists, and scoreboard ranking/freeze/reveal are implemented. Use formal academic styling and avoid clutter.
 - PlantUML:
@@ -633,7 +633,7 @@ CBS --> DB : aggregate final verdict
 - Purpose: Represent the current persistent model accurately.
 - Actors/components/swimlanes/entities: User, RefreshToken, Contest, Problem, TestCase, Clarification, Submission, SubmissionJudgeResult, ScoreboardRevealState, ScoreboardRevealCell, ReferenceSolution, InputGenerator, InputValidator, GeneratedTestBatch, GeneratedTestCase, Counterexample.
 - Description: Shows the current persistent entities and relationships, including compare-policy/custom-validator columns on `Problem` and the Phase 8 deterministic oracle/generated-test entities.
-- Code alignment: JPA entities under `contestServer.entity`, `contestServer.oracle.entity`, `authServer.entity`, `submissionServer.entity`, scoreboard entities, and Flyway migrations `V1`-`V4`.
+- Code alignment: JPA entities under `contestServer.entity`, `contestServer.oracle.entity`, `authServer.entity`, `submissionServer.entity`, scoreboard entities, and Flyway migrations `V1`-`V5`.
 - Current status: Implemented.
 - What the diagram should show: One User to many RefreshToken; Contest to many Problem; Problem includes comparePolicy, optional float epsilon fields, validationMode, validatorLanguageId, validatorSourceHash, and validatorEnabled; Problem to many TestCase; User/Contest/Problem to Submission; Submission to many SubmissionJudgeResult; Contest/User/optional Problem/admin User to Clarification; Contest to one ScoreboardRevealState; reveal state to many reveal cells; reveal cells link to team User and Problem; Problem to reference solutions, input generators, input validators, generated batches/cases, and counterexamples; counterexamples link to Submission, GeneratedTestCase, and optionally promoted hidden TestCase.
 - What the diagram must NOT include: SecurityAlert, Team entity, contest-membership table, Announcement entity, or a generic future Scoreboard table unless added in future code.
@@ -859,7 +859,7 @@ end note
 - Purpose: Provide implementation-level table names and important columns.
 - Actors/components/swimlanes/entities: `users`, `refresh_tokens`, `contests`, `problems`, `test_cases`, `clarifications`, `submissions`, `submission_judge_results`, `scoreboard_reveal_states`, `scoreboard_reveal_cells`, `reference_solutions`, `input_generators`, `input_validators`, `generated_test_batches`, `generated_test_cases`, `counterexamples`.
 - Description: Shows table-level implementation columns, including validator configuration fields added to `problems` and Phase 8 oracle/generated-test tables.
-- Code alignment: Flyway migrations `V1__baseline_schema.sql`, `V2__problem_compare_policy.sql`, `V3__problem_custom_validators.sql`, and `V4__reference_oracle_generated_tests.sql`.
+- Code alignment: Flyway migrations `V1__baseline_schema.sql`, `V2__problem_compare_policy.sql`, `V3__problem_custom_validators.sql`, `V4__reference_oracle_generated_tests.sql`, and `V5__generated_test_batch_partial_status.sql`.
 - Current status: Implemented.
 - What the diagram should show: Tables, primary keys, foreign keys, enum-as-string fields including `problems.compare_policy`, `problems.validation_mode`, generated batch/case status, important NOT NULL columns, indexes for lookup paths, and unique constraints.
 - What the diagram must NOT include: Unimplemented tables such as announcements, security alerts, contest membership, or generic scoreboard snapshots.
@@ -1048,14 +1048,14 @@ end note
 
 - Report section: 6.1 Application Architecture Design / Judging Extension
 - Diagram type: Activity/component flow diagram
-- Purpose: Show the implemented backend/admin reference-solution oracle, generated hidden tests, counterexample storage, and promotion path.
-- Description: Shows how admins configure reference/generator/validator programs, how the backend runs them through Judge0, stores generated cases, compares a selected submission deterministically, records counterexamples, and promotes a counterexample into an official hidden test for later rejudge.
-- Code alignment: `OracleAdminController`, `OracleService`, `OracleJudge0ExecutionService`, `ReferenceSolution`, `InputGenerator`, `InputValidator`, `GeneratedTestBatch`, `GeneratedTestCase`, `Counterexample`, `TestCase`, `V4__reference_oracle_generated_tests.sql`.
-- Current status: Implemented backend/admin API.
+- Purpose: Show the implemented admin reference-solution oracle, candidate generated tests, counterexample storage, and promotion paths.
+- Description: Shows the primary pre-contest test-preparation workflow and the secondary counterexample-search workflow. Admins configure reference/generator/validator programs, run them through Judge0, store generated candidate cases, promote valid generated cases into official hidden tests, optionally compare a selected submission deterministically, record counterexamples, and promote a counterexample into an official hidden test for later rejudge.
+- Code alignment: `OracleAdminController`, `OracleService`, `OracleJudge0ExecutionService`, `OraclePanel`, `ReferenceSolution`, `InputGenerator`, `InputValidator`, `GeneratedTestBatch`, `GeneratedTestCase`, `Counterexample`, `TestCase`, `V4__reference_oracle_generated_tests.sql`, `V5__generated_test_batch_partial_status.sql`.
+- Current status: Implemented backend/admin UI.
 - Actors/components/swimlanes/entities: Administrator, OracleAdminController, OracleService, Judge0 API, reference solution, input generator, input validator, generated test batch/case tables, selected submission, OutputComparator/CustomValidatorService, counterexample table, hidden TestCase table, RejudgeService.
-- What the diagram should show: Admin configures source programs; generator runs in Judge0 using seed and test number; optional input validator runs in Judge0 and rejects invalid generated inputs; reference solution runs in Judge0 to produce deterministic expected output; selected team submission runs in Judge0 on generated input; compare policy or custom validator makes deterministic accept/reject decision; mismatch stores counterexample; admin promotion creates `TestCase.isPublic=false`; rejudge can then use the promoted hidden test through the normal judging pipeline.
+- What the diagram should show: Admin configures source programs; generator runs in Judge0 using seed and test number; optional input validator runs in Judge0 and rejects invalid generated inputs; reference solution runs in Judge0 to produce deterministic expected output; generated cases are candidates until promoted; admin can promote one, selected, or all valid generated cases to `TestCase.isPublic=false`; optional counterexample search runs a selected team submission in Judge0 on generated input; compare policy or custom validator makes deterministic accept/reject decision; mismatch stores counterexample; counterexample promotion also creates `TestCase.isPublic=false`; rejudge can then use promoted hidden tests through the normal judging pipeline.
 - What the diagram must NOT include: ML probability scoring, host shell execution, interactive protocols, or claims that generated tests prove correctness.
-- AI image-generation prompt: Create a clean technical flow diagram for AuraC2 hybrid deterministic judging. Show Administrator configuring ReferenceSolution, InputGenerator, and optional InputValidator. Show OracleService sending generator, validator, reference solution, and selected team submission executions to Judge0 with wait=true and resource limits. Show GeneratedTestBatch and GeneratedTestCase storage, deterministic compare policy or custom validator decision, Counterexample storage on mismatch, promotion into hidden official TestCase, and rejudge through the existing judging pipeline. Add explicit notes: no ML verdict, no backend host execution, generated tests do not prove correctness.
+- AI image-generation prompt: Create a clean technical flow diagram for AuraC2 hybrid deterministic judging. Show two admin workflows: Test Preparation and Counterexample Search. In Test Preparation, Administrator configures ReferenceSolution, InputGenerator, and optional InputValidator, then OracleService sends generator, validator, and reference solution executions to Judge0 with wait=true and resource limits, stores GeneratedTestBatch and GeneratedTestCase candidates, and promotes one/selected/all valid cases into hidden official TestCase rows. In Counterexample Search, show optional selected submission execution through Judge0, deterministic compare policy or custom validator decision, Counterexample storage on mismatch, counterexample promotion, and rejudge through the existing judging pipeline. Add explicit notes: no ML verdict, no backend host execution, generated tests do not prove correctness.
 - PlantUML:
 
 ```plantuml
@@ -1075,14 +1075,18 @@ component "RejudgeService\nnormal judging pipeline" as Rejudge
 Admin --> Controller : configure reference,\ngenerator, validator
 Controller --> Oracle
 Oracle --> Config : store source hash,\nlanguage, active flag
-Admin --> Controller : create generated batch\nseed, count, optional submissionId
+Admin --> Controller : Test Preparation\ncreate generated batch\nseed + count
 Oracle --> Judge0 : run generator\nstdin: seed + testNumber
 Judge0 --> Oracle : candidate input
 Oracle --> Judge0 : optional input validator
 Judge0 --> Oracle : VALID / INVALID
 Oracle --> Judge0 : run reference solution\non valid input
 Judge0 --> Oracle : reference output
-Oracle --> Generated : store generated hidden case
+Oracle --> Generated : store candidate generated case
+Admin --> Controller : promote one, selected,\nor all valid candidates
+Oracle --> HiddenTC : create hidden official test
+
+Admin --> Controller : Counterexample Search\nseed + count + submissionId
 Oracle --> Judge0 : run selected team submission\non generated input
 Judge0 --> Oracle : team stdout / execution verdict
 Oracle --> Compare : deterministic compare\nor Judge0-sandboxed checker

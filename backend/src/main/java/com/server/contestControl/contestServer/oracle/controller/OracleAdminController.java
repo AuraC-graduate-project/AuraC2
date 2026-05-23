@@ -4,6 +4,7 @@ import com.server.contestControl.contestServer.dto.testcase.TestCaseResponse;
 import com.server.contestControl.contestServer.oracle.dto.CounterexampleResponse;
 import com.server.contestControl.contestServer.oracle.dto.GeneratedTestBatchRequest;
 import com.server.contestControl.contestServer.oracle.dto.GeneratedTestBatchResponse;
+import com.server.contestControl.contestServer.oracle.dto.GeneratedTestPromotionRequest;
 import com.server.contestControl.contestServer.oracle.dto.OracleProgramRequest;
 import com.server.contestControl.contestServer.oracle.dto.OracleProgramResponse;
 import com.server.contestControl.contestServer.oracle.service.OracleService;
@@ -106,5 +107,24 @@ public class OracleAdminController {
     @PostMapping("/counterexamples/{counterexampleId}/promote")
     public ResponseEntity<TestCaseResponse> promoteCounterexample(@PathVariable Long counterexampleId) {
         return ResponseEntity.ok(oracleService.promoteCounterexample(counterexampleId));
+    }
+
+    @PostMapping("/generated-test-cases/{generatedTestCaseId}/promote")
+    public ResponseEntity<TestCaseResponse> promoteGeneratedTestCase(@PathVariable Long generatedTestCaseId) {
+        return ResponseEntity.ok(oracleService.promoteGeneratedTestCase(generatedTestCaseId));
+    }
+
+    @PostMapping("/generated-test-cases/promote-selected")
+    public ResponseEntity<List<TestCaseResponse>> promoteSelectedGeneratedTestCases(
+            @Valid @RequestBody GeneratedTestPromotionRequest request
+    ) {
+        return ResponseEntity.ok(
+                oracleService.promoteGeneratedTestCases(request.getGeneratedTestCaseIds())
+        );
+    }
+
+    @PostMapping("/generated-batches/{batchId}/promote-valid")
+    public ResponseEntity<List<TestCaseResponse>> promoteAllValidGeneratedTestCases(@PathVariable Long batchId) {
+        return ResponseEntity.ok(oracleService.promoteAllValidGeneratedTestCases(batchId));
     }
 }

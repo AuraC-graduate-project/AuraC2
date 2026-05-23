@@ -53,6 +53,7 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.LinkedHashSet;
 
 import static com.server.contestControl.submissionServer.util.LanguageMapper.convertLanguage;
 
@@ -287,8 +288,10 @@ public class OracleService {
         batch.setCounterexampleCount(counterexampleCount);
         batch.setCompletedAt(LocalDateTime.now());
         batch.setDiagnostic(batchDiagnostic);
-        if (generatedCount == 0 || batchDiagnostic != null) {
+        if (generatedCount == 0) {
             batch.setStatus(GeneratedTestBatchStatus.FAILED);
+        } else if (generatedCount < testCount || invalidCount > 0 || batchDiagnostic != null) {
+            batch.setStatus(GeneratedTestBatchStatus.PARTIAL);
         }
         generatedTestBatchRepository.save(batch);
 
@@ -353,6 +356,52 @@ public class OracleService {
         return TestCaseResponse.fromEntity(officialHiddenTestCase);
     }
 
+    @Transactional
+    public TestCaseResponse promoteGeneratedTestCase(Long generatedTestCaseId) {
+        GeneratedTestCase generatedTestCase = generatedTestCaseRepository.findByIdForPromotion(generatedTestCaseId)
+                .orElseThrow(() -> new OracleNotFoundException("Generated test case not found: " + generatedTestCaseId));
+
+        return TestCaseResponse.fromEntity(promoteGeneratedTestCaseEntity(generatedTestCase));
+    }
+
+    @Transactional
+    public List<TestCaseResponse> promoteGeneratedTestCases(List<Long> generatedTestCaseIds) {
+        if (generatedTestCaseIds == null || generatedTestCaseIds.isEmpty()) {
+            throw new OracleConfigurationException("At least one generated test case must be selected");
+        }
+
+        List<Long> uniqueIds = new LinkedHashSet<>(generatedTestCaseIds).stream().toList();
+        List<GeneratedTestCase> generatedTestCases =
+                generatedTestCaseRepository.findAllByIdInForPromotion(uniqueIds);
+
+        if (generatedTestCases.size() != uniqueIds.size()) {
+            throw new OracleNotFoundException("One or more generated test cases were not found");
+        }
+
+        return generatedTestCases.stream()
+                .map(this::promoteGeneratedTestCaseEntity)
+                .map(TestCaseResponse::fromEntity)
+                .toList();
+    }
+
+    @Transactional
+    public List<TestCaseResponse> promoteAllValidGeneratedTestCases(Long batchId) {
+        List<GeneratedTestCase> generatedTestCases =
+                generatedTestCaseRepository.findByBatchIdAndStatusForPromotion(
+                        batchId,
+                        GeneratedTestCaseStatus.GENERATED
+                );
+
+        if (generatedTestCases.isEmpty()) {
+            throw new OracleNotFoundException("No valid generated test cases found for batch: " + batchId);
+        }
+
+        return generatedTestCases.stream()
+                .map(this::promoteGeneratedTestCaseEntity)
+                .map(TestCaseResponse::fromEntity)
+                .toList();
+    }
+
     private Optional<Counterexample> evaluateSubmission(
             Problem problem,
             Submission submission,
@@ -392,6 +441,46 @@ public class OracleService {
                 .build();
 
         return Optional.of(counterexampleRepository.save(counterexample));
+    }
+
+    private TestCase promoteGeneratedTestCaseEntity(GeneratedTestCase generatedTestCase) {
+        if (generatedTestCase.getStatus() != GeneratedTestCaseStatus.GENERATED) {
+            throw new OracleConfigurationException(
+                    "Only valid generated test cases can be promoted"
+            );
+        }
+
+        if (Boolean.TRUE.equals(generatedTestCase.getPromoted())
+                && generatedTestCase.getPromotedTestCase() != null) {
+            return generatedTestCase.getPromotedTestCase();
+        }
+
+        if (generatedTestCase.getInputData() == null || generatedTestCase.getReferenceOutput() == null) {
+            throw new OracleConfigurationException(
+                    "Generated test case is missing input or reference output"
+            );
+        }
+
+        TestCase officialHiddenTestCase = TestCase.builder()
+                .problem(generatedTestCase.getProblem())
+                .inputData(generatedTestCase.getInputData())
+                .expectedOutput(generatedTestCase.getReferenceOutput())
+                .isPublic(false)
+                .build();
+        testCaseRepository.save(officialHiddenTestCase);
+
+        generatedTestCase.setPromoted(true);
+        generatedTestCase.setPromotedTestCase(officialHiddenTestCase);
+        generatedTestCaseRepository.save(generatedTestCase);
+
+        log.info(
+                "Generated test case promoted to hidden official test case. generatedTestCaseId={} problemId={} testCaseId={}",
+                generatedTestCase.getId(),
+                generatedTestCase.getProblem().getId(),
+                officialHiddenTestCase.getId()
+        );
+
+        return officialHiddenTestCase;
     }
 
     private ComparisonOutcome compareGeneratedOutput(

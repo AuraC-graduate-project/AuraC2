@@ -393,3 +393,93 @@ export interface RejudgeResponse {
   skippedSubmissionIds: number[];
   missingSubmissionIds: number[];
 }
+
+// -----------------------------
+// Hybrid oracle / generated tests
+// -----------------------------
+
+export interface OracleProgramRequest {
+  languageId: number;
+  source: string;
+  active?: boolean;
+  defaultTestCount?: number | null;
+}
+
+export interface OracleProgramResponse {
+  id: number;
+  problemId: number;
+  languageId: number;
+  sourceHash: string;
+  active: boolean;
+  defaultTestCount: number | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
+export interface GeneratedTestBatchRequest {
+  testCount?: number | null;
+  seed?: number | null;
+  submissionId?: number | null;
+}
+
+export interface GeneratedTestPromotionRequest {
+  generatedTestCaseIds: number[];
+}
+
+export type GeneratedTestBatchStatus = 'COMPLETED' | 'PARTIAL' | 'FAILED';
+
+export type GeneratedTestCaseStatus =
+  | 'GENERATED'
+  | 'INVALID_INPUT'
+  | 'GENERATOR_FAILED'
+  | 'REFERENCE_FAILED';
+
+export interface GeneratedTestCaseResponse {
+  id: number;
+  batchId: number;
+  problemId: number;
+  testNumber: number;
+  seed: number;
+  inputData: string | null;
+  referenceOutput: string | null;
+  status: GeneratedTestCaseStatus;
+  promoted: boolean;
+  promotedTestCaseId: number | null;
+  diagnostic: string | null;
+  createdAt: string | null;
+}
+
+export interface GeneratedTestBatchResponse {
+  id: number;
+  problemId: number;
+  seed: number;
+  generatorSourceHash: string;
+  referenceSolutionSourceHash: string;
+  status: GeneratedTestBatchStatus;
+  requestedCount: number;
+  generatedCount: number;
+  invalidCount: number;
+  counterexampleCount: number;
+  diagnostic: string | null;
+  createdAt: string | null;
+  completedAt: string | null;
+  testCases: GeneratedTestCaseResponse[];
+}
+
+export interface CounterexampleResponse {
+  id: number;
+  problemId: number;
+  submissionId: number;
+  generatedTestCaseId: number;
+  judgeRunId: number;
+  generatedInput: string;
+  referenceOutput: string;
+  teamOutput: string | null;
+  verdict: Verdict | string;
+  comparePolicy: ComparePolicy | string | null;
+  validationMode: ValidationMode | string | null;
+  diagnostic: string | null;
+  promoted: boolean;
+  promotedTestCaseId: number | null;
+  createdAt: string | null;
+}

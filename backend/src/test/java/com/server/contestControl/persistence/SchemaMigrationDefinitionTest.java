@@ -83,7 +83,8 @@ class SchemaMigrationDefinitionTest {
                 "V1__baseline_schema.sql",
                 "V2__problem_compare_policy.sql",
                 "V3__problem_custom_validators.sql",
-                "V4__reference_oracle_generated_tests.sql"
+                "V4__reference_oracle_generated_tests.sql",
+                "V5__generated_test_batch_partial_status.sql"
         );
         assertThat(migrationNames).noneMatch(name -> name.startsWith("V1_1"));
     }
@@ -116,6 +117,14 @@ class SchemaMigrationDefinitionTest {
         assertThat(migration).contains("idx_generated_test_batches_problem_created");
         assertThat(migration).contains("idx_counterexamples_problem_created");
         assertThat(migration).contains("uk_generated_test_case_batch_number");
+    }
+
+    @Test
+    void oracleStatusMigrationAddsPartialBatchStatus() throws IOException {
+        String migration = readProjectFile("src/main/resources/db/migration/V5__generated_test_batch_partial_status.sql");
+
+        assertThat(migration).contains("DROP CONSTRAINT IF EXISTS chk_generated_test_batches_status");
+        assertThat(migration).contains("'PARTIAL'");
     }
 
     @Test

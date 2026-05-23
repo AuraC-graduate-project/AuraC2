@@ -130,6 +130,10 @@ class RouteAuthorizationSecurityTest {
         when(oracleService.configureInputValidator(eq(1L), any(), eq("admin"))).thenReturn(oracleProgramResponse());
         when(oracleService.createGeneratedTestBatch(eq(1L), any(), eq("admin"))).thenReturn(generatedBatchResponse());
         when(oracleService.counterexamples(1L)).thenReturn(List.of(counterexampleResponse()));
+        when(oracleService.promoteGeneratedTestCase(1L)).thenReturn(testCaseResponse());
+        when(oracleService.promoteGeneratedTestCases(any())).thenReturn(List.of(testCaseResponse()));
+        when(oracleService.promoteAllValidGeneratedTestCases(1L)).thenReturn(List.of(testCaseResponse()));
+        when(oracleService.promoteCounterexample(1L)).thenReturn(testCaseResponse());
     }
 
     @Test
@@ -391,6 +395,8 @@ class RouteAuthorizationSecurityTest {
                 .andExpect(status().isUnauthorized());
         mockMvc.perform(get("/api/admin/oracle/problems/1/counterexamples"))
                 .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/admin/oracle/generated-test-cases/1/promote"))
+                .andExpect(status().isUnauthorized());
 
         mockBearerUser("team-token", "team", Role.TEAM);
         mockMvc.perform(post("/api/admin/oracle/problems/1/reference-solution")
@@ -399,6 +405,9 @@ class RouteAuthorizationSecurityTest {
                         .content(oracleProgramRequestJson()))
                 .andExpect(status().isForbidden());
         mockMvc.perform(get("/api/admin/oracle/problems/1/counterexamples")
+                        .header("Authorization", "Bearer team-token"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/admin/oracle/generated-batches/1/promote-valid")
                         .header("Authorization", "Bearer team-token"))
                 .andExpect(status().isForbidden());
 
@@ -418,6 +427,19 @@ class RouteAuthorizationSecurityTest {
                         .header("Authorization", "Bearer admin-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].generatedInput").value("4\n"));
+        mockMvc.perform(post("/api/admin/oracle/generated-test-cases/1/promote")
+                        .header("Authorization", "Bearer admin-token"))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/admin/oracle/generated-test-cases/promote-selected")
+                        .header("Authorization", "Bearer admin-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"generatedTestCaseIds":[1]}
+                                """))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/admin/oracle/generated-batches/1/promote-valid")
+                        .header("Authorization", "Bearer admin-token"))
+                .andExpect(status().isOk());
     }
 
     @Test

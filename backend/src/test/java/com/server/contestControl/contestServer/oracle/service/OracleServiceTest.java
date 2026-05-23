@@ -3,6 +3,7 @@ package com.server.contestControl.contestServer.oracle.service;
 import com.server.contestControl.authServer.entity.User;
 import com.server.contestControl.authServer.enums.Role;
 import com.server.contestControl.authServer.repository.UserRepository;
+import com.server.contestControl.contestServer.dto.testcase.TestCaseResponse;
 import com.server.contestControl.contestServer.entity.Contest;
 import com.server.contestControl.contestServer.entity.Problem;
 import com.server.contestControl.contestServer.entity.TestCase;
@@ -52,6 +53,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -113,7 +115,15 @@ class OracleServiceTest {
             if (testCase.getCreatedAt() == null) {
                 testCase.setCreatedAt(LocalDateTime.now());
             }
+            savedGeneratedCases.removeIf(existing -> existing.getId().equals(testCase.getId()));
             savedGeneratedCases.add(testCase);
+            return testCase;
+        });
+        when(testCaseRepository.save(any(TestCase.class))).thenAnswer(invocation -> {
+            TestCase testCase = invocation.getArgument(0);
+            if (testCase.getId() == null) {
+                testCase.setId(ids.incrementAndGet());
+            }
             return testCase;
         });
         when(generatedTestCaseRepository.findByBatch_IdOrderByTestNumberAsc(any()))
@@ -261,6 +271,36 @@ class OracleServiceTest {
     }
 
     @Test
+    void generatedBatchWithoutSubmissionCreatesCandidateTestsOnly() {
+        Problem problem = problem();
+
+        when(problemRepository.findById(10L)).thenReturn(Optional.of(problem));
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin()));
+        when(referenceSolutionRepository.findFirstByProblem_IdAndActiveTrueOrderByUpdatedAtDescIdDesc(10L))
+                .thenReturn(Optional.of(referenceSolution(problem)));
+        when(inputGeneratorRepository.findFirstByProblem_IdAndActiveTrueOrderByUpdatedAtDescIdDesc(10L))
+                .thenReturn(Optional.of(inputGenerator(problem, 1)));
+        when(inputValidatorRepository.findFirstByProblem_IdAndActiveTrueOrderByUpdatedAtDescIdDesc(10L))
+                .thenReturn(Optional.empty());
+
+        when(oracleJudge0ExecutionService.run("generator", 71, "123\n1\n")).thenReturn(accepted("4\n"));
+        when(oracleJudge0ExecutionService.run("reference", 54, "4\n")).thenReturn(accepted("YES\n"));
+
+        GeneratedTestBatchResponse response = oracleService.createGeneratedTestBatch(
+                10L,
+                batchRequest(1, 123L, null),
+                "admin"
+        );
+
+        assertThat(response.status()).isEqualTo(GeneratedTestBatchStatus.COMPLETED.name());
+        assertThat(response.generatedCount()).isEqualTo(1);
+        assertThat(response.counterexampleCount()).isZero();
+        assertThat(response.testCases().getFirst().inputData()).isEqualTo("4\n");
+        verify(submissionRepository, never()).findByIdWithContestProblemUser(any());
+        verify(counterexampleRepository, never()).save(any());
+    }
+
+    @Test
     void inputValidatorRejectsInvalidGeneratedInputSafely() {
         Problem problem = problem();
 
@@ -286,6 +326,36 @@ class OracleServiceTest {
         assertThat(response.generatedCount()).isZero();
         assertThat(response.invalidCount()).isEqualTo(1);
         assertThat(response.testCases().getFirst().status()).isEqualTo(GeneratedTestCaseStatus.INVALID_INPUT.name());
+    }
+
+    @Test
+    void mixedGeneratedBatchIsMarkedPartial() {
+        Problem problem = problem();
+
+        when(problemRepository.findById(10L)).thenReturn(Optional.of(problem));
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin()));
+        when(referenceSolutionRepository.findFirstByProblem_IdAndActiveTrueOrderByUpdatedAtDescIdDesc(10L))
+                .thenReturn(Optional.of(referenceSolution(problem)));
+        when(inputGeneratorRepository.findFirstByProblem_IdAndActiveTrueOrderByUpdatedAtDescIdDesc(10L))
+                .thenReturn(Optional.of(inputGenerator(problem, 2)));
+        when(inputValidatorRepository.findFirstByProblem_IdAndActiveTrueOrderByUpdatedAtDescIdDesc(10L))
+                .thenReturn(Optional.of(inputValidator(problem)));
+
+        when(oracleJudge0ExecutionService.run("generator", 71, "123\n1\n")).thenReturn(accepted("4\n"));
+        when(oracleJudge0ExecutionService.run("validator", 71, "4\n")).thenReturn(accepted("VALID\n"));
+        when(oracleJudge0ExecutionService.run("reference", 54, "4\n")).thenReturn(accepted("YES\n"));
+        when(oracleJudge0ExecutionService.run("generator", 71, "123\n2\n")).thenReturn(accepted("-1\n"));
+        when(oracleJudge0ExecutionService.run("validator", 71, "-1\n")).thenReturn(accepted("INVALID\n"));
+
+        GeneratedTestBatchResponse response = oracleService.createGeneratedTestBatch(
+                10L,
+                batchRequest(2, 123L, null),
+                "admin"
+        );
+
+        assertThat(response.status()).isEqualTo(GeneratedTestBatchStatus.PARTIAL.name());
+        assertThat(response.generatedCount()).isEqualTo(1);
+        assertThat(response.invalidCount()).isEqualTo(1);
     }
 
     @Test
@@ -396,6 +466,81 @@ class OracleServiceTest {
         assertThat(generatedTestCase.getPromoted()).isTrue();
     }
 
+    @Test
+    void promoteGeneratedCaseCreatesHiddenOfficialTestCase() {
+        Problem problem = problem();
+        GeneratedTestCase generatedTestCase = generatedTestCase(problem, 1, "4\n", "YES\n");
+
+        when(generatedTestCaseRepository.findByIdForPromotion(2L)).thenReturn(Optional.of(generatedTestCase));
+
+        oracleService.promoteGeneratedTestCase(2L);
+
+        ArgumentCaptor<TestCase> testCaseCaptor = ArgumentCaptor.forClass(TestCase.class);
+        verify(testCaseRepository).save(testCaseCaptor.capture());
+        assertThat(testCaseCaptor.getValue().getInputData()).isEqualTo("4\n");
+        assertThat(testCaseCaptor.getValue().getExpectedOutput()).isEqualTo("YES\n");
+        assertThat(testCaseCaptor.getValue().isPublic()).isFalse();
+        assertThat(generatedTestCase.getPromoted()).isTrue();
+        assertThat(generatedTestCase.getPromotedTestCase()).isNotNull();
+    }
+
+    @Test
+    void duplicateGeneratedCasePromotionReturnsExistingHiddenTestCaseWithoutCreatingAnother() {
+        Problem problem = problem();
+        TestCase existingHidden = TestCase.builder()
+                .id(44L)
+                .problem(problem)
+                .inputData("4\n")
+                .expectedOutput("YES\n")
+                .isPublic(false)
+                .build();
+        GeneratedTestCase generatedTestCase = generatedTestCase(problem, 1, "4\n", "YES\n");
+        generatedTestCase.setPromoted(true);
+        generatedTestCase.setPromotedTestCase(existingHidden);
+
+        when(generatedTestCaseRepository.findByIdForPromotion(2L)).thenReturn(Optional.of(generatedTestCase));
+
+        oracleService.promoteGeneratedTestCase(2L);
+
+        verify(testCaseRepository, never()).save(any());
+    }
+
+    @Test
+    void promoteSelectedGeneratedCasesCreatesHiddenOfficialTestCases() {
+        Problem problem = problem();
+        GeneratedTestCase first = generatedTestCase(problem, 1, "4\n", "YES\n");
+        GeneratedTestCase second = generatedTestCase(problem, 2, "7\n", "NO\n");
+        second.setId(3L);
+
+        when(generatedTestCaseRepository.findAllByIdInForPromotion(List.of(2L, 3L)))
+                .thenReturn(List.of(first, second));
+
+        List<TestCaseResponse> responses = oracleService.promoteGeneratedTestCases(List.of(2L, 3L));
+
+        assertThat(responses).hasSize(2);
+        assertThat(first.getPromoted()).isTrue();
+        assertThat(second.getPromoted()).isTrue();
+        verify(testCaseRepository, times(2)).save(any(TestCase.class));
+    }
+
+    @Test
+    void promoteAllValidGeneratedCasesInBatchSkipsInvalidCasesByRepositoryQuery() {
+        Problem problem = problem();
+        GeneratedTestCase first = generatedTestCase(problem, 1, "4\n", "YES\n");
+        GeneratedTestCase second = generatedTestCase(problem, 2, "7\n", "NO\n");
+        second.setId(3L);
+
+        when(generatedTestCaseRepository.findByBatchIdAndStatusForPromotion(
+                1L,
+                GeneratedTestCaseStatus.GENERATED
+        )).thenReturn(List.of(first, second));
+
+        List<TestCaseResponse> responses = oracleService.promoteAllValidGeneratedTestCases(1L);
+
+        assertThat(responses).hasSize(2);
+        verify(testCaseRepository, times(2)).save(any(TestCase.class));
+    }
+
     private OracleProgramRequest programRequest(int languageId, String source, boolean active) {
         OracleProgramRequest request = new OracleProgramRequest();
         request.setLanguageId(languageId);
@@ -475,6 +620,30 @@ class OracleServiceTest {
                 .language("java")
                 .judgeRunId(8L)
                 .verdict(Verdict.ACCEPTED)
+                .build();
+    }
+
+    private GeneratedTestCase generatedTestCase(Problem problem, int testNumber, String input, String referenceOutput) {
+        GeneratedTestBatch batch = GeneratedTestBatch.builder()
+                .id(1L)
+                .problem(problem)
+                .seed(123L)
+                .generatorSourceHash("a".repeat(64))
+                .referenceSolutionSourceHash("b".repeat(64))
+                .status(GeneratedTestBatchStatus.COMPLETED)
+                .requestedCount(1)
+                .build();
+
+        return GeneratedTestCase.builder()
+                .id(2L)
+                .batch(batch)
+                .problem(problem)
+                .testNumber(testNumber)
+                .seed(123L)
+                .inputData(input)
+                .referenceOutput(referenceOutput)
+                .status(GeneratedTestCaseStatus.GENERATED)
+                .promoted(false)
                 .build();
     }
 
