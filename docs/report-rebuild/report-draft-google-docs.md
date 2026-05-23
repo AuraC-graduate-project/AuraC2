@@ -33,7 +33,7 @@ Figure 8. Exact-Time Scheduler and Fallback Sync Diagram
 Figure 9. SSE Connection and Contest Update Flow  
 Figure 10. Judge0 Callback and Per-Test-Case Result Flow  
 Figure 11. Rejudge Workflow Diagram  
-Figure 12. Clarification Workflow Diagram
+Figure 12. Clarification Workflow Diagram  
 Figure 13. Contest Lifecycle Architecture Diagram  
 Figure 14. Submission and Asynchronous Judging Architecture Diagram  
 Figure 15. Current ER Diagram  
@@ -45,9 +45,11 @@ Figure 18. Hybrid Deterministic Oracle and Generated Tests Diagram
 
 AuraC2, also referred to as Aura Contest Control, is a web-based programming contest management system designed for university competitive programming environments. The system supports two main roles: administrators who prepare and control contests, and team users who participate in active contests by reading problems, writing code, submitting solutions, and reviewing submission history.
 
-The current implementation is a real web application composed of a Spring Boot backend, a React frontend, PostgreSQL persistence, RabbitMQ asynchronous messaging, and Judge0 integration for code execution. The system is not only a static design proposal; it includes implemented authentication, contest lifecycle control, problem and test-case management, asynchronous judging, deterministic problem-level compare policies, Judge0-sandboxed custom output validators, an admin reference-solution oracle UI for generated tests and counterexample promotion, per-test-case result tracking, backend/frontend clarification handling, real-time contest lifecycle updates using server-sent events, and backend/admin rejudge functionality.
+The current implementation is a real web application composed of a Spring Boot backend, a React frontend, PostgreSQL persistence, RabbitMQ asynchronous messaging, and Judge0 integration for code execution. The system is not only a static design proposal; it includes implemented authentication, contest lifecycle control, problem and test-case management, asynchronous judging, deterministic problem-level compare policies, Judge0-sandboxed custom output validators, an admin reference-solution oracle UI for generated tests and counterexample promotion, per-test-case result tracking, backend/frontend clarification handling, real-time contest/submission/scoreboard updates using server-sent events, and backend/admin rejudge functionality.
 
 This report rebuilds the previous system analysis and design documentation so that it reflects the current local codebase. The codebase is treated as the source of truth. Features that exist only as placeholder UI or unused scaffolding are not described as complete. Features that were previously planned but now have backend implementation are reclassified accordingly. Features that exist only as unused scaffolding or old exception remnants are identified as partial, future work, or deprecated.
+
+Historical Markdown files, old report drafts, task prompts, and duplicate exported PDFs have been moved to `docs/archive/`. They are retained only for traceability and are not treated as current implementation evidence.
 
 # 2. Project Overview and Objectives
 
@@ -72,7 +74,7 @@ The current architecture contains the following primary elements:
 | Queue | RabbitMQ submission queue for asynchronous judging. |
 | Judge | Judge0 API through backend HTTP requests and callback endpoint. |
 | Real-time updates | Server-sent events for contest lifecycle snapshots and updates. |
-| Deployment support | Docker Compose for PostgreSQL, RabbitMQ, backend, and frontend. |
+| Deployment support | Docker Compose actively runs PostgreSQL and RabbitMQ; backend/frontend compose services are present but commented out. |
 
 [Insert Figure 1 here: System Context Diagram]
 
@@ -118,8 +120,8 @@ The target audience includes contest administrators, programming teams, instruct
 
 | Category | Features |
 |---|---|
-| Implemented | Login, administrator-protected team registration, refresh-token rotation, logout refresh-token revocation, production-aware refresh-cookie flags, admin bootstrap, role-based authorization, user management, contest creation, manual lifecycle controls, automatic lifecycle synchronization, SSE contest updates, problem creation/listing, deterministic compare policies, Judge0-sandboxed custom output validators, admin reference-solution oracle UI and generated counterexamples, test-case creation/listing, submission persistence, after-commit RabbitMQ judging, Judge0 time/memory limits, signed Judge0 callbacks, per-test-case results, stale callback protection, backend/admin rejudge, backend/frontend clarifications, scoreboard ranking, freeze, and reveal. |
-| Partially Implemented | Team workspace completeness, result queue, local/offline deployment. |
+| Implemented | Login, administrator-protected team registration, refresh-token rotation, logout refresh-token revocation, production-aware refresh-cookie flags, admin bootstrap, role-based authorization, user management, contest creation, manual lifecycle controls, automatic lifecycle synchronization, SSE contest updates, problem creation/listing, deterministic compare policies, Judge0-sandboxed custom output validators, admin reference-solution oracle UI and generated counterexamples, test-case creation/listing, submission persistence, after-commit RabbitMQ judging, Judge0 time/memory limits, signed Judge0 callbacks, per-test-case results, stale callback protection, live submission SSE, backend/admin rejudge, backend/frontend clarifications, scoreboard ranking, freeze, and reveal. |
+| Partially Implemented | Team workspace polish, result queue scaffold, local/offline deployment. |
 | Planned / Future Work | Announcements, full security monitoring, statistics endpoints, explicit contest participation/join workflow, full LAN-first Judge0 deployment. |
 | Deprecated / Removed | Email verification workflow. Only exception classes and security allow-list remnants remain. |
 
@@ -138,7 +140,7 @@ Competitive programming contest systems generally combine contest administration
 
 Systems such as PC2, DOMjudge, Codeforces, and similar online judges provide useful comparison points. PC2 and DOMjudge are commonly associated with formal contest operations, team accounts, problem sets, submissions, judging, and scoreboard behavior. Codeforces is a broader online programming platform that combines contests, practice, user profiles, rating, submissions, and community functions. Compared with these systems, AuraC2 currently implements the local contest-control foundation: authentication, contest lifecycle control, problem/test-case management, asynchronous judging, scoreboard behavior, and submission review.
 
-The main difference is scope. AuraC2 does not currently implement online community functions, announcements, explicit contest participation, or a complete monitoring subsystem. However, it includes design decisions that are important for contest reliability, such as persisted submission records before judging, RabbitMQ-based asynchronous dispatch, per-test-case result storage, signed callbacks, `judgeRunId` stale callback protection, and server-sent events for real-time contest and judging updates.
+The main difference is scope. AuraC2 does not currently implement online community functions, announcements, explicit contest participation, or a complete monitoring subsystem. However, it includes design decisions that are important for contest reliability, such as persisted submission records before judging, RabbitMQ-based asynchronous dispatch, per-test-case result storage, signed callbacks, `judgeRunId` stale callback protection, and server-sent events for real-time contest, submission, clarification, and scoreboard updates.
 
 [Insert References here for PC2, DOMjudge, Codeforces, Judge0, Spring Boot, RabbitMQ, PostgreSQL, and server-sent events during Phase 2.]
 
@@ -168,20 +170,19 @@ The main difference is scope. AuraC2 does not currently implement online communi
 | FR-IMP-16 | Configure deterministic problem compare policies. | Administrator | `ComparePolicy`, `Problem`, `ProblemService`, `OutputComparator`, admin problem modals | Implemented |
 | FR-IMP-17 | Configure deterministic custom output validators for multiple valid outputs. | Administrator, Judge0 | `ValidationMode`, `Problem.validator*`, `CustomValidatorService`, `Judge0CallbackService` | Implemented |
 | FR-IMP-18 | Configure and run deterministic reference-solution oracle generated tests. | Administrator, Judge0 | `OracleAdminController`, `OracleService`, `ReferenceSolution`, `InputGenerator`, `InputValidator`, `GeneratedTestBatch`, `Counterexample`, `OraclePanel` | Implemented backend/admin UI |
-| FR-IMP-18 | Review submission history. | Team, Administrator | `SubmissionController`, `SubmissionHistory`, `SubmissionsView` | Implemented |
-| FR-IMP-19 | Rejudge selected, problem, or contest submissions through backend endpoints and admin UI. | Administrator | `RejudgeController`, `RejudgeService`, `RejudgeView` | Implemented |
-| FR-IMP-19 | Submit and answer clarifications through backend endpoints and admin/team UI. | Team, Administrator | `ClarificationController`, `ClarificationService`, `Clarification`, `ClarificationsView`, team `Clarifications` | Implemented |
-| FR-IMP-20 | View public/team and admin scoreboard snapshots and streams with freeze/reveal behavior. | Visitor, Team, Administrator | `ScoreboardController`, `AdminScoreboardController`, scoreboard UI | Implemented |
+| FR-IMP-19 | Review submission history and receive live submission stream events. | Team, Administrator | `SubmissionController`, `SubmissionHistory`, `SubmissionsView`, `SubmissionStreamController`, `useSubmissionStream` | Implemented |
+| FR-IMP-20 | Rejudge selected, problem, or contest submissions through backend endpoints and admin UI. | Administrator | `RejudgeController`, `RejudgeService`, `RejudgeView` | Implemented |
+| FR-IMP-21 | Submit and answer clarifications through backend endpoints and admin/team UI. | Team, Administrator | `ClarificationController`, `ClarificationService`, `Clarification`, `ClarificationsView`, team `Clarifications` | Implemented |
+| FR-IMP-22 | View public/team and admin scoreboard snapshots and streams with freeze/reveal behavior. | Visitor, Team, Administrator | `ScoreboardController`, `AdminScoreboardController`, scoreboard UI | Implemented |
 
 ### Partially Implemented Requirements
 
 | ID | Requirement | Reason for partial status | Evidence |
 |---|---|---|---|
-| FR-PART-01 | Team contest workspace. | Team can load contest/problems, submit code, and view history, but problem statement presentation is minimal and no live verdict refresh was found. | `team/App.tsx`, `CodeEditor`, `SubmissionHistory` |
-| FR-PART-02 | Live verdict delivery. | Submissions persist verdicts, but no dedicated live result queue or verdict push flow was found. | `ResultProducer`, `ResultConsumer`, `SubmissionHistory` |
-| FR-PART-03 | Result notification queue. | Queue is configured, but producer and consumer are empty. | `RabbitMQConfig`, `ResultProducer`, `ResultConsumer` |
-| FR-PART-04 | Contest report/export workflow. | Scoreboard and submissions exist, but no formal export/report endpoint was found. | `ScoreboardController`, `AdminController.getAllSubmissions` |
-| FR-PART-05 | Local/offline deployment. | Docker Compose supports local services, but Judge0 defaults to external Judge0 CE. | `docker-compose.yml`, `application.yml` |
+| FR-PART-01 | Team contest workspace polish. | Team can load contest/problems, submit code, view history, receive stream updates, and use clarifications, but problem statement presentation remains minimal. | `team/App.tsx`, `TeamWorkspace`, `CodeEditor`, `SubmissionHistory`, `useSubmissionStream` |
+| FR-PART-02 | Result notification queue. | Queue is configured, but producer and consumer are empty; live verdict refresh uses submission SSE instead. | `RabbitMQConfig`, `ResultProducer`, `ResultConsumer`, `SubmissionSsePublisher` |
+| FR-PART-03 | Contest report/export workflow. | Scoreboard and submissions exist, but no formal export/report endpoint was found. | `ScoreboardController`, `AdminController.getAllSubmissions` |
+| FR-PART-04 | Local/offline deployment. | Docker Compose actively runs PostgreSQL/RabbitMQ, but backend/frontend services are commented out and Judge0 defaults to external Judge0 CE. | `docker-compose.yml`, `application.yml` |
 
 ### Planned / Future Work Requirements
 
@@ -213,7 +214,7 @@ The main difference is scope. AuraC2 does not currently implement online communi
 | Usability | Role-specific admin/team UI exists, including contest control, problem/test-case management, submissions, rejudge, scoreboard, and clarifications; quick statistics and security monitoring remain placeholders. | Partially implemented |
 | Data Integrity | Enums and foreign-key relationships model roles, contest status, verdicts, clarifications, and judging results. Row locks protect selected critical updates, including contest status synchronization and callback updates. | Implemented with noted judging limitations |
 | Extensibility | Package structure supports extending scoreboard reporting, notifications, monitoring, and additional UI integrations. | Implemented as design capacity |
-| Portability / Deployment Flexibility | Docker Compose supports local PostgreSQL/RabbitMQ/backend/frontend deployment. Judge0 needs explicit local configuration for full offline use. | Partially implemented |
+| Portability / Deployment Flexibility | Docker Compose supports local PostgreSQL/RabbitMQ infrastructure. Backend/frontend containers are defined but commented out, and Judge0 needs explicit local configuration for full offline use. | Partially implemented |
 | Observability | Logging exists in lifecycle, scheduler, judging, rejudge, and SSE components, but no metrics dashboard or monitoring subsystem exists. | Partially implemented |
 
 # 5. Analysis Phase
@@ -236,7 +237,7 @@ Figure 5. Team Contest Workspace Use Case Diagram
 Purpose: To show team contest operations.  
 Description: A team can log in, view the active contest, select problems, write code, submit code, view submission history, view the scoreboard, submit clarifications, and view clarification answers.  
 Code Alignment: `team/App.tsx`, `ProblemSidebar`, `CodeEditor`, `SubmissionHistory`, `teamApi`, `Clarifications.tsx`.  
-Current Status: Implemented for contest workspace, submissions, scoreboard, and clarifications; partial for live verdict updates.
+Current Status: Implemented for contest workspace, submissions, submission streams, scoreboard, and clarifications; partial for problem statement polish.
 
 ## 5.2 Use Case Specifications
 
@@ -693,13 +694,13 @@ Recommended screenshots:
 
 # Appendix C: CD / Deployment Package
 
-The project includes Docker-related deployment files. The current deployment package should include the backend, frontend, PostgreSQL, RabbitMQ, configuration examples, and any required environment variables. The current Compose file provisions PostgreSQL, RabbitMQ, backend, and frontend containers. Judge0 must be configured explicitly if the final deployment is expected to be fully LAN-first or offline.
+The project includes Docker-related deployment files. The checked-in Compose file actively provisions PostgreSQL and RabbitMQ. Backend and frontend service definitions are present in the file but currently commented out, so normal local development runs the backend and frontend separately unless those services are intentionally restored. Judge0 must be configured explicitly if the final deployment is expected to be fully LAN-first or offline.
 
 Deployment-related files:
 
 | File | Purpose |
 |---|---|
-| `docker-compose.yml` | Defines PostgreSQL, RabbitMQ, backend, and frontend services. |
+| `docker-compose.yml` | Actively defines PostgreSQL and RabbitMQ services; backend/frontend service blocks are present but commented out. |
 | `backend/Dockerfile` | Builds backend container. |
 | `UI/Dockerfile` | Builds frontend container. |
 | `.env.example` | Documents expected environment variables. |

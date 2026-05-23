@@ -1,6 +1,6 @@
-# AuraC2 Report Rebuild - Phase 1 Analysis Plan
+# AuraC2 Report Rebuild - Current Implementation Analysis Plan
 
-This document is based on the current local codebase only. The instructor template was used for report structure. The old DOCX and PDF were used only for academic tone, formatting pattern, and identifying outdated sections or diagrams that need replacement.
+This document is based on the current local codebase only. The instructor template was used for report structure. Historical Markdown/PDF material has been moved to `docs/archive/` and is not current implementation truth.
 
 ## A. Feature Classification Table
 
@@ -83,7 +83,7 @@ This document is based on the current local codebase only. The instructor templa
 | Security monitoring UI | Planned / Future Work | `AdminApp` Security Monitor placeholder, no backend security monitor package | Only a placeholder screen exists. Refresh token stores device IP, but no alerting, anomaly detection, or monitoring endpoint exists. | Mark as future work; do not claim monitoring is implemented. |
 | Quick statistics panel | Planned / Future Work | `StatsPanel` values are dashes with tooltip "No endpoint yet" | UI placeholders exist without backend aggregate endpoints. | Mark as placeholder. |
 | Announcements | Planned / Future Work | No announcement entity/controller/service/UI found | No implementation discovered. | Include only in future scope if desired. |
-| Notification/result dissemination | Partially Implemented | Empty `ResultProducer`, `ResultConsumer`, no frontend live verdict stream | Verdicts are persisted, but no result queue consumer/producer or push notification flow exists. | Classify as scaffold/future. |
+| Submission verdict streams | Implemented | `SubmissionStreamController`, `SubmissionSsePublisher`, `SubmissionSseRegistry`, `AdminSubmissionSseRegistry`, `useSubmissionStream`, `SubmissionsView`, team `TeamWorkspace`, team `Scoreboard` | Backend publishes created, running, finalized, and rejudge-queued submission events through SSE; admin and team UI consume the stream. | Include live verdict/event refresh as implemented SSE, separate from the unused result queue scaffold. |
 | LAN-first/offline operation | Partially Implemented | `docker-compose.yml`, `application.yml` default Judge0 URL | Docker Compose actively runs PostgreSQL and RabbitMQ. Backend/frontend compose services are present but commented out, and Judge0 defaults to external `https://ce.judge0.com` unless configured otherwise. | Mark local infrastructure supported, full offline stack not guaranteed. |
 | Contest participation/join workflow | Planned / Future Work | No Team entity, contest_membership table, participation controller, or join UI | Teams are users with `TEAM` role and see the active contest; there is no explicit enrollment per contest. | Mark future work or out of current scope. |
 | Placeholder UI surfaces | Partially Implemented | `StatsPanel`, security monitor placeholder | Quick statistics and security monitoring are still placeholder surfaces. Clarifications are wired to backend APIs. | Call out remaining placeholders without misclassifying clarifications. |
@@ -101,7 +101,7 @@ AuraC2 is currently a layered web application composed of:
 | Asynchronous processing | RabbitMQ submission queue for judging dispatch. Result queue exists as scaffold only. |
 | External judging | Judge0 API invoked by backend through `RestTemplate`, with callback endpoint under `/api/callback/judge0`. |
 | Real-time contest updates | SSE stream for contest lifecycle updates, snapshots, heartbeats, and frontend fallback polling. |
-| Deployment | Docker Compose provisions PostgreSQL, RabbitMQ, backend, and frontend. Judge0 remains externally configured unless the deployment overrides it. |
+| Deployment | The checked-in Docker Compose file actively provisions PostgreSQL and RabbitMQ. Backend/frontend service definitions are present but commented out; Judge0 remains externally configured unless the deployment overrides it. |
 
 The backend is best described as a modular monolith rather than separate microservices. Package names use `authServer`, `contestServer`, and `submissionServer`, but all modules run in one Spring Boot process and share one database.
 
@@ -216,8 +216,8 @@ The backend is best described as a modular monolith rather than separate microse
 | Custom validator execution | Implemented | `CustomValidatorService`, `ProblemService`, `V3__problem_custom_validators.sql` | Validator code is not run in the backend process. The backend submits the checker to Judge0 with resource limits and interprets only a deterministic first-line decision. |
 | Rejudge republish | Implemented backend | `RejudgeService`, `SubmissionProducer`, `SubmissionConsumer` | Rejudge resets final submissions to `PENDING_REJUDGE` and republishes after commit. |
 | Result queue | Partially Implemented | `RabbitMQConfig.RESULT_QUEUE`, empty `ResultProducer`, empty `ResultConsumer` | Queue exists but no result notification flow is implemented. |
-| SSE contest updates | Implemented | `ContestUpdatedEvent`, `ContestSseAdapter`, `ContestOverview` | Pushes contest lifecycle updates, not submission verdict updates. |
-| Team verdict refresh | Partially Implemented | `teamApi.getMySubmissions`, `SubmissionHistory` | Team UI reads history via REST but has no live verdict push or polling loop discovered. |
+| SSE contest updates | Implemented | `ContestUpdatedEvent`, `ContestSseAdapter`, `ContestOverview` | Pushes contest lifecycle snapshots and updates. |
+| Submission verdict SSE | Implemented | `SubmissionStreamController`, `SubmissionSsePublisher`, `useSubmissionStream`, `SubmissionHistory`, `SubmissionsView` | Pushes created, running, finalized, and rejudge-queued submission events to team/admin clients. |
 
 ## H. Updated Frontend Screen / Hook / Component List
 
@@ -234,7 +234,7 @@ The backend is best described as a modular monolith rather than separate microse
 | Admin clarifications | `ClarificationsView`, `useClarificationStream` | Implemented | Loads backend clarifications, replies, filters, and receives SSE updates. |
 | Security monitor | `PlaceholderView` through `admin/App.tsx` | Planned / Future Work | No backend endpoints. |
 | Quick statistics | `StatsPanel` | Planned / Future Work | Static dashes and tooltip "No endpoint yet". |
-| Team workspace | `team/App.tsx`, `Header`, `ProblemSidebar`, `CodeEditor`, `SubmissionHistory` | Partially Implemented | Uses active contest, problems, submissions, code editor. Problem statement display is minimal and no live submission updates. |
+| Team workspace | `team/App.tsx`, `TeamWorkspace`, `Header`, `ProblemSidebar`, `CodeEditor`, `SubmissionHistory`, `useSubmissionStream` | Partially Implemented | Uses active contest, problems, code editor, submissions, draft persistence, and live submission updates. Problem statement display is still minimal. |
 | Code draft persistence | `useCodeDraft`, `DraftIndicator` | Implemented, indicator appears unused | Draft hook saves to localStorage. `DraftIndicator` exists but is not visibly integrated into `CodeEditor`. |
 | Team clarifications | `team/components/Clarifications.tsx`, `useClarificationStream` | Implemented | Submits questions, loads own/public clarifications, and receives SSE updates. |
 
@@ -245,7 +245,7 @@ The backend is best described as a modular monolith rather than separate microse
 3. New submission RabbitMQ publish failures after commit are logged, but the team response already contains the committed submission.
 4. Zero-test-case submissions are marked `INTERNAL_ERROR`; this protects judging state but should still be prevented earlier by problem authoring validation.
 5. Unsupported language throws in the RabbitMQ consumer path without a user-facing validation response at submission time.
-6. Result queue is configured but producer/consumer are empty.
+6. Result queue is configured but producer/consumer are empty; live verdict refresh uses submission SSE instead.
 7. Clarifications are wired end-to-end; remaining risk is workflow polish and operator review around public/private reply behavior.
 8. Rejudge backend and admin UI exist; publish failures are logged after commit but not reflected in `RejudgeResponse`.
 9. Memory is stored from Judge0 in KB, while admin UI labels memory as MB.
@@ -253,6 +253,7 @@ The backend is best described as a modular monolith rather than separate microse
 11. Security Monitor and Quick Statistics are placeholders.
 12. There is no explicit contest participation/join workflow or team-contest membership model.
 13. Custom output validators and the admin reference-solution oracle are implemented through Judge0-sandboxed execution. Generated candidates can be promoted to official hidden tests before a contest, and counterexample search can discover concrete failing inputs for a specific submission. Generated tests do not prove correctness; interactive judging and ML verdicts remain unsupported.
+14. Historical Markdown/PDF files in `docs/archive/` are preserved for traceability only and should not be cited as current implementation truth.
 14. Team workspace does not appear to poll or subscribe for verdict changes after submission.
 15. Test-case public response includes expected output for public tests. This may be acceptable for sample tests, but the report should distinguish sample/public tests from hidden tests.
 16. There are duplicate exception packages under `contestServer.exception` and `contestServer.exceptions`, which may confuse documentation and maintenance.
@@ -345,22 +346,24 @@ Large old diagrams should be split by subsystem. No diagram should combine authe
 10. Any statement that the normal profile still uses `ddl-auto: create-drop` must be replaced: Flyway is now enabled and the default is schema validation.
 11. Any statement that TEAM users can call the all-testcase endpoint must be replaced with the separate public/sample endpoint.
 
-## N. Old Diagrams That Should Be Discarded or Split
+## N. Archived Legacy Diagrams And Documents
 
 | Old diagram type | Action | Reason |
 |---|---|---|
-| Large full-system flow diagram | Split | Too broad; should become context, lifecycle, SSE, judging, and rejudge diagrams. |
-| Old six-entity ER diagram | Replace | Missing `Clarification` and `SubmissionJudgeResult`; submission result modeling changed. |
-| Old submission workflow | Replace | Current flow includes judgeRunId, per-test-case result rows, stale callback rejection, and rejudge. |
-| Old clarification workflow | Replace/update | Backend and admin/team UI are now wired; diagrams should show the implemented workflow. |
-| Old intended full-system use case diagram | Split and mark future features | Future work should not appear as implemented use cases. |
-| Old architecture diagram without SSE | Replace | SSE and scheduler/event architecture are major current implementation features. |
+| Large full-system flow diagram | Archived/split | Too broad; active diagrams now use context, lifecycle, SSE, judging, rejudge, ER, and hybrid oracle views. |
+| Old six-entity ER diagram | Archived/replaced | Missing `Clarification`, `SubmissionJudgeResult`, scoreboard reveal tables, and oracle/generated-test tables. |
+| Old submission workflow | Archived/replaced | Current flow includes signed callbacks, judgeRunId, per-test-case result rows, stale callback rejection, backend comparison/custom validators, submission SSE, and rejudge. |
+| Old clarification workflow | Archived/updated | Backend and admin/team UI are now wired; active diagrams show the implemented workflow. |
+| Old intended full-system use case diagram | Archived/split | Future work should not appear as implemented use cases. |
+| Old architecture diagram without SSE | Archived/replaced | SSE and scheduler/event architecture are major current implementation features. |
+
+Detailed moved-file inventory is maintained in `docs/archive/ARCHIVE_INDEX.md`. Archived files are historical only and are not current implementation truth.
 
 ## O. Old Sections That Can Be Reused With Updates
 
 1. Formal front matter style, acknowledgement tone, and table-of-contents pattern.
 2. General introduction of AuraC2 as a university contest control system.
-3. High-level comparison to contest systems, after adding proper references in Phase 2.
+3. High-level comparison to contest systems, once final external references are selected.
 4. Basic explanation of role-based admin/team interfaces, updated with exact code evidence.
 5. General description of RabbitMQ and Judge0 as asynchronous judging technologies, updated with per-test-case and rejudge details.
 6. Functional requirement style, but requirements must be reclassified against current code.
@@ -374,8 +377,8 @@ Large old diagrams should be split by subsystem. No diagram should combine authe
 4. Should scoreboard export/reporting be treated as future work while live ranking/freeze/reveal remains implemented?
 5. Should the final report include screenshots from the current running UI, including implemented clarification and rejudge screens?
 6. Should the final report include code appendix excerpts or only file/class references?
-7. Do you want the literature review references gathered from external sources in Phase 2, or should we keep it source-neutral and brief?
-8. Should old diagrams be visually referenced in an appendix, or fully replaced with new smaller diagrams?
+7. Should the literature review gather external references for PC2, DOMjudge, Codeforces, Judge0, Spring Boot, RabbitMQ, PostgreSQL, React, and SSE, or remain source-neutral and brief?
+8. Should archived historical diagrams be visually referenced in an appendix, or should the final report use only the new smaller verified diagrams?
 
 ## Q. Human Decisions Before Final DOCX
 
