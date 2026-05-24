@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Judge0SubmissionDTO {
@@ -28,4 +31,23 @@ public class Judge0SubmissionDTO {
 
     @JsonProperty("memory_limit")
     private final Integer memoryLimit;
+
+    public Judge0SubmissionDTO base64Encoded() {
+        return new Judge0SubmissionDTO(
+                encodeText(sourceCode),
+                languageId,
+                encodeText(stdin),
+                encodeText(expectedOutput),
+                callbackUrl,
+                cpuTimeLimit,
+                memoryLimit
+        );
+    }
+
+    private static String encodeText(String value) {
+        if (value == null) {
+            return null;
+        }
+        return Base64.getEncoder().encodeToString(value.getBytes(StandardCharsets.UTF_8));
+    }
 }

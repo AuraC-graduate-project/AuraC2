@@ -39,9 +39,9 @@ public class Judge0Service {
                 buildSignedCallbackUrl(submission, testCaseNumber),
                 toJudge0CpuTimeLimitSeconds(submission.getProblem().getTimeLimit()),
                 toJudge0MemoryLimitKilobytes(submission.getProblem().getMemoryLimit())
-        );
+        ).base64Encoded();
 
-        judge0RestTemplate.postForObject(judge0Url, dto, Object.class);
+        judge0RestTemplate.postForObject(judge0SubmissionUrl(), dto, Object.class);
 
         log.info(
                 "Sent test case to Judge0. submissionId={} judgeRunId={} testCaseNumber={}",
@@ -98,6 +98,12 @@ public class Judge0Service {
                         String.valueOf(testCaseNumber)
                 )
                 .queryParam("signature", signature)
+                .toUriString();
+    }
+
+    String judge0SubmissionUrl() {
+        return UriComponentsBuilder.fromUriString(judge0Url)
+                .replaceQueryParam("base64_encoded", "true")
                 .toUriString();
     }
 }

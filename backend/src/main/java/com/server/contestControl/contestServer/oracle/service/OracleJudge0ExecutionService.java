@@ -37,7 +37,7 @@ public class OracleJudge0ExecutionService {
                 null,
                 oracleCpuTimeLimitSeconds,
                 oracleMemoryLimitKilobytes
-        );
+        ).base64Encoded();
 
         try {
             Judge0Response response = judge0RestTemplate.postForObject(
@@ -59,6 +59,7 @@ public class OracleJudge0ExecutionService {
     String synchronousJudge0Url() {
         return UriComponentsBuilder.fromUriString(judge0Url)
                 .replaceQueryParam("wait", "true")
+                .replaceQueryParam("base64_encoded", "true")
                 .toUriString();
     }
 

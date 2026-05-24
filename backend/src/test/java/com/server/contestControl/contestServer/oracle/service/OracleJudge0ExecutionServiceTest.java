@@ -9,6 +9,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,7 +25,7 @@ class OracleJudge0ExecutionServiceTest {
         RestTemplate restTemplate = mock(RestTemplate.class);
         OracleJudge0ExecutionService service = service(restTemplate);
         when(restTemplate.postForObject(
-                eq("http://judge0/submissions?base64_encoded=true&wait=true"),
+                eq("http://judge0/submissions?wait=true&base64_encoded=true"),
                 org.mockito.ArgumentMatchers.any(Judge0SubmissionDTO.class),
                 eq(Judge0Response.class)
         )).thenReturn(response(3, "Accepted", Base64.getEncoder().encodeToString("YES\n".getBytes())));
@@ -37,13 +38,13 @@ class OracleJudge0ExecutionServiceTest {
 
         ArgumentCaptor<Judge0SubmissionDTO> dtoCaptor = ArgumentCaptor.forClass(Judge0SubmissionDTO.class);
         verify(restTemplate).postForObject(
-                eq("http://judge0/submissions?base64_encoded=true&wait=true"),
+                eq("http://judge0/submissions?wait=true&base64_encoded=true"),
                 dtoCaptor.capture(),
                 eq(Judge0Response.class)
         );
-        assertThat(dtoCaptor.getValue().getSourceCode()).isEqualTo("source");
         assertThat(dtoCaptor.getValue().getLanguageId()).isEqualTo(54);
-        assertThat(dtoCaptor.getValue().getStdin()).isEqualTo("4\n");
+        assertThat(decoded(dtoCaptor.getValue().getSourceCode())).isEqualTo("source");
+        assertThat(decoded(dtoCaptor.getValue().getStdin())).isEqualTo("4\n");
         assertThat(dtoCaptor.getValue().getExpectedOutput()).isNull();
         assertThat(dtoCaptor.getValue().getCallbackUrl()).isNull();
         assertThat(dtoCaptor.getValue().getCpuTimeLimit()).isEqualTo(1.5);
@@ -55,7 +56,7 @@ class OracleJudge0ExecutionServiceTest {
         RestTemplate restTemplate = mock(RestTemplate.class);
         OracleJudge0ExecutionService service = service(restTemplate);
         when(restTemplate.postForObject(
-                eq("http://judge0/submissions?base64_encoded=true&wait=true"),
+                eq("http://judge0/submissions?wait=true&base64_encoded=true"),
                 org.mockito.ArgumentMatchers.any(Judge0SubmissionDTO.class),
                 eq(Judge0Response.class)
         )).thenThrow(new RestClientException("unavailable"));
@@ -69,7 +70,7 @@ class OracleJudge0ExecutionServiceTest {
 
     private OracleJudge0ExecutionService service(RestTemplate restTemplate) {
         OracleJudge0ExecutionService service = new OracleJudge0ExecutionService(restTemplate);
-        ReflectionTestUtils.setField(service, "judge0Url", "http://judge0/submissions?base64_encoded=true&wait=false");
+        ReflectionTestUtils.setField(service, "judge0Url", "http://judge0/submissions?wait=false");
         ReflectionTestUtils.setField(service, "oracleCpuTimeLimitSeconds", 1.5);
         ReflectionTestUtils.setField(service, "oracleMemoryLimitKilobytes", 65536);
         return service;
@@ -83,5 +84,9 @@ class OracleJudge0ExecutionServiceTest {
         response.setStatus(status);
         response.setStdout(stdout);
         return response;
+    }
+
+    private String decoded(String value) {
+        return new String(Base64.getDecoder().decode(value), StandardCharsets.UTF_8);
     }
 }

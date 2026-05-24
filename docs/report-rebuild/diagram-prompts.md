@@ -537,25 +537,45 @@ stop
 ```plantuml
 @startuml
 left to right direction
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+
 actor "Team User" as Team
-actor Administrator as Admin
-rectangle "Frontend" as Frontend {
-  [Team Clarifications UI]
-  [Admin ClarificationsView]
+actor "Administrator" as Admin
+
+rectangle "Frontend" as FE {
+  component "Team Clarifications UI" as TeamUI
+  component "Admin ClarificationsView" as AdminUI
 }
-rectangle "Backend" as Backend {
-  [ClarificationController]
-  [ClarificationService]
-  database "ClarificationRepository\nClarification table" as CDB
-  [Clarification SSE Stream]
+
+rectangle "Backend" as BE {
+  component "ClarificationController" as Controller
+  component "ClarificationService" as Service
+  database "ClarificationRepository\nClarification table" as Repo
+  component "Clarification SSE Stream" as SSE
 }
-[Team Clarifications UI] --> [ClarificationController] : submit / fetch own/public
-[Admin ClarificationsView] --> [ClarificationController] : fetch / reply
-[ClarificationController] --> [ClarificationService]
-[ClarificationService] --> CDB
-[ClarificationService] --> [Clarification SSE Stream] : publish update
-[Clarification SSE Stream] ..> [Team Clarifications UI] : refresh
-[Clarification SSE Stream] ..> [Admin ClarificationsView] : refresh
+
+Team --> TeamUI : ask question\nview own/public answers
+Admin --> AdminUI : review questions\nsend replies
+
+TeamUI --> Controller : submit clarification
+TeamUI --> Controller : fetch own/public clarifications
+
+AdminUI --> Controller : fetch pending/all clarifications
+AdminUI --> Controller : reply publicly/privately
+
+Controller --> Service : validate request\nexecute workflow
+
+Service --> Repo : save question
+Service --> Repo : load own/public/pending/all
+Service --> Repo : save admin reply
+
+Service --> SSE : publish clarification update
+
+SSE ..> TeamUI : refresh clarification list
+SSE ..> AdminUI : refresh pending/all view
+
 @enduml
 ```
 

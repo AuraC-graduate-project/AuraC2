@@ -12,6 +12,9 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -73,12 +76,14 @@ class Judge0ServiceTest {
 
         ArgumentCaptor<Judge0SubmissionDTO> dtoCaptor = ArgumentCaptor.forClass(Judge0SubmissionDTO.class);
         verify(restTemplate).postForObject(
-                eq("http://judge0/submissions?wait=false"),
+                eq("http://judge0/submissions?wait=false&base64_encoded=true"),
                 dtoCaptor.capture(),
                 eq(Object.class)
         );
         Judge0SubmissionDTO dto = dtoCaptor.getValue();
-        assertThat(dto.getExpectedOutput()).isEqualTo("1");
+        assertThat(decoded(dto.getSourceCode())).isEqualTo("class Main {}");
+        assertThat(decoded(dto.getStdin())).isEqualTo("1");
+        assertThat(decoded(dto.getExpectedOutput())).isEqualTo("1");
         assertThat(dto.getCpuTimeLimit()).isEqualTo(1.5);
         assertThat(dto.getMemoryLimit()).isEqualTo(262144);
     }
@@ -114,7 +119,7 @@ class Judge0ServiceTest {
 
         ArgumentCaptor<Judge0SubmissionDTO> dtoCaptor = ArgumentCaptor.forClass(Judge0SubmissionDTO.class);
         verify(restTemplate).postForObject(
-                eq("http://judge0/submissions?wait=false"),
+                eq("http://judge0/submissions?wait=false&base64_encoded=true"),
                 dtoCaptor.capture(),
                 eq(Object.class)
         );
@@ -156,7 +161,7 @@ class Judge0ServiceTest {
 
         ArgumentCaptor<Judge0SubmissionDTO> dtoCaptor = ArgumentCaptor.forClass(Judge0SubmissionDTO.class);
         verify(restTemplate).postForObject(
-                eq("http://judge0/submissions?wait=false"),
+                eq("http://judge0/submissions?wait=false&base64_encoded=true"),
                 dtoCaptor.capture(),
                 eq(Object.class)
         );
@@ -193,12 +198,16 @@ class Judge0ServiceTest {
 
         ArgumentCaptor<Judge0SubmissionDTO> dtoCaptor = ArgumentCaptor.forClass(Judge0SubmissionDTO.class);
         verify(restTemplate).postForObject(
-                eq("http://judge0/submissions?wait=false"),
+                eq("http://judge0/submissions?wait=false&base64_encoded=true"),
                 dtoCaptor.capture(),
                 eq(Object.class)
         );
         Judge0SubmissionDTO dto = dtoCaptor.getValue();
         assertThat(dto.getCpuTimeLimit()).isNull();
         assertThat(dto.getMemoryLimit()).isNull();
+    }
+
+    private String decoded(String value) {
+        return new String(Base64.getDecoder().decode(value), StandardCharsets.UTF_8);
     }
 }

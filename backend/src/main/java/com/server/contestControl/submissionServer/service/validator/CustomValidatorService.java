@@ -54,7 +54,7 @@ public class CustomValidatorService {
                 null,
                 validatorCpuTimeLimitSeconds,
                 validatorMemoryLimitKilobytes
-        );
+        ).base64Encoded();
 
         Judge0Response response;
         try {
@@ -79,6 +79,7 @@ public class CustomValidatorService {
     String validatorJudge0Url() {
         return UriComponentsBuilder.fromUriString(judge0Url)
                 .replaceQueryParam("wait", "true")
+                .replaceQueryParam("base64_encoded", "true")
                 .toUriString();
     }
 

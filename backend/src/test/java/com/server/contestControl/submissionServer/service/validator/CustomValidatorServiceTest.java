@@ -12,6 +12,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -25,7 +28,7 @@ class CustomValidatorServiceTest {
         RestTemplate restTemplate = mock(RestTemplate.class);
         CustomValidatorService service = service(restTemplate);
         when(restTemplate.postForObject(
-                eq("http://judge0/submissions?base64_encoded=true&wait=true"),
+                eq("http://judge0/submissions?wait=true&base64_encoded=true"),
                 org.mockito.ArgumentMatchers.any(Judge0SubmissionDTO.class),
                 eq(Judge0Response.class)
         )).thenReturn(judge0Response(3, "Accepted", "ACCEPT\n"));
@@ -41,18 +44,18 @@ class CustomValidatorServiceTest {
 
         ArgumentCaptor<Judge0SubmissionDTO> dtoCaptor = ArgumentCaptor.forClass(Judge0SubmissionDTO.class);
         verify(restTemplate).postForObject(
-                eq("http://judge0/submissions?base64_encoded=true&wait=true"),
+                eq("http://judge0/submissions?wait=true&base64_encoded=true"),
                 dtoCaptor.capture(),
                 eq(Judge0Response.class)
         );
         Judge0SubmissionDTO dto = dtoCaptor.getValue();
         assertThat(dto.getLanguageId()).isEqualTo(71);
-        assertThat(dto.getSourceCode()).isEqualTo("checker source");
+        assertThat(decoded(dto.getSourceCode())).isEqualTo("checker source");
         assertThat(dto.getExpectedOutput()).isNull();
         assertThat(dto.getCallbackUrl()).isNull();
         assertThat(dto.getCpuTimeLimit()).isEqualTo(1.25);
         assertThat(dto.getMemoryLimit()).isEqualTo(65536);
-        assertThat(dto.getStdin()).contains("3\n1 2\n", "4\n2 1\n");
+        assertThat(decoded(dto.getStdin())).contains("3\n1 2\n", "4\n2 1\n");
     }
 
     @Test
@@ -60,7 +63,7 @@ class CustomValidatorServiceTest {
         RestTemplate restTemplate = mock(RestTemplate.class);
         CustomValidatorService service = service(restTemplate);
         when(restTemplate.postForObject(
-                eq("http://judge0/submissions?base64_encoded=true&wait=true"),
+                eq("http://judge0/submissions?wait=true&base64_encoded=true"),
                 org.mockito.ArgumentMatchers.any(Judge0SubmissionDTO.class),
                 eq(Judge0Response.class)
         )).thenReturn(judge0Response(3, "Accepted", "REJECT\nnot equivalent"));
@@ -76,7 +79,7 @@ class CustomValidatorServiceTest {
         RestTemplate restTemplate = mock(RestTemplate.class);
         CustomValidatorService service = service(restTemplate);
         when(restTemplate.postForObject(
-                eq("http://judge0/submissions?base64_encoded=true&wait=true"),
+                eq("http://judge0/submissions?wait=true&base64_encoded=true"),
                 org.mockito.ArgumentMatchers.any(Judge0SubmissionDTO.class),
                 eq(Judge0Response.class)
         )).thenReturn(judge0Response(5, "Time Limit Exceeded", null));
@@ -92,7 +95,7 @@ class CustomValidatorServiceTest {
         RestTemplate restTemplate = mock(RestTemplate.class);
         CustomValidatorService service = service(restTemplate);
         when(restTemplate.postForObject(
-                eq("http://judge0/submissions?base64_encoded=true&wait=true"),
+                eq("http://judge0/submissions?wait=true&base64_encoded=true"),
                 org.mockito.ArgumentMatchers.any(Judge0SubmissionDTO.class),
                 eq(Judge0Response.class)
         )).thenReturn(judge0Response(3, "Accepted", "MAYBE\n"));
@@ -108,7 +111,7 @@ class CustomValidatorServiceTest {
         RestTemplate restTemplate = mock(RestTemplate.class);
         CustomValidatorService service = service(restTemplate);
         when(restTemplate.postForObject(
-                eq("http://judge0/submissions?base64_encoded=true&wait=true"),
+                eq("http://judge0/submissions?wait=true&base64_encoded=true"),
                 org.mockito.ArgumentMatchers.any(Judge0SubmissionDTO.class),
                 eq(Judge0Response.class)
         )).thenThrow(new RestClientException("judge0 unavailable"));
@@ -153,5 +156,9 @@ class CustomValidatorServiceTest {
         response.setStatus(status);
         response.setStdout(stdout);
         return response;
+    }
+
+    private String decoded(String value) {
+        return new String(Base64.getDecoder().decode(value), StandardCharsets.UTF_8);
     }
 }
