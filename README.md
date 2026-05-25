@@ -29,6 +29,8 @@
 ![Nginx](https://img.shields.io/badge/Proxy-Nginx-009639?style=flat-square&logo=nginx&logoColor=white)
 ![Judge0](https://img.shields.io/badge/Code%20Execution-Judge0-blueviolet?style=flat-square&logo=codeforces&logoColor=white)
 ![Gmail](https://img.shields.io/badge/Email-Gmail%20SMTP-EA4335?style=flat-square&logo=gmail&logoColor=white)
+
+
 AuraC2 is a university programming contest-control system. It combines a Spring Boot backend, a React/Vite frontend, PostgreSQL persistence, RabbitMQ queueing, and Judge0 execution to support ICPC-style contest administration and team submissions.
 
 The current implementation is a modular monolith: backend packages are organized by domain (`authServer`, `contestServer`, `submissionServer`, and shared utilities), but they run in one Spring Boot application and share one database.
