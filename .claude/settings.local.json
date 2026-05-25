@@ -3,7 +3,8 @@
     "allow": [
       "Bash(java --version)",
       "Bash(npm --version)",
-      "Bash(./mvnw test *)"
+      "Bash(./mvnw test *)",
+      "Bash(Select-String \"TestCase\")"
     ]
   }
 }

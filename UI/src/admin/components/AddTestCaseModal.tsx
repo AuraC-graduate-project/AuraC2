@@ -60,9 +60,14 @@ export function AddTestCaseModal({
       setIsPublic(false);
       onOpenChange(false);
       onSuccess();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to add test case:', error);
-      toast.error('Failed to add test case. Please try again.');
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      if (status === 409) {
+        toast.error('A test case with the same input and expected output already exists.');
+      } else {
+        toast.error('Failed to add test case. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }

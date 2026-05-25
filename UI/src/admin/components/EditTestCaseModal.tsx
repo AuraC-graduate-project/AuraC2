@@ -55,8 +55,13 @@ export function EditTestCaseModal({
       toast.success("Test case updated successfully");
       onSuccess();
       onOpenChange(false);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to update test case");
+    } catch (error: unknown) {
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      if (status === 409) {
+        toast.error("A test case with the same input and expected output already exists.");
+      } else {
+        toast.error("Failed to update test case. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }

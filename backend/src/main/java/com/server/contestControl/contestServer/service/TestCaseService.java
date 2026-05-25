@@ -6,6 +6,7 @@ import com.server.contestControl.contestServer.dto.testcase.TestCaseUpdateReques
 import com.server.contestControl.contestServer.dto.testcase.PublicTestCaseResponse;
 import com.server.contestControl.contestServer.entity.Problem;
 import com.server.contestControl.contestServer.entity.TestCase;
+import com.server.contestControl.contestServer.exceptions.DuplicateTestCaseException;
 import com.server.contestControl.contestServer.exceptions.ProblemNotFoundException;
 import com.server.contestControl.contestServer.exceptions.TestCaseNotFoundException;
 import com.server.contestControl.contestServer.repository.ProblemRepository;
@@ -29,10 +30,17 @@ public class TestCaseService {
         Problem problem = problemRepository.findById(problemId)
                 .orElseThrow(() -> new ProblemNotFoundException(problemId));
 
+        String normalizedInput = request.getInputData().trim();
+        String normalizedOutput = request.getExpectedOutput().trim();
+
+        if (testCaseRepository.existsByProblemIdAndInputDataAndExpectedOutput(problemId, normalizedInput, normalizedOutput)) {
+            throw new DuplicateTestCaseException();
+        }
+
         TestCase testCase = TestCase.builder()
                 .problem(problem)
-                .inputData(request.getInputData())
-                .expectedOutput(request.getExpectedOutput())
+                .inputData(normalizedInput)
+                .expectedOutput(normalizedOutput)
                 .isPublic(request.isPublic())
                 .build();
 
@@ -46,8 +54,16 @@ public class TestCaseService {
         TestCase testCase = testCaseRepository.findById(id)
                 .orElseThrow(() -> new TestCaseNotFoundException(id));
 
-        testCase.setInputData(request.getInputData());
-        testCase.setExpectedOutput(request.getExpectedOutput());
+        String normalizedInput = request.getInputData().trim();
+        String normalizedOutput = request.getExpectedOutput().trim();
+
+        if (testCaseRepository.existsByProblemIdAndInputDataAndExpectedOutputAndIdNot(
+                testCase.getProblem().getId(), normalizedInput, normalizedOutput, id)) {
+            throw new DuplicateTestCaseException();
+        }
+
+        testCase.setInputData(normalizedInput);
+        testCase.setExpectedOutput(normalizedOutput);
         testCase.setPublic(request.isPublic());
 
         testCaseRepository.save(testCase);
