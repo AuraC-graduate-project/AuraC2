@@ -101,7 +101,9 @@ public class PromptTemplateRenderer {
                 .append("- Hidden tests and hidden expected outputs must not be exposed.\n")
                 .append("- AI-generated code is not trusted until AuraC2 verifies it.\n")
                 .append("- The artifact must match the selected language: ").append(language.label()).append(".\n")
-                .append("- The artifact must follow AuraC2/Judge0 execution conventions for this language.\n\n");
+                .append("- The artifact must follow AuraC2/Judge0 execution conventions for this language.\n");
+        appendArtifactSpecificChecklist(out, request.getPromptType(), language);
+        out.append("\n");
 
         appendTitle(out, "Strict Output Rules");
         out.append("- Produce only the requested files and concise implementation notes.\n")
@@ -161,6 +163,7 @@ public class PromptTemplateRenderer {
                 .append("- Be deterministic for the same seed and testNumber.\n")
                 .append("- Cover boundary cases, random cases, edge cases, and stress-like categories by testNumber.\n")
                 .append("- Do not use testlib unless an admin explicitly asks and AuraC2 supports it.\n");
+        appendCpp17GeneratorGuardrails(out, language);
     }
 
     private void appendValidatorContract(StringBuilder out, SupportedLanguage language) {
@@ -168,7 +171,9 @@ public class PromptTemplateRenderer {
                 .append("- Strictly validate ranges, counts, structure, EOF, extra tokens, and problem-specific rules.\n")
                 .append("- Print exactly one line to stdout: VALID or INVALID.\n")
                 .append("- Return exit code 0 even for INVALID because AuraC2 reads the decision from stdout.\n")
-                .append("- Send optional diagnostics to stderr only.\n");
+                .append("- Send optional diagnostics to stderr only.\n")
+                .append("- Compile and run the validator on known valid and invalid inputs before using it in AuraC2.\n");
+        appendCpp17ValidatorGuardrails(out, language);
     }
 
     private void appendCheckerContract(StringBuilder out, SupportedLanguage language) {
@@ -188,7 +193,8 @@ public class PromptTemplateRenderer {
             case INPUT_GENERATOR -> "- " + language.generatorFileName()
                     + "\n- generator_notes.md\n- edge_case_plan.md";
             case INPUT_VALIDATOR -> "- " + language.validatorFileName()
-                    + "\n- constraint_coverage_checklist.md";
+                    + "\n- constraint_coverage_checklist.md"
+                    + "\n- validator_self_test_notes.md";
             case CHECKER_OUTPUT_VALIDATOR -> "- checker_need_decision.md\n- "
                     + language.checkerFileName()
                     + " only if a custom checker is needed";
@@ -201,8 +207,51 @@ public class PromptTemplateRenderer {
                     + "\n- proof_idea.md"
                     + "\n- complexity.md"
                     + "\n- edge_case_plan.md"
-                    + "\n- constraint_coverage_checklist.md";
+                    + "\n- constraint_coverage_checklist.md"
+                    + "\n- validator_self_test_notes.md";
         };
+    }
+
+    private void appendArtifactSpecificChecklist(StringBuilder out, PromptType type, SupportedLanguage language) {
+        if (type == PromptType.INPUT_VALIDATOR || type == PromptType.FULL_PROBLEM_ENGINEERING_BUNDLE) {
+            out.append("- Compile the input validator before using it; compilation errors make it unusable in AuraC2.\n")
+                    .append("- Run the validator on valid samples and deliberately invalid cases.\n")
+                    .append("- Confirm validator stdout is exactly VALID or INVALID with no debug logs.\n")
+                    .append("- Check EOF, extra non-whitespace tokens, missing tokens, malformed tokens, and out-of-range values.\n");
+        }
+        if ((type == PromptType.INPUT_GENERATOR || type == PromptType.FULL_PROBLEM_ENGINEERING_BUNDLE) && isCpp17(language)) {
+            out.append("- Compile the C++17 generator before use and confirm it prints only generated input to stdout.\n");
+        }
+    }
+
+    private void appendCpp17GeneratorGuardrails(StringBuilder out, SupportedLanguage language) {
+        if (!isCpp17(language)) {
+            return;
+        }
+        out.append("- C++17-specific guardrails: compile under C++17, use deterministic RNG safely, and avoid ambiguous parser-sensitive constructs.\n")
+                .append("- Keep stdout clean: print only the generated input, never explanations or debug logs.\n");
+    }
+
+    private void appendCpp17ValidatorGuardrails(StringBuilder out, SupportedLanguage language) {
+        if (!isCpp17(language)) {
+            return;
+        }
+        out.append("- C++17-specific guardrails: compile under C++17 and avoid C++ Most Vexing Parse patterns.\n")
+                .append("- Prefer brace initialization when constructing strings from iterators.\n")
+                .append("- If reading all stdin into a string, use a safe pattern such as:\n")
+                .append("```cpp\n")
+                .append("const string input{\n")
+                .append("    istreambuf_iterator<char>(cin),\n")
+                .append("    istreambuf_iterator<char>()\n")
+                .append("};\n")
+                .append("```\n")
+                .append("- Or use ostringstream:\n")
+                .append("```cpp\n")
+                .append("ostringstream ss;\n")
+                .append("ss << cin.rdbuf();\n")
+                .append("string input = ss.str();\n")
+                .append("```\n")
+                .append("- Do not use ambiguous parenthesized declarations for iterator-based string construction, such as string input((istreambuf_iterator<char>(cin)), istreambuf_iterator<char>()).\n");
     }
 
     private void appendProgramContext(StringBuilder out, PromptContext context, PromptExportRequest request) {
@@ -317,6 +366,13 @@ public class PromptTemplateRenderer {
         return SupportedLanguageCatalog.findByJudge0LanguageId(languageId)
                 .map(language -> language.label() + " (Judge0 " + language.judge0LanguageId() + ")")
                 .orElse("Judge0 " + defaultText(languageId == null ? null : String.valueOf(languageId), "unknown"));
+    }
+
+    private boolean isCpp17(SupportedLanguage language) {
+        return language != null
+                && ("cpp".equalsIgnoreCase(language.value())
+                || "C++17".equalsIgnoreCase(language.label())
+                || language.aliases().stream().anyMatch(alias -> "c++17".equalsIgnoreCase(alias) || "cpp17".equalsIgnoreCase(alias)));
     }
 
     private String defaultText(String value, String fallback) {

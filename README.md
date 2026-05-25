@@ -87,7 +87,7 @@ Historical reports, old feature writeups, task prompts, and duplicate PDFs are a
 - Public notes are contestant-facing and appear in team statement views and contestant-style previews.
 - Admin internal notes are admin-only and are excluded from team views and SAFE_MODE prompt exports.
 - Admin problem details include contestant-style preview and readiness warnings for missing key statement fields.
-- Admins can export contestant-safe single-problem PDFs and contest booklet PDFs. These exports use a Codeforces-style order (statement, input, output, constraints, examples, note) and include public samples only.
+- Admins can export contestant-safe single-problem PDFs and contest booklet PDFs. These exports use a Codeforces-style order (statement, input, output, constraints, examples, note), render public samples as grouped monospace examples, and include public samples only.
 - Admin test-case create/read/update/delete.
 - Hidden/private test cases remain admin/internal only.
 - TEAM users can fetch only public/sample test cases through the public sample endpoint.
@@ -168,7 +168,7 @@ The admin UI exposes three prompt modes:
 
 Target languages come from the backend supported-language catalog used by Judge0 mapping. The prompt renderer validates the requested language server-side and adapts file names, entry point expectations, runtime notes, and verification instructions to the selected language. C++17 is not assumed unless selected.
 
-Prompt previews include one-click copy plus `.txt` and `.md` download actions. The generated prompt wording is type-aware: reference-solution prompts ask for solution artifacts, generator prompts include the `seed testNumber` contract, validator prompts require `VALID`/`INVALID`, and checker prompts first ask whether a custom checker is needed.
+Prompt previews include one-click copy plus `.txt` and `.md` download actions. The generated prompt wording is type-aware: reference-solution prompts ask for solution artifacts, generator prompts include the `seed testNumber` contract, validator prompts require `VALID`/`INVALID`, and checker prompts first ask whether a custom checker is needed. C++17 generator and validator prompts include compile-safety guardrails, including avoiding Most Vexing Parse patterns in stdin-reading code.
 
 ### Admin Usability And Credential Handling
 

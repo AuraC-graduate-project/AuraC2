@@ -26,7 +26,8 @@ class ProblemStatementPdfServiceTest {
     private final ProblemStatementPdfService service = new ProblemStatementPdfService(
             problemRepository,
             contestRepository,
-            testCaseRepository
+            testCaseRepository,
+            new StatementPdfRenderer()
     );
 
     @Test
@@ -123,6 +124,35 @@ class ProblemStatementPdfServiceTest {
 
         assertThat(pdf).contains("Examples", "2 2", "3 4", "4", "7");
         assertThat(pdf).doesNotContain("private", "hidden expected");
+    }
+
+    @Test
+    void problemPdfGroupsMultiplePublicSamplesAsExamples() {
+        Problem problem = problem();
+        TestCase firstSample = TestCase.builder()
+                .id(1L)
+                .problem(problem)
+                .inputData("2 2\n")
+                .expectedOutput("4\n")
+                .isPublic(true)
+                .build();
+        TestCase secondSample = TestCase.builder()
+                .id(2L)
+                .problem(problem)
+                .inputData("10 5\n")
+                .expectedOutput("15\n")
+                .isPublic(true)
+                .build();
+
+        when(problemRepository.findById(10L)).thenReturn(Optional.of(problem));
+        when(testCaseRepository.findByProblemIdAndIsPublicTrueOrderByIdAsc(10L)).thenReturn(List.of(firstSample, secondSample));
+
+        ProblemStatementPdfService.PdfExport export = service.problemPdf(10L);
+        String pdf = new String(export.bytes(), StandardCharsets.ISO_8859_1);
+
+        assertThat(pdf).contains("Examples", "Example 1", "Example 2", "2 2", "10 5", "15");
+        assertThat(pdf.indexOf("Example 1")).isLessThan(pdf.indexOf("Example 2"));
+        assertThat(pdf.indexOf("Output")).isGreaterThan(pdf.indexOf("Input"));
     }
 
     @Test

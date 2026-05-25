@@ -99,4 +99,44 @@ class PromptTemplateRendererTest {
         assertThat(prompt).contains("checker.cpp only if a custom checker is needed");
         assertThat(prompt).contains("Built-in exact comparison is usually sufficient");
     }
+
+    @Test
+    void cppValidatorPromptWarnsAgainstMostVexingParseAndRequiresSelfTests() {
+        SupportedLanguage language = SupportedLanguageCatalog.findByValueOrAlias("cpp").orElseThrow();
+        Problem problem = Problem.builder()
+                .id(10L)
+                .contest(Contest.builder().id(1L).build())
+                .title("Tree")
+                .statement("Validate a tree.")
+                .inputFormat("n followed by n - 1 edges.")
+                .outputFormat("No output.")
+                .constraintsText("1 <= n <= 200000")
+                .comparePolicy(ComparePolicy.EXACT)
+                .validationMode(ValidationMode.BUILTIN_COMPARE_POLICY)
+                .validatorEnabled(false)
+                .build();
+        PromptContext context = new PromptContext(
+                problem,
+                language,
+                List.of(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty()
+        );
+        PromptExportRequest request = new PromptExportRequest();
+        request.setPromptType(PromptType.INPUT_VALIDATOR);
+        request.setTargetLanguage("cpp");
+
+        String prompt = renderer.render(context, request, List.of());
+
+        assertThat(prompt).contains(
+                "Input validator file: validator.cpp",
+                "avoid C++ Most Vexing Parse patterns",
+                "const string input{",
+                "ostringstream ss;",
+                "validator_self_test_notes.md",
+                "Confirm validator stdout is exactly VALID or INVALID"
+        );
+        assertThat(prompt).contains("Do not use ambiguous parenthesized declarations");
+    }
 }
