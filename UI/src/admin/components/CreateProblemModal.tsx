@@ -41,6 +41,12 @@ export function CreateProblemModal({ open, onOpenChange, contestId, nextProblemI
     contestId,
     title: '',
     description: '',
+    statement: '',
+    inputFormat: '',
+    outputFormat: '',
+    constraintsText: '',
+    publicNotes: '',
+    adminNotes: '',
     timeLimit: 0,
     memoryLimit: 0,
     difficulty: 'EASY',
@@ -60,6 +66,12 @@ export function CreateProblemModal({ open, onOpenChange, contestId, nextProblemI
       contestId,
       title: '',
       description: '',
+      statement: '',
+      inputFormat: '',
+      outputFormat: '',
+      constraintsText: '',
+      publicNotes: '',
+      adminNotes: '',
       timeLimit: 0,
       memoryLimit: 0,
       difficulty: 'EASY',
@@ -77,9 +89,13 @@ export function CreateProblemModal({ open, onOpenChange, contestId, nextProblemI
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const sanitizedDescription = sanitizeRichText(formData.description);
+    const sanitizedStatement = sanitizeRichText(formData.statement ?? formData.description);
+    const sanitizedInputFormat = sanitizeRichText(formData.inputFormat);
+    const sanitizedOutputFormat = sanitizeRichText(formData.outputFormat);
+    const sanitizedConstraints = sanitizeRichText(formData.constraintsText);
+    const sanitizedPublicNotes = sanitizeRichText(formData.publicNotes);
 
-    if (!formData.title.trim() || !richTextToPlainText(sanitizedDescription)) {
+    if (!formData.title.trim() || !richTextToPlainText(sanitizedStatement)) {
       toast.error('Title and problem statement are required');
       return;
     }
@@ -121,7 +137,13 @@ export function CreateProblemModal({ open, onOpenChange, contestId, nextProblemI
         ...formData,
         contestId,
         title: formData.title.trim(),
-        description: sanitizedDescription,
+        description: sanitizedStatement,
+        statement: sanitizedStatement,
+        inputFormat: sanitizedInputFormat || null,
+        outputFormat: sanitizedOutputFormat || null,
+        constraintsText: sanitizedConstraints || null,
+        publicNotes: sanitizedPublicNotes || null,
+        adminNotes: formData.adminNotes?.trim() || null,
         floatAbsoluteEpsilon:
           !usesCustomValidator && formData.comparePolicy === 'FLOAT_TOLERANCE' ? formData.floatAbsoluteEpsilon ?? null : null,
         floatRelativeEpsilon:
@@ -140,6 +162,12 @@ export function CreateProblemModal({ open, onOpenChange, contestId, nextProblemI
         contestId,
         title: '',
         description: '',
+        statement: '',
+        inputFormat: '',
+        outputFormat: '',
+        constraintsText: '',
+        publicNotes: '',
+        adminNotes: '',
         timeLimit: 0,
         memoryLimit: 0,
         difficulty: 'EASY',
@@ -183,13 +211,71 @@ export function CreateProblemModal({ open, onOpenChange, contestId, nextProblemI
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="statement">Statement</Label>
               <RichTextEditor
-                id="description"
-                value={formData.description}
-                onChange={(description) => setFormData((prev) => ({ ...prev, description }))}
+                id="statement"
+                value={formData.statement ?? ''}
+                onChange={(statement) => setFormData((prev) => ({ ...prev, statement }))}
                 disabled={isSubmitting}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="inputFormat">Input Format</Label>
+              <RichTextEditor
+                id="inputFormat"
+                value={formData.inputFormat ?? ''}
+                onChange={(inputFormat) => setFormData((prev) => ({ ...prev, inputFormat }))}
+                disabled={isSubmitting}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="outputFormat">Output Format</Label>
+              <RichTextEditor
+                id="outputFormat"
+                value={formData.outputFormat ?? ''}
+                onChange={(outputFormat) => setFormData((prev) => ({ ...prev, outputFormat }))}
+                disabled={isSubmitting}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="constraintsText">Constraints</Label>
+              <RichTextEditor
+                id="constraintsText"
+                value={formData.constraintsText ?? ''}
+                onChange={(constraintsText) => setFormData((prev) => ({ ...prev, constraintsText }))}
+                disabled={isSubmitting}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="publicNotes">Public Notes</Label>
+              <RichTextEditor
+                id="publicNotes"
+                value={formData.publicNotes ?? ''}
+                onChange={(publicNotes) => setFormData((prev) => ({ ...prev, publicNotes }))}
+                disabled={isSubmitting}
+              />
+              <p className="text-sm text-slate-500">
+                Contestant-facing notes for examples, edge cases, special definitions, or safe hints.
+              </p>
+            </div>
+
+            <div className="space-y-2 rounded-md border border-amber-200 bg-amber-50 p-4">
+              <Label htmlFor="adminNotes" className="text-amber-950">Admin Internal Notes</Label>
+              <Textarea
+                id="adminNotes"
+                value={formData.adminNotes ?? ''}
+                onChange={(e) => setFormData({ ...formData, adminNotes: e.target.value })}
+                className="min-h-28 bg-white"
+                placeholder="Setter notes, intended solution notes, trap cases, hidden-test strategy"
+                disabled={isSubmitting}
+              />
+              <p className="text-sm text-amber-800">
+                Admin-only. These notes do not appear in team views or SAFE_MODE prompt exports.
+              </p>
             </div>
             
             <div className="grid grid-cols-2 gap-4">

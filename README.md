@@ -23,7 +23,7 @@ Historical reports, old feature writeups, task prompts, and duplicate PDFs are a
 | Backend | Spring Boot 3.4.x, Java 21 |
 | Frontend | React 18, TypeScript, Vite, Tailwind |
 | Database | PostgreSQL |
-| Migrations | Flyway V1-V5 with Hibernate schema validation |
+| Migrations | Flyway V1-V6 with Hibernate schema validation |
 | Queue | RabbitMQ submission queue |
 | Judge | Judge0 API and signed callback endpoint |
 | Auth | JWT access tokens and HTTP-only refresh-token cookie flow |
@@ -51,6 +51,11 @@ Historical reports, old feature writeups, task prompts, and duplicate PDFs are a
 ### Problems And Test Cases
 
 - Admin problem create/read/update/delete.
+- Structured problem statements support statement body, input format, output format, constraints, public notes, admin internal notes, time limit, and memory limit.
+- Legacy `description` remains readable and is used as the statement fallback for older problems.
+- Public notes are contestant-facing and appear in team statement views and contestant-style previews.
+- Admin internal notes are admin-only and are excluded from team views and SAFE_MODE prompt exports.
+- Admin problem details include contestant-style preview and readiness warnings for missing key statement fields.
 - Admin test-case create/read/update/delete.
 - Hidden/private test cases remain admin/internal only.
 - TEAM users can fetch only public/sample test cases through the public sample endpoint.
@@ -109,6 +114,20 @@ AuraC2 includes an admin-only deterministic hybrid judging extension:
 
 Generated tests help discover bugs but do not prove correctness. ML is not used as a verdict source.
 
+### Problem Engineering Prompt Exports
+
+Admins can export deterministic prompt text from the Problem Engineering/Oracle panel for optional external use:
+
+- Reference solution prompt.
+- Input generator prompt.
+- Input validator prompt.
+- Checker/output validator prompt.
+- Full problem engineering bundle prompt.
+
+Prompt exports do not call OpenAI, Codex, Gemini, Claude, or any external AI provider. They only assemble copyable/exportable text from AuraC2 problem data, public samples, compare policy, selected language contracts, and explicitly selected admin instructions. SAFE_MODE excludes hidden tests, hidden expected outputs, admin internal notes, and official source snippets. ADMIN_FULL_MODE requires explicit confirmation before sensitive material can be included.
+
+Target languages come from the backend supported-language catalog used by Judge0 mapping. The prompt renderer validates the requested language server-side and adapts file names, entry point expectations, runtime notes, and verification instructions to the selected language. C++17 is not assumed unless selected.
+
 ### Rejudge
 
 - Admin can rejudge selected submissions, all submissions for a problem, or all submissions for a contest.
@@ -136,6 +155,7 @@ Generated tests help discover bugs but do not prove correctness. ML is not used 
 - Full LAN/offline deployment requires an explicitly configured local Judge0 instance.
 - Interactive problems are not supported.
 - ML is never used to judge submissions.
+- Prompt exports do not integrate with AI APIs and do not make generated code official.
 - Generated tests and counterexamples are deterministic aids, not mathematical proof of correctness.
 
 ## Local Development
@@ -199,10 +219,11 @@ Flyway migrations are under `backend/src/main/resources/db/migration`:
 - `V3__problem_custom_validators.sql`
 - `V4__reference_oracle_generated_tests.sql`
 - `V5__generated_test_batch_partial_status.sql`
+- `V6__structured_problem_statements.sql`
 
 Manual repair scripts, if any, belong outside `db/migration` and are not part of the official forward-only migration history.
 
-To reset a local development database intentionally, stop the application, reset the PostgreSQL volume or schema, then restart so Flyway can apply V1-V5 from a clean state. This is a local reset operation, not the normal startup workflow.
+To reset a local development database intentionally, stop the application, reset the PostgreSQL volume or schema, then restart so Flyway can apply V1-V6 from a clean state. This is a local reset operation, not the normal startup workflow.
 
 ## Verification Commands
 

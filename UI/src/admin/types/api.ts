@@ -66,6 +66,12 @@ export interface ProblemRequest {
   contestId: number;
   title: string;
   description: string;
+  statement?: string | null;
+  inputFormat?: string | null;
+  outputFormat?: string | null;
+  constraintsText?: string | null;
+  publicNotes?: string | null;
+  adminNotes?: string | null;
   timeLimit: number;
   memoryLimit: number;
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
@@ -82,6 +88,12 @@ export interface ProblemRequest {
 export interface ProblemUpdateRequest {
   title: string;
   description: string;
+  statement?: string | null;
+  inputFormat?: string | null;
+  outputFormat?: string | null;
+  constraintsText?: string | null;
+  publicNotes?: string | null;
+  adminNotes?: string | null;
   timeLimit: number;
   memoryLimit: number;
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
@@ -110,6 +122,12 @@ export interface ProblemResponse {
   contestId: number;
   title: string;
   description: string;
+  statement: string | null;
+  inputFormat: string | null;
+  outputFormat: string | null;
+  constraintsText: string | null;
+  publicNotes: string | null;
+  adminNotes?: string | null;
   timeLimit: number;
   memoryLimit: number;
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
@@ -482,4 +500,60 @@ export interface CounterexampleResponse {
   promoted: boolean;
   promotedTestCaseId: number | null;
   createdAt: string | null;
+}
+
+// -----------------------------
+// Supported languages / Prompt exports
+// -----------------------------
+
+export interface SupportedLanguageResponse {
+  value: string;
+  label: string;
+  judge0LanguageId: number;
+  supportsSubmission: boolean;
+  supportsReferenceSolution: boolean;
+  supportsGenerator: boolean;
+  supportsInputValidator: boolean;
+  supportsChecker: boolean;
+  referenceFileName: string;
+  generatorFileName: string;
+  validatorFileName: string;
+  checkerFileName: string;
+  entryPoint: string;
+  runtimeNotes: string;
+  verificationNotes: string;
+}
+
+export type PromptType =
+  | 'REFERENCE_SOLUTION'
+  | 'INPUT_GENERATOR'
+  | 'INPUT_VALIDATOR'
+  | 'CHECKER_OUTPUT_VALIDATOR'
+  | 'FULL_PROBLEM_ENGINEERING_BUNDLE';
+
+export type PromptVisibilityMode = 'SAFE_MODE' | 'ADMIN_FULL_MODE';
+
+export interface PromptExportRequest {
+  promptType: PromptType;
+  visibilityMode: PromptVisibilityMode;
+  targetLanguage: string;
+  includePublicSamples: boolean;
+  includeComparePolicy: boolean;
+  includePublicNotes: boolean;
+  includeAdminInternalNotes: boolean;
+  includeReferenceSolution: boolean;
+  includeProgramMetadata: boolean;
+  includeProgramSources: boolean;
+  includeAdditionalInstructions: boolean;
+  confirmSensitiveMaterial: boolean;
+  additionalInstructions?: string | null;
+}
+
+export interface PromptExportResponse {
+  promptType: PromptType;
+  visibilityMode: PromptVisibilityMode;
+  targetLanguage: SupportedLanguageResponse;
+  promptText: string;
+  warnings: string[];
+  readinessWarnings: string[];
 }

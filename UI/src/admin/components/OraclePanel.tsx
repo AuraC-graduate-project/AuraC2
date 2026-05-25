@@ -1,6 +1,9 @@
 import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from "react";
 import {
   CheckCircle2,
+  Copy,
+  Download,
+  FileText,
   FlaskConical,
   Play,
   RefreshCw,
@@ -24,7 +27,9 @@ import {
   getGeneratedTestBatches,
   getInputGenerators,
   getInputValidators,
+  getSupportedLanguages,
   getReferenceSolutions,
+  previewPromptExport,
   promoteAllValidGeneratedTestCases,
   promoteCounterexample,
   promoteGeneratedTestCase,
@@ -36,6 +41,11 @@ import {
   GeneratedTestBatchResponse,
   GeneratedTestCaseResponse,
   OracleProgramResponse,
+  PromptExportRequest,
+  PromptExportResponse,
+  PromptType,
+  PromptVisibilityMode,
+  SupportedLanguageResponse,
 } from "../types/api";
 import {
   DEFAULT_VALIDATOR_LANGUAGE_ID,
@@ -72,6 +82,8 @@ type CounterexampleFormState = PreparationFormState & {
   submissionId: string;
 };
 
+type PromptFormState = PromptExportRequest;
+
 interface OraclePanelProps {
   problemId: number;
   problemTitle: string;
@@ -94,6 +106,22 @@ const defaultCounterexampleForm: CounterexampleFormState = {
   testCount: "10",
   seed: "",
   submissionId: "",
+};
+
+const defaultPromptForm: PromptFormState = {
+  promptType: "INPUT_GENERATOR",
+  visibilityMode: "SAFE_MODE",
+  targetLanguage: "",
+  includePublicSamples: true,
+  includeComparePolicy: true,
+  includePublicNotes: true,
+  includeAdminInternalNotes: false,
+  includeReferenceSolution: false,
+  includeProgramMetadata: false,
+  includeProgramSources: false,
+  includeAdditionalInstructions: true,
+  confirmSensitiveMaterial: false,
+  additionalInstructions: "",
 };
 
 function shortHash(hash?: string | null) {
@@ -152,9 +180,14 @@ export function OraclePanel({ problemId, problemTitle, contestId }: OraclePanelP
   const [validatorForm, setValidatorForm] = useState<ProgramFormState>(() => defaultProgramForm());
   const [preparationForm, setPreparationForm] = useState<PreparationFormState>(defaultPreparationForm);
   const [counterexampleForm, setCounterexampleForm] = useState<CounterexampleFormState>(defaultCounterexampleForm);
+  const [promptForm, setPromptForm] = useState<PromptFormState>(defaultPromptForm);
+  const [supportedLanguages, setSupportedLanguages] = useState<SupportedLanguageResponse[]>([]);
+  const [promptPreview, setPromptPreview] = useState<PromptExportResponse | null>(null);
   const [selectedGeneratedCaseIds, setSelectedGeneratedCaseIds] = useState<Set<number>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingLanguages, setIsLoadingLanguages] = useState(false);
   const [submitting, setSubmitting] = useState<SubmittingState>(null);
+  const [isPromptSubmitting, setIsPromptSubmitting] = useState(false);
 
   const activeReference = useMemo(
     () => referenceSolutions.find((program) => program.active) ?? referenceSolutions[0] ?? null,
@@ -218,9 +251,41 @@ export function OraclePanel({ problemId, problemTitle, contestId }: OraclePanelP
     setValidatorForm(defaultProgramForm());
     setPreparationForm(defaultPreparationForm);
     setCounterexampleForm(defaultCounterexampleForm);
+    setPromptForm(defaultPromptForm);
+    setPromptPreview(null);
     setSelectedGeneratedCaseIds(new Set());
     void reload();
   }, [problemId, reload]);
+
+  useEffect(() => {
+    let mounted = true;
+    setIsLoadingLanguages(true);
+    getSupportedLanguages()
+      .then((languages) => {
+        if (mounted) setSupportedLanguages(languages);
+      })
+      .catch((error) => {
+        toast.error(error instanceof Error ? error.message : "Failed to load supported languages");
+      })
+      .finally(() => {
+        if (mounted) setIsLoadingLanguages(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const promptLanguageOptions = useMemo(
+    () => supportedLanguages.filter((language) => supportsPromptType(language, promptForm.promptType)),
+    [supportedLanguages, promptForm.promptType]
+  );
+
+  useEffect(() => {
+    if (!promptForm.targetLanguage) return;
+    if (!promptLanguageOptions.some((language) => language.value === promptForm.targetLanguage)) {
+      setPromptForm((prev) => ({ ...prev, targetLanguage: "" }));
+    }
+  }, [promptForm.targetLanguage, promptLanguageOptions]);
 
   async function submitProgram(kind: ProgramKind) {
     const form =
@@ -387,6 +452,55 @@ export function OraclePanel({ problemId, problemTitle, contestId }: OraclePanelP
     }
   }
 
+  async function handlePreviewPrompt() {
+    if (!promptForm.targetLanguage) {
+      toast.error("Select a target language before previewing a prompt");
+      return;
+    }
+    if (promptForm.visibilityMode === "ADMIN_FULL_MODE" && !promptForm.confirmSensitiveMaterial) {
+      toast.error("ADMIN_FULL_MODE requires sensitive-material confirmation");
+      return;
+    }
+
+    setIsPromptSubmitting(true);
+    try {
+      const response = await previewPromptExport(problemId, promptForm);
+      setPromptPreview(response);
+      toast.success("Prompt preview generated");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to generate prompt preview");
+    } finally {
+      setIsPromptSubmitting(false);
+    }
+  }
+
+  async function handleCopyPrompt() {
+    if (!promptPreview?.promptText) return;
+    try {
+      await navigator.clipboard.writeText(promptPreview.promptText);
+      toast.success("Prompt copied");
+    } catch {
+      toast.error("Clipboard access was blocked");
+    }
+  }
+
+  function handleExportPrompt(extension: "txt" | "md") {
+    if (!promptPreview?.promptText) return;
+    const safeTitle = problemTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "problem";
+    const fileName = `${safeTitle}-${promptPreview.promptType.toLowerCase()}.${extension}`;
+    const blob = new Blob([promptPreview.promptText], {
+      type: extension === "md" ? "text/markdown;charset=utf-8" : "text/plain;charset=utf-8",
+    });
+    const href = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = href;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(href);
+  }
+
   const canGenerate = Boolean(activeReference && activeGenerator);
 
   return (
@@ -417,6 +531,23 @@ export function OraclePanel({ problemId, problemTitle, contestId }: OraclePanelP
       <CardContent className="space-y-8 p-6">
         <SectionHeading
           index="1"
+          title="Prompt Exports"
+          description="Generate deterministic copyable prompt text from structured problem data without calling AI services."
+        />
+        <PromptExportsSection
+          form={promptForm}
+          setForm={setPromptForm}
+          languages={promptLanguageOptions}
+          isLoadingLanguages={isLoadingLanguages}
+          preview={promptPreview}
+          submitting={isPromptSubmitting}
+          onPreview={handlePreviewPrompt}
+          onCopy={handleCopyPrompt}
+          onExport={handleExportPrompt}
+        />
+
+        <SectionHeading
+          index="2"
           title="Configuration"
           description="Configure the sandboxed programs used to generate candidate tests and reference outputs."
         />
@@ -457,7 +588,7 @@ export function OraclePanel({ problemId, problemTitle, contestId }: OraclePanelP
         </div>
 
         <SectionHeading
-          index="2"
+          index="3"
           title="Test Preparation"
           description="Primary workflow: generate candidate hidden tests before the contest, then promote the useful ones."
         />
@@ -516,7 +647,7 @@ export function OraclePanel({ problemId, problemTitle, contestId }: OraclePanelP
         </section>
 
         <SectionHeading
-          index="3"
+          index="4"
           title="Candidate Generated Tests"
           description="Review generated input/reference output and promote valid candidates into official hidden tests."
         />
@@ -532,7 +663,7 @@ export function OraclePanel({ problemId, problemTitle, contestId }: OraclePanelP
         />
 
         <SectionHeading
-          index="4"
+          index="5"
           title="Counterexample Search"
           description="Secondary workflow: check one existing submission against freshly generated candidates."
         />
@@ -603,7 +734,7 @@ export function OraclePanel({ problemId, problemTitle, contestId }: OraclePanelP
         </section>
 
         <SectionHeading
-          index="5"
+          index="6"
           title="Counterexamples"
           description="Review mismatches found during counterexample search and promote concrete failing inputs when useful."
         />
@@ -665,6 +796,318 @@ function StatusTile({
       <p className="mt-1 text-xs text-slate-500">Updated {formatDate(program?.updatedAt)}</p>
     </div>
   );
+}
+
+const PROMPT_TYPES: { value: PromptType; label: string }[] = [
+  { value: "REFERENCE_SOLUTION", label: "Reference Solution" },
+  { value: "INPUT_GENERATOR", label: "Input Generator" },
+  { value: "INPUT_VALIDATOR", label: "Input Validator" },
+  { value: "CHECKER_OUTPUT_VALIDATOR", label: "Checker / Output Validator" },
+  { value: "FULL_PROBLEM_ENGINEERING_BUNDLE", label: "Full Problem Engineering Bundle" },
+];
+
+const VISIBILITY_MODES: { value: PromptVisibilityMode; label: string }[] = [
+  { value: "SAFE_MODE", label: "SAFE_MODE" },
+  { value: "ADMIN_FULL_MODE", label: "ADMIN_FULL_MODE" },
+];
+
+function PromptExportsSection({
+  form,
+  setForm,
+  languages,
+  isLoadingLanguages,
+  preview,
+  submitting,
+  onPreview,
+  onCopy,
+  onExport,
+}: {
+  form: PromptFormState;
+  setForm: Dispatch<SetStateAction<PromptFormState>>;
+  languages: SupportedLanguageResponse[];
+  isLoadingLanguages: boolean;
+  preview: PromptExportResponse | null;
+  submitting: boolean;
+  onPreview: () => void;
+  onCopy: () => void;
+  onExport: (extension: "txt" | "md") => void;
+}) {
+  const selectedLanguage = languages.find((language) => language.value === form.targetLanguage) ?? null;
+  const adminFullMode = form.visibilityMode === "ADMIN_FULL_MODE";
+
+  const setVisibilityMode = (visibilityMode: PromptVisibilityMode) => {
+    setForm((prev) => ({
+      ...prev,
+      visibilityMode,
+      includeAdminInternalNotes: visibilityMode === "ADMIN_FULL_MODE" ? prev.includeAdminInternalNotes : false,
+      includeReferenceSolution: visibilityMode === "ADMIN_FULL_MODE" ? prev.includeReferenceSolution : false,
+      includeProgramSources: visibilityMode === "ADMIN_FULL_MODE" ? prev.includeProgramSources : false,
+      confirmSensitiveMaterial: visibilityMode === "ADMIN_FULL_MODE" ? prev.confirmSensitiveMaterial : false,
+    }));
+  };
+
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-4">
+      <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
+        <p className="font-semibold">AuraC2 only generates prompt text. It does not call AI services.</p>
+        <p className="mt-1">
+          Any AI-generated code must be reviewed, compiled, tested, and verified inside AuraC2 before use.
+        </p>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[360px_1fr]">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="prompt-type">Prompt Type</Label>
+            <Select
+              value={form.promptType}
+              onValueChange={(value: PromptType) =>
+                setForm((prev) => ({ ...prev, promptType: value, targetLanguage: "" }))
+              }
+            >
+              <SelectTrigger id="prompt-type">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PROMPT_TYPES.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="prompt-visibility">Visibility Mode</Label>
+            <Select value={form.visibilityMode} onValueChange={(value: PromptVisibilityMode) => setVisibilityMode(value)}>
+              <SelectTrigger id="prompt-visibility">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {VISIBILITY_MODES.map((mode) => (
+                  <SelectItem key={mode.value} value={mode.value}>
+                    {mode.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {adminFullMode && (
+            <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
+              <p className="text-sm font-semibold text-amber-950">Sensitive-material warning</p>
+              <p className="mt-1 text-sm text-amber-800">
+                ADMIN_FULL_MODE can export contest-sensitive material selected below.
+              </p>
+              <label className="mt-3 flex items-start gap-2 text-sm text-amber-950">
+                <Checkbox
+                  checked={form.confirmSensitiveMaterial}
+                  onCheckedChange={(checked) =>
+                    setForm((prev) => ({ ...prev, confirmSensitiveMaterial: checked === true }))
+                  }
+                />
+                <span>I confirm this export may contain sensitive admin material.</span>
+              </label>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="prompt-language">Target Language</Label>
+            <Select
+              value={form.targetLanguage}
+              onValueChange={(value) => setForm((prev) => ({ ...prev, targetLanguage: value }))}
+              disabled={isLoadingLanguages || languages.length === 0}
+            >
+              <SelectTrigger id="prompt-language">
+                <SelectValue placeholder={isLoadingLanguages ? "Loading languages..." : "Select language"} />
+              </SelectTrigger>
+              <SelectContent>
+                {languages.map((language) => (
+                  <SelectItem key={language.value} value={language.value}>
+                    {language.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedLanguage && (
+              <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+                <p className="font-semibold text-slate-800">
+                  {selectedLanguage.label} / Judge0 #{selectedLanguage.judge0LanguageId}
+                </p>
+                <p className="mt-1">{selectedLanguage.entryPoint}</p>
+                <p className="mt-1">{selectedLanguage.runtimeNotes}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="grid gap-3 md:grid-cols-2">
+            <PromptCheckbox
+              label="Include public samples"
+              checked={form.includePublicSamples}
+              onChange={(value) => setForm((prev) => ({ ...prev, includePublicSamples: value }))}
+            />
+            <PromptCheckbox
+              label="Include compare policy"
+              checked={form.includeComparePolicy}
+              onChange={(value) => setForm((prev) => ({ ...prev, includeComparePolicy: value }))}
+            />
+            <PromptCheckbox
+              label="Include Public Notes"
+              checked={form.includePublicNotes}
+              onChange={(value) => setForm((prev) => ({ ...prev, includePublicNotes: value }))}
+            />
+            <PromptCheckbox
+              label="Include safe artifact metadata"
+              checked={form.includeProgramMetadata}
+              onChange={(value) => setForm((prev) => ({ ...prev, includeProgramMetadata: value }))}
+            />
+            <PromptCheckbox
+              label="Include reference solution source"
+              checked={form.includeReferenceSolution}
+              disabled={!adminFullMode}
+              onChange={(value) => setForm((prev) => ({ ...prev, includeReferenceSolution: value }))}
+            />
+            <PromptCheckbox
+              label="Include generator/validator/checker snippets"
+              checked={form.includeProgramSources}
+              disabled={!adminFullMode}
+              onChange={(value) => setForm((prev) => ({ ...prev, includeProgramSources: value }))}
+            />
+            <PromptCheckbox
+              label="Include Admin Internal Notes"
+              checked={form.includeAdminInternalNotes}
+              disabled={!adminFullMode}
+              onChange={(value) => setForm((prev) => ({ ...prev, includeAdminInternalNotes: value }))}
+            />
+            <PromptCheckbox
+              label="Include additional instructions"
+              checked={form.includeAdditionalInstructions}
+              onChange={(value) => setForm((prev) => ({ ...prev, includeAdditionalInstructions: value }))}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="prompt-additional">Additional Admin Instructions</Label>
+            <Textarea
+              id="prompt-additional"
+              value={form.additionalInstructions ?? ""}
+              onChange={(event) =>
+                setForm((prev) => ({ ...prev, additionalInstructions: event.target.value }))
+              }
+              disabled={!form.includeAdditionalInstructions}
+              className="min-h-28"
+              placeholder="Optional constraints for the external admin prompt, such as preferred algorithm family or edge-case focus."
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              className="gap-2 bg-blue-700 hover:bg-blue-800"
+              onClick={onPreview}
+              disabled={submitting || !form.targetLanguage || (adminFullMode && !form.confirmSensitiveMaterial)}
+            >
+              <FileText className="h-4 w-4" />
+              {submitting ? "Generating..." : "Preview Prompt"}
+            </Button>
+            <Button type="button" variant="outline" className="gap-2 bg-white" disabled={!preview} onClick={onCopy}>
+              <Copy className="h-4 w-4" />
+              Copy Prompt
+            </Button>
+            <Button type="button" variant="outline" className="gap-2 bg-white" disabled={!preview} onClick={() => onExport("txt")}>
+              <Download className="h-4 w-4" />
+              Export .txt
+            </Button>
+            <Button type="button" variant="outline" className="gap-2 bg-white" disabled={!preview} onClick={() => onExport("md")}>
+              <Download className="h-4 w-4" />
+              Export .md
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {preview && (
+        <div className="mt-4 space-y-3">
+          {(preview.warnings.length > 0 || preview.readinessWarnings.length > 0) && (
+            <div className="grid gap-3 md:grid-cols-2">
+              {preview.warnings.length > 0 && (
+                <WarningList title="Safety Decisions" warnings={preview.warnings} tone="blue" />
+              )}
+              {preview.readinessWarnings.length > 0 && (
+                <WarningList title="Readiness Warnings" warnings={preview.readinessWarnings} tone="amber" />
+              )}
+            </div>
+          )}
+          <pre className="max-h-[520px] overflow-auto rounded-lg border border-slate-200 bg-slate-950 p-4 text-xs leading-6 text-slate-50">{preview.promptText}</pre>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function PromptCheckbox({
+  label,
+  checked,
+  disabled = false,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <label className={`flex items-center gap-2 rounded-md border border-slate-200 p-3 text-sm ${disabled ? "bg-slate-50 text-slate-400" : "bg-white text-slate-800"}`}>
+      <Checkbox checked={checked} disabled={disabled} onCheckedChange={(value) => onChange(value === true)} />
+      <span>{label}</span>
+    </label>
+  );
+}
+
+function WarningList({
+  title,
+  warnings,
+  tone,
+}: {
+  title: string;
+  warnings: string[];
+  tone: "blue" | "amber";
+}) {
+  const className =
+    tone === "blue"
+      ? "border-blue-200 bg-blue-50 text-blue-950"
+      : "border-amber-200 bg-amber-50 text-amber-900";
+
+  return (
+    <div className={`rounded-md border p-3 ${className}`}>
+      <p className="text-sm font-semibold">{title}</p>
+      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+        {warnings.map((warning) => (
+          <li key={warning}>{warning}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function supportsPromptType(language: SupportedLanguageResponse, promptType: PromptType) {
+  switch (promptType) {
+    case "REFERENCE_SOLUTION":
+      return language.supportsReferenceSolution;
+    case "INPUT_GENERATOR":
+      return language.supportsGenerator;
+    case "INPUT_VALIDATOR":
+      return language.supportsInputValidator;
+    case "CHECKER_OUTPUT_VALIDATOR":
+      return language.supportsChecker;
+    case "FULL_PROBLEM_ENGINEERING_BUNDLE":
+      return language.supportsReferenceSolution && language.supportsGenerator && language.supportsInputValidator;
+    default:
+      return false;
+  }
 }
 
 function ProgramSection({

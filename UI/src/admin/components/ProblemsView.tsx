@@ -17,11 +17,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from './ui/alert-dialog';
-import { deleteProblem, getProblem, getProblemsByContest } from '../services/api';
-import { ProblemResponse } from '../types/api';
+import { deleteProblem, getProblem, getProblemsByContest, getPublicTestCasesForProblem } from '../services/api';
+import { ProblemResponse, TestCaseResponse } from '../types/api';
 import { toast } from 'sonner';
 import { StatusBadge } from '../../components/StatusBadge';
-import { RichTextContent } from '../../components/RichTextContent';
+import { ProblemStatementPreview, problemReadinessWarnings } from '../../components/ProblemStatementPreview';
 import {
   contestLabel,
   ContestOption,
@@ -73,6 +73,8 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [problems, setProblems] = useState<ProblemResponse[]>([]);
   const [selectedProblem, setSelectedProblem] = useState<ProblemResponse | null>(null);
+  const [publicSamples, setPublicSamples] = useState<TestCaseResponse[]>([]);
+  const [isLoadingPublicSamples, setIsLoadingPublicSamples] = useState(false);
   const [isLoadingProblem, setIsLoadingProblem] = useState(false);
   const [isLoadingList, setIsLoadingList] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -90,6 +92,9 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
   }, [selectedContestId]);
   const selectedContestState = selectedContest?.effectiveState ?? selectedContest?.status;
   const isEndedContest = selectedContestState === 'ENDED';
+  const readinessWarnings = selectedProblem
+    ? problemReadinessWarnings(selectedProblem, publicSamples.length)
+    : [];
 
   const loadContestChoices = useCallback(async () => {
     setIsLoadingContests(true);
@@ -159,6 +164,31 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
   useEffect(() => {
     loadProblems();
   }, [loadProblems]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    if (!selectedProblem?.id) {
+      setPublicSamples([]);
+      return;
+    }
+
+    setIsLoadingPublicSamples(true);
+    getPublicTestCasesForProblem(selectedProblem.id)
+      .then((samples) => {
+        if (mounted) setPublicSamples(samples);
+      })
+      .catch(() => {
+        if (mounted) setPublicSamples([]);
+      })
+      .finally(() => {
+        if (mounted) setIsLoadingPublicSamples(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [selectedProblem?.id]);
 
   // Load problem details when selected
   const handleProblemSelect = async (problem: ProblemResponse) => {
@@ -437,12 +467,41 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
                   </div>
                 </div>
 
-                <div>
-                  <h4 className="font-semibold text-slate-800 mb-2">Problem Statement</h4>
-                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
-                    <RichTextContent content={selectedProblem.description} />
+                {readinessWarnings.length > 0 && (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                    <div className="flex gap-3">
+                      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+                      <div>
+                        <p className="text-sm font-semibold text-amber-950">Readiness warnings</p>
+                        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-amber-800">
+                          {readinessWarnings.map((warning) => (
+                            <li key={warning}>{warning}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
                   </div>
+                )}
+
+                <div>
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <h4 className="font-semibold text-slate-800">Contestant-Style Preview</h4>
+                    {isLoadingPublicSamples && (
+                      <span className="text-xs font-medium text-slate-500">Loading public samples...</span>
+                    )}
+                  </div>
+                  <ProblemStatementPreview problem={selectedProblem} samples={publicSamples} />
                 </div>
+
+                {selectedProblem.adminNotes && (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                    <p className="text-sm font-semibold text-amber-950">Admin Internal Notes</p>
+                    <p className="mt-1 text-xs font-medium uppercase tracking-wide text-amber-700">
+                      Hidden from team views and SAFE_MODE prompt exports
+                    </p>
+                    <pre className="mt-3 whitespace-pre-wrap rounded-md border border-amber-200 bg-white p-3 text-sm text-amber-950">{selectedProblem.adminNotes}</pre>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>

@@ -84,7 +84,8 @@ class SchemaMigrationDefinitionTest {
                 "V2__problem_compare_policy.sql",
                 "V3__problem_custom_validators.sql",
                 "V4__reference_oracle_generated_tests.sql",
-                "V5__generated_test_batch_partial_status.sql"
+                "V5__generated_test_batch_partial_status.sql",
+                "V6__structured_problem_statements.sql"
         );
         assertThat(migrationNames).noneMatch(name -> name.startsWith("V1_1"));
     }
@@ -125,6 +126,18 @@ class SchemaMigrationDefinitionTest {
 
         assertThat(migration).contains("DROP CONSTRAINT IF EXISTS chk_generated_test_batches_status");
         assertThat(migration).contains("'PARTIAL'");
+    }
+
+    @Test
+    void structuredProblemStatementMigrationAddsNullableStatementColumns() throws IOException {
+        String migration = readProjectFile("src/main/resources/db/migration/V6__structured_problem_statements.sql");
+
+        assertThat(migration).contains("ADD COLUMN statement TEXT");
+        assertThat(migration).contains("ADD COLUMN input_format TEXT");
+        assertThat(migration).contains("ADD COLUMN output_format TEXT");
+        assertThat(migration).contains("ADD COLUMN constraints_text TEXT");
+        assertThat(migration).contains("ADD COLUMN public_notes TEXT");
+        assertThat(migration).contains("ADD COLUMN admin_notes TEXT");
     }
 
     @Test

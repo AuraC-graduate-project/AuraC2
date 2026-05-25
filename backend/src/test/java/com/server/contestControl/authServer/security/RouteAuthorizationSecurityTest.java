@@ -60,6 +60,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
@@ -110,8 +111,8 @@ class RouteAuthorizationSecurityTest {
         when(contestService.updateContestDetails(eq(1L), any())).thenReturn(contestResponse());
         when(problemService.createProblem(any())).thenReturn(problemResponse());
         when(problemService.updateProblem(eq(1L), any())).thenReturn(problemResponse());
-        when(problemService.getProblem(1L)).thenReturn(problemResponse());
-        when(problemService.getAllProblems(1L)).thenReturn(List.of(problemResponse()));
+        when(problemService.getProblem(eq(1L), anyBoolean())).thenReturn(problemResponse());
+        when(problemService.getAllProblems(eq(1L), anyBoolean())).thenReturn(List.of(problemResponse()));
         when(testCaseService.addTestCase(eq(1L), any())).thenReturn(testCaseResponse());
         when(testCaseService.updateTestCase(eq(1L), any())).thenReturn(testCaseResponse());
         when(testCaseService.getAdminTestCases(1L)).thenReturn(List.of(testCaseResponse()));

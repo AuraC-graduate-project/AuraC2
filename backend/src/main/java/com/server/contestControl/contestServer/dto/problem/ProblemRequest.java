@@ -18,6 +18,18 @@ public class ProblemRequest {
     @NotBlank
     private String description;
 
+    private String statement;
+
+    private String inputFormat;
+
+    private String outputFormat;
+
+    private String constraintsText;
+
+    private String publicNotes;
+
+    private String adminNotes;
+
     @NotNull
     @Positive
     private Integer timeLimit;

@@ -6,6 +6,12 @@ export type ProblemRequest = {
   contestId: number;
   title: string;
   description: string;
+  statement?: string | null;
+  inputFormat?: string | null;
+  outputFormat?: string | null;
+  constraintsText?: string | null;
+  publicNotes?: string | null;
+  adminNotes?: string | null;
   timeLimit: number;
   memoryLimit: number;
   difficulty: "EASY" | "MEDIUM" | "HARD";
@@ -33,6 +39,12 @@ export type ProblemResponse = {
   id: number;
   title: string;
   description: string;
+  statement: string | null;
+  inputFormat: string | null;
+  outputFormat: string | null;
+  constraintsText: string | null;
+  publicNotes: string | null;
+  adminNotes?: string | null;
   timeLimit: number;
   memoryLimit: number;
   difficulty: string;

@@ -8,6 +8,7 @@ import com.server.contestControl.contestServer.service.ProblemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -43,15 +44,22 @@ public class ProblemController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEAM')")
-    public ResponseEntity<ProblemResponse> getProblem(@PathVariable Long id) {
-        return ResponseEntity.ok(problemService.getProblem(id));
+    public ResponseEntity<ProblemResponse> getProblem(@PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(problemService.getProblem(id, isAdmin(authentication)));
     }
 
     @GetMapping("/contest/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEAM')")
     public ResponseEntity<List<ProblemResponse>> getProblemsByContest(
-            @PathVariable Long id
+            @PathVariable Long id,
+            Authentication authentication
     ) {
-        return ResponseEntity.ok(problemService.getAllProblems(id));
+        return ResponseEntity.ok(problemService.getAllProblems(id, isAdmin(authentication)));
+    }
+
+    private boolean isAdmin(Authentication authentication) {
+        return authentication != null
+                && authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
     }
 }

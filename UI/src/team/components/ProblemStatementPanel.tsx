@@ -3,6 +3,7 @@ import { BookOpen, Copy, Database, FileText, FlaskConical, Timer } from "lucide-
 import { ProblemResponse, TestCaseResponse } from "../../admin/types/api";
 import { StatusBadge } from "../../components/StatusBadge";
 import { RichTextContent } from "../../components/RichTextContent";
+import { effectiveProblemStatement } from "../../components/ProblemStatementPreview";
 import { getPublicTestCasesForProblem } from "../services/teamApi";
 
 type ProblemStatementPanelProps = {
@@ -106,9 +107,12 @@ export function ProblemStatementPanel({
 
       <div className="aura-panel-switch min-h-0 flex-1 space-y-6 overflow-y-auto p-5" key={activeSection}>
         {activeSection === "statement" ? (
-          <div>
-            <h3 className="mb-2 font-semibold text-slate-900">Question Statement</h3>
-            <RichTextContent content={problem.description} className="max-w-[78ch]" />
+          <div className="space-y-6">
+            <StatementSection title="Statement" content={effectiveProblemStatement(problem)} emptyText="No statement provided." />
+            <StatementSection title="Input" content={problem.inputFormat} emptyText="No input format provided." />
+            <StatementSection title="Output" content={problem.outputFormat} emptyText="No output format provided." />
+            <StatementSection title="Constraints" content={problem.constraintsText} emptyText="No constraints provided." />
+            <StatementSection title="Notes" content={problem.publicNotes} emptyText="No public notes provided." />
           </div>
         ) : (
           <div>
@@ -164,6 +168,23 @@ export function ProblemStatementPanel({
           </div>
         )}
       </div>
+    </section>
+  );
+}
+
+function StatementSection({
+  title,
+  content,
+  emptyText,
+}: {
+  title: string;
+  content?: string | null;
+  emptyText: string;
+}) {
+  return (
+    <section>
+      <h3 className="mb-2 font-semibold text-slate-900">{title}</h3>
+      <RichTextContent content={content} emptyText={emptyText} className="max-w-[78ch]" />
     </section>
   );
 }

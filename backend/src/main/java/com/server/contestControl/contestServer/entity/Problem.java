@@ -36,6 +36,24 @@ public class Problem {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
+    @Column(columnDefinition = "TEXT")
+    private String statement;
+
+    @Column(name = "input_format", columnDefinition = "TEXT")
+    private String inputFormat;
+
+    @Column(name = "output_format", columnDefinition = "TEXT")
+    private String outputFormat;
+
+    @Column(name = "constraints_text", columnDefinition = "TEXT")
+    private String constraintsText;
+
+    @Column(name = "public_notes", columnDefinition = "TEXT")
+    private String publicNotes;
+
+    @Column(name = "admin_notes", columnDefinition = "TEXT")
+    private String adminNotes;
+
     @Column(nullable = false)
     private Integer timeLimit;
 

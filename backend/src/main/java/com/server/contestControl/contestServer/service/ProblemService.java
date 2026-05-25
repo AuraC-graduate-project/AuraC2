@@ -64,6 +64,12 @@ public class ProblemService {
                 .contest(contest)
                 .title(request.getTitle())
                 .description(request.getDescription())
+                .statement(blankToNull(request.getStatement()))
+                .inputFormat(blankToNull(request.getInputFormat()))
+                .outputFormat(blankToNull(request.getOutputFormat()))
+                .constraintsText(blankToNull(request.getConstraintsText()))
+                .publicNotes(blankToNull(request.getPublicNotes()))
+                .adminNotes(blankToNull(request.getAdminNotes()))
                 .timeLimit(request.getTimeLimit())
                 .memoryLimit(request.getMemoryLimit())
                 .difficulty(parseDifficulty(request.getDifficulty()))
@@ -86,7 +92,7 @@ public class ProblemService {
 
         problemRepository.save(problem);
 
-        return ProblemResponse.from(problem, nextProblemIndex);
+        return ProblemResponse.from(problem, nextProblemIndex, true);
     }
 
     @Transactional
@@ -96,6 +102,12 @@ public class ProblemService {
 
         problem.setTitle(request.getTitle());
         problem.setDescription(request.getDescription());
+        problem.setStatement(blankToNull(request.getStatement()));
+        problem.setInputFormat(blankToNull(request.getInputFormat()));
+        problem.setOutputFormat(blankToNull(request.getOutputFormat()));
+        problem.setConstraintsText(blankToNull(request.getConstraintsText()));
+        problem.setPublicNotes(blankToNull(request.getPublicNotes()));
+        problem.setAdminNotes(blankToNull(request.getAdminNotes()));
         problem.setTimeLimit(request.getTimeLimit());
         problem.setMemoryLimit(request.getMemoryLimit());
         problem.setDifficulty(parseDifficulty(request.getDifficulty()));
@@ -124,14 +136,18 @@ public class ProblemService {
         }
 
         problemRepository.save(problem);
-        return ProblemResponse.from(problem, problemIndex(problem));
+        return ProblemResponse.from(problem, problemIndex(problem), true);
     }
 
     public ProblemResponse getProblem(Long id) {
+        return getProblem(id, false);
+    }
+
+    public ProblemResponse getProblem(Long id, boolean includeAdminFields) {
         Problem problem = problemRepository.findById(id)
                 .orElseThrow(() -> new ProblemNotFoundException(id));
 
-        return ProblemResponse.from(problem, problemIndex(problem));
+        return ProblemResponse.from(problem, problemIndex(problem), includeAdminFields);
     }
 
 
@@ -143,9 +159,13 @@ public class ProblemService {
     }
 
     public List<ProblemResponse> getAllProblems(Long contestId) {
+        return getAllProblems(contestId, false);
+    }
+
+    public List<ProblemResponse> getAllProblems(Long contestId, boolean includeAdminFields) {
         List<Problem> problems = problemRepository.findByContest_IdOrderByIdAsc(contestId);
         return java.util.stream.IntStream.range(0, problems.size())
-                .mapToObj(index -> ProblemResponse.from(problems.get(index), index))
+                .mapToObj(index -> ProblemResponse.from(problems.get(index), index, includeAdminFields))
                 .toList();
     }
 
@@ -372,6 +392,10 @@ public class ProblemService {
         } catch (NoSuchAlgorithmException ex) {
             throw new IllegalStateException("SHA-256 is unavailable", ex);
         }
+    }
+
+    private String blankToNull(String value) {
+        return hasText(value) ? value.trim() : null;
     }
 
     private int problemIndex(Problem problem) {

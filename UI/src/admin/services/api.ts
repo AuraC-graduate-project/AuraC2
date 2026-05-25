@@ -27,6 +27,9 @@ import {
   GeneratedTestPromotionRequest,
   OracleProgramRequest,
   OracleProgramResponse,
+  PromptExportRequest,
+  PromptExportResponse,
+  SupportedLanguageResponse,
 } from "../types/api";
 
 /**
@@ -284,6 +287,10 @@ export async function deleteProblem(id: number): Promise<void> {
   await apiFetch<void>(`/api/problems/${id}`, { method: "DELETE" });
 }
 
+export async function getSupportedLanguages(): Promise<SupportedLanguageResponse[]> {
+  return apiFetch<SupportedLanguageResponse[]>("/api/languages/supported");
+}
+
 // -----------------------------
 // Admin / Users
 // -----------------------------
@@ -442,6 +449,10 @@ export async function addTestCase(
 
 export async function getTestCasesForProblem(problemId: number): Promise<TestCaseResponse[]> {
   return apiFetch<TestCaseResponse[]>(`/api/testcases/problem/${problemId}`);
+}
+
+export async function getPublicTestCasesForProblem(problemId: number): Promise<TestCaseResponse[]> {
+  return apiFetch<TestCaseResponse[]>(`/api/testcases/public/problem/${problemId}`);
 }
 
 export async function updateTestCase(
@@ -625,5 +636,16 @@ export async function promoteSelectedGeneratedTestCases(
 export async function promoteAllValidGeneratedTestCases(batchId: number): Promise<TestCaseResponse[]> {
   return apiFetch<TestCaseResponse[]>(`/api/admin/oracle/generated-batches/${batchId}/promote-valid`, {
     method: "POST",
+  });
+}
+
+export async function previewPromptExport(
+  problemId: number,
+  data: PromptExportRequest
+): Promise<PromptExportResponse> {
+  return apiFetch<PromptExportResponse>(`/api/admin/prompt-exports/problems/${problemId}/preview`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
   });
 }
