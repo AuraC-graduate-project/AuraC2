@@ -4,6 +4,7 @@ import { ProblemResponse, TestCaseResponse } from "../../admin/types/api";
 import { StatusBadge } from "../../components/StatusBadge";
 import { RichTextContent } from "../../components/RichTextContent";
 import { effectiveProblemStatement } from "../../components/ProblemStatementPreview";
+import { richTextToPlainText } from "../../components/richText";
 import { getPublicTestCasesForProblem } from "../services/teamApi";
 
 type ProblemStatementPanelProps = {
@@ -62,6 +63,14 @@ export function ProblemStatementPanel({
     );
   }
 
+  const statementSections = [
+    { title: "Statement", content: effectiveProblemStatement(problem), emptyText: "No statement provided." },
+    { title: "Input", content: problem.inputFormat, emptyText: "No input format provided." },
+    { title: "Output", content: problem.outputFormat, emptyText: "No output format provided." },
+    { title: "Constraints", content: problem.constraintsText, emptyText: "No constraints provided." },
+    { title: "Note", content: problem.publicNotes, emptyText: "No public notes provided." },
+  ].filter((section) => hasRichText(section.content));
+
   return (
     <section className={`aura-statement-card flex h-full min-h-0 flex-col rounded-lg border border-slate-200 bg-white shadow-sm ${className}`}>
       <div className="shrink-0 border-b border-slate-200 bg-slate-50 p-5">
@@ -108,11 +117,20 @@ export function ProblemStatementPanel({
       <div className="aura-panel-switch min-h-0 flex-1 space-y-6 overflow-y-auto p-5" key={activeSection}>
         {activeSection === "statement" ? (
           <div className="space-y-6">
-            <StatementSection title="Statement" content={effectiveProblemStatement(problem)} emptyText="No statement provided." />
-            <StatementSection title="Input" content={problem.inputFormat} emptyText="No input format provided." />
-            <StatementSection title="Output" content={problem.outputFormat} emptyText="No output format provided." />
-            <StatementSection title="Constraints" content={problem.constraintsText} emptyText="No constraints provided." />
-            <StatementSection title="Notes" content={problem.publicNotes} emptyText="No public notes provided." />
+            {statementSections.length === 0 ? (
+              <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+                No statement content is available for this problem.
+              </p>
+            ) : (
+              statementSections.map((section) => (
+                <StatementSection
+                  key={section.title}
+                  title={section.title}
+                  content={section.content}
+                  emptyText={section.emptyText}
+                />
+              ))
+            )}
           </div>
         ) : (
           <div>
@@ -128,7 +146,7 @@ export function ProblemStatementPanel({
               <div className="space-y-4">
                 {samples.map((sample, index) => (
                   <article key={sample.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                    <h4 className="mb-3 text-sm font-semibold text-slate-800">Sample #{index + 1}</h4>
+                    <h4 className="mb-3 text-sm font-semibold text-slate-800">Example {index + 1}</h4>
                     <div className="grid gap-3">
                       <div>
                         <div className="mb-1 flex items-center justify-between gap-2">
@@ -170,6 +188,10 @@ export function ProblemStatementPanel({
       </div>
     </section>
   );
+}
+
+function hasRichText(value: string | null | undefined) {
+  return Boolean(richTextToPlainText(value));
 }
 
 function StatementSection({

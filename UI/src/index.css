@@ -520,12 +520,14 @@ html .text-gray-400 {
 }
 
 html .text-blue-700,
-html .text-blue-600 {
+html .text-blue-600,
+html .text-blue-950 {
   color: var(--aura-primary) !important;
 }
 
 html.dark .text-blue-700,
 html.dark .text-blue-600,
+html.dark .text-blue-950,
 html.dark .text-blue-100,
 html.dark .text-blue-50 {
   color: #aebed0 !important;
@@ -533,14 +535,28 @@ html.dark .text-blue-50 {
 
 html .text-amber-800,
 html .text-amber-700,
+html .text-amber-900,
+html .text-amber-950,
 html .text-yellow-800 {
   color: #7a642f !important;
 }
 
 html.dark .text-amber-800,
 html.dark .text-amber-700,
+html.dark .text-amber-900,
+html.dark .text-amber-950,
 html.dark .text-yellow-800 {
   color: #d1c09a !important;
+}
+
+html.dark .text-emerald-700,
+html.dark .text-green-700 {
+  color: #a9c7b8 !important;
+}
+
+html.dark .text-rose-700,
+html.dark .text-red-700 {
+  color: #d4b0b5 !important;
 }
 
 html input,

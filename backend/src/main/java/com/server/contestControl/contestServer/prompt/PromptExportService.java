@@ -147,7 +147,7 @@ public class PromptExportService {
         }
         if (request.getPromptMode() == PromptMode.CUSTOM_ADVANCED
                 && request.getVisibilityMode() == PromptVisibilityMode.ADMIN_FULL_MODE) {
-            warnings.add("Custom Advanced ADMIN_FULL_MODE may include contest-sensitive material explicitly selected by the admin.");
+            warnings.add("Custom Advanced Prompt may include contest-sensitive material explicitly selected by the admin.");
         }
         return warnings;
     }

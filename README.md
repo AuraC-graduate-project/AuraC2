@@ -54,7 +54,7 @@ Historical reports, old feature writeups, task prompts, and duplicate PDFs are a
 | Backend | Spring Boot 3.4.x, Java 21 |
 | Frontend | React 18, TypeScript, Vite, Tailwind |
 | Database | PostgreSQL |
-| Migrations | Flyway V1-V6 with Hibernate schema validation |
+| Migrations | Flyway V1-V8 with Hibernate schema validation |
 | Queue | RabbitMQ submission queue |
 | Judge | Judge0 API and signed callback endpoint |
 | Auth | JWT access tokens and HTTP-only refresh-token cookie flow |
@@ -87,6 +87,7 @@ Historical reports, old feature writeups, task prompts, and duplicate PDFs are a
 - Public notes are contestant-facing and appear in team statement views and contestant-style previews.
 - Admin internal notes are admin-only and are excluded from team views and SAFE_MODE prompt exports.
 - Admin problem details include contestant-style preview and readiness warnings for missing key statement fields.
+- Admins can export contestant-safe single-problem PDFs and contest booklet PDFs. These exports use a Codeforces-style order (statement, input, output, constraints, examples, note) and include public samples only.
 - Admin test-case create/read/update/delete.
 - Hidden/private test cases remain admin/internal only.
 - TEAM users can fetch only public/sample test cases through the public sample endpoint.
@@ -136,7 +137,9 @@ AuraC2 includes an admin-only deterministic hybrid judging extension:
    - Generator, validator, and reference solution execution go through Judge0.
    - Generated cases are candidates until promoted.
    - Admin can promote one, selected, or all valid generated cases to official hidden `TestCase` records.
+   - Generated promotion reuses server-side duplicate-input checks and skips candidates that duplicate existing official tests or another selected generated candidate.
    - Promoted hidden tests are used by normal future submissions and rejudge.
+   - Stored reference solution, input generator, input validator, and custom checker source can be revealed, copied, or downloaded by admins only; it remains hidden from teams and public/safe exports.
 
 2. Counterexample Search:
    - Admin may run generated tests against one existing submission.
@@ -161,9 +164,17 @@ The admin UI exposes three prompt modes:
 
 - `Recommended Admin Prompt`: default workflow. AuraC2 chooses useful context by prompt type, can include helpful admin context such as reference solution source for generator prompts, and excludes hidden tests and hidden expected outputs by default.
 - `Public/Safe Prompt`: contestant-safe context only. It excludes hidden tests, hidden expected outputs, admin internal notes, source snippets, and sensitive diagnostics.
-- `Custom Advanced`: expert workflow with manual include/exclude controls and explicit warnings for sensitive material. Server-side policy still enforces visibility rules.
+- `Custom Advanced Prompt`: expert workflow with manual include/exclude controls and explicit warnings for sensitive material. Server-side policy still enforces visibility rules.
 
 Target languages come from the backend supported-language catalog used by Judge0 mapping. The prompt renderer validates the requested language server-side and adapts file names, entry point expectations, runtime notes, and verification instructions to the selected language. C++17 is not assumed unless selected.
+
+Prompt previews include one-click copy plus `.txt` and `.md` download actions. The generated prompt wording is type-aware: reference-solution prompts ask for solution artifacts, generator prompts include the `seed testNumber` contract, validator prompts require `VALID`/`INVALID`, and checker prompts first ask whether a custom checker is needed.
+
+### Admin Usability And Credential Handling
+
+- The admin Problems area is organized around statement, test cases, prompt exports, engineering, generated tests, counterexamples, and settings workflows.
+- Help/info tooltips are reused across admin screens for sensitive or non-obvious controls.
+- Newly generated team credentials can be copied or downloaded as XLSX or spreadsheet-safe CSV while they are visible. XLSX is recommended for Excel because password cells are stored as text; passwords are still one-time plaintext material and are stored only as hashes afterward.
 
 ### Rejudge
 
@@ -194,6 +205,7 @@ Target languages come from the backend supported-language catalog used by Judge0
 - ML is never used to judge submissions.
 - Prompt exports do not integrate with AI APIs and do not make generated code official.
 - Generated tests and counterexamples are deterministic aids, not mathematical proof of correctness.
+- Statement PDFs flatten rich text into printable text and code-style sample blocks; they are contestant-safe exports, not editorial or solution documents.
 
 ## Local Development
 
@@ -257,10 +269,12 @@ Flyway migrations are under `backend/src/main/resources/db/migration`:
 - `V4__reference_oracle_generated_tests.sql`
 - `V5__generated_test_batch_partial_status.sql`
 - `V6__structured_problem_statements.sql`
+- `V7__ensure_clarifications_table.sql`
+- `V8__generated_test_duplicate_status.sql`
 
 Manual repair scripts, if any, belong outside `db/migration` and are not part of the official forward-only migration history.
 
-To reset a local development database intentionally, stop the application, reset the PostgreSQL volume or schema, then restart so Flyway can apply V1-V6 from a clean state. This is a local reset operation, not the normal startup workflow.
+To reset a local development database intentionally, stop the application, reset the PostgreSQL volume or schema, then restart so Flyway can apply V1-V8 from a clean state. This is a local reset operation, not the normal startup workflow.
 
 ## Verification Commands
 

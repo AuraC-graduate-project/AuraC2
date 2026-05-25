@@ -37,8 +37,10 @@ export function ProblemStatementPreview({
     { title: "Input", content: problem.inputFormat, empty: "No input format provided." },
     { title: "Output", content: problem.outputFormat, empty: "No output format provided." },
     { title: "Constraints", content: problem.constraintsText, empty: "No constraints provided." },
-    { title: "Notes", content: problem.publicNotes, empty: "No public notes provided." },
-  ];
+  ].filter((section) => hasRichText(section.content));
+  const hasPublicNotes = hasRichText(problem.publicNotes);
+  const hasSamples = samples.length > 0;
+  const hasRenderableContent = sections.length > 0 || hasSamples || hasPublicNotes;
 
   return (
     <article className={`rounded-lg border border-slate-200 bg-white ${className}`}>
@@ -57,49 +59,65 @@ export function ProblemStatementPreview({
       </header>
 
       <div className="space-y-7 p-5">
+        {!hasRenderableContent && (
+          <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+            No contestant-facing statement content has been added yet.
+          </p>
+        )}
+
         {sections.map((section) => (
-          <section key={section.title}>
-            <h3 className="mb-2 text-base font-semibold text-slate-950">{section.title}</h3>
-            <RichTextContent content={section.content} emptyText={section.empty} className="max-w-[78ch]" />
-          </section>
+          <StatementSection key={section.title} title={section.title} content={section.content} emptyText={section.empty} />
         ))}
 
-        <section>
-          <h3 className="mb-3 text-base font-semibold text-slate-950">Samples</h3>
-          {samples.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
-              No public sample test cases are available for this problem.
-            </p>
-          ) : (
+        {hasSamples && (
+          <section>
+            <h3 className="mb-3 text-base font-semibold text-slate-950">Examples</h3>
             <div className="space-y-4">
               {samples.map((sample, index) => (
                 <article key={sample.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                  <h4 className="mb-3 text-sm font-semibold text-slate-800">Sample #{index + 1}</h4>
+                  {samples.length > 1 && (
+                    <h4 className="mb-3 text-sm font-semibold text-slate-800">Example {index + 1}</h4>
+                  )}
                   <div className="grid gap-3">
-                    <SampleBlock title="Input" value={sample.inputData} dark />
+                    <SampleBlock title="Input" value={sample.inputData} />
                     <SampleBlock title="Output" value={sample.expectedOutput} />
                   </div>
                 </article>
               ))}
             </div>
-          )}
-        </section>
+          </section>
+        )}
+
+        {hasPublicNotes && (
+          <StatementSection title="Note" content={problem.publicNotes} emptyText="No public notes provided." />
+        )}
       </div>
     </article>
   );
 }
 
-function SampleBlock({ title, value, dark = false }: { title: string; value: string; dark?: boolean }) {
+function StatementSection({
+  title,
+  content,
+  emptyText,
+}: {
+  title: string;
+  content?: string | null;
+  emptyText: string;
+}) {
+  return (
+    <section>
+      <h3 className="mb-2 text-base font-semibold text-slate-950">{title}</h3>
+      <RichTextContent content={content} emptyText={emptyText} className="max-w-[78ch]" />
+    </section>
+  );
+}
+
+function SampleBlock({ title, value }: { title: string; value: string }) {
   return (
     <div>
       <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</p>
-      <pre
-        className={
-          dark
-            ? "overflow-x-auto rounded-md bg-slate-950 p-3 text-xs text-slate-100"
-            : "overflow-x-auto rounded-md border border-slate-200 bg-white p-3 text-xs text-slate-800"
-        }
-      >
+      <pre className="overflow-x-auto rounded-md border border-slate-200 bg-white p-3 text-xs text-slate-800">
         {value}
       </pre>
     </div>

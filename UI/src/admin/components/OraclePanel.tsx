@@ -494,7 +494,7 @@ export function OraclePanel({
       promptForm.visibilityMode === "ADMIN_FULL_MODE" &&
       !promptForm.confirmSensitiveMaterial
     ) {
-      toast.error("Custom Advanced ADMIN_FULL_MODE requires sensitive-material confirmation");
+      toast.error("Custom Advanced Prompt with admin-sensitive context requires confirmation");
       return;
     }
 
@@ -995,7 +995,7 @@ const PROMPT_TYPES: { value: PromptType; label: string }[] = [
 
 const VISIBILITY_MODES: { value: PromptVisibilityMode; label: string }[] = [
   { value: "SAFE_MODE", label: "Public/Safe boundary" },
-  { value: "ADMIN_FULL_MODE", label: "Admin full boundary" },
+  { value: "ADMIN_FULL_MODE", label: "Admin-sensitive boundary" },
 ];
 
 const PROMPT_MODES: { value: PromptMode; label: string; description: string }[] = [
@@ -1011,10 +1011,18 @@ const PROMPT_MODES: { value: PromptMode; label: string; description: string }[] 
   },
   {
     value: "CUSTOM_ADVANCED",
-    label: "Custom Advanced",
+    label: "Custom Advanced Prompt",
     description: "Manual include/exclude controls for expert admins with sensitive-material warnings.",
   },
 ];
+
+function promptModeLabel(promptMode: PromptMode) {
+  return PROMPT_MODES.find((mode) => mode.value === promptMode)?.label ?? promptMode;
+}
+
+function visibilityBoundaryLabel(visibilityMode: PromptVisibilityMode) {
+  return visibilityMode === "SAFE_MODE" ? "Public/Safe boundary" : "Admin-sensitive boundary";
+}
 
 function PromptExportsSection({
   form,
@@ -1342,7 +1350,7 @@ function PromptExportsSection({
             <div>
               <p className="text-sm font-semibold text-slate-950">Generated Prompt Preview</p>
               <p className="text-xs text-slate-500">
-                {preview.targetLanguage.label} · {preview.promptMode} · {preview.visibilityMode}
+                {preview.targetLanguage.label} · {promptModeLabel(preview.promptMode)} · {visibilityBoundaryLabel(preview.visibilityMode)}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">

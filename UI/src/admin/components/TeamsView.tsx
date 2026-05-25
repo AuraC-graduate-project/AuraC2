@@ -34,6 +34,12 @@ import { deleteUser, generateTeamAccounts, getAllUsers, updateUserName, updateUs
 import { GeneratedTeamCredentialResponse, UserResponse } from '../types/api';
 import { StatusBadge } from '../../components/StatusBadge';
 import { AdminHelpTooltip } from './AdminHelpTooltip';
+import {
+  buildCredentialRows,
+  credentialsCsv,
+  credentialsPlainText,
+  credentialsXlsx,
+} from '../utils/teamCredentialExport';
 
 export function TeamsView() {
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
@@ -88,19 +94,7 @@ export function TeamsView() {
     }
   };
 
-  const csvEscape = (value: string | number | null | undefined) => {
-    const text = String(value ?? '');
-    return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-  };
-
-  const credentialsCsv = (credentials: GeneratedTeamCredentialResponse[]) => [
-    ['username', 'password', 'role', 'generatedAt'].map(csvEscape).join(','),
-    ...credentials.map((credential) =>
-      [credential.username, credential.password, credential.role, generatedCredentialsAt ?? new Date().toISOString()]
-        .map(csvEscape)
-        .join(',')
-    ),
-  ].join('\n');
+  const credentialRows = () => buildCredentialRows(generatedCredentials, generatedCredentialsAt ?? new Date().toISOString());
 
   const copyText = async (value: string, successMessage: string) => {
     try {
@@ -111,18 +105,30 @@ export function TeamsView() {
     }
   };
 
-  const downloadCredentialsCsv = () => {
-    if (generatedCredentials.length === 0) return;
-    const blob = new Blob([credentialsCsv(generatedCredentials)], { type: 'text/csv;charset=utf-8' });
+  const downloadBlob = (blob: Blob, filename: string, successMessage: string) => {
     const href = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = href;
-    link.download = `team-credentials-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.csv`;
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
     link.remove();
     URL.revokeObjectURL(href);
-    toast.success('Credentials CSV downloaded');
+    toast.success(successMessage);
+  };
+
+  const credentialsFilename = (extension: 'csv' | 'xlsx') =>
+    `team-credentials-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.${extension}`;
+
+  const downloadCredentialsCsv = () => {
+    if (generatedCredentials.length === 0) return;
+    const blob = new Blob([credentialsCsv(credentialRows())], { type: 'text/csv;charset=utf-8' });
+    downloadBlob(blob, credentialsFilename('csv'), 'Spreadsheet-safe credentials CSV downloaded');
+  };
+
+  const downloadCredentialsXlsx = () => {
+    if (generatedCredentials.length === 0) return;
+    downloadBlob(credentialsXlsx(credentialRows()), credentialsFilename('xlsx'), 'Credentials XLSX downloaded');
   };
 
   const handleGenerateTeams = async (event: FormEvent) => {
@@ -371,6 +377,9 @@ export function TeamsView() {
                   </div>
                   <p className="mt-1 text-sm text-slate-600">
                     Store these securely now. Plaintext passwords will not be available after you leave this result.
+                    <span className="mt-1 block text-xs font-medium text-slate-500">
+                      XLSX is recommended for Excel because it preserves passwords that begin with symbols such as +, -, =, or @.
+                    </span>
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -378,10 +387,18 @@ export function TeamsView() {
                     type="button"
                     variant="outline"
                     className="gap-2 bg-white"
-                    onClick={() => copyText(credentialsCsv(generatedCredentials), 'All generated credentials copied')}
+                    onClick={() => copyText(credentialsPlainText(credentialRows()), 'All generated credentials copied')}
                   >
                     <Copy className="h-4 w-4" />
                     Copy All
+                  </Button>
+                  <Button
+                    type="button"
+                    className="gap-2 bg-blue-700 hover:bg-blue-800"
+                    onClick={downloadCredentialsXlsx}
+                  >
+                    <Download className="h-4 w-4" />
+                    Download XLSX
                   </Button>
                   <Button
                     type="button"

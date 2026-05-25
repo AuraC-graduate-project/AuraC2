@@ -50,8 +50,79 @@ class ProblemStatementPdfServiceTest {
 
         assertThat(export.filename()).isEqualTo("sum-statement.pdf");
         assertThat(pdf).startsWith("%PDF-1.4");
-        assertThat(pdf).contains("Sum", "Read two numbers", "Input Format", "1 2", "3");
+        assertThat(pdf).contains(
+                "/MediaBox [0 0 595 842]",
+                "Sum",
+                "time limit per test: 1000 milliseconds",
+                "memory limit per test: 128 megabytes",
+                "Input",
+                "Output",
+                "Constraints",
+                "Examples",
+                "Note",
+                "/BaseFont /Courier",
+                "1 2",
+                "3"
+        );
+        assertThat(pdf).doesNotContain("Input Format", "Output Format", "Public Samples");
+        assertThat(pdf.indexOf("Examples")).isLessThan(pdf.indexOf("Note"));
         assertThat(pdf).doesNotContain("secret setter note", "checker secret", "hidden");
+    }
+
+    @Test
+    void problemPdfDoesNotFallbackStatementIntoOtherStructuredSections() {
+        Problem problem = problem();
+        problem.setStatement("<p>Only the statement text.</p>");
+        problem.setDescription("<p>Legacy statement fallback.</p>");
+        problem.setInputFormat(null);
+        problem.setOutputFormat("");
+        problem.setConstraintsText("   ");
+        problem.setPublicNotes(null);
+
+        when(problemRepository.findById(10L)).thenReturn(Optional.of(problem));
+        when(testCaseRepository.findByProblemIdAndIsPublicTrueOrderByIdAsc(10L)).thenReturn(List.of());
+
+        ProblemStatementPdfService.PdfExport export = service.problemPdf(10L);
+        String pdf = new String(export.bytes(), StandardCharsets.ISO_8859_1);
+
+        assertThat(pdf).contains("Statement", "Only the statement text.");
+        assertThat(pdf).doesNotContain("Legacy statement fallback.", "Input", "Output", "Constraints", "Examples", "Note");
+    }
+
+    @Test
+    void problemPdfUsesLegacyDescriptionOnlyForMissingStatement() {
+        Problem problem = problem();
+        problem.setStatement(null);
+        problem.setDescription("<p>Legacy statement fallback.</p>");
+
+        when(problemRepository.findById(10L)).thenReturn(Optional.of(problem));
+        when(testCaseRepository.findByProblemIdAndIsPublicTrueOrderByIdAsc(10L)).thenReturn(List.of());
+
+        ProblemStatementPdfService.PdfExport export = service.problemPdf(10L);
+        String pdf = new String(export.bytes(), StandardCharsets.ISO_8859_1);
+
+        assertThat(pdf).contains("Statement", "Legacy statement fallback.");
+    }
+
+    @Test
+    void problemPdfPreservesPublicSampleLineBreaksAndExcludesHiddenTests() {
+        Problem problem = problem();
+        TestCase publicSample = TestCase.builder()
+                .id(1L)
+                .problem(problem)
+                .inputData("2 2\n3 4\n")
+                .expectedOutput("4\n7\n")
+                .isPublic(true)
+                .build();
+
+        when(problemRepository.findById(10L)).thenReturn(Optional.of(problem));
+        when(testCaseRepository.findByProblemIdAndIsPublicTrueOrderByIdAsc(10L)).thenReturn(List.of(publicSample));
+
+        ProblemStatementPdfService.PdfExport export = service.problemPdf(10L);
+        String pdf = new String(export.bytes(), StandardCharsets.ISO_8859_1);
+
+        assertThat(pdf).contains("Examples", "2 2", "3 4", "4", "7");
+        assertThat(pdf).doesNotContain("private", "hidden expected");
     }
 
     @Test

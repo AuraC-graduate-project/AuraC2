@@ -13,7 +13,7 @@ public class PromptVisibilityPolicy {
                 && request.getVisibilityMode() == PromptVisibilityMode.ADMIN_FULL_MODE
                 && !enabled(request.getConfirmSensitiveMaterial())) {
             throw new OracleConfigurationException(
-                    "Custom Advanced ADMIN_FULL_MODE requires explicit sensitive-material confirmation"
+                    "Custom Advanced Prompt with admin-sensitive context requires explicit confirmation"
             );
         }
 

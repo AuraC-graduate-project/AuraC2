@@ -31,6 +31,8 @@ public class UserService {
     private static final int MIN_BULK_PASSWORD_LENGTH = 8;
     private static final char[] PASSWORD_CHARS =
             "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%+-_".toCharArray();
+    private static final char[] PASSWORD_FIRST_CHARS =
+            "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!#$%_".toCharArray();
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -131,7 +133,8 @@ public class UserService {
 
     private String generatePassword(int length) {
         StringBuilder password = new StringBuilder(length);
-        for (int i = 0; i < length; i++) {
+        password.append(PASSWORD_FIRST_CHARS[secureRandom.nextInt(PASSWORD_FIRST_CHARS.length)]);
+        for (int i = 1; i < length; i++) {
             password.append(PASSWORD_CHARS[secureRandom.nextInt(PASSWORD_CHARS.length)]);
         }
         return password.toString();

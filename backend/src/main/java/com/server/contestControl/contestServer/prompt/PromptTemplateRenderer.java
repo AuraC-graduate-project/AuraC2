@@ -29,7 +29,9 @@ public class PromptTemplateRenderer {
         appendTitle(out, "AuraC2 Context");
         out.append("AuraC2 is a university programming contest-control system. ")
                 .append("This export is deterministic prompt text only. AuraC2 does not call AI services here.\n")
-                .append("Any code produced outside AuraC2 must be reviewed, compiled, tested, and verified inside AuraC2 before it becomes official.\n\n");
+                .append("Any code produced outside AuraC2 must be reviewed, compiled, tested, and verified inside AuraC2 before it becomes official.\n")
+                .append("- Prompt mode: ").append(promptModeLabel(request.getPromptMode())).append("\n")
+                .append("- Visibility boundary: ").append(visibilityLabel(request.getVisibilityMode())).append("\n\n");
 
         appendTitle(out, "Selected Target Language");
         out.append("- Language: ").append(language.label()).append("\n")
@@ -109,7 +111,7 @@ public class PromptTemplateRenderer {
                 .append("- Keep all generated code reviewable and suitable for AuraC2 verification.\n");
 
         if (request.getVisibilityMode() == PromptVisibilityMode.ADMIN_FULL_MODE) {
-            out.append("\nSensitive-material warning: this ADMIN_FULL_MODE export may contain contest-sensitive material selected by an admin. Handle it as confidential.\n");
+            out.append("\nSensitive-material warning: this admin-context export may contain contest-sensitive material selected by an admin. Handle it as confidential.\n");
         }
 
         return out.toString();
@@ -171,7 +173,9 @@ public class PromptTemplateRenderer {
 
     private void appendCheckerContract(StringBuilder out, SupportedLanguage language) {
         out.append("- Checker/output validator file: ").append(language.checkerFileName()).append("\n")
-                .append("- Use a custom checker only when exact, normalized, token-normalized, or float-tolerance comparison is insufficient.\n")
+                .append("- First write checker_need_decision.md explaining whether a custom checker is actually needed.\n")
+                .append("- If exact, normalized, token-normalized, or float-tolerance comparison is sufficient, say no custom checker is needed and do not produce checker code.\n")
+                .append("- Produce ").append(language.checkerFileName()).append(" only when the compare policy cannot express the accepted outputs.\n")
                 .append("- AuraC2 custom checker stdin has three UTF-8 byte-length-prefixed sections: official input, expected output, contestant output.\n")
                 .append("- For each section, read the byte length line, then that many bytes of payload, then the trailing newline.\n")
                 .append("- Print ACCEPT or REJECT as the first non-empty stdout line. Do not print debug logs to stdout.\n");
@@ -288,6 +292,12 @@ public class PromptTemplateRenderer {
         }
         if (problem.hasActiveCustomValidator()) {
             out.append("- AuraC2 has an active custom output validator. Follow its stdin/stdout checker contract exactly.\n");
+        } else if (comparePolicy == ComparePolicy.EXACT) {
+            out.append("- Built-in exact comparison is usually sufficient unless the statement allows multiple valid outputs.\n");
+        } else if (comparePolicy == ComparePolicy.NORMALIZED_TEXT || comparePolicy == ComparePolicy.TOKEN_NORMALIZED) {
+            out.append("- Built-in normalized comparison is usually sufficient unless output semantics require deeper validation.\n");
+        } else if (comparePolicy == ComparePolicy.FLOAT_TOLERANCE) {
+            out.append("- Built-in float tolerance may be sufficient when every output token is numeric and tolerance rules match the statement.\n");
         } else {
             out.append("- No active custom output validator is configured.\n");
         }
@@ -311,6 +321,27 @@ public class PromptTemplateRenderer {
 
     private String defaultText(String value, String fallback) {
         return hasText(value) ? value : fallback;
+    }
+
+    private String promptModeLabel(PromptMode promptMode) {
+        if (promptMode == null) {
+            return "Unspecified";
+        }
+        return switch (promptMode) {
+            case RECOMMENDED_ADMIN -> "Recommended Admin Prompt";
+            case PUBLIC_SAFE -> "Public/Safe Prompt";
+            case CUSTOM_ADVANCED -> "Custom Advanced Prompt";
+        };
+    }
+
+    private String visibilityLabel(PromptVisibilityMode visibilityMode) {
+        if (visibilityMode == null) {
+            return "Unspecified";
+        }
+        return switch (visibilityMode) {
+            case SAFE_MODE -> "Public/Safe";
+            case ADMIN_FULL_MODE -> "Admin-sensitive context";
+        };
     }
 
     private String toPlainText(String value) {

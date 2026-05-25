@@ -17,6 +17,9 @@ import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -57,7 +60,8 @@ public class ProblemStatementPdfService {
         SimplePdf pdf = new SimplePdf();
         if (problems.size() != 1) {
             pdf.addTitle(title);
-            pdf.addParagraph("Contestant-safe export. Hidden tests, admin notes, and problem-engineering source are excluded.");
+            pdf.addCenteredMuted("Contestant-safe problem booklet");
+            pdf.addParagraph("Hidden tests, admin notes, source code, and private diagnostics are excluded from this export.");
         }
 
         if (problems.isEmpty()) {
@@ -67,7 +71,7 @@ public class ProblemStatementPdfService {
         }
 
         for (int i = 0; i < problems.size(); i++) {
-            if (i > 0) {
+            if (problems.size() != 1 || i > 0) {
                 pdf.newPage();
             }
             addProblem(pdf, problems.get(i), sampleSets.get(i).samples());
@@ -78,26 +82,35 @@ public class ProblemStatementPdfService {
 
     private void addProblem(SimplePdf pdf, Problem problem, List<TestCase> publicSamples) {
         pdf.addTitle(problem.getTitle());
-        pdf.addParagraph("Time limit: " + problem.getTimeLimit() + " ms");
-        pdf.addParagraph("Memory limit: " + problem.getMemoryLimit() + " MB");
+        pdf.addLimitLine("time limit per test: " + problem.getTimeLimit() + " milliseconds");
+        pdf.addLimitLine("memory limit per test: " + problem.getMemoryLimit() + " megabytes");
+        pdf.addDivider();
 
         addSection(pdf, "Statement", effectiveStatement(problem));
-        addSection(pdf, "Input Format", problem.getInputFormat());
-        addSection(pdf, "Output Format", problem.getOutputFormat());
+        addSection(pdf, "Input", problem.getInputFormat());
+        addSection(pdf, "Output", problem.getOutputFormat());
         addSection(pdf, "Constraints", problem.getConstraintsText());
-        addSection(pdf, "Notes", problem.getPublicNotes());
+        addSamples(pdf, publicSamples);
+        addSection(pdf, "Note", problem.getPublicNotes());
+    }
 
-        pdf.addHeading("Public Samples");
+    private void addSamples(SimplePdf pdf, List<TestCase> publicSamples) {
         if (publicSamples.isEmpty()) {
-            pdf.addParagraph("No public samples have been added.");
             return;
         }
-
+        boolean multipleSamples = publicSamples.size() > 1;
+        TestCase firstSample = publicSamples.getFirst();
+        pdf.ensureExamplesSectionStart(firstSample.getInputData(), firstSample.getExpectedOutput(), multipleSamples);
+        pdf.addHeading("Examples");
         int sampleNumber = 1;
         for (TestCase sample : publicSamples) {
-            pdf.addSubheading("Sample " + sampleNumber++);
-            pdf.addCode("Input", sample.getInputData());
-            pdf.addCode("Output", sample.getExpectedOutput());
+            pdf.ensureSamplePairSpace(sample.getInputData(), sample.getExpectedOutput(), multipleSamples);
+            if (multipleSamples) {
+                pdf.addSubheading("Example " + sampleNumber);
+            }
+            pdf.addCodeBox("Input", sample.getInputData());
+            pdf.addCodeBox("Output", sample.getExpectedOutput());
+            sampleNumber++;
         }
     }
 
@@ -134,9 +147,13 @@ public class ProblemStatementPdfService {
                 .replace("\r\n", "\n")
                 .replace('\r', '\n')
                 .replaceAll("(?i)<br\\s*/?>", "\n")
+                .replaceAll("(?i)</h[1-6]>", "\n")
                 .replaceAll("(?i)</p>", "\n")
                 .replaceAll("(?i)</div>", "\n")
                 .replaceAll("(?i)</li>", "\n")
+                .replaceAll("(?i)<tr[^>]*>", "\n")
+                .replaceAll("(?i)</tr>", "\n")
+                .replaceAll("(?i)</t[dh]>", " ")
                 .replaceAll("(?i)<li[^>]*>", "- ")
                 .replaceAll("(?s)<[^>]+>", "");
         text = decodeEntities(text);
@@ -146,13 +163,35 @@ public class ProblemStatementPdfService {
     }
 
     private static String decodeEntities(String text) {
-        return text
+        String named = text
                 .replace("&nbsp;", " ")
                 .replace("&amp;", "&")
                 .replace("&lt;", "<")
                 .replace("&gt;", ">")
                 .replace("&quot;", "\"")
-                .replace("&#39;", "'");
+                .replace("&#39;", "'")
+                .replace("&le;", "<=")
+                .replace("&ge;", ">=")
+                .replace("&minus;", "-")
+                .replace("&times;", "x");
+        return decodeNumericEntity(decodeNumericEntity(named, "&#x([0-9a-fA-F]+);", 16), "&#([0-9]+);", 10);
+    }
+
+    private static String decodeNumericEntity(String text, String regex, int radix) {
+        Matcher matcher = Pattern.compile(regex).matcher(text);
+        StringBuilder decoded = new StringBuilder();
+        while (matcher.find()) {
+            String replacement = matcher.group(0);
+            try {
+                int codePoint = Integer.parseInt(matcher.group(1), radix);
+                replacement = new String(Character.toChars(codePoint));
+            } catch (IllegalArgumentException ignored) {
+                // Keep malformed entities as plain text; PDF generation should stay best-effort.
+            }
+            matcher.appendReplacement(decoded, Matcher.quoteReplacement(replacement));
+        }
+        matcher.appendTail(decoded);
+        return decoded.toString();
     }
 
     private String safeFileName(String value, String fallback) {
@@ -172,12 +211,14 @@ public class ProblemStatementPdfService {
     }
 
     private static final class SimplePdf {
-        private static final int PAGE_WIDTH = 612;
-        private static final int PAGE_HEIGHT = 792;
-        private static final int MARGIN_LEFT = 50;
-        private static final int MARGIN_TOP = 54;
-        private static final int MARGIN_BOTTOM = 54;
+        private static final int PAGE_WIDTH = 595;
+        private static final int PAGE_HEIGHT = 842;
+        private static final int MARGIN_LEFT = 57;
+        private static final int MARGIN_TOP = 51;
+        private static final int MARGIN_BOTTOM = 51;
         private static final int TEXT_WIDTH = PAGE_WIDTH - (MARGIN_LEFT * 2);
+        private static final int SAMPLE_BOX_WIDTH = Math.min(TEXT_WIDTH, 430);
+        private static final int CODE_PADDING = 10;
 
         private final List<StringBuilder> pages = new ArrayList<>();
         private StringBuilder current;
@@ -194,11 +235,27 @@ public class ProblemStatementPdfService {
         }
 
         private void addTitle(String value) {
-            addWrapped(value, 17, true, 22, 14);
+            addWrappedCentered(value, 20, true, 25, 6);
+        }
+
+        private void addCenteredMuted(String value) {
+            addWrappedCentered(value, 10, false, 14, 18);
+        }
+
+        private void addLimitLine(String value) {
+            addWrappedCentered(value, 10, false, 14, 0);
+        }
+
+        private void addDivider() {
+            ensureSpace(18);
+            y -= 10;
+            drawLine(MARGIN_LEFT, y, PAGE_WIDTH - MARGIN_LEFT, y, 0.80, 0.84, 0.90);
+            y -= 18;
         }
 
         private void addHeading(String value) {
-            addWrapped(value, 13, true, 17, 8);
+            y -= 7;
+            addWrapped(value, 14, true, 18, 8);
         }
 
         private void addSubheading(String value) {
@@ -207,33 +264,75 @@ public class ProblemStatementPdfService {
 
         private void addParagraph(String value) {
             for (String block : safeText(value).split("\\n\\s*\\n")) {
-                addWrapped(block, 10, false, 14, 6);
+                addWrapped(block, 10, false, 15, 8);
             }
         }
 
-        private void addCode(String label, String value) {
-            addSubheading(label);
-            for (String line : safeText(value).split("\\n", -1)) {
-                addWrapped(line.isEmpty() ? " " : line, 9, false, 12, 0);
+        private void addCodeBox(String label, String value) {
+            addSampleLabel(label);
+            List<String> lines = codeLines(value);
+            int boxHeight = codeBoxHeight(lines);
+            ensureSpace(boxHeight + 8);
+
+            int boxTop = y;
+            int boxBottom = y - boxHeight;
+            drawFilledRect(MARGIN_LEFT, boxBottom, SAMPLE_BOX_WIDTH, boxHeight, 0.965, 0.972, 0.982);
+            drawRect(MARGIN_LEFT, boxBottom, SAMPLE_BOX_WIDTH, boxHeight, 0.78, 0.82, 0.88);
+
+            int textY = boxTop - CODE_PADDING - 9;
+            for (String line : lines) {
+                drawText(MARGIN_LEFT + CODE_PADDING, textY, line.isEmpty() ? " " : line, 9, "F3");
+                textY -= 12;
             }
-            y -= 5;
+            y = boxBottom - 8;
+        }
+
+        private void addSampleLabel(String value) {
+            addWrapped(value, 10, true, 13, 3);
+        }
+
+        private void ensureSamplePairSpace(String input, String output, boolean includeExampleTitle) {
+            int sampleTitleHeight = includeExampleTitle ? 20 : 0;
+            int labelHeights = 32;
+            int inputHeight = codeBoxHeight(codeLines(input)) + 8;
+            int outputHeight = codeBoxHeight(codeLines(output)) + 8;
+            ensureSpace(sampleTitleHeight + labelHeights + inputHeight + outputHeight);
+        }
+
+        private void ensureExamplesSectionStart(String input, String output, boolean includeExampleTitle) {
+            ensureSpace(34
+                    + (includeExampleTitle ? 20 : 0)
+                    + 32
+                    + codeBoxHeight(codeLines(input))
+                    + codeBoxHeight(codeLines(output))
+                    + 16);
+        }
+
+        private List<String> codeLines(String value) {
+            return wrapCode(safeText(value), Math.max(24, (int) ((SAMPLE_BOX_WIDTH - (CODE_PADDING * 2)) / (9 * 0.56))));
+        }
+
+        private int codeBoxHeight(List<String> lines) {
+            return Math.max(28, CODE_PADDING + lines.size() * 12 + CODE_PADDING - 2);
         }
 
         private void addWrapped(String value, int fontSize, boolean bold, int lineHeight, int after) {
             List<String> lines = wrap(safeText(value), Math.max(24, (int) (TEXT_WIDTH / (fontSize * 0.52))));
             for (String line : lines) {
                 ensureSpace(lineHeight);
-                current.append("BT /")
-                        .append(bold ? "F2" : "F1")
-                        .append(' ')
-                        .append(fontSize)
-                        .append(" Tf ")
-                        .append(MARGIN_LEFT)
-                        .append(' ')
-                        .append(y)
-                        .append(" Td (")
-                        .append(escape(line))
-                        .append(") Tj ET\n");
+                drawText(MARGIN_LEFT, y, line, fontSize, bold ? "F2" : "F1");
+                y -= lineHeight;
+            }
+            y -= after;
+        }
+
+        private void addWrappedCentered(String value, int fontSize, boolean bold, int lineHeight, int after) {
+            List<String> lines = wrap(safeText(value), Math.max(24, (int) (TEXT_WIDTH / (fontSize * 0.50))));
+            for (String line : lines) {
+                ensureSpace(lineHeight);
+                int textWidth = estimateTextWidth(line, fontSize);
+                int x = Math.max(MARGIN_LEFT, (PAGE_WIDTH - textWidth) / 2);
+                drawText(x, y, line, fontSize, bold ? "F2" : "F1");
                 y -= lineHeight;
             }
             y -= after;
@@ -266,6 +365,24 @@ public class ProblemStatementPdfService {
             return wrapped;
         }
 
+        private List<String> wrapCode(String text, int maxChars) {
+            List<String> wrapped = new ArrayList<>();
+            String[] lines = text.split("\\n", -1);
+            for (String rawLine : lines) {
+                String line = rawLine.stripTrailing();
+                if (line.isEmpty()) {
+                    wrapped.add("");
+                    continue;
+                }
+                while (line.length() > maxChars) {
+                    wrapped.add(line.substring(0, maxChars));
+                    line = line.substring(maxChars);
+                }
+                wrapped.add(line);
+            }
+            return wrapped.isEmpty() ? List.of("") : wrapped;
+        }
+
         private String safeText(String value) {
             if (value == null) {
                 return "";
@@ -284,11 +401,56 @@ public class ProblemStatementPdfService {
             return ascii.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)");
         }
 
+        private void drawText(int x, int y, String line, int fontSize, String fontName) {
+            current.append("0 0 0 rg BT /")
+                    .append(fontName)
+                    .append(' ')
+                    .append(fontSize)
+                    .append(" Tf ")
+                    .append(x)
+                    .append(' ')
+                    .append(y)
+                    .append(" Td (")
+                    .append(escape(line))
+                    .append(") Tj ET\n");
+        }
+
+        private void drawLine(int x1, int y1, int x2, int y2, double r, double g, double b) {
+            current.append(formatColor(r, g, b, "RG"))
+                    .append(" 0.7 w ")
+                    .append(x1).append(' ').append(y1).append(" m ")
+                    .append(x2).append(' ').append(y2).append(" l S\n");
+        }
+
+        private void drawRect(int x, int y, int width, int height, double r, double g, double b) {
+            current.append(formatColor(r, g, b, "RG"))
+                    .append(" 0.8 w ")
+                    .append(x).append(' ').append(y).append(' ')
+                    .append(width).append(' ').append(height)
+                    .append(" re S\n");
+        }
+
+        private void drawFilledRect(int x, int y, int width, int height, double r, double g, double b) {
+            current.append(formatColor(r, g, b, "rg"))
+                    .append(' ')
+                    .append(x).append(' ').append(y).append(' ')
+                    .append(width).append(' ').append(height)
+                    .append(" re f\n");
+        }
+
+        private String formatColor(double r, double g, double b, String operator) {
+            return String.format(Locale.ROOT, "%.3f %.3f %.3f %s", r, g, b, operator);
+        }
+
+        private int estimateTextWidth(String line, int fontSize) {
+            return (int) Math.round(line.length() * fontSize * 0.50);
+        }
+
         private byte[] toBytes() {
             List<byte[]> objects = new ArrayList<>();
             objects.add(bytes("<< /Type /Catalog /Pages 2 0 R >>"));
 
-            int firstPageObject = 5;
+            int firstPageObject = 6;
             StringBuilder kids = new StringBuilder();
             for (int i = 0; i < pages.size(); i++) {
                 kids.append(firstPageObject + (i * 2)).append(" 0 R ");
@@ -296,12 +458,13 @@ public class ProblemStatementPdfService {
             objects.add(bytes("<< /Type /Pages /Kids [" + kids + "] /Count " + pages.size() + " >>"));
             objects.add(bytes("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"));
             objects.add(bytes("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>"));
+            objects.add(bytes("<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>"));
 
             for (int i = 0; i < pages.size(); i++) {
                 int pageObjectNumber = firstPageObject + (i * 2);
                 int contentObjectNumber = pageObjectNumber + 1;
                 byte[] streamBytes = pages.get(i).toString().getBytes(StandardCharsets.ISO_8859_1);
-                objects.add(bytes("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents "
+                objects.add(bytes("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + PAGE_WIDTH + " " + PAGE_HEIGHT + "] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents "
                         + contentObjectNumber + " 0 R >>"));
                 objects.add(bytes("<< /Length " + streamBytes.length + " >>\nstream\n"
                         + pages.get(i)

@@ -464,8 +464,8 @@ class OracleServiceTest {
 
         ArgumentCaptor<TestCase> testCaseCaptor = ArgumentCaptor.forClass(TestCase.class);
         verify(testCaseRepository).save(testCaseCaptor.capture());
-        assertThat(testCaseCaptor.getValue().getInputData()).isEqualTo("4");
-        assertThat(testCaseCaptor.getValue().getExpectedOutput()).isEqualTo("YES");
+        assertThat(testCaseCaptor.getValue().getInputData()).isEqualTo("4\n");
+        assertThat(testCaseCaptor.getValue().getExpectedOutput()).isEqualTo("YES\n");
         assertThat(testCaseCaptor.getValue().isPublic()).isFalse();
         assertThat(counterexample.getPromoted()).isTrue();
         assertThat(generatedTestCase.getPromoted()).isTrue();
@@ -482,8 +482,8 @@ class OracleServiceTest {
 
         ArgumentCaptor<TestCase> testCaseCaptor = ArgumentCaptor.forClass(TestCase.class);
         verify(testCaseRepository).save(testCaseCaptor.capture());
-        assertThat(testCaseCaptor.getValue().getInputData()).isEqualTo("4\n");
-        assertThat(testCaseCaptor.getValue().getExpectedOutput()).isEqualTo("YES\n");
+        assertThat(testCaseCaptor.getValue().getInputData()).isEqualTo("4");
+        assertThat(testCaseCaptor.getValue().getExpectedOutput()).isEqualTo("YES");
         assertThat(testCaseCaptor.getValue().isPublic()).isFalse();
         assertThat(generatedTestCase.getPromoted()).isTrue();
         assertThat(generatedTestCase.getPromotedTestCase()).isNotNull();

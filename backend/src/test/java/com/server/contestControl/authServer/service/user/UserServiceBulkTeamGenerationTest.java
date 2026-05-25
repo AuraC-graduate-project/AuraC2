@@ -93,6 +93,25 @@ class UserServiceBulkTeamGenerationTest {
     }
 
     @Test
+    void generatedPasswordsAvoidSpreadsheetFormulaPrefixes() {
+        List<String> usernames = java.util.stream.IntStream.rangeClosed(1, 50)
+                .mapToObj(number -> "team" + number)
+                .toList();
+        when(userRepository.findByUsernameIn(usernames)).thenReturn(List.of());
+        when(passwordEncoder.encode(anyString())).thenReturn("hashed-password");
+
+        List<GeneratedTeamCredentialResponse> generated = userService.generateTeamAccounts(
+                request("team", 1, 50, 10)
+        );
+
+        assertThat(generated)
+                .extracting(GeneratedTeamCredentialResponse::getPassword)
+                .allSatisfy(password ->
+                        assertThat(password.charAt(0)).isNotIn('=', '+', '-', '@')
+                );
+    }
+
+    @Test
     void generatedPasswordsAreHashedBeforeSave() {
         when(userRepository.findByUsernameIn(List.of("team1"))).thenReturn(List.of());
         when(passwordEncoder.encode(anyString())).thenReturn("encoded-secret");
