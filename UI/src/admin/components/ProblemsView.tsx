@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { Plus, ChevronRight, Pencil, Search, Timer, Database, Trash2, AlertTriangle, RefreshCw, RotateCcw, Download } from 'lucide-react';
+import { Plus, ChevronRight, ChevronLeft, Pencil, Search, Timer, Database, Trash2, AlertTriangle, RefreshCw, RotateCcw, Download } from 'lucide-react';
 import { CreateProblemModal } from './CreateProblemModal';
 import { TestCasesPanel } from './TestCasesPanel';
 import { EditProblemModal } from './EditProblemModal';
@@ -95,6 +95,7 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
   const [exportingPdf, setExportingPdf] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [activeProblemTab, setActiveProblemTab] = useState<ProblemTab>('statement');
+  const [navigatorCollapsed, setNavigatorCollapsed] = useState(false);
 
   const selectedContest = useMemo(
     () => contestOptions.find((contest) => String(contest.id) === selectedContestId) ?? null,
@@ -302,6 +303,20 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
       problem.difficulty.toLowerCase().includes(q)
     );
   });
+  const navigatorProblems = navigatorCollapsed ? problems : filteredProblems;
+  const selectedProblemIndex = selectedProblem
+    ? problems.findIndex((problem) => problem.id === selectedProblem.id)
+    : -1;
+  const selectedProblemLabel = selectedProblemIndex >= 0 ? String.fromCharCode(65 + selectedProblemIndex) : '';
+
+  const problemLabel = (problem: ProblemResponse) => {
+    const index = problems.findIndex((item) => item.id === problem.id);
+    return index >= 0 ? String.fromCharCode(65 + index) : '#';
+  };
+
+  const toggleNavigator = () => {
+    setNavigatorCollapsed((collapsed) => !collapsed);
+  };
 
   return (
     <>
@@ -400,83 +415,141 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
           </CardContent>
         </Card>
       ) : (
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="border border-gray-200 shadow-sm lg:col-span-1">
-          <CardHeader className="border-b border-slate-200 bg-slate-50">
-            <div>
-              <CardTitle className="text-lg text-slate-950">Problem List</CardTitle>
-              <p className="mt-1 text-sm text-slate-500">{problems.length} problem(s) in this contest.</p>
-            </div>
-          </CardHeader>
-          <CardContent className="p-4">
-            <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search problems..."
-                className="h-10 pl-9"
-              />
+      <div className="space-y-4 lg:flex lg:items-start lg:gap-5 lg:space-y-0">
+        <div className="lg:hidden">
+          <label className="mb-2 block text-sm font-semibold text-slate-800 dark:text-slate-100" htmlFor="mobile-problem-select">
+            Problem
+          </label>
+          <select
+            id="mobile-problem-select"
+            className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            value={selectedProblem?.id ?? ''}
+            onChange={(event) => {
+              const problem = problems.find((item) => item.id === Number(event.target.value));
+              if (problem) handleProblemSelect(problem);
+            }}
+            disabled={isLoadingList || problems.length === 0}
+          >
+            <option value="">{isLoadingList ? 'Loading problems...' : 'Select problem'}</option>
+            {problems.map((problem) => (
+              <option key={problem.id} value={problem.id}>
+                {problemLabel(problem)}. {problem.title}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <aside
+          className={`hidden shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition-all duration-200 dark:border-slate-700 dark:bg-slate-900 lg:flex lg:flex-col ${
+            navigatorCollapsed ? 'w-16' : 'w-[18rem]'
+          }`}
+          aria-label="Problem Navigator"
+        >
+          <div className="border-b border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/70">
+            <div className={`flex items-center ${navigatorCollapsed ? 'justify-center' : 'justify-between gap-2'}`}>
+              {!navigatorCollapsed && (
+                <div className="min-w-0">
+                  <h2 className="text-sm font-semibold text-slate-950 dark:text-slate-50">Problem Navigator</h2>
+                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{problems.length} problem(s)</p>
+                </div>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 shrink-0 p-0"
+                onClick={toggleNavigator}
+                aria-label={navigatorCollapsed ? 'Expand problem navigator' : 'Collapse problem navigator'}
+                title={navigatorCollapsed ? 'Expand problem navigator' : 'Collapse problem navigator'}
+              >
+                {navigatorCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+              </Button>
             </div>
 
-            {isLoadingList ? (
-              <div className="text-center py-8">
-                <p className="text-slate-600 text-sm">Loading problems...</p>
-              </div>
-            ) : problems.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-slate-600 text-sm mb-2">
-                  No problems yet
-                </p>
-                <p className="text-slate-500 text-xs">
-                  Use "Create" to add problems.
-                </p>
-              </div>
-            ) : filteredProblems.length === 0 ? (
-              <p className="py-8 text-center text-sm text-slate-500">No problems match your search.</p>
-            ) : (
-              <div className="space-y-2">
-                {filteredProblems.map((problem, index) => (
-                  <button
-                    key={problem.id}
-                    onClick={() => handleProblemSelect(problem)}
-                    className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                      selectedProblem?.id === problem.id
-                        ? 'bg-slate-100 border-slate-300'
-                        : 'bg-white border-gray-200 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                          <span className="inline-flex items-center gap-2">
-                            <span
-                              className="h-3 w-3 rounded-full border border-slate-300"
-                              style={{ backgroundColor: problem.balloonColor }}
-                              aria-hidden="true"
-                            />
-                            Problem {String.fromCharCode(65 + index)}
-                          </span>
-                        </p>
-                        <p className="text-sm font-medium text-slate-900 truncate">
-                          {problem.title}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <StatusBadge kind="difficulty" value={problem.difficulty} />
-                        </div>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-slate-400 flex-shrink-0 ml-2" />
-                    </div>
-                  </button>
-                ))}
+            {!navigatorCollapsed && (
+              <div className="relative mt-3">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search problems..."
+                  className="h-9 pl-9 text-sm"
+                />
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
 
-        <Card className="border border-gray-200 shadow-sm lg:col-span-2">
-          <CardHeader className="border-b border-slate-200 bg-slate-50">
-            <CardTitle className="text-lg text-slate-950">Problem Details</CardTitle>
+          <div className="max-h-[calc(100vh-18rem)] min-h-[12rem] overflow-y-auto p-2">
+            {isLoadingList ? (
+              <div className={`py-8 text-center text-sm text-slate-600 dark:text-slate-300 ${navigatorCollapsed ? 'px-1' : 'px-3'}`}>
+                {navigatorCollapsed ? '...' : 'Loading problems...'}
+              </div>
+            ) : problems.length === 0 ? (
+              <div className={`py-8 text-center ${navigatorCollapsed ? 'px-1' : 'px-3'}`}>
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{navigatorCollapsed ? '0' : 'No problems yet'}</p>
+                {!navigatorCollapsed && <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Use Create Problem to add one.</p>}
+              </div>
+            ) : !navigatorCollapsed && filteredProblems.length === 0 ? (
+              <p className="px-3 py-8 text-center text-sm text-slate-500 dark:text-slate-400">No problems match your search.</p>
+            ) : (
+              <div className="space-y-1">
+                {navigatorProblems.map((problem) => {
+                  const active = selectedProblem?.id === problem.id;
+                  const label = problemLabel(problem);
+                  return (
+                    <button
+                      key={problem.id}
+                      type="button"
+                      onClick={() => handleProblemSelect(problem)}
+                      title={`${label}. ${problem.title}`}
+                      aria-current={active ? 'true' : undefined}
+                      className={`group relative flex w-full items-center rounded-md border text-left transition ${
+                        navigatorCollapsed
+                          ? 'h-11 justify-center px-1'
+                          : 'min-h-11 gap-2 px-2.5 py-2'
+                      } ${
+                        active
+                          ? 'border-blue-300 bg-blue-50 text-blue-950 shadow-sm dark:border-blue-700 dark:bg-blue-950/35 dark:text-blue-50'
+                          : 'border-transparent bg-transparent text-slate-700 hover:border-slate-200 hover:bg-slate-50 dark:text-slate-200 dark:hover:border-slate-700 dark:hover:bg-slate-800/70'
+                      }`}
+                    >
+                      <span
+                        className={`shrink-0 rounded-full border border-slate-300 dark:border-slate-600 ${
+                          navigatorCollapsed ? 'absolute right-2 top-2 h-2.5 w-2.5' : 'h-2.5 w-2.5'
+                        }`}
+                        style={{ backgroundColor: problem.balloonColor }}
+                        aria-hidden="true"
+                      />
+                      <span
+                        className={`inline-flex shrink-0 items-center justify-center rounded-md border font-mono text-xs font-bold ${
+                          navigatorCollapsed ? 'h-8 w-8' : 'h-7 w-7'
+                        } ${
+                          active
+                            ? 'border-blue-300 bg-white text-blue-800 dark:border-blue-700 dark:bg-slate-950 dark:text-blue-200'
+                            : 'border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200'
+                        }`}
+                      >
+                        {label}
+                      </span>
+                      {!navigatorCollapsed && (
+                        <>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-semibold">{problem.title}</span>
+                          </span>
+                          <StatusBadge kind="difficulty" value={problem.difficulty} />
+                        </>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </aside>
+
+        <Card className="min-w-0 flex-1 border border-gray-200 shadow-sm dark:border-slate-700">
+          <CardHeader className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/70">
+            <CardTitle className="text-lg text-slate-950 dark:text-slate-50">Problem Details</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
             {isLoadingProblem ? (
@@ -491,7 +564,14 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
               <div className="space-y-4">
                 <div>
                   <div className="flex items-center justify-between gap-3 mb-2">
-                    <h3 className="text-2xl font-semibold text-slate-950">{selectedProblem.title}</h3>
+                    <div className="min-w-0">
+                      {selectedProblemLabel && (
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          Problem {selectedProblemLabel}
+                        </p>
+                      )}
+                      <h3 className="truncate text-2xl font-semibold text-slate-950 dark:text-slate-50">{selectedProblem.title}</h3>
+                    </div>
                     <div className="flex items-center gap-2">
                       <Button
                         size="sm"
