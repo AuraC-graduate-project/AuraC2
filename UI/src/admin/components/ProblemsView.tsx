@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { Plus, ChevronRight, Pencil, Search, Timer, Database, Trash2, AlertTriangle, RefreshCw, RotateCcw } from 'lucide-react';
+import { Plus, ChevronRight, Pencil, Search, Timer, Database, Trash2, AlertTriangle, RefreshCw, RotateCcw, Download } from 'lucide-react';
 import { CreateProblemModal } from './CreateProblemModal';
 import { TestCasesPanel } from './TestCasesPanel';
 import { EditProblemModal } from './EditProblemModal';
@@ -17,7 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from './ui/alert-dialog';
-import { deleteProblem, getProblem, getProblemsByContest, getPublicTestCasesForProblem } from '../services/api';
+import { deleteProblem, fetchContestBookletPdf, fetchProblemStatementPdf, getProblem, getProblemsByContest, getPublicTestCasesForProblem } from '../services/api';
 import { ProblemResponse, TestCaseResponse } from '../types/api';
 import { toast } from 'sonner';
 import { StatusBadge } from '../../components/StatusBadge';
@@ -27,10 +27,22 @@ import {
   ContestOption,
   loadContestOptions,
 } from '../utils/contestOptions';
+import { AdminHelpTooltip } from './AdminHelpTooltip';
 
 interface ProblemsViewProps {
   contestId: number | null;
 }
+
+type ProblemTab = 'statement' | 'test-cases' | 'prompt-exports' | 'engineering' | 'generated-tests' | 'counterexamples';
+
+const PROBLEM_TABS: { value: ProblemTab; label: string }[] = [
+  { value: 'statement', label: 'Statement' },
+  { value: 'test-cases', label: 'Test Cases' },
+  { value: 'prompt-exports', label: 'Prompt Exports' },
+  { value: 'engineering', label: 'Engineering' },
+  { value: 'generated-tests', label: 'Generated Tests' },
+  { value: 'counterexamples', label: 'Counterexamples' },
+];
 
 function contestIdFromUrl(): string {
   try {
@@ -80,7 +92,9 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [problemToDelete, setProblemToDelete] = useState<ProblemResponse | null>(null);
   const [isDeletingProblem, setIsDeletingProblem] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  const [activeProblemTab, setActiveProblemTab] = useState<ProblemTab>('statement');
 
   const selectedContest = useMemo(
     () => contestOptions.find((contest) => String(contest.id) === selectedContestId) ?? null,
@@ -190,6 +204,10 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
     };
   }, [selectedProblem?.id]);
 
+  useEffect(() => {
+    setActiveProblemTab('statement');
+  }, [selectedProblem?.id]);
+
   // Load problem details when selected
   const handleProblemSelect = async (problem: ProblemResponse) => {
     setIsLoadingProblem(true);
@@ -233,6 +251,45 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
       toast.error(error instanceof Error ? error.message : 'Failed to delete problem');
     } finally {
       setIsDeletingProblem(false);
+    }
+  };
+
+  const downloadBlob = (blob: Blob, filename: string) => {
+    const href = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = href;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(href);
+  };
+
+  const handleProblemPdfExport = async () => {
+    if (!selectedProblem) return;
+    setExportingPdf(`problem-${selectedProblem.id}`);
+    try {
+      const { blob, filename } = await fetchProblemStatementPdf(selectedProblem.id);
+      downloadBlob(blob, filename ?? `${selectedProblem.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-statement.pdf`);
+      toast.success('Problem PDF exported');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to export problem PDF');
+    } finally {
+      setExportingPdf(null);
+    }
+  };
+
+  const handleContestBookletExport = async () => {
+    if (!selectedContestNumericId) return;
+    setExportingPdf(`contest-${selectedContestNumericId}`);
+    try {
+      const { blob, filename } = await fetchContestBookletPdf(selectedContestNumericId);
+      downloadBlob(blob, filename ?? `contest-${selectedContestNumericId}-problem-booklet.pdf`);
+      toast.success('Contest booklet PDF exported');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to export contest booklet PDF');
+    } finally {
+      setExportingPdf(null);
     }
   };
 
@@ -280,6 +337,16 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
             >
               <RefreshCw className="h-4 w-4" />
               Refresh
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-2 bg-white"
+              disabled={!selectedContestNumericId || exportingPdf === `contest-${selectedContestNumericId}`}
+              onClick={handleContestBookletExport}
+            >
+              <Download className="h-4 w-4" />
+              {exportingPdf === `contest-${selectedContestNumericId}` ? 'Exporting...' : 'Booklet PDF'}
             </Button>
             <Button
               className="gap-2 bg-blue-700 hover:bg-blue-800"
@@ -430,6 +497,16 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
                         size="sm"
                         variant="outline"
                         className="gap-2"
+                        onClick={handleProblemPdfExport}
+                        disabled={exportingPdf === `problem-${selectedProblem.id}`}
+                      >
+                        <Download className="w-4 h-4" />
+                        {exportingPdf === `problem-${selectedProblem.id}` ? 'Exporting...' : 'Statement PDF'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-2"
                         onClick={() => setEditModalOpen(true)}
                       >
                         <Pencil className="w-4 h-4" />
@@ -467,64 +544,133 @@ export function ProblemsView({ contestId }: ProblemsViewProps) {
                   </div>
                 </div>
 
-                {readinessWarnings.length > 0 && (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-                    <div className="flex gap-3">
-                      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
-                      <div>
-                        <p className="text-sm font-semibold text-amber-950">Readiness warnings</p>
-                        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-amber-800">
-                          {readinessWarnings.map((warning) => (
-                            <li key={warning}>{warning}</li>
-                          ))}
-                        </ul>
+                <div className="overflow-x-auto border-b border-slate-200">
+                  <div className="flex min-w-max gap-1">
+                    {PROBLEM_TABS.map((tab) => (
+                      <button
+                        key={tab.value}
+                        type="button"
+                        className={`border-b-2 px-3 py-2 text-sm font-semibold transition ${
+                          activeProblemTab === tab.value
+                            ? 'border-blue-700 text-blue-700'
+                            : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800'
+                        }`}
+                        onClick={() => setActiveProblemTab(tab.value)}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {activeProblemTab === 'statement' && (
+                  <div className="space-y-4">
+                    {readinessWarnings.length > 0 && (
+                      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                        <div className="flex gap-3">
+                          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+                          <div>
+                            <p className="text-sm font-semibold text-amber-950">Readiness warnings</p>
+                            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-amber-800">
+                              {readinessWarnings.map((warning) => (
+                                <li key={warning}>{warning}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
                       </div>
+                    )}
+
+                    <div>
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-semibold text-slate-800">Contestant-Style Preview</h4>
+                          <AdminHelpTooltip
+                            label="Contestant preview help"
+                            content="This preview uses public statement fields and public samples only. Admin notes and hidden tests stay out."
+                          />
+                        </div>
+                        {isLoadingPublicSamples && (
+                          <span className="text-xs font-medium text-slate-500">Loading public samples...</span>
+                        )}
+                      </div>
+                      <ProblemStatementPreview problem={selectedProblem} samples={publicSamples} />
                     </div>
+
+                    {selectedProblem.adminNotes && (
+                      <details className="rounded-lg border border-amber-200 bg-amber-50">
+                        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-amber-950">
+                          Admin Internal Notes
+                        </summary>
+                        <div className="border-t border-amber-200 p-4">
+                          <p className="text-xs font-medium uppercase tracking-wide text-amber-700">
+                            Hidden from team views and SAFE_MODE prompt exports
+                          </p>
+                          <pre className="mt-3 max-h-56 overflow-auto whitespace-pre-wrap rounded-md border border-amber-200 bg-white p-3 text-sm text-amber-950">{selectedProblem.adminNotes}</pre>
+                        </div>
+                      </details>
+                    )}
                   </div>
                 )}
 
-                <div>
-                  <div className="mb-2 flex items-center justify-between gap-3">
-                    <h4 className="font-semibold text-slate-800">Contestant-Style Preview</h4>
-                    {isLoadingPublicSamples && (
-                      <span className="text-xs font-medium text-slate-500">Loading public samples...</span>
-                    )}
-                  </div>
-                  <ProblemStatementPreview problem={selectedProblem} samples={publicSamples} />
-                </div>
+                {activeProblemTab === 'test-cases' && (
+                  <TestCasesPanel
+                    problemId={selectedProblem.id}
+                    problemTitle={selectedProblem.title}
+                    embedded
+                  />
+                )}
 
-                {selectedProblem.adminNotes && (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-                    <p className="text-sm font-semibold text-amber-950">Admin Internal Notes</p>
-                    <p className="mt-1 text-xs font-medium uppercase tracking-wide text-amber-700">
-                      Hidden from team views and SAFE_MODE prompt exports
-                    </p>
-                    <pre className="mt-3 whitespace-pre-wrap rounded-md border border-amber-200 bg-white p-3 text-sm text-amber-950">{selectedProblem.adminNotes}</pre>
-                  </div>
+                {activeProblemTab === 'prompt-exports' && selectedContestNumericId && (
+                  <OraclePanel
+                    problemId={selectedProblem.id}
+                    problemTitle={selectedProblem.title}
+                    contestId={selectedContestNumericId}
+                    section="prompts"
+                    embedded
+                    customValidatorSourceHash={selectedProblem.validatorSourceHash}
+                    customValidatorLanguageId={selectedProblem.validatorLanguageId}
+                    customValidatorEnabled={selectedProblem.validatorEnabled}
+                  />
+                )}
+
+                {activeProblemTab === 'engineering' && selectedContestNumericId && (
+                  <OraclePanel
+                    problemId={selectedProblem.id}
+                    problemTitle={selectedProblem.title}
+                    contestId={selectedContestNumericId}
+                    section="engineering"
+                    embedded
+                    customValidatorSourceHash={selectedProblem.validatorSourceHash}
+                    customValidatorLanguageId={selectedProblem.validatorLanguageId}
+                    customValidatorEnabled={selectedProblem.validatorEnabled}
+                  />
+                )}
+
+                {activeProblemTab === 'generated-tests' && selectedContestNumericId && (
+                  <OraclePanel
+                    problemId={selectedProblem.id}
+                    problemTitle={selectedProblem.title}
+                    contestId={selectedContestNumericId}
+                    section="generated"
+                    embedded
+                  />
+                )}
+
+                {activeProblemTab === 'counterexamples' && selectedContestNumericId && (
+                  <OraclePanel
+                    problemId={selectedProblem.id}
+                    problemTitle={selectedProblem.title}
+                    contestId={selectedContestNumericId}
+                    section="counterexamples"
+                    embedded
+                  />
                 )}
               </div>
             )}
           </CardContent>
         </Card>
       </div>
-      )}
-
-      {/* Test Cases Panel - Only shown when a problem is selected */}
-      {selectedContestNumericId && selectedProblem && (
-        <TestCasesPanel 
-          problemId={selectedProblem.id} 
-          problemTitle={selectedProblem.title}
-        />
-      )}
-
-      {selectedContestNumericId && selectedProblem && (
-        <div className="mt-6">
-          <OraclePanel
-            problemId={selectedProblem.id}
-            problemTitle={selectedProblem.title}
-            contestId={selectedContestNumericId}
-          />
-        </div>
       )}
 
       {selectedContestNumericId && selectedProblem && (

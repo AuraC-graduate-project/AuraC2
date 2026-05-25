@@ -981,8 +981,9 @@ html.dark .aura-workspace-main {
 }
 
 .aura-rich-text-input:empty::before {
-  content: "Write the problem statement here...";
+  content: attr(data-placeholder);
   color: var(--aura-text-soft);
+  pointer-events: none;
 }
 
 .aura-rich-text-input h2,

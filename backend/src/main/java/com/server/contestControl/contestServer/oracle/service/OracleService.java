@@ -14,8 +14,10 @@ import com.server.contestControl.contestServer.oracle.dto.CounterexampleResponse
 import com.server.contestControl.contestServer.oracle.dto.GeneratedTestBatchRequest;
 import com.server.contestControl.contestServer.oracle.dto.GeneratedTestBatchResponse;
 import com.server.contestControl.contestServer.oracle.dto.GeneratedTestCaseResponse;
+import com.server.contestControl.contestServer.oracle.dto.GeneratedTestPromotionResponse;
 import com.server.contestControl.contestServer.oracle.dto.OracleProgramRequest;
 import com.server.contestControl.contestServer.oracle.dto.OracleProgramResponse;
+import com.server.contestControl.contestServer.oracle.dto.OracleProgramSourceResponse;
 import com.server.contestControl.contestServer.oracle.entity.Counterexample;
 import com.server.contestControl.contestServer.oracle.entity.GeneratedTestBatch;
 import com.server.contestControl.contestServer.oracle.entity.GeneratedTestCase;
@@ -34,6 +36,7 @@ import com.server.contestControl.contestServer.oracle.repository.InputValidatorR
 import com.server.contestControl.contestServer.oracle.repository.ReferenceSolutionRepository;
 import com.server.contestControl.contestServer.repository.ProblemRepository;
 import com.server.contestControl.contestServer.repository.TestCaseRepository;
+import com.server.contestControl.contestServer.service.TestCaseDuplicateService;
 import com.server.contestControl.submissionServer.entity.Submission;
 import com.server.contestControl.submissionServer.enums.Verdict;
 import com.server.contestControl.submissionServer.repository.SubmissionRepository;
@@ -49,7 +52,10 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.HexFormat;
+import java.util.Set;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -77,6 +83,7 @@ public class OracleService {
     private final OracleJudge0ExecutionService oracleJudge0ExecutionService;
     private final OutputComparator outputComparator;
     private final CustomValidatorService customValidatorService;
+    private final TestCaseDuplicateService testCaseDuplicateService;
 
     @Transactional
     public OracleProgramResponse configureReferenceSolution(
@@ -170,6 +177,36 @@ public class OracleService {
                 .stream()
                 .map(OracleProgramResponse::from)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public OracleProgramSourceResponse referenceSolutionSource(Long referenceSolutionId) {
+        return referenceSolutionRepository.findById(referenceSolutionId)
+                .map(OracleProgramSourceResponse::from)
+                .orElseThrow(() -> new OracleNotFoundException("Reference solution not found: " + referenceSolutionId));
+    }
+
+    @Transactional(readOnly = true)
+    public OracleProgramSourceResponse inputGeneratorSource(Long inputGeneratorId) {
+        return inputGeneratorRepository.findById(inputGeneratorId)
+                .map(OracleProgramSourceResponse::from)
+                .orElseThrow(() -> new OracleNotFoundException("Input generator not found: " + inputGeneratorId));
+    }
+
+    @Transactional(readOnly = true)
+    public OracleProgramSourceResponse inputValidatorSource(Long inputValidatorId) {
+        return inputValidatorRepository.findById(inputValidatorId)
+                .map(OracleProgramSourceResponse::from)
+                .orElseThrow(() -> new OracleNotFoundException("Input validator not found: " + inputValidatorId));
+    }
+
+    @Transactional(readOnly = true)
+    public OracleProgramSourceResponse customOutputValidatorSource(Long problemId) {
+        Problem problem = problem(problemId);
+        if (problem.getValidatorSource() == null || problem.getValidatorSource().isBlank()) {
+            throw new OracleNotFoundException("Custom output validator source not found for problem: " + problemId);
+        }
+        return OracleProgramSourceResponse.customValidator(problem);
     }
 
     @Transactional
@@ -357,15 +394,15 @@ public class OracleService {
     }
 
     @Transactional
-    public TestCaseResponse promoteGeneratedTestCase(Long generatedTestCaseId) {
+    public GeneratedTestPromotionResponse promoteGeneratedTestCase(Long generatedTestCaseId) {
         GeneratedTestCase generatedTestCase = generatedTestCaseRepository.findByIdForPromotion(generatedTestCaseId)
                 .orElseThrow(() -> new OracleNotFoundException("Generated test case not found: " + generatedTestCaseId));
 
-        return TestCaseResponse.fromEntity(promoteGeneratedTestCaseEntity(generatedTestCase));
+        return promoteGeneratedTestCaseEntities(List.of(generatedTestCase), 1);
     }
 
     @Transactional
-    public List<TestCaseResponse> promoteGeneratedTestCases(List<Long> generatedTestCaseIds) {
+    public GeneratedTestPromotionResponse promoteGeneratedTestCases(List<Long> generatedTestCaseIds) {
         if (generatedTestCaseIds == null || generatedTestCaseIds.isEmpty()) {
             throw new OracleConfigurationException("At least one generated test case must be selected");
         }
@@ -378,14 +415,11 @@ public class OracleService {
             throw new OracleNotFoundException("One or more generated test cases were not found");
         }
 
-        return generatedTestCases.stream()
-                .map(this::promoteGeneratedTestCaseEntity)
-                .map(TestCaseResponse::fromEntity)
-                .toList();
+        return promoteGeneratedTestCaseEntities(generatedTestCases, uniqueIds.size());
     }
 
     @Transactional
-    public List<TestCaseResponse> promoteAllValidGeneratedTestCases(Long batchId) {
+    public GeneratedTestPromotionResponse promoteAllValidGeneratedTestCases(Long batchId) {
         List<GeneratedTestCase> generatedTestCases =
                 generatedTestCaseRepository.findByBatchIdAndStatusForPromotion(
                         batchId,
@@ -396,10 +430,7 @@ public class OracleService {
             throw new OracleNotFoundException("No valid generated test cases found for batch: " + batchId);
         }
 
-        return generatedTestCases.stream()
-                .map(this::promoteGeneratedTestCaseEntity)
-                .map(TestCaseResponse::fromEntity)
-                .toList();
+        return promoteGeneratedTestCaseEntities(generatedTestCases, generatedTestCases.size());
     }
 
     private Optional<Counterexample> evaluateSubmission(
@@ -443,44 +474,98 @@ public class OracleService {
         return Optional.of(counterexampleRepository.save(counterexample));
     }
 
-    private TestCase promoteGeneratedTestCaseEntity(GeneratedTestCase generatedTestCase) {
-        if (generatedTestCase.getStatus() != GeneratedTestCaseStatus.GENERATED) {
-            throw new OracleConfigurationException(
-                    "Only valid generated test cases can be promoted"
+    private GeneratedTestPromotionResponse promoteGeneratedTestCaseEntities(
+            List<GeneratedTestCase> generatedTestCases,
+            int requestedCount
+    ) {
+        List<TestCaseResponse> promoted = new ArrayList<>();
+        List<GeneratedTestCaseResponse> skipped = new ArrayList<>();
+        Set<String> seenInputsInRequest = new HashSet<>();
+        int alreadyPromoted = 0;
+        int skippedDuplicate = 0;
+        int skippedInvalid = 0;
+
+        for (GeneratedTestCase generatedTestCase : generatedTestCases) {
+            if (Boolean.TRUE.equals(generatedTestCase.getPromoted())
+                    && generatedTestCase.getPromotedTestCase() != null) {
+                alreadyPromoted++;
+                promoted.add(TestCaseResponse.fromEntity(generatedTestCase.getPromotedTestCase()));
+                continue;
+            }
+
+            if (generatedTestCase.getStatus() != GeneratedTestCaseStatus.GENERATED
+                    || generatedTestCase.getInputData() == null
+                    || generatedTestCase.getReferenceOutput() == null) {
+                skippedInvalid++;
+                skipped.add(GeneratedTestCaseResponse.from(generatedTestCase));
+                continue;
+            }
+
+            String normalizedInput = testCaseDuplicateService.normalizeInput(generatedTestCase.getInputData());
+            boolean duplicateInRequest = !seenInputsInRequest.add(normalizedInput);
+            boolean duplicateOfficial = testCaseDuplicateService.inputDuplicateExistsForPromotion(
+                    generatedTestCase.getProblem().getId(),
+                    generatedTestCase.getInputData()
+            );
+
+            if (duplicateInRequest || duplicateOfficial) {
+                skippedDuplicate++;
+                generatedTestCase.setStatus(GeneratedTestCaseStatus.DUPLICATE);
+                generatedTestCase.setDiagnostic(duplicateOfficial
+                        ? "Skipped during promotion: an official test case with the same input already exists."
+                        : "Skipped during promotion: another selected generated candidate has the same input.");
+                generatedTestCaseRepository.save(generatedTestCase);
+                skipped.add(GeneratedTestCaseResponse.from(generatedTestCase));
+                continue;
+            }
+
+            TestCase officialHiddenTestCase = TestCase.builder()
+                    .problem(generatedTestCase.getProblem())
+                    .inputData(testCaseDuplicateService.normalizeInput(generatedTestCase.getInputData()))
+                    .expectedOutput(testCaseDuplicateService.normalizeOutput(generatedTestCase.getReferenceOutput()))
+                    .isPublic(false)
+                    .build();
+            testCaseRepository.save(officialHiddenTestCase);
+
+            generatedTestCase.setPromoted(true);
+            generatedTestCase.setPromotedTestCase(officialHiddenTestCase);
+            generatedTestCaseRepository.save(generatedTestCase);
+            promoted.add(TestCaseResponse.fromEntity(officialHiddenTestCase));
+
+            log.info(
+                    "Generated test case promoted to hidden official test case. generatedTestCaseId={} problemId={} testCaseId={}",
+                    generatedTestCase.getId(),
+                    generatedTestCase.getProblem().getId(),
+                    officialHiddenTestCase.getId()
             );
         }
 
-        if (Boolean.TRUE.equals(generatedTestCase.getPromoted())
-                && generatedTestCase.getPromotedTestCase() != null) {
-            return generatedTestCase.getPromotedTestCase();
-        }
-
-        if (generatedTestCase.getInputData() == null || generatedTestCase.getReferenceOutput() == null) {
-            throw new OracleConfigurationException(
-                    "Generated test case is missing input or reference output"
-            );
-        }
-
-        TestCase officialHiddenTestCase = TestCase.builder()
-                .problem(generatedTestCase.getProblem())
-                .inputData(generatedTestCase.getInputData())
-                .expectedOutput(generatedTestCase.getReferenceOutput())
-                .isPublic(false)
-                .build();
-        testCaseRepository.save(officialHiddenTestCase);
-
-        generatedTestCase.setPromoted(true);
-        generatedTestCase.setPromotedTestCase(officialHiddenTestCase);
-        generatedTestCaseRepository.save(generatedTestCase);
-
-        log.info(
-                "Generated test case promoted to hidden official test case. generatedTestCaseId={} problemId={} testCaseId={}",
-                generatedTestCase.getId(),
-                generatedTestCase.getProblem().getId(),
-                officialHiddenTestCase.getId()
+        String message = promotionMessage(promoted.size(), alreadyPromoted, skippedDuplicate, skippedInvalid);
+        return new GeneratedTestPromotionResponse(
+                requestedCount,
+                promoted.size(),
+                alreadyPromoted,
+                skippedDuplicate,
+                skippedInvalid,
+                promoted,
+                skipped,
+                message
         );
+    }
 
-        return officialHiddenTestCase;
+    private String promotionMessage(int promoted, int alreadyPromoted, int skippedDuplicate, int skippedInvalid) {
+        List<String> parts = new ArrayList<>();
+        parts.add(promoted + " promoted");
+        if (alreadyPromoted > 0) {
+            parts.add(alreadyPromoted + " already promoted");
+        }
+        if (skippedDuplicate > 0) {
+            parts.add(skippedDuplicate + " duplicate skipped");
+        }
+        if (skippedInvalid > 0) {
+            parts.add(skippedInvalid + " invalid skipped");
+        }
+        return String.join(", ", parts) + ".";
     }
 
     private ComparisonOutcome compareGeneratedOutput(

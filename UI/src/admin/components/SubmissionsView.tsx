@@ -44,6 +44,7 @@ import { RefreshCw, Eye, Search, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { StatusBadge, formatStatusText, normalizeVerdict } from '../../components/StatusBadge';
 import { useSubmissionStream } from '../../hooks/useSubmissionStream';
+import { AdminHelpTooltip } from './AdminHelpTooltip';
 
 function formatDateTime(iso: string): string {
   if (!iso) return '-';
@@ -301,7 +302,13 @@ export function SubmissionsView() {
         <CardHeader className="border-b border-slate-200 bg-slate-50">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <CardTitle className="text-2xl text-slate-950">Submissions</CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-2xl text-slate-950">Submissions</CardTitle>
+                <AdminHelpTooltip
+                  label="Submissions help"
+                  content="Select submissions to rejudge after test, checker, or language configuration changes."
+                />
+              </div>
               <p className="mt-1 text-sm text-slate-600">Review aggregate verdicts and submitted source code.</p>
             </div>
             <div className="flex items-center gap-2">

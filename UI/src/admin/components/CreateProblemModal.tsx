@@ -13,6 +13,7 @@ import { ProblemRequest, ProblemResponse } from '../types/api';
 import { BALLOON_COLOR_PRESETS, defaultBalloonColor, DEFAULT_BALLOON_COLOR, isBalloonColor, normalizeBalloonColor } from '../utils/balloonColors';
 import { DEFAULT_VALIDATOR_LANGUAGE_ID, SUPPORTED_JUDGE0_LANGUAGES } from '../../constants/judge0Languages';
 import { toast } from 'sonner';
+import { AdminHelpTooltip } from './AdminHelpTooltip';
 
 const COMPARE_POLICIES = [
   { value: 'EXACT', label: 'Exact' },
@@ -25,6 +26,9 @@ const VALIDATION_MODES = [
   { value: 'BUILTIN_COMPARE_POLICY', label: 'Built-in compare policy' },
   { value: 'CUSTOM_VALIDATOR', label: 'Custom validator' },
 ] as const;
+
+const STATEMENT_EDITOR_CLASS = 'min-h-[240px] max-h-[300px]';
+const COMPACT_EDITOR_CLASS = 'min-h-[120px] max-h-[160px]';
 
 interface CreateProblemModalProps {
   open: boolean;
@@ -193,12 +197,12 @@ export function CreateProblemModal({ open, onOpenChange, contestId, nextProblemI
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-[760px]">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[90vh] flex-col overflow-hidden p-0 sm:max-w-[1180px]">
+        <DialogHeader className="sticky top-0 z-10 border-b border-slate-200 bg-white px-6 py-4">
           <DialogTitle className="text-xl text-slate-950">Create Problem</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
             <div className="space-y-2">
               <Label htmlFor="title">Title</Label>
               <Input
@@ -217,66 +221,106 @@ export function CreateProblemModal({ open, onOpenChange, contestId, nextProblemI
                 value={formData.statement ?? ''}
                 onChange={(statement) => setFormData((prev) => ({ ...prev, statement }))}
                 disabled={isSubmitting}
+                placeholder="Write the main problem statement here..."
+                inputClassName={STATEMENT_EDITOR_CLASS}
+                ariaLabel="Main problem statement editor"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="inputFormat">Input Format</Label>
-              <RichTextEditor
-                id="inputFormat"
-                value={formData.inputFormat ?? ''}
-                onChange={(inputFormat) => setFormData((prev) => ({ ...prev, inputFormat }))}
-                disabled={isSubmitting}
-              />
+            <div className="grid gap-4 xl:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="inputFormat">Input Format</Label>
+                <RichTextEditor
+                  id="inputFormat"
+                  value={formData.inputFormat ?? ''}
+                  onChange={(inputFormat) => setFormData((prev) => ({ ...prev, inputFormat }))}
+                  disabled={isSubmitting}
+                  placeholder="Describe the exact input format here..."
+                  inputClassName={COMPACT_EDITOR_CLASS}
+                  toolbarVariant="compact"
+                  ariaLabel="Input format editor"
+                  footerText="Compact formatting"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="outputFormat">Output Format</Label>
+                <RichTextEditor
+                  id="outputFormat"
+                  value={formData.outputFormat ?? ''}
+                  onChange={(outputFormat) => setFormData((prev) => ({ ...prev, outputFormat }))}
+                  disabled={isSubmitting}
+                  placeholder="Describe the exact output format here..."
+                  inputClassName={COMPACT_EDITOR_CLASS}
+                  toolbarVariant="compact"
+                  ariaLabel="Output format editor"
+                  footerText="Compact formatting"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="constraintsText">Constraints</Label>
+                <RichTextEditor
+                  id="constraintsText"
+                  value={formData.constraintsText ?? ''}
+                  onChange={(constraintsText) => setFormData((prev) => ({ ...prev, constraintsText }))}
+                  disabled={isSubmitting}
+                  placeholder="Write all input limits and constraints here..."
+                  inputClassName={COMPACT_EDITOR_CLASS}
+                  toolbarVariant="compact"
+                  ariaLabel="Constraints editor"
+                  footerText="Compact formatting"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="publicNotes">Public Notes</Label>
+                  <AdminHelpTooltip
+                    label="Public notes help"
+                    content="Contestant-facing clarifications or safe hints. These appear in team statements and public/safe prompt exports."
+                  />
+                </div>
+                <RichTextEditor
+                  id="publicNotes"
+                  value={formData.publicNotes ?? ''}
+                  onChange={(publicNotes) => setFormData((prev) => ({ ...prev, publicNotes }))}
+                  disabled={isSubmitting}
+                  placeholder="Write contestant-facing notes, edge-case clarifications, or safe hints here..."
+                  inputClassName={COMPACT_EDITOR_CLASS}
+                  toolbarVariant="compact"
+                  ariaLabel="Public notes editor"
+                  footerText="Contestant-facing"
+                />
+                <p className="text-sm text-slate-500">
+                  Contestant-facing notes for examples, edge cases, special definitions, or safe hints.
+                </p>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="outputFormat">Output Format</Label>
-              <RichTextEditor
-                id="outputFormat"
-                value={formData.outputFormat ?? ''}
-                onChange={(outputFormat) => setFormData((prev) => ({ ...prev, outputFormat }))}
-                disabled={isSubmitting}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="constraintsText">Constraints</Label>
-              <RichTextEditor
-                id="constraintsText"
-                value={formData.constraintsText ?? ''}
-                onChange={(constraintsText) => setFormData((prev) => ({ ...prev, constraintsText }))}
-                disabled={isSubmitting}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="publicNotes">Public Notes</Label>
-              <RichTextEditor
-                id="publicNotes"
-                value={formData.publicNotes ?? ''}
-                onChange={(publicNotes) => setFormData((prev) => ({ ...prev, publicNotes }))}
-                disabled={isSubmitting}
-              />
-              <p className="text-sm text-slate-500">
-                Contestant-facing notes for examples, edge cases, special definitions, or safe hints.
-              </p>
-            </div>
-
-            <div className="space-y-2 rounded-md border border-amber-200 bg-amber-50 p-4">
-              <Label htmlFor="adminNotes" className="text-amber-950">Admin Internal Notes</Label>
-              <Textarea
-                id="adminNotes"
-                value={formData.adminNotes ?? ''}
-                onChange={(e) => setFormData({ ...formData, adminNotes: e.target.value })}
-                className="min-h-28 bg-white"
-                placeholder="Setter notes, intended solution notes, trap cases, hidden-test strategy"
-                disabled={isSubmitting}
-              />
-              <p className="text-sm text-amber-800">
-                Admin-only. These notes do not appear in team views or SAFE_MODE prompt exports.
-              </p>
-            </div>
+            <details className="rounded-md border border-amber-200 bg-amber-50">
+              <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-amber-950">
+                Admin Internal Notes
+                <AdminHelpTooltip
+                  label="Admin internal notes help"
+                  content="Setter-only guidance such as intended solution notes or hidden-test strategy. Never shown to teams."
+                  className="ml-2 text-amber-700 hover:bg-amber-100 hover:text-amber-900"
+                />
+              </summary>
+              <div className="space-y-2 border-t border-amber-200 p-4">
+                <Textarea
+                  id="adminNotes"
+                  value={formData.adminNotes ?? ''}
+                  onChange={(e) => setFormData({ ...formData, adminNotes: e.target.value })}
+                  className="max-h-40 min-h-32 resize-y overflow-y-auto bg-white"
+                  placeholder="Setter notes, intended solution notes, trap cases, hidden-test strategy..."
+                  disabled={isSubmitting}
+                />
+                <p className="text-sm text-amber-800">
+                  Admin-only. These notes do not appear in team views or SAFE_MODE prompt exports.
+                </p>
+              </div>
+            </details>
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -467,8 +511,8 @@ export function CreateProblemModal({ open, onOpenChange, contestId, nextProblemI
                     id="validatorSource"
                     value={formData.validatorSource ?? ''}
                     onChange={(e) => setFormData({ ...formData, validatorSource: e.target.value })}
-                    className="min-h-48 font-mono text-sm"
-                    placeholder="Paste checker source code"
+                    className="h-56 max-h-80 resize-y overflow-y-auto font-mono text-sm"
+                    placeholder="Paste custom output validator source code"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -516,7 +560,7 @@ export function CreateProblemModal({ open, onOpenChange, contestId, nextProblemI
             </div>
           </div>
           
-          <DialogFooter>
+          <DialogFooter className="sticky bottom-0 z-10 border-t border-slate-200 bg-white px-6 py-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>

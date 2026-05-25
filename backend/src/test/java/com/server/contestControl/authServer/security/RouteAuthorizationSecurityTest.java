@@ -23,6 +23,7 @@ import com.server.contestControl.contestServer.exceptions.ProblemDeletionConflic
 import com.server.contestControl.contestServer.oracle.controller.OracleAdminController;
 import com.server.contestControl.contestServer.oracle.dto.CounterexampleResponse;
 import com.server.contestControl.contestServer.oracle.dto.GeneratedTestBatchResponse;
+import com.server.contestControl.contestServer.oracle.dto.GeneratedTestPromotionResponse;
 import com.server.contestControl.contestServer.oracle.dto.OracleProgramResponse;
 import com.server.contestControl.contestServer.oracle.service.OracleService;
 import com.server.contestControl.contestServer.scoreboard.controller.AdminScoreboardController;
@@ -131,9 +132,9 @@ class RouteAuthorizationSecurityTest {
         when(oracleService.configureInputValidator(eq(1L), any(), eq("admin"))).thenReturn(oracleProgramResponse());
         when(oracleService.createGeneratedTestBatch(eq(1L), any(), eq("admin"))).thenReturn(generatedBatchResponse());
         when(oracleService.counterexamples(1L)).thenReturn(List.of(counterexampleResponse()));
-        when(oracleService.promoteGeneratedTestCase(1L)).thenReturn(testCaseResponse());
-        when(oracleService.promoteGeneratedTestCases(any())).thenReturn(List.of(testCaseResponse()));
-        when(oracleService.promoteAllValidGeneratedTestCases(1L)).thenReturn(List.of(testCaseResponse()));
+        when(oracleService.promoteGeneratedTestCase(1L)).thenReturn(generatedPromotionResponse());
+        when(oracleService.promoteGeneratedTestCases(any())).thenReturn(generatedPromotionResponse());
+        when(oracleService.promoteAllValidGeneratedTestCases(1L)).thenReturn(generatedPromotionResponse());
         when(oracleService.promoteCounterexample(1L)).thenReturn(testCaseResponse());
     }
 
@@ -613,6 +614,19 @@ class RouteAuthorizationSecurityTest {
                 Instant.now(),
                 Instant.now(),
                 List.of()
+        );
+    }
+
+    private GeneratedTestPromotionResponse generatedPromotionResponse() {
+        return new GeneratedTestPromotionResponse(
+                1,
+                1,
+                0,
+                0,
+                0,
+                List.of(testCaseResponse()),
+                List.of(),
+                "1 promoted."
         );
     }
 

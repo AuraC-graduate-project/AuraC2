@@ -23,6 +23,7 @@ public class TestCaseService {
 
     private final ProblemRepository problemRepository;
     private final TestCaseRepository testCaseRepository;
+    private final TestCaseDuplicateService testCaseDuplicateService;
 
     @Transactional
     public TestCaseResponse addTestCase(Long problemId, TestCaseRequest request) {
@@ -30,10 +31,10 @@ public class TestCaseService {
         Problem problem = problemRepository.findById(problemId)
                 .orElseThrow(() -> new ProblemNotFoundException(problemId));
 
-        String normalizedInput = request.getInputData().trim();
-        String normalizedOutput = request.getExpectedOutput().trim();
+        String normalizedInput = testCaseDuplicateService.normalizeInput(request.getInputData());
+        String normalizedOutput = testCaseDuplicateService.normalizeOutput(request.getExpectedOutput());
 
-        if (testCaseRepository.existsByProblemIdAndInputDataAndExpectedOutput(problemId, normalizedInput, normalizedOutput)) {
+        if (testCaseDuplicateService.exactDuplicateExists(problemId, normalizedInput, normalizedOutput)) {
             throw new DuplicateTestCaseException();
         }
 
@@ -54,10 +55,10 @@ public class TestCaseService {
         TestCase testCase = testCaseRepository.findById(id)
                 .orElseThrow(() -> new TestCaseNotFoundException(id));
 
-        String normalizedInput = request.getInputData().trim();
-        String normalizedOutput = request.getExpectedOutput().trim();
+        String normalizedInput = testCaseDuplicateService.normalizeInput(request.getInputData());
+        String normalizedOutput = testCaseDuplicateService.normalizeOutput(request.getExpectedOutput());
 
-        if (testCaseRepository.existsByProblemIdAndInputDataAndExpectedOutputAndIdNot(
+        if (testCaseDuplicateService.exactDuplicateExistsExcludingId(
                 testCase.getProblem().getId(), normalizedInput, normalizedOutput, id)) {
             throw new DuplicateTestCaseException();
         }

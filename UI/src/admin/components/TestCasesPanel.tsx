@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from './ui/button';
+import { Input } from './ui/input';
 import { Plus, Pencil, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { AddTestCaseModal } from './AddTestCaseModal';
 import { EditTestCaseModal } from './EditTestCaseModal';
@@ -18,13 +18,17 @@ import { deleteTestCase, getTestCasesForProblem } from '../services/api';
 import { TestCaseResponse } from '../types/api';
 import { toast } from 'sonner';
 import { StatusBadge } from '../../components/StatusBadge';
+import { AdminHelpTooltip } from './AdminHelpTooltip';
 
 interface TestCasesPanelProps {
   problemId: number;
   problemTitle: string;
+  embedded?: boolean;
 }
 
-export function TestCasesPanel({ problemId, problemTitle }: TestCasesPanelProps) {
+type TestCaseVisibilityFilter = 'all' | 'public' | 'hidden';
+
+export function TestCasesPanel({ problemId, problemTitle, embedded = false }: TestCasesPanelProps) {
   const [testCases, setTestCases] = useState<TestCaseResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -32,6 +36,8 @@ export function TestCasesPanel({ problemId, problemTitle }: TestCasesPanelProps)
   const [editingTestCase, setEditingTestCase] = useState<TestCaseResponse | null>(null);
   const [testCaseToDelete, setTestCaseToDelete] = useState<TestCaseResponse | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [visibilityFilter, setVisibilityFilter] = useState<TestCaseVisibilityFilter>('all');
+  const [query, setQuery] = useState('');
 
   const loadTestCases = async () => {
     setIsLoading(true);
@@ -67,13 +73,36 @@ export function TestCasesPanel({ problemId, problemTitle }: TestCasesPanelProps)
     }
   };
 
+  const filteredTestCases = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    return testCases.filter((testCase, index) => {
+      if (visibilityFilter === 'public' && !testCase.isPublic) return false;
+      if (visibilityFilter === 'hidden' && testCase.isPublic) return false;
+      if (!normalizedQuery) return true;
+      return (
+        String(index + 1).includes(normalizedQuery) ||
+        testCase.inputData.toLowerCase().includes(normalizedQuery) ||
+        testCase.expectedOutput.toLowerCase().includes(normalizedQuery)
+      );
+    });
+  }, [query, testCases, visibilityFilter]);
+
+  const publicCount = testCases.filter((testCase) => testCase.isPublic).length;
+  const hiddenCount = testCases.length - publicCount;
+
   return (
     <>
-      <Card className="border border-gray-200 shadow-sm mt-6">
-        <CardHeader className="border-b border-slate-200 bg-slate-50">
+      <section className={`${embedded ? '' : 'mt-6'} rounded-lg border border-gray-200 bg-white shadow-sm`}>
+        <div className="border-b border-slate-200 bg-slate-50 p-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <CardTitle className="text-lg text-slate-950">Test Cases</CardTitle>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-slate-950">Test Cases</h3>
+                <AdminHelpTooltip
+                  label="Test cases help"
+                  content="Public samples appear in team statements and safe exports. Private hidden tests are used for judging only."
+                />
+              </div>
               <p className="mt-1 text-sm text-slate-600">{problemTitle}</p>
             </div>
             <Button 
@@ -85,8 +114,8 @@ export function TestCasesPanel({ problemId, problemTitle }: TestCasesPanelProps)
               Add Test Case
             </Button>
           </div>
-        </CardHeader>
-        <CardContent className="p-6">
+        </div>
+        <div className="p-4">
           {isLoading ? (
             <p className="text-slate-600 py-8 text-center">Loading test cases...</p>
           ) : testCases.length === 0 ? (
@@ -94,15 +123,50 @@ export function TestCasesPanel({ problemId, problemTitle }: TestCasesPanelProps)
               No test cases yet. Click "Add Test Case" to create a sample or hidden judge test.
             </p>
           ) : (
-            <div className="grid gap-4 lg:grid-cols-2">
-              {testCases.map((testCase, index) => (
-                <div 
+            <div className="space-y-4">
+              <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { value: 'all' as const, label: `All (${testCases.length})` },
+                    { value: 'public' as const, label: `Public samples (${publicCount})` },
+                    { value: 'hidden' as const, label: `Hidden (${hiddenCount})` },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      className={`rounded-md border px-3 py-1.5 text-sm font-semibold transition ${
+                        visibilityFilter === option.value
+                          ? 'border-blue-700 bg-blue-50 text-blue-700'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                      }`}
+                      onClick={() => setVisibilityFilter(option.value)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                <Input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  className="h-9 xl:max-w-xs"
+                  placeholder="Search input or output..."
+                />
+              </div>
+
+              {filteredTestCases.length === 0 ? (
+                <p className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500">
+                  No test cases match the current filters.
+                </p>
+              ) : (
+              <div className="grid max-h-[720px] gap-3 overflow-y-auto pr-1 lg:grid-cols-2">
+              {filteredTestCases.map((testCase) => (
+                <div
                   key={testCase.id} 
                   className="border border-slate-200 rounded-lg p-4 bg-white"
                 >
                    <div className="flex items-center justify-between mb-3">
                      <div>
-                       <h4 className="font-semibold text-slate-900">Test Case #{index + 1}</h4>
+                       <h4 className="font-semibold text-slate-900">Test Case #{testCases.findIndex((item) => item.id === testCase.id) + 1}</h4>
                        <div className="mt-1 flex items-center gap-2">
                          {testCase.isPublic ? (
                            <Eye className="h-4 w-4 text-cyan-700" />
@@ -142,24 +206,26 @@ export function TestCasesPanel({ problemId, problemTitle }: TestCasesPanelProps)
                   <div className="space-y-3">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Input Data</p>
-                      <pre className="bg-slate-950 text-slate-100 border border-slate-800 rounded p-3 text-xs overflow-x-auto">
+                      <pre className="max-h-44 overflow-auto rounded border border-slate-800 bg-slate-950 p-3 text-xs text-slate-100">
                         {testCase.inputData}
                       </pre>
                     </div>
                     
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Expected Output</p>
-                      <pre className="bg-slate-50 border border-slate-200 rounded p-3 text-xs overflow-x-auto text-slate-800">
+                      <pre className="max-h-44 overflow-auto rounded border border-slate-200 bg-slate-50 p-3 text-xs text-slate-800">
                         {testCase.expectedOutput}
                       </pre>
                     </div>
                   </div>
                 </div>
               ))}
+              </div>
+              )}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       <AddTestCaseModal 
         open={addModalOpen}

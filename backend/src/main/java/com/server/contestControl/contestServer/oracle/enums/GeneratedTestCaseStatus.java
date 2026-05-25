@@ -4,5 +4,6 @@ public enum GeneratedTestCaseStatus {
     GENERATED,
     INVALID_INPUT,
     GENERATOR_FAILED,
-    REFERENCE_FAILED
+    REFERENCE_FAILED,
+    DUPLICATE
 }

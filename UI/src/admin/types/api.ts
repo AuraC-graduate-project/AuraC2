@@ -434,6 +434,19 @@ export interface OracleProgramResponse {
   updatedAt: string | null;
 }
 
+export interface OracleProgramSourceResponse {
+  id: number;
+  problemId: number;
+  kind: 'REFERENCE_SOLUTION' | 'INPUT_GENERATOR' | 'INPUT_VALIDATOR' | 'CUSTOM_OUTPUT_VALIDATOR';
+  languageId: number | null;
+  source: string;
+  sourceHash: string | null;
+  active: boolean;
+  fileName: string;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
 export interface GeneratedTestBatchRequest {
   testCount?: number | null;
   seed?: number | null;
@@ -450,7 +463,8 @@ export type GeneratedTestCaseStatus =
   | 'GENERATED'
   | 'INVALID_INPUT'
   | 'GENERATOR_FAILED'
-  | 'REFERENCE_FAILED';
+  | 'REFERENCE_FAILED'
+  | 'DUPLICATE';
 
 export interface GeneratedTestCaseResponse {
   id: number;
@@ -482,6 +496,17 @@ export interface GeneratedTestBatchResponse {
   createdAt: string | null;
   completedAt: string | null;
   testCases: GeneratedTestCaseResponse[];
+}
+
+export interface GeneratedTestPromotionResponse {
+  requestedCount: number;
+  promotedCount: number;
+  alreadyPromotedCount: number;
+  skippedDuplicateCount: number;
+  skippedInvalidCount: number;
+  promotedTestCases: TestCaseResponse[];
+  skippedCandidates: GeneratedTestCaseResponse[];
+  message: string;
 }
 
 export interface CounterexampleResponse {
@@ -533,8 +558,11 @@ export type PromptType =
 
 export type PromptVisibilityMode = 'SAFE_MODE' | 'ADMIN_FULL_MODE';
 
+export type PromptMode = 'RECOMMENDED_ADMIN' | 'PUBLIC_SAFE' | 'CUSTOM_ADVANCED';
+
 export interface PromptExportRequest {
   promptType: PromptType;
+  promptMode: PromptMode;
   visibilityMode: PromptVisibilityMode;
   targetLanguage: string;
   includePublicSamples: boolean;
@@ -551,6 +579,7 @@ export interface PromptExportRequest {
 
 export interface PromptExportResponse {
   promptType: PromptType;
+  promptMode: PromptMode;
   visibilityMode: PromptVisibilityMode;
   targetLanguage: SupportedLanguageResponse;
   promptText: string;

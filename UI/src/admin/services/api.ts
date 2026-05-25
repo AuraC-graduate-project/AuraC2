@@ -25,8 +25,10 @@ import {
   GeneratedTestBatchRequest,
   GeneratedTestBatchResponse,
   GeneratedTestPromotionRequest,
+  GeneratedTestPromotionResponse,
   OracleProgramRequest,
   OracleProgramResponse,
+  OracleProgramSourceResponse,
   PromptExportRequest,
   PromptExportResponse,
   SupportedLanguageResponse,
@@ -187,6 +189,49 @@ async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise
   return (await res.json()) as T;
 }
 
+async function apiBlobFetch(path: string, options: ApiFetchOptions = {}): Promise<{ blob: Blob; filename: string | null }> {
+  const {
+    headers: headerObj,
+    skipAuth = false,
+    noRetry = false,
+    ...init
+  } = options;
+
+  const headers = new Headers(headerObj ?? {});
+  if (!skipAuth) {
+    const token = getAccessToken();
+    if (token && !headers.has("Authorization")) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
+  }
+
+  const send = () => fetch(url(path), { ...init, headers, credentials: "include" });
+  let res = await send();
+  if (res.status === 401 && !noRetry) {
+    const newToken = await ensureRefreshedOnce();
+    if (newToken) {
+      headers.set("Authorization", `Bearer ${newToken}`);
+      res = await send();
+    }
+  }
+
+  if (!res.ok) {
+    const body = await parseBodySafe(res);
+    throw new Error(formatApiError(body, res.status));
+  }
+
+  return {
+    blob: await res.blob(),
+    filename: filenameFromDisposition(res.headers.get("content-disposition")),
+  };
+}
+
+function filenameFromDisposition(disposition: string | null): string | null {
+  if (!disposition) return null;
+  const match = /filename="?([^";]+)"?/i.exec(disposition);
+  return match?.[1] ?? null;
+}
+
 function formatApiError(body: any, status: number): string {
   if (typeof body === "string" && body.length > 0) return body;
   if (typeof body?.message === "string" && body.message.length > 0) return body.message;
@@ -266,6 +311,14 @@ export async function createProblem(data: ProblemRequest): Promise<ProblemRespon
 
 export async function getProblem(id: number): Promise<ProblemResponse> {
   return apiFetch<ProblemResponse>(`/api/problems/${id}`);
+}
+
+export async function fetchProblemStatementPdf(problemId: number): Promise<{ blob: Blob; filename: string | null }> {
+  return apiBlobFetch(`/api/admin/problem-exports/problems/${problemId}/statement.pdf`);
+}
+
+export async function fetchContestBookletPdf(contestId: number): Promise<{ blob: Blob; filename: string | null }> {
+  return apiBlobFetch(`/api/admin/problem-exports/contests/${contestId}/booklet.pdf`);
 }
 
 export async function getProblemsByContest(contestId: number): Promise<ProblemResponse[]> {
@@ -562,6 +615,10 @@ export async function getReferenceSolutions(problemId: number): Promise<OraclePr
   return apiFetch<OracleProgramResponse[]>(`/api/admin/oracle/problems/${problemId}/reference-solutions`);
 }
 
+export async function getReferenceSolutionSource(referenceSolutionId: number): Promise<OracleProgramSourceResponse> {
+  return apiFetch<OracleProgramSourceResponse>(`/api/admin/oracle/reference-solutions/${referenceSolutionId}/source`);
+}
+
 export async function configureInputGenerator(
   problemId: number,
   data: OracleProgramRequest
@@ -577,6 +634,10 @@ export async function getInputGenerators(problemId: number): Promise<OracleProgr
   return apiFetch<OracleProgramResponse[]>(`/api/admin/oracle/problems/${problemId}/input-generators`);
 }
 
+export async function getInputGeneratorSource(inputGeneratorId: number): Promise<OracleProgramSourceResponse> {
+  return apiFetch<OracleProgramSourceResponse>(`/api/admin/oracle/input-generators/${inputGeneratorId}/source`);
+}
+
 export async function configureInputValidator(
   problemId: number,
   data: OracleProgramRequest
@@ -590,6 +651,14 @@ export async function configureInputValidator(
 
 export async function getInputValidators(problemId: number): Promise<OracleProgramResponse[]> {
   return apiFetch<OracleProgramResponse[]>(`/api/admin/oracle/problems/${problemId}/input-validators`);
+}
+
+export async function getInputValidatorSource(inputValidatorId: number): Promise<OracleProgramSourceResponse> {
+  return apiFetch<OracleProgramSourceResponse>(`/api/admin/oracle/input-validators/${inputValidatorId}/source`);
+}
+
+export async function getCustomOutputValidatorSource(problemId: number): Promise<OracleProgramSourceResponse> {
+  return apiFetch<OracleProgramSourceResponse>(`/api/admin/oracle/problems/${problemId}/custom-output-validator/source`);
 }
 
 export async function createGeneratedTestBatch(
@@ -617,24 +686,24 @@ export async function promoteCounterexample(counterexampleId: number): Promise<T
   });
 }
 
-export async function promoteGeneratedTestCase(generatedTestCaseId: number): Promise<TestCaseResponse> {
-  return apiFetch<TestCaseResponse>(`/api/admin/oracle/generated-test-cases/${generatedTestCaseId}/promote`, {
+export async function promoteGeneratedTestCase(generatedTestCaseId: number): Promise<GeneratedTestPromotionResponse> {
+  return apiFetch<GeneratedTestPromotionResponse>(`/api/admin/oracle/generated-test-cases/${generatedTestCaseId}/promote`, {
     method: "POST",
   });
 }
 
 export async function promoteSelectedGeneratedTestCases(
   data: GeneratedTestPromotionRequest
-): Promise<TestCaseResponse[]> {
-  return apiFetch<TestCaseResponse[]>("/api/admin/oracle/generated-test-cases/promote-selected", {
+): Promise<GeneratedTestPromotionResponse> {
+  return apiFetch<GeneratedTestPromotionResponse>("/api/admin/oracle/generated-test-cases/promote-selected", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
 }
 
-export async function promoteAllValidGeneratedTestCases(batchId: number): Promise<TestCaseResponse[]> {
-  return apiFetch<TestCaseResponse[]>(`/api/admin/oracle/generated-batches/${batchId}/promote-valid`, {
+export async function promoteAllValidGeneratedTestCases(batchId: number): Promise<GeneratedTestPromotionResponse> {
+  return apiFetch<GeneratedTestPromotionResponse>(`/api/admin/oracle/generated-batches/${batchId}/promote-valid`, {
     method: "POST",
   });
 }

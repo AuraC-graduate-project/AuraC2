@@ -22,6 +22,11 @@ type RichTextEditorProps = {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
+  placeholder?: string;
+  inputClassName?: string;
+  ariaLabel?: string;
+  footerText?: string;
+  toolbarVariant?: "full" | "compact";
 };
 
 type ToolbarButton = {
@@ -30,7 +35,17 @@ type ToolbarButton = {
   action: () => void;
 };
 
-export function RichTextEditor({ id, value, onChange, disabled = false }: RichTextEditorProps) {
+export function RichTextEditor({
+  id,
+  value,
+  onChange,
+  disabled = false,
+  placeholder = "Write the problem statement here...",
+  inputClassName = "min-h-[220px]",
+  ariaLabel = "Problem statement editor",
+  footerText = "Use toolbar buttons for formatting",
+  toolbarVariant = "full",
+}: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement | null>(null);
   const lastValueRef = useRef<string>("");
   const initializedRef = useRef(false);
@@ -81,7 +96,7 @@ export function RichTextEditor({ id, value, onChange, disabled = false }: RichTe
     return selection.toString();
   };
 
-  const toolbarButtons: ToolbarButton[] = [
+  const fullToolbarButtons: ToolbarButton[] = [
     { label: "Paragraph", icon: Pilcrow, action: () => runCommand("formatBlock", "p") },
     { label: "Heading", icon: Heading2, action: () => runCommand("formatBlock", "h2") },
     { label: "Subheading", icon: Heading3, action: () => runCommand("formatBlock", "h3") },
@@ -116,6 +131,10 @@ export function RichTextEditor({ id, value, onChange, disabled = false }: RichTe
       },
     },
   ];
+  const compactToolbarButtons = fullToolbarButtons.filter((item) =>
+    ["Paragraph", "Bold", "Italic", "Bullets", "Numbers", "Inline code", "Clear"].includes(item.label)
+  );
+  const toolbarButtons = toolbarVariant === "compact" ? compactToolbarButtons : fullToolbarButtons;
 
   const plainText = richTextToPlainText(value);
 
@@ -139,22 +158,24 @@ export function RichTextEditor({ id, value, onChange, disabled = false }: RichTe
               onClick={item.action}
             >
               <Icon className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">{item.label}</span>
+              {toolbarVariant === "full" && <span className="hidden sm:inline">{item.label}</span>}
             </Button>
           );
         })}
 
-        <Button
-          type="button"
-          variant={previewOpen ? "default" : "outline"}
-          size="sm"
-          disabled={disabled}
-          className="ml-auto h-8 gap-1.5 px-2 text-xs"
-          onClick={() => setPreviewOpen((open) => !open)}
-        >
-          <Eye className="h-3.5 w-3.5" />
-          Preview
-        </Button>
+        {toolbarVariant === "full" && (
+          <Button
+            type="button"
+            variant={previewOpen ? "default" : "outline"}
+            size="sm"
+            disabled={disabled}
+            className="ml-auto h-8 gap-1.5 px-2 text-xs"
+            onClick={() => setPreviewOpen((open) => !open)}
+          >
+            <Eye className="h-3.5 w-3.5" />
+            Preview
+          </Button>
+        )}
       </div>
 
       <div
@@ -162,9 +183,10 @@ export function RichTextEditor({ id, value, onChange, disabled = false }: RichTe
         ref={editorRef}
         role="textbox"
         aria-multiline="true"
-        aria-label="Problem statement editor"
+        aria-label={ariaLabel}
         contentEditable={!disabled}
         suppressContentEditableWarning
+        data-placeholder={placeholder}
         onInput={emitChange}
         onBlur={() => onChange(sanitizeRichText(editorRef.current?.innerHTML ?? ""))}
         onPaste={(event) => {
@@ -173,12 +195,12 @@ export function RichTextEditor({ id, value, onChange, disabled = false }: RichTe
           document.execCommand("insertText", false, text);
           emitChange();
         }}
-        className="aura-rich-text-input min-h-[220px] overflow-y-auto p-4 text-sm leading-7 text-slate-800 outline-none"
+        className={`aura-rich-text-input overflow-y-auto p-4 text-sm leading-7 text-slate-800 outline-none ${inputClassName}`}
       />
 
       <div className="flex items-center justify-between border-t border-slate-200 px-3 py-2 text-xs text-slate-500">
         <span>{plainText ? `${plainText.length} characters` : "Start writing the statement"}</span>
-        <span>Use toolbar buttons for formatting</span>
+        <span>{footerText}</span>
       </div>
 
       {previewOpen && (

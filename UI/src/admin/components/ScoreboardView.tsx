@@ -37,6 +37,7 @@ import { StatusBadge } from "../../components/StatusBadge";
 import { useTheme } from "../../components/ThemeProvider";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { AdminHelpTooltip } from "./AdminHelpTooltip";
 
 type Props = {
   contestId: number | null;
@@ -341,6 +342,10 @@ export function ScoreboardView({ contestId, presentationMode = false }: Props) {
               <CardTitle className="flex items-center gap-2 text-2xl text-slate-950">
                 <Trophy className="h-6 w-6 text-blue-700" />
                 Scoreboard
+                <AdminHelpTooltip
+                  label="Scoreboard help"
+                  content="Admin view shows live standings. Freeze hides public updates near contest end until reveal or finalization."
+                />
               </CardTitle>
             </div>
 
@@ -412,7 +417,13 @@ export function ScoreboardView({ contestId, presentationMode = false }: Props) {
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                   <div>
-                    <h3 className="font-semibold text-slate-950">Reveal Mode</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-slate-950">Reveal Mode</h3>
+                      <AdminHelpTooltip
+                        label="Reveal mode help"
+                        content="After the contest ends, reveal hidden frozen cells step by step or all at once for final standings."
+                      />
+                    </div>
                     <p className="mt-1 text-sm text-slate-600">{revealSummary}</p>
                   </div>
                   <div className="flex flex-wrap gap-2">

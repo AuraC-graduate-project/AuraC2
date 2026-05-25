@@ -3,7 +3,6 @@ package com.server.contestControl.contestServer.oracle.service;
 import com.server.contestControl.authServer.entity.User;
 import com.server.contestControl.authServer.enums.Role;
 import com.server.contestControl.authServer.repository.UserRepository;
-import com.server.contestControl.contestServer.dto.testcase.TestCaseResponse;
 import com.server.contestControl.contestServer.entity.Contest;
 import com.server.contestControl.contestServer.entity.Problem;
 import com.server.contestControl.contestServer.entity.TestCase;
@@ -12,6 +11,7 @@ import com.server.contestControl.contestServer.enums.Difficulty;
 import com.server.contestControl.contestServer.enums.ValidationMode;
 import com.server.contestControl.contestServer.oracle.dto.GeneratedTestBatchRequest;
 import com.server.contestControl.contestServer.oracle.dto.GeneratedTestBatchResponse;
+import com.server.contestControl.contestServer.oracle.dto.GeneratedTestPromotionResponse;
 import com.server.contestControl.contestServer.oracle.dto.OracleProgramRequest;
 import com.server.contestControl.contestServer.oracle.dto.OracleProgramResponse;
 import com.server.contestControl.contestServer.oracle.entity.Counterexample;
@@ -30,6 +30,7 @@ import com.server.contestControl.contestServer.oracle.repository.InputValidatorR
 import com.server.contestControl.contestServer.oracle.repository.ReferenceSolutionRepository;
 import com.server.contestControl.contestServer.repository.ProblemRepository;
 import com.server.contestControl.contestServer.repository.TestCaseRepository;
+import com.server.contestControl.contestServer.service.TestCaseDuplicateService;
 import com.server.contestControl.submissionServer.entity.Submission;
 import com.server.contestControl.submissionServer.enums.Verdict;
 import com.server.contestControl.submissionServer.repository.SubmissionRepository;
@@ -76,11 +77,13 @@ class OracleServiceTest {
 
     private OracleService oracleService;
     private final OutputComparator outputComparator = new OutputComparator();
+    private TestCaseDuplicateService testCaseDuplicateService;
     private final AtomicLong ids = new AtomicLong(100);
     private final List<GeneratedTestCase> savedGeneratedCases = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
+        testCaseDuplicateService = new TestCaseDuplicateService(testCaseRepository);
         oracleService = new OracleService(
                 problemRepository,
                 userRepository,
@@ -94,7 +97,8 @@ class OracleServiceTest {
                 counterexampleRepository,
                 oracleJudge0ExecutionService,
                 outputComparator,
-                customValidatorService
+                customValidatorService,
+                testCaseDuplicateService
         );
 
         when(generatedTestBatchRepository.save(any(GeneratedTestBatch.class))).thenAnswer(invocation -> {
@@ -126,6 +130,7 @@ class OracleServiceTest {
             }
             return testCase;
         });
+        when(testCaseRepository.findByProblemIdForDuplicatePromotionCheck(any())).thenReturn(List.of());
         when(generatedTestCaseRepository.findByBatch_IdOrderByTestNumberAsc(any()))
                 .thenAnswer(invocation -> List.copyOf(savedGeneratedCases));
         when(counterexampleRepository.save(any(Counterexample.class))).thenAnswer(invocation -> {
@@ -459,8 +464,8 @@ class OracleServiceTest {
 
         ArgumentCaptor<TestCase> testCaseCaptor = ArgumentCaptor.forClass(TestCase.class);
         verify(testCaseRepository).save(testCaseCaptor.capture());
-        assertThat(testCaseCaptor.getValue().getInputData()).isEqualTo("4\n");
-        assertThat(testCaseCaptor.getValue().getExpectedOutput()).isEqualTo("YES\n");
+        assertThat(testCaseCaptor.getValue().getInputData()).isEqualTo("4");
+        assertThat(testCaseCaptor.getValue().getExpectedOutput()).isEqualTo("YES");
         assertThat(testCaseCaptor.getValue().isPublic()).isFalse();
         assertThat(counterexample.getPromoted()).isTrue();
         assertThat(generatedTestCase.getPromoted()).isTrue();
@@ -515,9 +520,10 @@ class OracleServiceTest {
         when(generatedTestCaseRepository.findAllByIdInForPromotion(List.of(2L, 3L)))
                 .thenReturn(List.of(first, second));
 
-        List<TestCaseResponse> responses = oracleService.promoteGeneratedTestCases(List.of(2L, 3L));
+        GeneratedTestPromotionResponse response = oracleService.promoteGeneratedTestCases(List.of(2L, 3L));
 
-        assertThat(responses).hasSize(2);
+        assertThat(response.promotedCount()).isEqualTo(2);
+        assertThat(response.promotedTestCases()).hasSize(2);
         assertThat(first.getPromoted()).isTrue();
         assertThat(second.getPromoted()).isTrue();
         verify(testCaseRepository, times(2)).save(any(TestCase.class));
@@ -535,10 +541,55 @@ class OracleServiceTest {
                 GeneratedTestCaseStatus.GENERATED
         )).thenReturn(List.of(first, second));
 
-        List<TestCaseResponse> responses = oracleService.promoteAllValidGeneratedTestCases(1L);
+        GeneratedTestPromotionResponse response = oracleService.promoteAllValidGeneratedTestCases(1L);
 
-        assertThat(responses).hasSize(2);
+        assertThat(response.promotedCount()).isEqualTo(2);
+        assertThat(response.promotedTestCases()).hasSize(2);
         verify(testCaseRepository, times(2)).save(any(TestCase.class));
+    }
+
+    @Test
+    void generatedPromotionSkipsExistingOfficialInputDuplicate() {
+        Problem problem = problem();
+        GeneratedTestCase generatedTestCase = generatedTestCase(problem, 1, "4\n", "YES\n");
+        TestCase existingOfficial = TestCase.builder()
+                .id(55L)
+                .problem(problem)
+                .inputData("4")
+                .expectedOutput("OLD\n")
+                .isPublic(false)
+                .build();
+
+        when(generatedTestCaseRepository.findByIdForPromotion(2L)).thenReturn(Optional.of(generatedTestCase));
+        when(testCaseRepository.findByProblemIdForDuplicatePromotionCheck(10L)).thenReturn(List.of(existingOfficial));
+
+        GeneratedTestPromotionResponse response = oracleService.promoteGeneratedTestCase(2L);
+
+        assertThat(response.promotedCount()).isZero();
+        assertThat(response.skippedDuplicateCount()).isEqualTo(1);
+        assertThat(generatedTestCase.getStatus()).isEqualTo(GeneratedTestCaseStatus.DUPLICATE);
+        assertThat(generatedTestCase.getDiagnostic()).contains("official test case");
+        verify(testCaseRepository, never()).save(any());
+        verify(generatedTestCaseRepository).save(generatedTestCase);
+    }
+
+    @Test
+    void selectedGeneratedPromotionSkipsDuplicateInputsWithinRequest() {
+        Problem problem = problem();
+        GeneratedTestCase first = generatedTestCase(problem, 1, "4\n", "YES\n");
+        GeneratedTestCase second = generatedTestCase(problem, 2, "4", "YES\n");
+        second.setId(3L);
+
+        when(generatedTestCaseRepository.findAllByIdInForPromotion(List.of(2L, 3L)))
+                .thenReturn(List.of(first, second));
+
+        GeneratedTestPromotionResponse response = oracleService.promoteGeneratedTestCases(List.of(2L, 3L));
+
+        assertThat(response.promotedCount()).isEqualTo(1);
+        assertThat(response.skippedDuplicateCount()).isEqualTo(1);
+        assertThat(first.getPromoted()).isTrue();
+        assertThat(second.getStatus()).isEqualTo(GeneratedTestCaseStatus.DUPLICATE);
+        verify(testCaseRepository, times(1)).save(any(TestCase.class));
     }
 
     private OracleProgramRequest programRequest(int languageId, String source, boolean active) {

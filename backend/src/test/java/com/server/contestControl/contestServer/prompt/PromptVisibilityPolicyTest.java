@@ -36,12 +36,24 @@ class PromptVisibilityPolicyTest {
     @Test
     void adminFullModeRequiresConfirmation() {
         PromptExportRequest request = baseRequest();
+        request.setPromptMode(PromptMode.CUSTOM_ADVANCED);
         request.setVisibilityMode(PromptVisibilityMode.ADMIN_FULL_MODE);
         request.setConfirmSensitiveMaterial(false);
 
         assertThatThrownBy(() -> policy.validate(request, language))
                 .isInstanceOf(OracleConfigurationException.class)
                 .hasMessageContaining("confirmation");
+    }
+
+    @Test
+    void recommendedAdminModeDoesNotRequireAdvancedConfirmation() {
+        PromptExportRequest request = baseRequest();
+        request.setPromptMode(PromptMode.RECOMMENDED_ADMIN);
+        request.setVisibilityMode(PromptVisibilityMode.ADMIN_FULL_MODE);
+        request.setIncludeAdminInternalNotes(true);
+        request.setConfirmSensitiveMaterial(false);
+
+        policy.validate(request, language);
     }
 
     private PromptExportRequest baseRequest() {

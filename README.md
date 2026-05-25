@@ -155,7 +155,13 @@ Admins can export deterministic prompt text from the Problem Engineering/Oracle 
 - Checker/output validator prompt.
 - Full problem engineering bundle prompt.
 
-Prompt exports do not call OpenAI, Codex, Gemini, Claude, or any external AI provider. They only assemble copyable/exportable text from AuraC2 problem data, public samples, compare policy, selected language contracts, and explicitly selected admin instructions. SAFE_MODE excludes hidden tests, hidden expected outputs, admin internal notes, and official source snippets. ADMIN_FULL_MODE requires explicit confirmation before sensitive material can be included.
+Prompt exports do not call OpenAI, Codex, Gemini, Claude, or any external AI provider. They only assemble copyable/exportable text from AuraC2 problem data, public samples, compare policy, selected language contracts, and admin instructions.
+
+The admin UI exposes three prompt modes:
+
+- `Recommended Admin Prompt`: default workflow. AuraC2 chooses useful context by prompt type, can include helpful admin context such as reference solution source for generator prompts, and excludes hidden tests and hidden expected outputs by default.
+- `Public/Safe Prompt`: contestant-safe context only. It excludes hidden tests, hidden expected outputs, admin internal notes, source snippets, and sensitive diagnostics.
+- `Custom Advanced`: expert workflow with manual include/exclude controls and explicit warnings for sensitive material. Server-side policy still enforces visibility rules.
 
 Target languages come from the backend supported-language catalog used by Judge0 mapping. The prompt renderer validates the requested language server-side and adapts file names, entry point expectations, runtime notes, and verification instructions to the selected language. C++17 is not assumed unless selected.
 

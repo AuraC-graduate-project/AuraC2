@@ -35,6 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from './ui/select';
+import { AdminHelpTooltip } from './AdminHelpTooltip';
 
 type ForceTarget =
   | { kind: 'problem'; id: number; label: string }
@@ -295,7 +296,13 @@ export function RejudgeView({ initialContestId = null }: RejudgeViewProps) {
     <>
       <Card className="border border-slate-200 shadow-sm">
         <CardHeader className="border-b border-slate-200 bg-slate-50">
-          <CardTitle className="text-2xl text-slate-950">Rejudge</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-2xl text-slate-950">Rejudge</CardTitle>
+            <AdminHelpTooltip
+              label="Rejudge help"
+              content="Reruns previous submissions after judge, problem, checker, or test-case changes. Force rejudge can rerun even finalized submissions."
+            />
+          </div>
           <p className="mt-1 text-sm text-slate-600">
             Select a contest, choose a problem by name, then requeue normal or force rejudge jobs.
           </p>

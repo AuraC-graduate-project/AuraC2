@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { ClipboardList, Copy, UserPlus, Pencil, KeyRound, Trash2, RefreshCw, Search, ShieldCheck } from 'lucide-react';
+import { ClipboardList, Copy, Download, UserPlus, Pencil, KeyRound, Trash2, RefreshCw, Search, ShieldCheck } from 'lucide-react';
 import { RegisterModal } from './RegisterModal';
 import { Input } from './ui/input';
 import {
@@ -33,6 +33,7 @@ import { toast } from 'sonner';
 import { deleteUser, generateTeamAccounts, getAllUsers, updateUserName, updateUserPassword } from '../services/api';
 import { GeneratedTeamCredentialResponse, UserResponse } from '../types/api';
 import { StatusBadge } from '../../components/StatusBadge';
+import { AdminHelpTooltip } from './AdminHelpTooltip';
 
 export function TeamsView() {
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
@@ -46,6 +47,7 @@ export function TeamsView() {
   const [bulkPasswordLength, setBulkPasswordLength] = useState(10);
   const [bulkGenerating, setBulkGenerating] = useState(false);
   const [generatedCredentials, setGeneratedCredentials] = useState<GeneratedTeamCredentialResponse[]>([]);
+  const [generatedCredentialsAt, setGeneratedCredentialsAt] = useState<string | null>(null);
 
   const [editNameOpen, setEditNameOpen] = useState(false);
   const [editPasswordOpen, setEditPasswordOpen] = useState(false);
@@ -86,9 +88,18 @@ export function TeamsView() {
     }
   };
 
+  const csvEscape = (value: string | number | null | undefined) => {
+    const text = String(value ?? '');
+    return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  };
+
   const credentialsCsv = (credentials: GeneratedTeamCredentialResponse[]) => [
-    'username,password',
-    ...credentials.map((credential) => `${credential.username},${credential.password}`),
+    ['username', 'password', 'role', 'generatedAt'].map(csvEscape).join(','),
+    ...credentials.map((credential) =>
+      [credential.username, credential.password, credential.role, generatedCredentialsAt ?? new Date().toISOString()]
+        .map(csvEscape)
+        .join(',')
+    ),
   ].join('\n');
 
   const copyText = async (value: string, successMessage: string) => {
@@ -98,6 +109,20 @@ export function TeamsView() {
     } catch {
       toast.error('Copy failed. Please copy the credentials manually.');
     }
+  };
+
+  const downloadCredentialsCsv = () => {
+    if (generatedCredentials.length === 0) return;
+    const blob = new Blob([credentialsCsv(generatedCredentials)], { type: 'text/csv;charset=utf-8' });
+    const href = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = href;
+    link.download = `team-credentials-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(href);
+    toast.success('Credentials CSV downloaded');
   };
 
   const handleGenerateTeams = async (event: FormEvent) => {
@@ -126,6 +151,7 @@ export function TeamsView() {
         passwordLength: bulkPasswordLength,
       });
       setGeneratedCredentials(credentials);
+      setGeneratedCredentialsAt(new Date().toISOString());
       toast.success(`${credentials.length} team account${credentials.length === 1 ? '' : 's'} generated`);
       await loadUsers();
     } catch (error) {
@@ -255,6 +281,10 @@ export function TeamsView() {
                 <div className="flex items-center gap-2">
                   <ClipboardList className="h-5 w-5 text-blue-700" />
                   <h3 className="font-semibold text-slate-950">Bulk Team Generation</h3>
+                  <AdminHelpTooltip
+                    label="Bulk team generation help"
+                    content="Generated passwords are returned once. Copy or download the CSV before leaving this result."
+                  />
                 </div>
                 <p className="mt-1 text-sm text-slate-600">
                   Generated passwords are shown only once after creation. They are hashed on the server and cannot be recovered later.
@@ -332,20 +362,37 @@ export function TeamsView() {
             <div className="mb-6 overflow-hidden rounded-lg border border-slate-200 bg-white">
               <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                  <h3 className="font-semibold text-slate-950">Generated Credentials</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-slate-950">Generated Credentials</h3>
+                    <AdminHelpTooltip
+                      label="Generated credentials help"
+                      content="Plaintext passwords are visible only in this result. Store the CSV securely and restrict who can access it."
+                    />
+                  </div>
                   <p className="mt-1 text-sm text-slate-600">
                     Store these securely now. Plaintext passwords will not be available after you leave this result.
                   </p>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="gap-2 bg-white"
-                  onClick={() => copyText(credentialsCsv(generatedCredentials), 'All generated credentials copied')}
-                >
-                  <Copy className="h-4 w-4" />
-                  Copy All
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="gap-2 bg-white"
+                    onClick={() => copyText(credentialsCsv(generatedCredentials), 'All generated credentials copied')}
+                  >
+                    <Copy className="h-4 w-4" />
+                    Copy All
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="gap-2 bg-white"
+                    onClick={downloadCredentialsCsv}
+                  >
+                    <Download className="h-4 w-4" />
+                    Download CSV
+                  </Button>
+                </div>
               </div>
               <Table>
                 <TableHeader>

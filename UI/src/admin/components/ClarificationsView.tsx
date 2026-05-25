@@ -12,6 +12,7 @@ import { MessageSquareReply, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useClarificationStream } from "../../hooks/useClarificationStream";
+import { AdminHelpTooltip } from "./AdminHelpTooltip";
 
 type ClarificationFilter = "ALL" | "PENDING" | "ANSWERED" | "PUBLIC" | "PRIVATE";
 
@@ -144,7 +145,13 @@ export function ClarificationsView({ contestId }: { contestId: number | null }) 
         <CardHeader className="border-b border-slate-200 bg-slate-50">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <CardTitle className="text-2xl text-slate-950">Clarifications</CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-2xl text-slate-950">Clarifications</CardTitle>
+                <AdminHelpTooltip
+                  label="Clarifications help"
+                  content="Private replies go only to the asking team. Public replies are visible to all teams."
+                />
+              </div>
               <p className="mt-1 text-sm text-slate-600">Reply privately to one team or publicly to all teams.</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">

@@ -5,8 +5,10 @@ import com.server.contestControl.contestServer.oracle.dto.CounterexampleResponse
 import com.server.contestControl.contestServer.oracle.dto.GeneratedTestBatchRequest;
 import com.server.contestControl.contestServer.oracle.dto.GeneratedTestBatchResponse;
 import com.server.contestControl.contestServer.oracle.dto.GeneratedTestPromotionRequest;
+import com.server.contestControl.contestServer.oracle.dto.GeneratedTestPromotionResponse;
 import com.server.contestControl.contestServer.oracle.dto.OracleProgramRequest;
 import com.server.contestControl.contestServer.oracle.dto.OracleProgramResponse;
+import com.server.contestControl.contestServer.oracle.dto.OracleProgramSourceResponse;
 import com.server.contestControl.contestServer.oracle.service.OracleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +48,11 @@ public class OracleAdminController {
         return ResponseEntity.ok(oracleService.referenceSolutions(problemId));
     }
 
+    @GetMapping("/reference-solutions/{referenceSolutionId}/source")
+    public ResponseEntity<OracleProgramSourceResponse> referenceSolutionSource(@PathVariable Long referenceSolutionId) {
+        return ResponseEntity.ok(oracleService.referenceSolutionSource(referenceSolutionId));
+    }
+
     @PostMapping("/problems/{problemId}/input-generator")
     public ResponseEntity<OracleProgramResponse> configureInputGenerator(
             @PathVariable Long problemId,
@@ -62,6 +69,11 @@ public class OracleAdminController {
         return ResponseEntity.ok(oracleService.inputGenerators(problemId));
     }
 
+    @GetMapping("/input-generators/{inputGeneratorId}/source")
+    public ResponseEntity<OracleProgramSourceResponse> inputGeneratorSource(@PathVariable Long inputGeneratorId) {
+        return ResponseEntity.ok(oracleService.inputGeneratorSource(inputGeneratorId));
+    }
+
     @PostMapping("/problems/{problemId}/input-validator")
     public ResponseEntity<OracleProgramResponse> configureInputValidator(
             @PathVariable Long problemId,
@@ -76,6 +88,16 @@ public class OracleAdminController {
     @GetMapping("/problems/{problemId}/input-validators")
     public ResponseEntity<List<OracleProgramResponse>> inputValidators(@PathVariable Long problemId) {
         return ResponseEntity.ok(oracleService.inputValidators(problemId));
+    }
+
+    @GetMapping("/input-validators/{inputValidatorId}/source")
+    public ResponseEntity<OracleProgramSourceResponse> inputValidatorSource(@PathVariable Long inputValidatorId) {
+        return ResponseEntity.ok(oracleService.inputValidatorSource(inputValidatorId));
+    }
+
+    @GetMapping("/problems/{problemId}/custom-output-validator/source")
+    public ResponseEntity<OracleProgramSourceResponse> customOutputValidatorSource(@PathVariable Long problemId) {
+        return ResponseEntity.ok(oracleService.customOutputValidatorSource(problemId));
     }
 
     @PostMapping("/problems/{problemId}/generated-batches")
@@ -110,12 +132,12 @@ public class OracleAdminController {
     }
 
     @PostMapping("/generated-test-cases/{generatedTestCaseId}/promote")
-    public ResponseEntity<TestCaseResponse> promoteGeneratedTestCase(@PathVariable Long generatedTestCaseId) {
+    public ResponseEntity<GeneratedTestPromotionResponse> promoteGeneratedTestCase(@PathVariable Long generatedTestCaseId) {
         return ResponseEntity.ok(oracleService.promoteGeneratedTestCase(generatedTestCaseId));
     }
 
     @PostMapping("/generated-test-cases/promote-selected")
-    public ResponseEntity<List<TestCaseResponse>> promoteSelectedGeneratedTestCases(
+    public ResponseEntity<GeneratedTestPromotionResponse> promoteSelectedGeneratedTestCases(
             @Valid @RequestBody GeneratedTestPromotionRequest request
     ) {
         return ResponseEntity.ok(
@@ -124,7 +146,7 @@ public class OracleAdminController {
     }
 
     @PostMapping("/generated-batches/{batchId}/promote-valid")
-    public ResponseEntity<List<TestCaseResponse>> promoteAllValidGeneratedTestCases(@PathVariable Long batchId) {
+    public ResponseEntity<GeneratedTestPromotionResponse> promoteAllValidGeneratedTestCases(@PathVariable Long batchId) {
         return ResponseEntity.ok(oracleService.promoteAllValidGeneratedTestCases(batchId));
     }
 }

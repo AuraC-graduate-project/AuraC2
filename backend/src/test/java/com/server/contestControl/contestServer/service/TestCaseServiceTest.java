@@ -28,6 +28,9 @@ class TestCaseServiceTest {
     @Mock
     private TestCaseRepository testCaseRepository;
 
+    @Mock
+    private TestCaseDuplicateService testCaseDuplicateService;
+
     @InjectMocks
     private TestCaseService testCaseService;
 

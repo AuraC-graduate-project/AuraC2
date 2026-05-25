@@ -4,6 +4,7 @@ import { Button } from "./ui/button";
 import { getActiveContest, getPausedContest, getUpcomingContest } from "../services/api";
 import { ContestResponse } from "../types/api";
 import { StatusBadge } from "../../components/StatusBadge";
+import { AdminHelpTooltip } from "./AdminHelpTooltip";
 
 type AdminOverviewProps = {
   onNavigate: (view: string) => void;
@@ -109,7 +110,13 @@ export function AdminOverview({ onNavigate }: AdminOverviewProps) {
           <div className="rounded-lg border border-slate-200 p-5">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold text-slate-950">Current contest summary</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold text-slate-950">Current contest summary</h2>
+                  <AdminHelpTooltip
+                    label="Current contest summary help"
+                    content="The overview prefers active contests, then upcoming or paused contests, so admins see the next operational item first."
+                  />
+                </div>
               </div>
               {contest && <StatusBadge kind="contest" value={contest.status} />}
             </div>

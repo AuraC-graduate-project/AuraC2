@@ -1,6 +1,7 @@
 package com.server.contestControl.contestServer.prompt.dto;
 
 import com.server.contestControl.contestServer.prompt.PromptType;
+import com.server.contestControl.contestServer.prompt.PromptMode;
 import com.server.contestControl.contestServer.prompt.PromptVisibilityMode;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -10,6 +11,8 @@ import lombok.Data;
 public class PromptExportRequest {
     @NotNull
     private PromptType promptType;
+
+    private PromptMode promptMode;
 
     @NotNull
     private PromptVisibilityMode visibilityMode = PromptVisibilityMode.SAFE_MODE;

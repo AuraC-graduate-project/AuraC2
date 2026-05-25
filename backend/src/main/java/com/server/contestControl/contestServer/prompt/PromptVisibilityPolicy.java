@@ -9,10 +9,11 @@ import org.springframework.stereotype.Component;
 public class PromptVisibilityPolicy {
 
     public void validate(PromptExportRequest request, SupportedLanguage language) {
-        if (request.getVisibilityMode() == PromptVisibilityMode.ADMIN_FULL_MODE
+        if (request.getPromptMode() == PromptMode.CUSTOM_ADVANCED
+                && request.getVisibilityMode() == PromptVisibilityMode.ADMIN_FULL_MODE
                 && !enabled(request.getConfirmSensitiveMaterial())) {
             throw new OracleConfigurationException(
-                    "ADMIN_FULL_MODE requires explicit sensitive-material confirmation"
+                    "Custom Advanced ADMIN_FULL_MODE requires explicit sensitive-material confirmation"
             );
         }
 

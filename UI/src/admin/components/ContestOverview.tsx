@@ -48,6 +48,7 @@ import {
 } from './ui/alert-dialog';
 import { Checkbox } from './ui/checkbox';
 import { toast } from 'sonner';
+import { AdminHelpTooltip } from './AdminHelpTooltip';
 
 type ContestTab = 'active' | 'upcoming' | 'paused' | 'ended';
 type ContestOverviewProps = {
@@ -497,7 +498,14 @@ export function ContestOverview({ onOpenScoreboard }: ContestOverviewProps) {// 
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Contest lifecycle</p>
-                <CardTitle className="mt-1 leading-none">Contest Overview</CardTitle>
+                <div className="mt-1 flex items-center gap-2">
+                  <CardTitle className="leading-none">Contest Overview</CardTitle>
+                  <AdminHelpTooltip
+                    label="Contest lifecycle help"
+                    content="Start, pause, resume, and end contest sessions here. Freeze settings control what public standings hide before reveal."
+                    className="text-slate-300 hover:bg-slate-700 hover:text-white"
+                  />
+                </div>
               </div>
 
               <div className="flex items-center gap-2">

@@ -85,7 +85,9 @@ class SchemaMigrationDefinitionTest {
                 "V3__problem_custom_validators.sql",
                 "V4__reference_oracle_generated_tests.sql",
                 "V5__generated_test_batch_partial_status.sql",
-                "V6__structured_problem_statements.sql"
+                "V6__structured_problem_statements.sql",
+                "V7__ensure_clarifications_table.sql",
+                "V8__generated_test_duplicate_status.sql"
         );
         assertThat(migrationNames).noneMatch(name -> name.startsWith("V1_1"));
     }
@@ -138,6 +140,25 @@ class SchemaMigrationDefinitionTest {
         assertThat(migration).contains("ADD COLUMN constraints_text TEXT");
         assertThat(migration).contains("ADD COLUMN public_notes TEXT");
         assertThat(migration).contains("ADD COLUMN admin_notes TEXT");
+    }
+
+    @Test
+    void clarificationRepairMigrationIsIdempotentAndForwardOnly() throws IOException {
+        String migration = readProjectFile("src/main/resources/db/migration/V7__ensure_clarifications_table.sql");
+
+        assertThat(migration).contains("CREATE TABLE IF NOT EXISTS clarifications");
+        assertThat(migration).contains("ADD COLUMN IF NOT EXISTS contest_id BIGINT");
+        assertThat(migration).contains("fk_clarifications_contest");
+        assertThat(migration).contains("CREATE INDEX IF NOT EXISTS idx_clarifications_contest_created");
+    }
+
+    @Test
+    void generatedTestDuplicateStatusMigrationKeepsPromotionStatesSchemaValidated() throws IOException {
+        String migration = readProjectFile("src/main/resources/db/migration/V8__generated_test_duplicate_status.sql");
+
+        assertThat(migration).contains("DROP CONSTRAINT IF EXISTS chk_generated_test_cases_status");
+        assertThat(migration).contains("'DUPLICATE'");
+        assertThat(migration).contains("chk_generated_test_cases_generated_payload");
     }
 
     @Test
