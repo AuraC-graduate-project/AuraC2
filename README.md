@@ -1,4 +1,35 @@
 # AuraC2 - Aura Contest Control
+## Tech Stack
+
+### Backend
+![Java](https://img.shields.io/badge/Java-21-orange?style=flat-square&logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.2-6DB33F?style=flat-square&logo=springboot&logoColor=white)
+![Spring Security](https://img.shields.io/badge/Spring%20Security-JWT-6DB33F?style=flat-square&logo=springsecurity&logoColor=white)
+![Spring JPA](https://img.shields.io/badge/Spring%20Data-JPA-6DB33F?style=flat-square&logo=spring&logoColor=white)
+![Maven](https://img.shields.io/badge/Build-Maven-C71A36?style=flat-square&logo=apachemaven&logoColor=white)
+![Swagger](https://img.shields.io/badge/API%20Docs-Swagger-85EA2D?style=flat-square&logo=swagger&logoColor=black)
+![Lombok](https://img.shields.io/badge/Lombok-1.18-red?style=flat-square&logo=java&logoColor=white)
+![Flyway](https://img.shields.io/badge/Migrations-Flyway-CC0200?style=flat-square&logo=flyway&logoColor=white)
+
+### Database & Messaging
+![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL%2015-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+![RabbitMQ](https://img.shields.io/badge/Messaging-RabbitMQ-FF6600?style=flat-square&logo=rabbitmq&logoColor=white)
+
+### Frontend
+![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Build-Vite-646CFF?style=flat-square&logo=vite&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Styling-TailwindCSS%20v4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
+![Radix UI](https://img.shields.io/badge/UI-Radix%20UI-161618?style=flat-square&logo=radixui&logoColor=white)
+![React Hook Form](https://img.shields.io/badge/Forms-React%20Hook%20Form-EC5990?style=flat-square&logo=reacthookform&logoColor=white)
+![Recharts](https://img.shields.io/badge/Charts-Recharts-22B5BF?style=flat-square&logo=chartdotjs&logoColor=white)
+
+### Infrastructure & Services
+![Docker](https://img.shields.io/badge/Container-Docker-2496ED?style=flat-square&logo=docker&logoColor=white)
+![Nginx](https://img.shields.io/badge/Proxy-Nginx-009639?style=flat-square&logo=nginx&logoColor=white)
+![Judge0](https://img.shields.io/badge/Code%20Execution-Judge0-blueviolet?style=flat-square&logo=codeforces&logoColor=white)
+![Gmail](https://img.shields.io/badge/Email-Gmail%20SMTP-EA4335?style=flat-square&logo=gmail&logoColor=white)
+
 
 AuraC2 is a university programming contest-control system. It combines a Spring Boot backend, a React/Vite frontend, PostgreSQL persistence, RabbitMQ queueing, and Judge0 execution to support ICPC-style contest administration and team submissions.
 
