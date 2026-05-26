@@ -13,22 +13,15 @@ import java.util.Locale;
 public class StatementPdfRenderer {
 
     public byte[] renderProblem(ContestantSafeStatementModel problem) {
-        return render(null, List.of(problem));
+        return render(List.of(problem));
     }
 
-    public byte[] renderBooklet(String title, List<ContestantSafeStatementModel> problems) {
-        return render(title, problems);
+    public byte[] renderBooklet(List<ContestantSafeStatementModel> problems) {
+        return render(problems);
     }
 
-    private byte[] render(String bookletTitle, List<ContestantSafeStatementModel> problems) {
+    private byte[] render(List<ContestantSafeStatementModel> problems) {
         SimplePdf pdf = new SimplePdf();
-        boolean hasBookletTitle = hasText(bookletTitle);
-        if (hasBookletTitle) {
-            pdf.addTitle(bookletTitle);
-            pdf.addCenteredMuted("Contestant-safe problem booklet");
-            pdf.addParagraph("Hidden tests, admin notes, source code, and private diagnostics are excluded from this export.");
-        }
-
         if (problems.isEmpty()) {
             pdf.addHeading("No problems");
             pdf.addParagraph("This contest does not currently contain any problems.");
@@ -36,7 +29,7 @@ public class StatementPdfRenderer {
         }
 
         for (int i = 0; i < problems.size(); i++) {
-            if (hasBookletTitle || i > 0) {
+            if (i > 0) {
                 pdf.newPage();
             }
             addProblem(pdf, problems.get(i));
@@ -121,10 +114,6 @@ public class StatementPdfRenderer {
 
         private void addTitle(String value) {
             addWrappedCentered(value, 20, true, 25, 6);
-        }
-
-        private void addCenteredMuted(String value) {
-            addWrappedCentered(value, 10, false, 14, 18);
         }
 
         private void addLimitLine(String value) {

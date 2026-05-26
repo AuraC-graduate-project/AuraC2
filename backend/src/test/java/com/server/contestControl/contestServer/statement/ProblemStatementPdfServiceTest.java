@@ -178,7 +178,13 @@ class ProblemStatementPdfServiceTest {
         String pdf = new String(export.bytes(), StandardCharsets.ISO_8859_1);
 
         assertThat(export.filename()).isEqualTo("practice-round-problem-booklet.pdf");
-        assertThat(pdf).contains("Practice Round Problem Booklet", "Sum", "Max");
+        assertThat(pdf).contains("Sum", "Max");
+        assertThat(pdf).doesNotContain(
+                "Practice Round Problem Booklet",
+                "Contestant-safe problem booklet",
+                "Hidden tests, admin notes, source code, and private diagnostics are excluded"
+        );
+        assertThat(pdf.indexOf("Sum")).isLessThan(pdf.indexOf("Max"));
     }
 
     private Problem problem() {

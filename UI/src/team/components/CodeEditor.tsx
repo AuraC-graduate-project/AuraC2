@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type UIEvent } from "react";
-import { Send, Terminal, XCircle } from "lucide-react";
+import { CheckCircle2, Play, Send, Terminal, XCircle } from "lucide-react";
 import { Button } from "./ui/button";
 import {
   Select,
@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { submitCode } from "../services/teamApi";
+import { runCode, submitCode, type RunResponse } from "../services/teamApi";
 import { useCodeDraft } from "../../hooks/useCodeDraft";
 import { decodeJwtSubject } from "../../auth/jwt";
 import { getStoredToken } from "../../auth/tokenStore";
@@ -89,13 +89,21 @@ func main() {
 };
 
 const languageOptions = SUPPORTED_JUDGE0_LANGUAGES;
-
 const TAB_INDENT = "    ";
 
 type Props = {
   contestId?: number | null;
   problem: { id: number; title: string } | null;
+  customTestCaseIds?: number[];
   onSubmitted?: () => void;
+  onRunStarted?: () => void;
+  onRunCompleted?: (response: RunResponse) => void;
+  onRunFailed?: (message: string) => void;
+};
+
+type EditorMessage = {
+  tone: "error" | "success";
+  text: string;
 };
 
 function getUserId(): string {
@@ -249,7 +257,15 @@ function unindentSelection(value: string, selectionStart: number, selectionEnd: 
   };
 }
 
-export function CodeEditor({ contestId, problem, onSubmitted }: Props) {
+export function CodeEditor({
+  contestId,
+  problem,
+  customTestCaseIds = [],
+  onSubmitted,
+  onRunStarted,
+  onRunCompleted,
+  onRunFailed,
+}: Props) {
   const userId = useMemo(getUserId, []);
   const contestKey = contestId ? String(contestId) : "0";
   const problemKey = problem?.id ? String(problem.id) : "0";
@@ -257,7 +273,8 @@ export function CodeEditor({ contestId, problem, onSubmitted }: Props) {
     loadStoredLanguage(userId, contestKey, problemKey)
   );
   const [submitting, setSubmitting] = useState(false);
-  const [message, setMessage] = useState<{ text: string } | null>(null);
+  const [running, setRunning] = useState(false);
+  const [message, setMessage] = useState<EditorMessage | null>(null);
   const highlightRef = useRef<HTMLPreElement | null>(null);
   const lineNumbersRef = useRef<HTMLPreElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -295,12 +312,12 @@ export function CodeEditor({ contestId, problem, onSubmitted }: Props) {
 
   const handleSubmit = async () => {
     if (!contestId || !problem) {
-      setMessage({ type: "error", text: "A running contest and selected problem are required." });
+      setMessage({ tone: "error", text: "A running contest and selected problem are required." });
       return;
     }
 
     if (!code.trim()) {
-      setMessage({ type: "error", text: "Source code cannot be empty." });
+      setMessage({ tone: "error", text: "Source code cannot be empty." });
       return;
     }
 
@@ -316,10 +333,49 @@ export function CodeEditor({ contestId, problem, onSubmitted }: Props) {
       onSubmitted?.();
     } catch (error) {
       setMessage({
+        tone: "error",
         text: error instanceof Error ? error.message : "Submission failed.",
       });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleRun = async () => {
+    if (!problem) {
+      setMessage({ tone: "error", text: "Select a problem before running code." });
+      return;
+    }
+    if (!code.trim()) {
+      setMessage({ tone: "error", text: "Source code cannot be empty." });
+      return;
+    }
+
+    const languageOption = languageOptions.find((option) => option.value === language);
+    if (!languageOption) {
+      setMessage({ tone: "error", text: "Choose a supported language before running." });
+      return;
+    }
+
+    setRunning(true);
+    setMessage(null);
+    onRunStarted?.();
+    try {
+      const response = await runCode(problem.id, {
+        languageId: languageOption.judge0LanguageId,
+        language,
+        sourceCode: code,
+        includePublicSamples: true,
+        customTestCaseIds,
+      });
+      onRunCompleted?.(response);
+      setMessage({ tone: "success", text: "Run completed in Test Cases. No official submission was created." });
+    } catch (error) {
+      const text = error instanceof Error ? error.message : "Run failed.";
+      setMessage({ tone: "error", text });
+      onRunFailed?.(text);
+    } finally {
+      setRunning(false);
     }
   };
 
@@ -370,16 +426,16 @@ export function CodeEditor({ contestId, problem, onSubmitted }: Props) {
 
   return (
     <section className="aura-code-card flex min-h-0 flex-1 flex-col overflow-hidden rounded-none border-0 bg-white shadow-none">
-      <div className="shrink-0 border-b border-slate-200 bg-slate-50 p-4">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-          <div>
+      <div className="shrink-0 border-b border-slate-200 bg-slate-50 px-3 py-2.5 lg:px-4">
+        <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+          <div className="min-w-0">
             <p className="text-xs font-semibold uppercase text-blue-700">Code</p>
-            <h2 className="text-lg font-semibold text-slate-950">{problem.title}</h2>
+            <h2 className="truncate text-base font-semibold text-slate-950">{problem.title}</h2>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             <Select value={language} onValueChange={handleLanguageChange}>
-              <SelectTrigger className="w-40 bg-white">
+              <SelectTrigger className="h-9 w-36 bg-white">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -392,9 +448,20 @@ export function CodeEditor({ contestId, problem, onSubmitted }: Props) {
             </Select>
 
             <Button
+              type="button"
+              variant="outline"
+              onClick={handleRun}
+              disabled={running || submitting || !contestId}
+              className="h-9 gap-2 bg-white"
+            >
+              <Play className="h-4 w-4" />
+              {running ? "Running..." : "Run"}
+            </Button>
+
+            <Button
               onClick={handleSubmit}
-              disabled={submitting || !contestId}
-              className="gap-2 bg-blue-700 hover:bg-blue-800"
+              disabled={submitting || running || !contestId}
+              className="h-9 gap-2 bg-blue-700 hover:bg-blue-800"
             >
               <Send className="h-4 w-4" />
               {submitting ? "Submitting..." : "Submit"}
@@ -404,13 +471,19 @@ export function CodeEditor({ contestId, problem, onSubmitted }: Props) {
       </div>
 
       {message && (
-        <div className="m-4 flex gap-2 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
-          <XCircle className="h-4 w-4" />
+        <div
+          className={`mx-3 mt-3 flex gap-2 rounded-lg border p-2.5 text-sm lg:mx-4 ${
+            message.tone === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              : "border-rose-200 bg-rose-50 text-rose-700"
+          }`}
+        >
+          {message.tone === "success" ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
           <span>{message.text}</span>
         </div>
       )}
 
-      <div className="aura-code-shell grid min-h-0 flex-1 grid-cols-[3.25rem_1fr] overflow-hidden rounded-b-lg bg-slate-950">
+      <div className="aura-code-shell mt-3 grid min-h-0 flex-1 grid-cols-[3.25rem_1fr] overflow-hidden bg-slate-950 lg:mt-4">
         <pre
           ref={lineNumbersRef}
           className="select-none overflow-hidden border-r border-slate-800 bg-slate-900 px-3 py-4 text-right font-mono text-xs leading-6 text-slate-500"

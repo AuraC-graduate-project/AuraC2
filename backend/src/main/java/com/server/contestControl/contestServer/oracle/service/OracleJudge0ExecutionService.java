@@ -29,14 +29,24 @@ public class OracleJudge0ExecutionService {
     private Integer oracleMemoryLimitKilobytes;
 
     public SandboxExecutionResult run(String source, int languageId, String stdin) {
+        return run(source, languageId, stdin, oracleCpuTimeLimitSeconds, oracleMemoryLimitKilobytes);
+    }
+
+    public SandboxExecutionResult run(
+            String source,
+            int languageId,
+            String stdin,
+            Double cpuTimeLimitSeconds,
+            Integer memoryLimitKilobytes
+    ) {
         Judge0SubmissionDTO dto = new Judge0SubmissionDTO(
                 source,
                 languageId,
                 stdin,
                 null,
                 null,
-                oracleCpuTimeLimitSeconds,
-                oracleMemoryLimitKilobytes
+                cpuTimeLimitSeconds,
+                memoryLimitKilobytes
         ).base64Encoded();
 
         try {
@@ -74,6 +84,7 @@ public class OracleJudge0ExecutionService {
                 response.getStatus().getId(),
                 Judge0AuditUtil.safeStatusDescription(response.getStatus().getDescription()),
                 response.getDecodedStdout(),
+                response.getDecodedStderr(),
                 response.getTimeAsInt(),
                 response.getMemoryAsInt(),
                 Judge0AuditUtil.firstSafeDiagnostic(
@@ -89,6 +100,7 @@ public class OracleJudge0ExecutionService {
             Integer statusId,
             String statusDescription,
             String stdout,
+            String stderr,
             Integer executionTime,
             Integer memoryUsage,
             String diagnostic
@@ -96,6 +108,7 @@ public class OracleJudge0ExecutionService {
         static SandboxExecutionResult internalError(String diagnostic) {
             return new SandboxExecutionResult(
                     Verdict.INTERNAL_ERROR,
+                    null,
                     null,
                     null,
                     null,

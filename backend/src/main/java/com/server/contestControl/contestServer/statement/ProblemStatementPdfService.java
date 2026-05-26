@@ -50,10 +50,9 @@ public class ProblemStatementPdfService {
                 ))
                 .toList();
 
-        String title = contest.getTitle() == null ? "Contest booklet" : contest.getTitle() + " Problem Booklet";
         return new PdfExport(
                 safeFileName(contest.getTitle(), "contest-" + contestId) + "-problem-booklet.pdf",
-                statementPdfRenderer.renderBooklet(title, models)
+                statementPdfRenderer.renderBooklet(models)
         );
     }
 

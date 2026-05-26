@@ -81,13 +81,24 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
                 headers,
                 credentials: "include",
             });
-            if (!retry.ok) throw new Error("Unauthorized");
+            if (!retry.ok) throw await responseError(retry);
+            if (retry.status === 204) return undefined as T;
             return retry.json();
         }
     }
 
-    if (!res.ok) throw new Error("Request failed");
+    if (!res.ok) throw await responseError(res);
+    if (res.status === 204) return undefined as T;
     return res.json();
+}
+
+async function responseError(response: Response): Promise<Error> {
+    try {
+        const body = await response.json();
+        return new Error(body?.message ?? `Request failed with status ${response.status}`);
+    } catch {
+        return new Error(`Request failed with status ${response.status}`);
+    }
 }
 
 /* ================= TEAM ENDPOINTS ================= */
@@ -141,6 +152,90 @@ export function submitCode(body: {
     code: string;
 }): Promise<SubmissionResponse> {
     return apiFetch("/api/submissions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+    });
+}
+
+export interface CustomTestCaseResponse {
+    id: number;
+    contestId: number;
+    problemId: number;
+    input: string;
+    expectedOutput: string | null;
+    createdAt: string | null;
+    updatedAt: string | null;
+}
+
+export interface RunCaseResult {
+    caseNumber: number;
+    caseType: "PUBLIC_SAMPLE" | "CUSTOM" | string;
+    caseId: number | null;
+    label: string;
+    input: string;
+    expectedOutput: string | null;
+    actualOutput: string | null;
+    stderr: string | null;
+    status: string;
+    diagnostic: string | null;
+    runtimeMillis: number | null;
+    memoryKb: number | null;
+}
+
+export interface RunResponse {
+    compileStatus: string;
+    compileOutput: string | null;
+    scoring: boolean;
+    publicSampleCount: number;
+    customTestCount: number;
+    results: RunCaseResult[];
+}
+
+export function getCustomTests(problemId: number): Promise<CustomTestCaseResponse[]> {
+    return apiFetch<CustomTestCaseResponse[]>(`/api/team/problems/${problemId}/custom-tests`);
+}
+
+export function createCustomTest(
+    problemId: number,
+    body: { input: string; expectedOutput?: string | null }
+): Promise<CustomTestCaseResponse> {
+    return apiFetch<CustomTestCaseResponse>(`/api/team/problems/${problemId}/custom-tests`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+    });
+}
+
+export function updateCustomTest(
+    problemId: number,
+    customTestId: number,
+    body: { input: string; expectedOutput?: string | null }
+): Promise<CustomTestCaseResponse> {
+    return apiFetch<CustomTestCaseResponse>(`/api/team/problems/${problemId}/custom-tests/${customTestId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+    });
+}
+
+export function deleteCustomTest(problemId: number, customTestId: number): Promise<void> {
+    return apiFetch<void>(`/api/team/problems/${problemId}/custom-tests/${customTestId}`, {
+        method: "DELETE",
+    });
+}
+
+export function runCode(
+    problemId: number,
+    body: {
+        languageId: number;
+        language: string;
+        sourceCode: string;
+        includePublicSamples: boolean;
+        customTestCaseIds: number[];
+    }
+): Promise<RunResponse> {
+    return apiFetch<RunResponse>(`/api/team/problems/${problemId}/run`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),

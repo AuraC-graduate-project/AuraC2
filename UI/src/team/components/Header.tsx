@@ -50,38 +50,38 @@ export function Header({
   }, [contestEndTime]);
 
   return (
-    <header className="aura-topbar aura-team-header border-b border-slate-200 bg-white px-5 py-3 shadow-sm">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        <div className="flex items-center gap-4">
-          <div className="aura-mark aura-logo-chip flex h-14 w-14 items-center justify-center rounded-lg border border-slate-200 p-2.5">
+    <header className="aura-topbar aura-team-header border-b border-slate-200 bg-white px-4 py-2 shadow-sm">
+      <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="aura-mark aura-logo-chip flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 p-1.5">
             <img src={auraSymbol} alt="AuraC2 logo" className="h-full w-full object-contain" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">AuraC²</p>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl font-semibold text-slate-950">{contestName ?? "No Active Contest"}</h1>
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <h1 className="truncate text-lg font-semibold text-slate-950">{contestName ?? "No Active Contest"}</h1>
               {contestStatus && <StatusBadge kind="contest" value={contestStatus} />}
             </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700">
             <Clock className="h-4 w-4 text-blue-700" />
             <span className="font-mono font-semibold">{timeLeft === null ? "--:--:--" : formatTime(timeLeft)}</span>
           </div>
 
-          <div className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+          <div className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700">
             <UserRound className="h-4 w-4 text-blue-700" />
             <span className="font-semibold">{teamName}</span>
           </div>
 
-          <ThemeToggle />
+          <ThemeToggle className="h-9 px-2" />
 
           <button
             type="button"
             onClick={onLogout}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-blue-700 px-4 text-sm font-semibold text-white hover:bg-blue-800"
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-blue-700 px-3 text-sm font-semibold text-white hover:bg-blue-800"
           >
             <LogOut className="h-4 w-4" />
             Logout

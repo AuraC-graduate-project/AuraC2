@@ -21,18 +21,27 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "./components/ui/resizable";
-import { ContestResponse, ProblemResponse, SubmissionResponse } from "../admin/types/api";
+import { ContestResponse, ProblemResponse, SubmissionResponse, TestCaseResponse } from "../admin/types/api";
 import { normalizeVerdict } from "../components/StatusBadge";
 import {
+  createCustomTest,
+  deleteCustomTest,
+  getCustomTests,
   getProblemsByContest,
+  getPublicTestCasesForProblem,
   getMySubmissions,
   getMyAllSubmissions,
+  updateCustomTest,
+  type CustomTestCaseResponse,
+  type RunResponse,
 } from "./services/teamApi";
 import { useSubmissionStream } from "../hooks/useSubmissionStream";
 import { CODE_DRAFT_FLUSH_EVENT } from "../hooks/useCodeDraft";
 
 type WorkspaceMode = "balanced" | "problem" | "code";
 type WorkspacePage = "solve" | "scoreboard";
+type ProblemPanelSection = "statement" | "samples";
+type MobileWorkspaceTab = "problem" | "code" | "submissions";
 
 const workspaceModes: Array<{
   value: WorkspaceMode;
@@ -121,6 +130,18 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
   const [selectedProblem, setSelectedProblem] = useState<ProblemResponse | null>(null);
   const [loadingProblems, setLoadingProblems] = useState(true);
   const [problemError, setProblemError] = useState<string | null>(null);
+  const [problemPanelSection, setProblemPanelSection] = useState<ProblemPanelSection>("statement");
+  const [mobileTab, setMobileTab] = useState<MobileWorkspaceTab>("problem");
+  const [publicSamples, setPublicSamples] = useState<TestCaseResponse[]>([]);
+  const [customTests, setCustomTests] = useState<CustomTestCaseResponse[]>([]);
+  const [loadingTestCases, setLoadingTestCases] = useState(false);
+  const [testCaseError, setTestCaseError] = useState<string | null>(null);
+  const [runResponse, setRunResponse] = useState<RunResponse | null>(null);
+  const [runError, setRunError] = useState<string | null>(null);
+  const [runInFlight, setRunInFlight] = useState(false);
+  const [savingCustomTest, setSavingCustomTest] = useState(false);
+  const [updatingCustomTestId, setUpdatingCustomTestId] = useState<number | null>(null);
+  const [deletingCustomTestId, setDeletingCustomTestId] = useState<number | null>(null);
 
   const [allSubmissions, setAllSubmissions] = useState<Submission[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -185,6 +206,46 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
       // Selection persistence is a convenience; drafts remain independently keyed.
     }
   }, [contest.id, selectedProblem?.id]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    setRunResponse(null);
+    setRunError(null);
+    setTestCaseError(null);
+    setPublicSamples([]);
+    setCustomTests([]);
+    setProblemPanelSection("statement");
+
+    if (!selectedProblem) {
+      setLoadingTestCases(false);
+      return;
+    }
+
+    setLoadingTestCases(true);
+    Promise.all([
+      getPublicTestCasesForProblem(selectedProblem.id),
+      getCustomTests(selectedProblem.id),
+    ])
+      .then(([samples, tests]) => {
+        if (!mounted) return;
+        setPublicSamples(samples);
+        setCustomTests(tests);
+      })
+      .catch((error) => {
+        if (!mounted) return;
+        setPublicSamples([]);
+        setCustomTests([]);
+        setTestCaseError(error instanceof Error ? error.message : "Could not load test cases.");
+      })
+      .finally(() => {
+        if (mounted) setLoadingTestCases(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [selectedProblem?.id]);
 
   useEffect(() => {
     if (problems.length === 0) {
@@ -273,6 +334,73 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
     setSubmissionRefreshKey((value) => value + 1);
   }, []);
 
+  const customTestIds = useMemo(() => customTests.map((test) => test.id), [customTests]);
+
+  const handleAddCustomTest = useCallback(async (body: { input: string; expectedOutput: string | null }) => {
+    if (!selectedProblem) return;
+    setSavingCustomTest(true);
+    setTestCaseError(null);
+    try {
+      const saved = await createCustomTest(selectedProblem.id, body);
+      setCustomTests((current) => [...current, saved]);
+      setRunResponse(null);
+    } finally {
+      setSavingCustomTest(false);
+    }
+  }, [selectedProblem?.id]);
+
+  const handleUpdateCustomTest = useCallback(async (
+    customTestId: number,
+    body: { input: string; expectedOutput: string | null }
+  ) => {
+    if (!selectedProblem) return;
+    setUpdatingCustomTestId(customTestId);
+    setTestCaseError(null);
+    try {
+      const updated = await updateCustomTest(selectedProblem.id, customTestId, body);
+      setCustomTests((current) => current.map((test) => test.id === customTestId ? updated : test));
+      setRunResponse(null);
+    } finally {
+      setUpdatingCustomTestId(null);
+    }
+  }, [selectedProblem?.id]);
+
+  const handleDeleteCustomTest = useCallback(async (customTestId: number) => {
+    if (!selectedProblem) return;
+    setDeletingCustomTestId(customTestId);
+    setTestCaseError(null);
+    try {
+      await deleteCustomTest(selectedProblem.id, customTestId);
+      setCustomTests((current) => current.filter((test) => test.id !== customTestId));
+      setRunResponse(null);
+    } finally {
+      setDeletingCustomTestId(null);
+    }
+  }, [selectedProblem?.id]);
+
+  const handleRunStarted = useCallback(() => {
+    setRunInFlight(true);
+    setRunResponse(null);
+    setRunError(null);
+    setProblemPanelSection("samples");
+    setMobileTab("problem");
+  }, []);
+
+  const handleRunCompleted = useCallback((response: RunResponse) => {
+    setRunResponse(response);
+    setRunError(null);
+    setRunInFlight(false);
+    setProblemPanelSection("samples");
+    setMobileTab("problem");
+  }, []);
+
+  const handleRunFailed = useCallback((message: string) => {
+    setRunError(message);
+    setRunInFlight(false);
+    setProblemPanelSection("samples");
+    setMobileTab("problem");
+  }, []);
+
   const handleWorkspaceModeChange = useCallback((mode: WorkspaceMode) => {
     setWorkspaceMode(mode);
     const nextSizes = panelSizes[mode];
@@ -280,7 +408,7 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
   }, []);
 
   const modeControl = (
-    <div className="grid w-full grid-cols-3 rounded-lg border border-slate-200 bg-slate-100 p-1 lg:w-auto lg:min-w-[440px]">
+    <div className="grid w-full grid-cols-3 rounded-lg border border-slate-200 bg-slate-100 p-0.5 lg:w-auto lg:min-w-[360px]">
       {workspaceModes.map((mode) => {
         const Icon = mode.icon;
         const active = workspaceMode === mode.value;
@@ -291,7 +419,7 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
             type="button"
             onClick={() => handleWorkspaceModeChange(mode.value)}
             aria-pressed={active}
-            className={`inline-flex h-10 items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold transition ${
+            className={`inline-flex h-8 items-center justify-center gap-1.5 rounded-md px-2 text-xs font-semibold transition ${
               active
                 ? "bg-white text-slate-950 shadow-sm"
                 : "text-slate-600 hover:bg-white/70 hover:text-slate-900"
@@ -316,21 +444,21 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
         onLogout={onLogout}
       />
 
-      <section className="aura-workspace-toolbar border-b border-slate-200 bg-white px-4 py-3 lg:px-5">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+      <section className="aura-workspace-toolbar border-b border-slate-200 bg-white px-3 py-2 lg:px-4">
+        <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase text-blue-700">
               {isScoreboardPage ? "Contest standings" : "Solving workspace"}
             </p>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              <h2 className="truncate text-lg font-semibold text-slate-950">
+            <div className="mt-0.5 flex flex-wrap items-center gap-2">
+              <h2 className="truncate text-base font-semibold text-slate-950">
                 {isScoreboardPage
                   ? "Scoreboard"
                   : selectedProblem
                     ? selectedProblem.title
                     : "Choose a problem"}
               </h2>
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-semibold text-slate-600">
                 {isScoreboardPage ? contest.title : selectedLabel}
               </span>
             </div>
@@ -341,7 +469,7 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
               <Button
                 type="button"
                 variant="outline"
-                className="h-11 gap-2 bg-white"
+                className="h-9 gap-2 bg-white px-3"
                 onClick={() => navigateWorkspacePage("solve")}
               >
                 <FileText className="h-4 w-4" />
@@ -353,7 +481,7 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-11 gap-2 bg-white"
+                  className="h-9 gap-2 bg-white px-3"
                   onClick={() => navigateWorkspacePage("scoreboard")}
                 >
                   <Trophy className="h-4 w-4" />
@@ -364,7 +492,7 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
             <Button
               type="button"
               variant="outline"
-              className="h-11 gap-2 bg-white"
+              className="h-9 gap-2 bg-white px-3"
               onClick={() => setClarificationsOpen(true)}
             >
               <MessageSquare className="h-4 w-4" />
@@ -397,6 +525,20 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
                   <ProblemStatementPanel
                     problem={selectedProblem}
                     className="aura-statement-flush h-full rounded-none border-0 shadow-none"
+                    activeSection={problemPanelSection}
+                    onActiveSectionChange={setProblemPanelSection}
+                    samples={publicSamples}
+                    customTests={customTests}
+                    loadingTestCases={loadingTestCases}
+                    runResponse={runResponse}
+                    runError={runError ?? testCaseError}
+                    isRunning={runInFlight}
+                    savingCustomTest={savingCustomTest}
+                    updatingCustomTestId={updatingCustomTestId}
+                    deletingCustomTestId={deletingCustomTestId}
+                    onAddCustomTest={handleAddCustomTest}
+                    onUpdateCustomTest={handleUpdateCustomTest}
+                    onDeleteCustomTest={handleDeleteCustomTest}
                   />
                 </ResizablePanel>
 
@@ -407,7 +549,11 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
                     <CodeEditor
                       contestId={contest.id}
                       problem={selectedProblem}
+                      customTestCaseIds={customTestIds}
                       onSubmitted={handleSubmitted}
+                      onRunStarted={handleRunStarted}
+                      onRunCompleted={handleRunCompleted}
+                      onRunFailed={handleRunFailed}
                     />
 
                     <section className="aura-submissions-panel shrink-0 border-t border-slate-200 bg-white">
@@ -419,7 +565,7 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
                       >
                         <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
                           <Inbox className="h-4 w-4 text-blue-700" />
-                          Submissions
+                          Official Submissions
                         </span>
                         <span className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500">
                           {submissionCount} total
@@ -432,7 +578,7 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
                           <SubmissionHistory
                             submissions={submissions}
                             isLoading={loadingSubmissions}
-                            title="This Problem"
+                            title="Official Submissions"
                             className="border-0 shadow-none"
                             compact
                           />
@@ -457,22 +603,42 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
                 className="h-[340px] rounded-lg border border-slate-200"
               />
 
-              <Tabs defaultValue="problem" className="space-y-4">
+              <Tabs value={mobileTab} onValueChange={(value) => setMobileTab(value as MobileWorkspaceTab)} className="space-y-4">
                 <TabsList className="grid w-full grid-cols-3 rounded-lg bg-slate-100 p-1">
                   <TabsTrigger value="problem">Problem</TabsTrigger>
                   <TabsTrigger value="code">Code</TabsTrigger>
-                  <TabsTrigger value="submissions">Runs</TabsTrigger>
+                  <TabsTrigger value="submissions">Submissions</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="problem" className="m-0">
-                  <ProblemStatementPanel problem={selectedProblem} />
+                  <ProblemStatementPanel
+                    problem={selectedProblem}
+                    activeSection={problemPanelSection}
+                    onActiveSectionChange={setProblemPanelSection}
+                    samples={publicSamples}
+                    customTests={customTests}
+                    loadingTestCases={loadingTestCases}
+                    runResponse={runResponse}
+                    runError={runError ?? testCaseError}
+                    isRunning={runInFlight}
+                    savingCustomTest={savingCustomTest}
+                    updatingCustomTestId={updatingCustomTestId}
+                    deletingCustomTestId={deletingCustomTestId}
+                    onAddCustomTest={handleAddCustomTest}
+                    onUpdateCustomTest={handleUpdateCustomTest}
+                    onDeleteCustomTest={handleDeleteCustomTest}
+                  />
                 </TabsContent>
 
                 <TabsContent value="code" className="m-0">
                   <CodeEditor
                     contestId={contest.id}
                     problem={selectedProblem}
+                    customTestCaseIds={customTestIds}
                     onSubmitted={handleSubmitted}
+                    onRunStarted={handleRunStarted}
+                    onRunCompleted={handleRunCompleted}
+                    onRunFailed={handleRunFailed}
                   />
                 </TabsContent>
 
@@ -480,7 +646,7 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
                   <SubmissionHistory
                     submissions={submissions}
                     isLoading={loadingSubmissions}
-                    title="This Problem"
+                    title="Official Submissions"
                   />
                 </TabsContent>
 

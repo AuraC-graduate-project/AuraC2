@@ -87,7 +87,8 @@ class SchemaMigrationDefinitionTest {
                 "V5__generated_test_batch_partial_status.sql",
                 "V6__structured_problem_statements.sql",
                 "V7__ensure_clarifications_table.sql",
-                "V8__generated_test_duplicate_status.sql"
+                "V8__generated_test_duplicate_status.sql",
+                "V9__team_custom_run_tests.sql"
         );
         assertThat(migrationNames).noneMatch(name -> name.startsWith("V1_1"));
     }
@@ -159,6 +160,17 @@ class SchemaMigrationDefinitionTest {
         assertThat(migration).contains("DROP CONSTRAINT IF EXISTS chk_generated_test_cases_status");
         assertThat(migration).contains("'DUPLICATE'");
         assertThat(migration).contains("chk_generated_test_cases_generated_payload");
+    }
+
+    @Test
+    void teamCustomRunTestsMigrationScopesCasesToOwnerContestAndProblem() throws IOException {
+        String migration = readProjectFile("src/main/resources/db/migration/V9__team_custom_run_tests.sql");
+
+        assertThat(migration).contains("CREATE TABLE user_custom_test_cases");
+        assertThat(migration).contains("owner_user_id BIGINT NOT NULL");
+        assertThat(migration).contains("expected_output TEXT");
+        assertThat(migration).contains("fk_user_custom_tests_owner");
+        assertThat(migration).contains("idx_user_custom_tests_owner_problem");
     }
 
     @Test

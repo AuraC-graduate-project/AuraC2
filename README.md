@@ -54,7 +54,7 @@ Historical reports, old feature writeups, task prompts, and duplicate PDFs are a
 | Backend | Spring Boot 3.4.x, Java 21 |
 | Frontend | React 18, TypeScript, Vite, Tailwind |
 | Database | PostgreSQL |
-| Migrations | Flyway V1-V8 with Hibernate schema validation |
+| Migrations | Flyway V1-V9 with Hibernate schema validation |
 | Queue | RabbitMQ submission queue |
 | Judge | Judge0 API and signed callback endpoint |
 | Auth | JWT access tokens and HTTP-only refresh-token cookie flow |
@@ -87,7 +87,7 @@ Historical reports, old feature writeups, task prompts, and duplicate PDFs are a
 - Public notes are contestant-facing and appear in team statement views and contestant-style previews.
 - Admin internal notes are admin-only and are excluded from team views and SAFE_MODE prompt exports.
 - Admin problem details include contestant-style preview and readiness warnings for missing key statement fields.
-- Admins can export contestant-safe single-problem PDFs and contest booklet PDFs. These exports use a Codeforces-style order (statement, input, output, constraints, examples, note), render public samples as grouped monospace examples, and include public samples only.
+- Admins can export contestant-safe single-problem PDFs and contest booklet PDFs. These exports use a Codeforces-style order (statement, input, output, constraints, examples, note), render public samples as grouped monospace examples, and include public samples only. Contest booklet PDFs are direct concatenations of the same single-problem statement layout, with each problem starting on a new page and no cover page by default.
 - Admin test-case create/read/update/delete.
 - Hidden/private test cases remain admin/internal only.
 - TEAM users can fetch only public/sample test cases through the public sample endpoint.
@@ -106,6 +106,19 @@ Historical reports, old feature writeups, task prompts, and duplicate PDFs are a
 - Per-test-case `SubmissionJudgeResult` rows are stored idempotently with a unique `(submission_id, judge_run_id, test_case_number)` constraint.
 - Zero-test submissions become `INTERNAL_ERROR` rather than remaining `RUNNING`.
 - Final verdict aggregation waits for expected terminal results and uses the earliest non-accepted test case by test-case number.
+
+### Contestant Run Workflow
+
+- TEAM users have a non-scoring Run action beside Submit in the code editor.
+- Run executes the current source through Judge0 against public samples and all user-owned custom tests for the selected problem by default.
+- Public samples are locked/read-only and include their public expected output.
+- Custom tests are stored in `user_custom_test_cases`, scoped by owner user, contest, and problem.
+- Custom tests are managed inside the problem Test Cases tab and can be added, edited, or deleted only by their owner.
+- Custom tests may include optional expected output. If expected output is absent, AuraC2 shows program output without marking the case passed or failed.
+- Custom inputs are checked by the active problem input validator when one exists.
+- Run results are shown on the Test Cases tab cards with per-case verdict badges; compilation errors appear once at the run level and selected cases are marked not run.
+- Run results are transient UI results and do not create official `Submission` rows, publish submission queue messages, change scoreboard state, or apply penalties.
+- Run never loads hidden tests or hidden expected outputs and never runs the reference solution to produce expected output for arbitrary custom input.
 
 ### Compare Policies
 
@@ -206,6 +219,7 @@ Prompt previews include one-click copy plus `.txt` and `.md` download actions. T
 - Prompt exports do not integrate with AI APIs and do not make generated code official.
 - Generated tests and counterexamples are deterministic aids, not mathematical proof of correctness.
 - Statement PDFs flatten rich text into printable text and code-style sample blocks; they are contestant-safe exports, not editorial or solution documents.
+- Contestant Run executes public samples plus saved custom tests synchronously through Judge0 and uses a small in-memory per-team throttle; it is not a persistent run-history subsystem.
 
 ## Local Development
 
@@ -271,10 +285,11 @@ Flyway migrations are under `backend/src/main/resources/db/migration`:
 - `V6__structured_problem_statements.sql`
 - `V7__ensure_clarifications_table.sql`
 - `V8__generated_test_duplicate_status.sql`
+- `V9__team_custom_run_tests.sql`
 
 Manual repair scripts, if any, belong outside `db/migration` and are not part of the official forward-only migration history.
 
-To reset a local development database intentionally, stop the application, reset the PostgreSQL volume or schema, then restart so Flyway can apply V1-V8 from a clean state. This is a local reset operation, not the normal startup workflow.
+To reset a local development database intentionally, stop the application, reset the PostgreSQL volume or schema, then restart so Flyway can apply V1-V9 from a clean state. This is a local reset operation, not the normal startup workflow.
 
 ## Verification Commands
 

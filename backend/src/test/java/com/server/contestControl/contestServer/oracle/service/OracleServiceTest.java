@@ -714,6 +714,7 @@ class OracleServiceTest {
                 statusId,
                 statusDescription,
                 stdout,
+                null,
                 10,
                 1024,
                 diagnostic

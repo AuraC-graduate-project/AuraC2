@@ -94,7 +94,7 @@ cloud "Judge0" as J0
 - Code alignment: Feature classification in `docs/report-rebuild/analysis-plan.md`, backend controllers/services/entities/tests, and UI components under `UI/src`.
 - Current status: Implemented as documentation classification; individual feature statuses vary by group.
 - Actors/components/swimlanes/entities: Implemented scope, partial scope, future scope, deprecated/removed scope.
-- What the diagram should show: Implemented: login, admin-protected team registration, team credential XLSX/spreadsheet-safe CSV download at reveal time, refresh rotation/logout revocation, admin bootstrap, user admin, contest lifecycle, SSE contest/submission/clarification/scoreboard updates, structured problem/test-case create/update/delete, contestant-safe statement PDF/booklet export, deterministic prompt exports with no AI runtime call, deterministic compare policies, custom output validators, admin reference-solution oracle/generated counterexample UI, duplicate generated-test promotion skipping, admin source reveal controls, submission queue, Judge0 callback, per-case results, rejudge backend/UI, clarifications backend/UI, scoreboard ranking/freeze/reveal, reusable admin help tooltips. Partial: team workspace polish, result queue scaffold, local/offline deployment. Future: announcements, security monitor, statistics endpoints, participation/join workflow, richer report/export workflow, interactive judging/ML verdicts, full LAN-first Judge0. Removed: email verification.
+- What the diagram should show: Implemented: login, admin-protected team registration, team credential XLSX/spreadsheet-safe CSV download at reveal time, refresh rotation/logout revocation, admin bootstrap, user admin, contest lifecycle, SSE contest/submission/clarification/scoreboard updates, structured problem/test-case create/update/delete, contestant-safe statement PDF/booklet export, team solving workspace, non-scoring Run with public samples and private custom tests, deterministic prompt exports with no AI runtime call, deterministic compare policies, custom output validators, admin reference-solution oracle/generated counterexample UI, duplicate generated-test promotion skipping, admin source reveal controls, submission queue, Judge0 callback, per-case results, rejudge backend/UI, clarifications backend/UI, scoreboard ranking/freeze/reveal, reusable admin help tooltips. Partial: result queue scaffold, local/offline deployment. Future: announcements, security monitor, statistics endpoints, participation/join workflow, richer report/export workflow, interactive judging/ML verdicts, full LAN-first Judge0. Removed: email verification.
 - What the diagram must NOT include: Detailed code paths, class names, or unverified features.
 - AI image-generation prompt: Create a clean status diagram for AuraC2 with four labeled groups: Implemented, Partially Implemented, Planned/Future Work, Deprecated/Removed. Include concise feature chips. Make clear that registration is admin-protected, logout revocation is implemented, clarifications are wired, rejudge UI exists, and scoreboard ranking/freeze/reveal are implemented. Use formal academic styling and avoid clutter.
 - PlantUML:
@@ -106,13 +106,14 @@ rectangle "Implemented" as I {
   rectangle "Auth login\nAdmin-protected team registration\nRefresh rotation\nLogout revocation"
   rectangle "Contest lifecycle\nSSE updates\nProblem and test-case CRUD"
   rectangle "Structured statements\nSafe prompt exports\nStatement PDF/booklet exports"
+  rectangle "Team workspace\nNon-scoring Run\nPrivate custom tests"
   rectangle "Compare policies\nCustom validators\nSubmission queue\nJudge0 callbacks\nPer-test-case results"
   rectangle "Reference oracle\nGenerated tests\nDuplicate-safe promotion\nCounterexamples"
   rectangle "Admin source reveal\nCredential XLSX/CSV download\nHelp tooltips"
   rectangle "Rejudge backend/UI\nClarifications backend/UI\nScoreboard ranking/freeze/reveal"
 }
 rectangle "Partially Implemented" as P {
-  rectangle "Team workspace polish\nResult queue scaffold"
+  rectangle "Result queue scaffold"
   rectangle "Local/offline Judge0 setup"
 }
 rectangle "Planned / Future Work" as F {
@@ -193,13 +194,13 @@ Admin --> UC15
 - Report section: 5.1 Use Case Diagrams
 - Diagram type: UML use case diagram
 - Purpose: Show current team capabilities.
-- Description: Shows team workspace actions for login, contest/problem access, code drafts, submissions, live submission updates, scoreboard viewing, and clarifications.
+- Description: Shows team workspace actions for login, contest/problem access, code drafts, non-scoring Run, official submissions, live submission updates, scoreboard viewing, and clarifications.
 - Code alignment: `TeamWorkspace`, `CodeEditor`, `ProblemSidebar`, `SubmissionHistory`, `useSubmissionStream`, `Scoreboard`, `Clarifications`, and team API services.
-- Current status: Implemented with remaining problem-statement polish limitations.
+- Current status: Implemented with future refinements possible.
 - Actors/components/swimlanes/entities: Team User, AuraC2 backend/frontend.
-- What the diagram should show: Log in, view active contest, view problem list, select problem, write code, save local draft, submit code, receive live submission updates, view own submission history, view submitted code, view public/team scoreboard, submit clarifications, and view own/public clarification answers.
+- What the diagram should show: Log in, view active contest, view problem list, select problem, write code, save local draft, run code against locked public samples and private custom tests without scoring, manage own custom tests in the Test Cases tab, view transient run results on test-case cards, submit code officially, receive live submission updates, view official submission history, view submitted code, view public/team scoreboard, submit clarifications, and view own/public clarification answers.
 - What the diagram must NOT include: Admin user management or rejudge as a team action.
-- AI image-generation prompt: Create a UML use case diagram for AuraC2 team workspace. Actor: Team User. Include implemented use cases for login, view active contest, view problems, select problem, write code, local draft persistence, submit code, receive live submission updates, view own submission history, view submitted code, view scoreboard, submit clarifications, and view clarification answers.
+- AI image-generation prompt: Create a UML use case diagram for AuraC2 team workspace. Actor: Team User. Include implemented use cases for login, view active contest, view problems, select problem, write code, local draft persistence, run code on locked public samples and private custom tests as a non-scoring workflow, manage own custom tests in the Test Cases tab, view transient run results on test-case cards, submit code officially, receive live submission updates, view official submission history, view submitted code, view scoreboard, submit clarifications, and view clarification answers.
 - PlantUML:
 
 ```plantuml
@@ -214,6 +215,9 @@ rectangle "AuraC2 Team Workspace" {
   usecase "Write Code" as T5
   usecase "Save Local Draft" as T6
   usecase "Submit Code" as T7
+  usecase "Run Code\nNon-scoring" as T7b
+  usecase "Manage Own\nCustom Tests" as T7c
+  usecase "View Run Results\nOn Test Cases" as T7d
   usecase "Receive Live Submission Updates" as T8
   usecase "View Own Submission History" as T9
   usecase "View Submitted Code" as T10
@@ -228,6 +232,9 @@ Team --> T4
 Team --> T5
 T5 ..> T6 : includes
 Team --> T7
+Team --> T7b
+T7b ..> T7c : includes
+T7b ..> T7d : includes
 Team --> T8
 Team --> T9
 Team --> T10
@@ -701,11 +708,11 @@ CBS --> DB : aggregate final verdict
 - Purpose: Represent the current persistent model accurately.
 - Actors/components/swimlanes/entities: User, RefreshToken, Contest, Problem, TestCase, Clarification, Submission, SubmissionJudgeResult, ScoreboardRevealState, ScoreboardRevealCell, ReferenceSolution, InputGenerator, InputValidator, GeneratedTestBatch, GeneratedTestCase, Counterexample.
 - Description: Shows the current persistent entities and relationships, including structured statement fields, compare-policy/custom-validator columns on `Problem`, and the deterministic oracle/generated-test entities.
-- Code alignment: JPA entities under `contestServer.entity`, `contestServer.oracle.entity`, `authServer.entity`, `submissionServer.entity`, scoreboard entities, and Flyway migrations `V1`-`V8`.
+- Code alignment: JPA entities under `contestServer.entity`, `contestServer.oracle.entity`, `authServer.entity`, `submissionServer.entity`, `submissionServer.run.entity`, scoreboard entities, and Flyway migrations `V1`-`V9`.
 - Current status: Implemented.
-- What the diagram should show: One User to many RefreshToken; Contest to many Problem; Problem includes legacy description plus structured statement/input/output/constraints/publicNotes/adminNotes, comparePolicy, optional float epsilon fields, validationMode, validatorLanguageId, validatorSourceHash, and validatorEnabled; Problem to many TestCase; User/Contest/Problem to Submission; Submission to many SubmissionJudgeResult; Contest/User/optional Problem/admin User to Clarification; Contest to one ScoreboardRevealState; reveal state to many reveal cells; reveal cells link to team User and Problem; Problem to reference solutions, input generators, input validators, generated batches/cases, and counterexamples; generated cases can have duplicate status; counterexamples link to Submission, GeneratedTestCase, and optionally promoted hidden TestCase.
+- What the diagram should show: One User to many RefreshToken; Contest to many Problem; Problem includes legacy description plus structured statement/input/output/constraints/publicNotes/adminNotes, comparePolicy, optional float epsilon fields, validationMode, validatorLanguageId, validatorSourceHash, and validatorEnabled; Problem to many TestCase; User/Contest/Problem to Submission; Submission to many SubmissionJudgeResult; Contest/User/Problem to UserCustomTestCase for private non-scoring Run cases; Contest/User/optional Problem/admin User to Clarification; Contest to one ScoreboardRevealState; reveal state to many reveal cells; reveal cells link to team User and Problem; Problem to reference solutions, input generators, input validators, generated batches/cases, and counterexamples; generated cases can have duplicate status; counterexamples link to Submission, GeneratedTestCase, and optionally promoted hidden TestCase.
 - What the diagram must NOT include: SecurityAlert, Team entity, contest-membership table, Announcement entity, or a generic future Scoreboard table unless added in future code.
-- AI image-generation prompt: Create a readable ER diagram for the current AuraC2 database. Entities: User, RefreshToken, Contest, Problem, TestCase, Clarification, Submission, SubmissionJudgeResult, ScoreboardRevealState, ScoreboardRevealCell, ReferenceSolution, InputGenerator, InputValidator, GeneratedTestBatch, GeneratedTestCase, and Counterexample. Show primary keys, important fields including Problem structured statement fields, comparePolicy, float epsilon fields, validationMode, validatorLanguageId, validatorSourceHash, and validatorEnabled, cardinalities, and the note that Team is represented by User.role = TEAM. Show TestCase visibility as admin/internal for private cases and public/sample for TEAM users. Do not include future-only tables such as SecurityAlert, Announcement, or ContestMembership.
+- AI image-generation prompt: Create a readable ER diagram for the current AuraC2 database. Entities: User, RefreshToken, Contest, Problem, TestCase, UserCustomTestCase, Clarification, Submission, SubmissionJudgeResult, ScoreboardRevealState, ScoreboardRevealCell, ReferenceSolution, InputGenerator, InputValidator, GeneratedTestBatch, GeneratedTestCase, and Counterexample. Show primary keys, important fields including Problem structured statement fields, comparePolicy, float epsilon fields, validationMode, validatorLanguageId, validatorSourceHash, and validatorEnabled, cardinalities, and the note that Team is represented by User.role = TEAM. Show TestCase visibility as admin/internal for private cases and public/sample for TEAM users. Show UserCustomTestCase as private team-owned non-scoring run input with optional expected output. Do not include future-only tables such as SecurityAlert, Announcement, or ContestMembership.
 - PlantUML:
 
 ```plantuml
@@ -764,6 +771,13 @@ entity TestCase {
   inputData
   expectedOutput
   isPublic
+}
+entity UserCustomTestCase {
+  * id
+  inputData
+  expectedOutput
+  createdAt
+  updatedAt
 }
 entity Clarification {
   * id
@@ -846,6 +860,9 @@ entity Counterexample {
 User ||--o{ RefreshToken
 Contest ||--o{ Problem
 Problem ||--o{ TestCase
+User ||--o{ UserCustomTestCase : owner
+Contest ||--o{ UserCustomTestCase
+Problem ||--o{ UserCustomTestCase
 User ||--o{ Submission
 Contest ||--o{ Submission
 Problem ||--o{ Submission
@@ -871,6 +888,10 @@ TestCase ||--o{ Counterexample : promoted_test_case
 note right of TestCase
 Private rows are admin/internal only.
 TEAM API returns public samples only.
+end note
+note right of UserCustomTestCase
+Owner-scoped private non-scoring Run cases.
+Optional expected output.
 end note
 @enduml
 ```
@@ -934,13 +955,13 @@ end note
 - Report section: 6.2 Data Architecture Design
 - Diagram type: Logical database schema diagram
 - Purpose: Provide implementation-level table names and important columns.
-- Actors/components/swimlanes/entities: `users`, `refresh_tokens`, `contests`, `problems`, `test_cases`, `clarifications`, `submissions`, `submission_judge_results`, `scoreboard_reveal_states`, `scoreboard_reveal_cells`, `reference_solutions`, `input_generators`, `input_validators`, `generated_test_batches`, `generated_test_cases`, `counterexamples`.
+- Actors/components/swimlanes/entities: `users`, `refresh_tokens`, `contests`, `problems`, `test_cases`, `user_custom_test_cases`, `clarifications`, `submissions`, `submission_judge_results`, `scoreboard_reveal_states`, `scoreboard_reveal_cells`, `reference_solutions`, `input_generators`, `input_validators`, `generated_test_batches`, `generated_test_cases`, `counterexamples`.
 - Description: Shows table-level implementation columns, including structured statement fields and validator configuration fields on `problems`, plus deterministic oracle/generated-test tables and duplicate generated-case status.
-- Code alignment: Flyway migrations `V1__baseline_schema.sql`, `V2__problem_compare_policy.sql`, `V3__problem_custom_validators.sql`, `V4__reference_oracle_generated_tests.sql`, `V5__generated_test_batch_partial_status.sql`, `V6__structured_problem_statements.sql`, `V7__ensure_clarifications_table.sql`, and `V8__generated_test_duplicate_status.sql`.
+- Code alignment: Flyway migrations `V1__baseline_schema.sql`, `V2__problem_compare_policy.sql`, `V3__problem_custom_validators.sql`, `V4__reference_oracle_generated_tests.sql`, `V5__generated_test_batch_partial_status.sql`, `V6__structured_problem_statements.sql`, `V7__ensure_clarifications_table.sql`, `V8__generated_test_duplicate_status.sql`, and `V9__team_custom_run_tests.sql`.
 - Current status: Implemented.
 - What the diagram should show: Tables, primary keys, foreign keys, enum-as-string fields including `problems.compare_policy`, `problems.validation_mode`, generated batch/case status including `DUPLICATE`, structured statement columns on `problems`, important NOT NULL columns, indexes for lookup paths, and unique constraints.
 - What the diagram must NOT include: Unimplemented tables such as announcements, security alerts, contest membership, or generic scoreboard snapshots.
-- AI image-generation prompt: Create a relational schema diagram for AuraC2 using actual table names: users, refresh_tokens, contests, problems, test_cases, clarifications, submissions, submission_judge_results, scoreboard_reveal_states, scoreboard_reveal_cells, reference_solutions, input_generators, input_validators, generated_test_batches, generated_test_cases, and counterexamples. Show primary keys, foreign keys, enum string fields including problems.compare_policy and problems.validation_mode, structured statement columns, float epsilon columns, validator configuration columns, generated case status including DUPLICATE, useful indexes, NOT NULL required fields, and unique constraints such as users.username, submission_judge_results submission_id plus judge_run_id plus test_case_number, scoreboard_reveal_states contest_id, and scoreboard_reveal_cells reveal_state_id plus team_id plus problem_id. Keep the diagram compact and readable.
+- AI image-generation prompt: Create a relational schema diagram for AuraC2 using actual table names: users, refresh_tokens, contests, problems, test_cases, user_custom_test_cases, clarifications, submissions, submission_judge_results, scoreboard_reveal_states, scoreboard_reveal_cells, reference_solutions, input_generators, input_validators, generated_test_batches, generated_test_cases, and counterexamples. Show primary keys, foreign keys, enum string fields including problems.compare_policy and problems.validation_mode, structured statement columns, float epsilon columns, validator configuration columns, generated case status including DUPLICATE, useful indexes, NOT NULL required fields, and unique constraints such as users.username, submission_judge_results submission_id plus judge_run_id plus test_case_number, scoreboard_reveal_states contest_id, and scoreboard_reveal_cells reveal_state_id plus team_id plus problem_id. Show user_custom_test_cases owner_user_id plus contest_id plus problem_id for private Run tests. Keep the diagram compact and readable.
 - PlantUML:
 
 ```plantuml
@@ -998,6 +1019,16 @@ entity test_cases {
   input_data : text <<not null>>
   expected_output : text <<not null>>
   is_public : boolean <<not null>>
+}
+entity user_custom_test_cases {
+  * id : bigint
+  problem_id : bigint <<FK>>
+  contest_id : bigint <<FK>>
+  owner_user_id : bigint <<FK>>
+  input_data : text <<not null>>
+  expected_output : text <<nullable>>
+  created_at : timestamp
+  updated_at : timestamp
 }
 entity clarifications {
   * id : bigint
@@ -1090,6 +1121,9 @@ entity counterexamples {
 users ||--o{ refresh_tokens
 contests ||--o{ problems
 problems ||--o{ test_cases
+users ||--o{ user_custom_test_cases : owner_user_id
+contests ||--o{ user_custom_test_cases
+problems ||--o{ user_custom_test_cases
 users ||--o{ submissions
 contests ||--o{ submissions
 problems ||--o{ submissions
@@ -1124,6 +1158,10 @@ note right of test_cases
 Index:
 problem_id + is_public
 TEAM sample API uses public rows only.
+end note
+note right of user_custom_test_cases
+Owner-scoped non-scoring Run tests.
+Index: owner_user_id + contest_id + problem_id.
 end note
 @enduml
 ```
