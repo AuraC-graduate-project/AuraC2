@@ -5,6 +5,7 @@ import {
   ContestResponse,
   ContestStreamSnapshot,
   ContestStreamUpdate,
+  TeamContestAccessResponse,
 } from "../admin/types/api";
 import { decodeJwtSubject } from "../auth/jwt";
 import {
@@ -15,8 +16,9 @@ import {
   getActiveContest,
   getUpcomingContest,
   getPausedContest,
+  getMyContestAccess,
 } from "./services/teamApi";
-import { Loader2, LogOut } from "lucide-react";
+import { Loader2, LogOut, ShieldAlert } from "lucide-react";
 import { Button } from "./components/ui/button";
 
 type ResolvedState =
@@ -153,7 +155,7 @@ export default function TeamApp({ onLogout }: { onLogout: () => void }) {
   if (state.lifecycle === "RUNNING") {
     return (
       <>
-        <TeamWorkspace
+        <TeamContestGate
           contest={state.contest}
           teamName={teamName}
           onLogout={onLogout}
@@ -175,6 +177,104 @@ export default function TeamApp({ onLogout }: { onLogout: () => void }) {
       />
       {indicator}
     </>
+  );
+}
+
+function TeamContestGate({
+  contest,
+  teamName,
+  onLogout,
+}: {
+  contest: ContestResponse;
+  teamName: string;
+  onLogout: () => void;
+}) {
+  const [access, setAccess] = useState<TeamContestAccessResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    setError(null);
+    getMyContestAccess(contest.id)
+      .then((next) => {
+        if (mounted) setAccess(next);
+      })
+      .catch((err) => {
+        if (mounted) setError(err instanceof Error ? err.message : "Could not load contest access.");
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [contest.id]);
+
+  if (loading) {
+    return <TeamLoadingPage onLogout={onLogout} />;
+  }
+
+  if (error || !access) {
+    return (
+      <TeamBlockedPage
+        title="Contest access unavailable"
+        message={error ?? "AuraC2 could not verify your contest access."}
+        onLogout={onLogout}
+      />
+    );
+  }
+
+  if (!access.workspaceVisible || access.status === "DISQUALIFIED") {
+    return (
+      <TeamBlockedPage
+        title="You are disqualified from this contest."
+        message="Please contact the contest administrator if you believe this is a mistake."
+        onLogout={onLogout}
+      />
+    );
+  }
+
+  return (
+    <TeamWorkspace
+      contest={contest}
+      teamName={teamName}
+      teamAccess={access}
+      onLogout={onLogout}
+    />
+  );
+}
+
+function TeamBlockedPage({
+  title,
+  message,
+  onLogout,
+}: {
+  title: string;
+  message: string;
+  onLogout: () => void;
+}) {
+  return (
+    <div className="relative flex min-h-screen flex-col items-center justify-center bg-gray-50 p-6 text-center">
+      <Button
+        variant="ghost"
+        onClick={onLogout}
+        className="absolute right-4 top-4 text-gray-600 hover:text-gray-900"
+      >
+        <LogOut className="mr-2 h-4 w-4" />
+        Logout
+      </Button>
+
+      <div className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-700">
+          <ShieldAlert className="h-6 w-6" />
+        </div>
+        <h1 className="text-2xl font-semibold text-slate-950">{title}</h1>
+        <p className="mt-3 text-sm leading-6 text-slate-600">{message}</p>
+      </div>
+    </div>
   );
 }
 

@@ -3,6 +3,7 @@ package com.server.contestControl.contestServer.controller;
 import com.server.contestControl.contestServer.dto.problem.ProblemRequest;
 import com.server.contestControl.contestServer.dto.problem.ProblemResponse;
 import com.server.contestControl.contestServer.dto.problem.ProblemUpdateRequest;
+import com.server.contestControl.contestServer.moderation.service.ContestTeamModerationService;
 import jakarta.validation.Valid;
 import com.server.contestControl.contestServer.service.ProblemService;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import java.util.List;
 public class ProblemController {
 
     private final ProblemService problemService;
+    private final ContestTeamModerationService moderationService;
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -45,7 +47,11 @@ public class ProblemController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEAM')")
     public ResponseEntity<ProblemResponse> getProblem(@PathVariable Long id, Authentication authentication) {
-        return ResponseEntity.ok(problemService.getProblem(id, isAdmin(authentication)));
+        ProblemResponse response = problemService.getProblem(id, isAdmin(authentication));
+        if (!isAdmin(authentication)) {
+            moderationService.assertWorkspaceVisible(response.getContestId(), authentication.getName());
+        }
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/contest/{id}")
@@ -54,6 +60,9 @@ public class ProblemController {
             @PathVariable Long id,
             Authentication authentication
     ) {
+        if (!isAdmin(authentication)) {
+            moderationService.assertWorkspaceVisible(id, authentication.getName());
+        }
         return ResponseEntity.ok(problemService.getAllProblems(id, isAdmin(authentication)));
     }
 

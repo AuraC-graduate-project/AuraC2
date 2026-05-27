@@ -7,6 +7,7 @@ import {
   Trophy,
   Medal,
   RotateCcw,
+  FlaskConical,
 } from 'lucide-react';
 import auraSymbol from '../../assets/aura-symbol.png';
 
@@ -16,14 +17,15 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { icon: LayoutDashboard, label: 'Overview' },
-  { icon: Trophy, label: 'Contests' },
-  { icon: Users, label: 'Teams' },
-  { icon: FileCode, label: 'Problems' },
-  { icon: Send, label: 'Submissions' },
-  { icon: MessageSquare, label: 'Clarifications' },
-  { icon: Medal, label: 'Scoreboard' },
-  { icon: RotateCcw, label: 'Rejudge' },
+  { icon: LayoutDashboard, label: 'Overview', displayLabel: 'Overview' },
+  { icon: Trophy, label: 'Contests', displayLabel: 'Contests' },
+  { icon: Users, label: 'Teams', displayLabel: 'Teams' },
+  { icon: FileCode, label: 'Problems', displayLabel: 'Problems' },
+  { icon: Send, label: 'Submissions', displayLabel: 'Submissions' },
+  { icon: MessageSquare, label: 'Clarifications', displayLabel: 'Clarifications' },
+  { icon: Medal, label: 'Scoreboard', displayLabel: 'Scoreboard' },
+  { icon: RotateCcw, label: 'Rejudge', displayLabel: 'Rejudge' },
+  { icon: FlaskConical, label: 'RunLab', displayLabel: 'Run Lab' },
 ];
 
 export function Sidebar({ activeView, setActiveView }: SidebarProps) {
@@ -50,6 +52,7 @@ export function Sidebar({ activeView, setActiveView }: SidebarProps) {
             const Icon = item.icon;
             const isActive = activeView === item.label;
             const isFuture = item.label.includes('(Future)');
+            const displayLabel = item.displayLabel ?? item.label.replace(' (Future)', '');
             
             return (
               <li key={item.label}>
@@ -62,7 +65,7 @@ export function Sidebar({ activeView, setActiveView }: SidebarProps) {
                   }`}
                 >
                   <Icon className="h-5 w-5 shrink-0" />
-                  <span className="flex-1">{item.label.replace(' (Future)', '')}</span>
+                  <span className="flex-1">{displayLabel}</span>
                   {isFuture && (
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                       isActive ? 'bg-amber-100 text-amber-800' : 'bg-white/10 text-amber-100'

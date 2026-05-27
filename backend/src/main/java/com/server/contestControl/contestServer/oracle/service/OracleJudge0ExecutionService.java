@@ -39,11 +39,22 @@ public class OracleJudge0ExecutionService {
             Double cpuTimeLimitSeconds,
             Integer memoryLimitKilobytes
     ) {
+        return run(source, languageId, stdin, null, cpuTimeLimitSeconds, memoryLimitKilobytes);
+    }
+
+    public SandboxExecutionResult run(
+            String source,
+            int languageId,
+            String stdin,
+            String expectedOutput,
+            Double cpuTimeLimitSeconds,
+            Integer memoryLimitKilobytes
+    ) {
         Judge0SubmissionDTO dto = new Judge0SubmissionDTO(
                 source,
                 languageId,
                 stdin,
-                null,
+                expectedOutput,
                 null,
                 cpuTimeLimitSeconds,
                 memoryLimitKilobytes

@@ -1,7 +1,6 @@
 package com.server.contestControl.submissionServer.service.judge;
 
 import com.server.contestControl.contestServer.entity.TestCase;
-import com.server.contestControl.contestServer.enums.ComparePolicy;
 import com.server.contestControl.submissionServer.dto.Judge0SubmissionDTO;
 import com.server.contestControl.submissionServer.entity.Submission;
 import com.server.contestControl.submissionServer.service.callback.Judge0CallbackSignatureService;
@@ -22,6 +21,7 @@ public class Judge0Service {
 
     private final Judge0CallbackSignatureService callbackSignatureService;
     private final RestTemplate judge0RestTemplate;
+    private final Judge0ExpectedOutputPolicy expectedOutputPolicy;
 
     @Value("${judge0.url}")
     private String judge0Url;
@@ -71,17 +71,10 @@ public class Judge0Service {
     }
 
     String expectedOutputForJudge0(Submission submission, TestCase testCase) {
-        if (submission.getProblem() != null && submission.getProblem().hasActiveCustomValidator()) {
-            return null;
-        }
-
-        if (submission.getProblem() == null
-                || submission.getProblem().getComparePolicy() == null
-                || submission.getProblem().getComparePolicy() == ComparePolicy.EXACT) {
-            return testCase.getExpectedOutput();
-        }
-
-        return null;
+        return expectedOutputPolicy.expectedOutputForJudge0(
+                submission.getProblem(),
+                testCase.getExpectedOutput()
+        );
     }
 
     String buildSignedCallbackUrl(Submission submission, int testCaseNumber) {

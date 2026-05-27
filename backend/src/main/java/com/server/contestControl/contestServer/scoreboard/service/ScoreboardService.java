@@ -7,6 +7,7 @@ import com.server.contestControl.contestServer.entity.Contest;
 import com.server.contestControl.contestServer.entity.Problem;
 import com.server.contestControl.contestServer.enums.ContestStatus;
 import com.server.contestControl.contestServer.exception.ContestNotFoundException;
+import com.server.contestControl.contestServer.moderation.service.ContestTeamModerationService;
 import com.server.contestControl.contestServer.repository.ContestRepository;
 import com.server.contestControl.contestServer.repository.ProblemRepository;
 import com.server.contestControl.contestServer.scoreboard.dto.ScoreboardMetadata;
@@ -47,6 +48,7 @@ public class ScoreboardService {
     private final ScoreboardFreezePolicy freezePolicy;
     private final ScoreboardCalculator calculator;
     private final ScoreboardVersionService versionService;
+    private final ContestTeamModerationService moderationService;
 
     public ScoreboardSnapshot getPublicSnapshot(Long contestId) {
         return getSnapshot(contestId, ScoreboardAudience.PUBLIC, versionService.current(contestId, ScoreboardAudience.PUBLIC));
@@ -63,6 +65,14 @@ public class ScoreboardService {
         List<Problem> problems = problemRepository.findByContest_IdOrderByIdAsc(contestId);
         List<User> teams = userRepository.findAllByRoleOrderByUsernameAscIdAsc(Role.TEAM);
         List<Submission> allSubmissions = submissionRepository.findAllByContestIdForScoreboard(contestId);
+        Set<Long> suppressedTeamIds = moderationService.scoreboardSuppressedTeamIds(contestId);
+        List<User> visibleTeams = teams.stream()
+                .filter(team -> !suppressedTeamIds.contains(team.getId()))
+                .toList();
+        List<Submission> moderationVisibleSubmissions = allSubmissions.stream()
+                .filter(submission -> submission.getUser() == null
+                        || !suppressedTeamIds.contains(submission.getUser().getId()))
+                .toList();
         RevealContext revealContext = revealContext(contestId);
 
         Instant freezeTime = freezePolicy.freezeTime(contest, now);
@@ -75,7 +85,7 @@ public class ScoreboardService {
         ScoreboardViewMode viewMode = viewModeFor(audience);
         Set<ScoreboardCellKey> publicHiddenCells = !publicFrozen
                 ? Set.of()
-                : calculator.hiddenCellsAfterFreeze(freezeTime, allSubmissions);
+                : calculator.hiddenCellsAfterFreeze(freezeTime, moderationVisibleSubmissions);
         Set<ScoreboardCellKey> revealedCells = revealContext.revealedCells();
         Set<ScoreboardCellKey> rowHiddenCells = viewMode == ScoreboardViewMode.PUBLIC_OFFICIAL && publicFrozen
                 ? publicHiddenCells
@@ -88,7 +98,7 @@ public class ScoreboardService {
                 publicFrozen,
                 freezeTime,
                 revealedCells,
-                allSubmissions
+                moderationVisibleSubmissions
         );
 
         List<ScoreboardMetadata.ProblemColumn> columns = new ArrayList<>();
@@ -124,7 +134,7 @@ public class ScoreboardService {
 
         return new ScoreboardSnapshot(
                 metadata,
-                calculator.calculateRows(contest, problems, teams, visibleSubmissions, rowHiddenCells, rowRevealedCells)
+                calculator.calculateRows(contest, problems, visibleTeams, visibleSubmissions, rowHiddenCells, rowRevealedCells)
         );
     }
 

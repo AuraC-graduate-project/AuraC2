@@ -152,6 +152,14 @@ function resultKey(caseType: string, caseId: number | null | undefined) {
   return `${caseType}:${caseId ?? "inline"}`;
 }
 
+function escapedOutput(value: string | null | undefined): string {
+  return JSON.stringify(value ?? "");
+}
+
+function normalizedVisible(value: string | null | undefined): string {
+  return (value ?? "").replace(/\r\n/g, "\n").replace(/\r/g, "\n").trimEnd();
+}
+
 function CodeBlock({
   label,
   value,
@@ -569,6 +577,14 @@ function TestCaseCard({
   const status = running ? "RUNNING" : result?.status;
   const meta = verdictMeta(status);
   const hasResultDetails = Boolean(result);
+  const displayedInput = result?.input ?? input;
+  const displayedExpectedOutput = result?.expectedOutput ?? expectedOutput;
+  const whitespaceOnlyMismatch =
+    result?.status === "WRONG_ANSWER"
+    && displayedExpectedOutput != null
+    && result.actualOutput != null
+    && displayedExpectedOutput !== result.actualOutput
+    && normalizedVisible(displayedExpectedOutput) === normalizedVisible(result.actualOutput);
 
   return (
     <article className={`rounded-lg border p-3 ${meta.className}`}>
@@ -616,15 +632,21 @@ function TestCaseCard({
       </div>
 
       <div className="mt-3 grid gap-3 xl:grid-cols-2">
-        <CaseValue label="Input" value={input} onCopy={onCopy} dark />
-        {expectedOutput != null ? (
-          <CaseValue label="Expected Output" value={expectedOutput} onCopy={onCopy} />
+        <CaseValue label="Input" value={displayedInput} onCopy={onCopy} dark />
+        {displayedExpectedOutput != null ? (
+          <CaseValue label="Expected Output" value={displayedExpectedOutput} onCopy={onCopy} />
         ) : (
           <p className="rounded-md border border-dashed border-slate-300 bg-white p-2.5 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
             No expected output
           </p>
         )}
       </div>
+
+      {whitespaceOnlyMismatch && (
+        <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+          Outputs differ by whitespace, line endings, or hidden characters.
+        </p>
+      )}
 
       {hasResultDetails && (
         <div className="mt-3">
@@ -641,6 +663,12 @@ function TestCaseCard({
             <div className="mt-3 grid gap-3 xl:grid-cols-2">
               <CodeBlock label="Actual Output" value={result.actualOutput} muted />
               {result.stderr && <CodeBlock label="Stderr" value={result.stderr} muted />}
+              {result.status === "WRONG_ANSWER" && displayedExpectedOutput != null && (
+                <CodeBlock label="Expected Escaped" value={escapedOutput(displayedExpectedOutput)} muted />
+              )}
+              {result.status === "WRONG_ANSWER" && (
+                <CodeBlock label="Actual Escaped" value={escapedOutput(result.actualOutput)} muted />
+              )}
               <div className="rounded-md border border-slate-200 bg-white p-2.5 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-200">
                 <p className="font-semibold uppercase tracking-wide text-slate-500">Runtime</p>
                 <p className="mt-1">{result.runtimeMillis ?? 0} ms</p>

@@ -12,6 +12,12 @@ import {
   UserResponse,
   BulkTeamGenerationRequest,
   GeneratedTeamCredentialResponse,
+  ContestTeamModerationResponse,
+  ModerationActionRequest,
+  ModerationAuditLogResponse,
+  ModerationLogFilters,
+  AdminRunLabRequest,
+  AdminRunLabResponse,
   TestCaseRequest,
   TestCaseUpdateRequest,
   TestCaseResponse,
@@ -386,6 +392,64 @@ export async function generateTeamAccounts(
   data: BulkTeamGenerationRequest
 ): Promise<GeneratedTeamCredentialResponse[]> {
   return apiFetch<GeneratedTeamCredentialResponse[]>('/api/admin/users/bulk-generate-teams', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+}
+
+// -----------------------------
+// Admin / Team moderation
+// -----------------------------
+
+export async function getContestTeamModerations(contestId: number): Promise<ContestTeamModerationResponse[]> {
+  return apiFetch<ContestTeamModerationResponse[]>(`/api/admin/team-moderation/contests/${contestId}/teams`);
+}
+
+export async function moderateContestTeam(
+  contestId: number,
+  teamId: number,
+  data: ModerationActionRequest
+): Promise<ContestTeamModerationResponse> {
+  return apiFetch<ContestTeamModerationResponse>(
+    `/api/admin/team-moderation/contests/${contestId}/teams/${teamId}/actions`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }
+  );
+}
+
+function moderationLogParams(filters: ModerationLogFilters = {}): string {
+  const params = new URLSearchParams();
+  if (filters.contestId != null) params.set('contestId', String(filters.contestId));
+  if (filters.teamId != null) params.set('teamId', String(filters.teamId));
+  if (filters.adminId != null) params.set('adminId', String(filters.adminId));
+  if (filters.actionType) params.set('actionType', filters.actionType);
+  if (filters.from) params.set('from', filters.from);
+  if (filters.to) params.set('to', filters.to);
+  return params.toString() ? `?${params.toString()}` : '';
+}
+
+export async function getModerationLogs(
+  filters: ModerationLogFilters = {}
+): Promise<ModerationAuditLogResponse[]> {
+  return apiFetch<ModerationAuditLogResponse[]>(`/api/admin/team-moderation/logs${moderationLogParams(filters)}`);
+}
+
+export async function exportModerationLogsCsv(
+  filters: ModerationLogFilters = {}
+): Promise<{ blob: Blob; filename: string | null }> {
+  return apiBlobFetch(`/api/admin/team-moderation/logs.csv${moderationLogParams(filters)}`);
+}
+
+// -----------------------------
+// Admin / Run Lab
+// -----------------------------
+
+export async function runAdminLab(data: AdminRunLabRequest): Promise<AdminRunLabResponse> {
+  return apiFetch<AdminRunLabResponse>('/api/admin/run-lab/run', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),

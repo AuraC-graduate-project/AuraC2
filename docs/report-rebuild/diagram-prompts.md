@@ -706,13 +706,13 @@ CBS --> DB : aggregate final verdict
 - Report section: 6.2 Data Architecture Design
 - Diagram type: ER diagram
 - Purpose: Represent the current persistent model accurately.
-- Actors/components/swimlanes/entities: User, RefreshToken, Contest, Problem, TestCase, Clarification, Submission, SubmissionJudgeResult, ScoreboardRevealState, ScoreboardRevealCell, ReferenceSolution, InputGenerator, InputValidator, GeneratedTestBatch, GeneratedTestCase, Counterexample.
-- Description: Shows the current persistent entities and relationships, including structured statement fields, compare-policy/custom-validator columns on `Problem`, and the deterministic oracle/generated-test entities.
-- Code alignment: JPA entities under `contestServer.entity`, `contestServer.oracle.entity`, `authServer.entity`, `submissionServer.entity`, `submissionServer.run.entity`, scoreboard entities, and Flyway migrations `V1`-`V9`.
+- Actors/components/swimlanes/entities: User, RefreshToken, Contest, Problem, TestCase, UserCustomTestCase, ContestTeamModeration, ContestModerationAuditLog, Clarification, Submission, SubmissionJudgeResult, ScoreboardRevealState, ScoreboardRevealCell, ReferenceSolution, InputGenerator, InputValidator, GeneratedTestBatch, GeneratedTestCase, Counterexample.
+- Description: Shows the current persistent entities and relationships, including structured statement fields, compare-policy/custom-validator columns on `Problem`, contest-scoped moderation/audit entities, and the deterministic oracle/generated-test entities.
+- Code alignment: JPA entities under `contestServer.entity`, `contestServer.moderation.entity`, `contestServer.oracle.entity`, `authServer.entity`, `submissionServer.entity`, `submissionServer.run.entity`, scoreboard entities, and Flyway migrations `V1`-`V10`.
 - Current status: Implemented.
-- What the diagram should show: One User to many RefreshToken; Contest to many Problem; Problem includes legacy description plus structured statement/input/output/constraints/publicNotes/adminNotes, comparePolicy, optional float epsilon fields, validationMode, validatorLanguageId, validatorSourceHash, and validatorEnabled; Problem to many TestCase; User/Contest/Problem to Submission; Submission to many SubmissionJudgeResult; Contest/User/Problem to UserCustomTestCase for private non-scoring Run cases; Contest/User/optional Problem/admin User to Clarification; Contest to one ScoreboardRevealState; reveal state to many reveal cells; reveal cells link to team User and Problem; Problem to reference solutions, input generators, input validators, generated batches/cases, and counterexamples; generated cases can have duplicate status; counterexamples link to Submission, GeneratedTestCase, and optionally promoted hidden TestCase.
+- What the diagram should show: One User to many RefreshToken; Contest to many Problem; Problem includes legacy description plus structured statement/input/output/constraints/publicNotes/adminNotes, comparePolicy, optional float epsilon fields, validationMode, validatorLanguageId, validatorSourceHash, and validatorEnabled; Problem to many TestCase; User/Contest/Problem to Submission; Submission to many SubmissionJudgeResult; Contest/User/Problem to UserCustomTestCase for private non-scoring Run cases; Contest/User to ContestTeamModeration for contest-scoped status, scoreboard visibility, Submit, and Run access; Contest/User/admin User to ContestModerationAuditLog; Contest/User/optional Problem/admin User to Clarification; Contest to one ScoreboardRevealState; reveal state to many reveal cells; reveal cells link to team User and Problem; Problem to reference solutions, input generators, input validators, generated batches/cases, and counterexamples; generated cases can have duplicate status; counterexamples link to Submission, GeneratedTestCase, and optionally promoted hidden TestCase.
 - What the diagram must NOT include: SecurityAlert, Team entity, contest-membership table, Announcement entity, or a generic future Scoreboard table unless added in future code.
-- AI image-generation prompt: Create a readable ER diagram for the current AuraC2 database. Entities: User, RefreshToken, Contest, Problem, TestCase, UserCustomTestCase, Clarification, Submission, SubmissionJudgeResult, ScoreboardRevealState, ScoreboardRevealCell, ReferenceSolution, InputGenerator, InputValidator, GeneratedTestBatch, GeneratedTestCase, and Counterexample. Show primary keys, important fields including Problem structured statement fields, comparePolicy, float epsilon fields, validationMode, validatorLanguageId, validatorSourceHash, and validatorEnabled, cardinalities, and the note that Team is represented by User.role = TEAM. Show TestCase visibility as admin/internal for private cases and public/sample for TEAM users. Show UserCustomTestCase as private team-owned non-scoring run input with optional expected output. Do not include future-only tables such as SecurityAlert, Announcement, or ContestMembership.
+- AI image-generation prompt: Create a readable ER diagram for the current AuraC2 database. Entities: User, RefreshToken, Contest, Problem, TestCase, UserCustomTestCase, ContestTeamModeration, ContestModerationAuditLog, Clarification, Submission, SubmissionJudgeResult, ScoreboardRevealState, ScoreboardRevealCell, ReferenceSolution, InputGenerator, InputValidator, GeneratedTestBatch, GeneratedTestCase, and Counterexample. Show primary keys, important fields including Problem structured statement fields, comparePolicy, float epsilon fields, validationMode, validatorLanguageId, validatorSourceHash, and validatorEnabled, cardinalities, and the note that Team is represented by User.role = TEAM. Show ContestTeamModeration as contest-scoped team status/visibility/access controls and ContestModerationAuditLog as admin action history. Show TestCase visibility as admin/internal for private cases and public/sample for TEAM users. Show UserCustomTestCase as private team-owned non-scoring run input with optional expected output. Do not include future-only tables such as SecurityAlert, Announcement, or ContestMembership.
 - PlantUML:
 
 ```plantuml
@@ -778,6 +778,23 @@ entity UserCustomTestCase {
   expectedOutput
   createdAt
   updatedAt
+}
+entity ContestTeamModeration {
+  * id
+  status
+  hiddenFromScoreboard
+  submitEnabled
+  runEnabled
+  reason
+  updatedAt
+}
+entity ContestModerationAuditLog {
+  * id
+  actionType
+  reason
+  oldValueJson
+  newValueJson
+  createdAt
 }
 entity Clarification {
   * id
@@ -863,6 +880,12 @@ Problem ||--o{ TestCase
 User ||--o{ UserCustomTestCase : owner
 Contest ||--o{ UserCustomTestCase
 Problem ||--o{ UserCustomTestCase
+Contest ||--o{ ContestTeamModeration
+User ||--o{ ContestTeamModeration : team
+User ||--o{ ContestTeamModeration : updatedByAdmin
+Contest ||--o{ ContestModerationAuditLog
+User ||--o{ ContestModerationAuditLog : team
+User ||--o{ ContestModerationAuditLog : admin
 User ||--o{ Submission
 Contest ||--o{ Submission
 Problem ||--o{ Submission
@@ -892,6 +915,11 @@ end note
 note right of UserCustomTestCase
 Owner-scoped private non-scoring Run cases.
 Optional expected output.
+end note
+note right of ContestTeamModeration
+Contest-scoped controls:
+scoreboard visibility,
+Submit, Run, disqualification.
 end note
 @enduml
 ```
@@ -955,13 +983,13 @@ end note
 - Report section: 6.2 Data Architecture Design
 - Diagram type: Logical database schema diagram
 - Purpose: Provide implementation-level table names and important columns.
-- Actors/components/swimlanes/entities: `users`, `refresh_tokens`, `contests`, `problems`, `test_cases`, `user_custom_test_cases`, `clarifications`, `submissions`, `submission_judge_results`, `scoreboard_reveal_states`, `scoreboard_reveal_cells`, `reference_solutions`, `input_generators`, `input_validators`, `generated_test_batches`, `generated_test_cases`, `counterexamples`.
-- Description: Shows table-level implementation columns, including structured statement fields and validator configuration fields on `problems`, plus deterministic oracle/generated-test tables and duplicate generated-case status.
-- Code alignment: Flyway migrations `V1__baseline_schema.sql`, `V2__problem_compare_policy.sql`, `V3__problem_custom_validators.sql`, `V4__reference_oracle_generated_tests.sql`, `V5__generated_test_batch_partial_status.sql`, `V6__structured_problem_statements.sql`, `V7__ensure_clarifications_table.sql`, `V8__generated_test_duplicate_status.sql`, and `V9__team_custom_run_tests.sql`.
+- Actors/components/swimlanes/entities: `users`, `refresh_tokens`, `contests`, `problems`, `test_cases`, `user_custom_test_cases`, `contest_team_moderations`, `contest_moderation_audit_logs`, `clarifications`, `submissions`, `submission_judge_results`, `scoreboard_reveal_states`, `scoreboard_reveal_cells`, `reference_solutions`, `input_generators`, `input_validators`, `generated_test_batches`, `generated_test_cases`, `counterexamples`.
+- Description: Shows table-level implementation columns, including structured statement fields and validator configuration fields on `problems`, contest-scoped team moderation/audit tables, plus deterministic oracle/generated-test tables and duplicate generated-case status.
+- Code alignment: Flyway migrations `V1__baseline_schema.sql`, `V2__problem_compare_policy.sql`, `V3__problem_custom_validators.sql`, `V4__reference_oracle_generated_tests.sql`, `V5__generated_test_batch_partial_status.sql`, `V6__structured_problem_statements.sql`, `V7__ensure_clarifications_table.sql`, `V8__generated_test_duplicate_status.sql`, `V9__team_custom_run_tests.sql`, and `V10__contest_team_moderation.sql`.
 - Current status: Implemented.
-- What the diagram should show: Tables, primary keys, foreign keys, enum-as-string fields including `problems.compare_policy`, `problems.validation_mode`, generated batch/case status including `DUPLICATE`, structured statement columns on `problems`, important NOT NULL columns, indexes for lookup paths, and unique constraints.
+- What the diagram should show: Tables, primary keys, foreign keys, enum-as-string fields including `problems.compare_policy`, `problems.validation_mode`, `contest_team_moderations.status`, `contest_moderation_audit_logs.action_type`, generated batch/case status including `DUPLICATE`, structured statement columns on `problems`, important NOT NULL columns, indexes for lookup paths, and unique constraints.
 - What the diagram must NOT include: Unimplemented tables such as announcements, security alerts, contest membership, or generic scoreboard snapshots.
-- AI image-generation prompt: Create a relational schema diagram for AuraC2 using actual table names: users, refresh_tokens, contests, problems, test_cases, user_custom_test_cases, clarifications, submissions, submission_judge_results, scoreboard_reveal_states, scoreboard_reveal_cells, reference_solutions, input_generators, input_validators, generated_test_batches, generated_test_cases, and counterexamples. Show primary keys, foreign keys, enum string fields including problems.compare_policy and problems.validation_mode, structured statement columns, float epsilon columns, validator configuration columns, generated case status including DUPLICATE, useful indexes, NOT NULL required fields, and unique constraints such as users.username, submission_judge_results submission_id plus judge_run_id plus test_case_number, scoreboard_reveal_states contest_id, and scoreboard_reveal_cells reveal_state_id plus team_id plus problem_id. Show user_custom_test_cases owner_user_id plus contest_id plus problem_id for private Run tests. Keep the diagram compact and readable.
+- AI image-generation prompt: Create a relational schema diagram for AuraC2 using actual table names: users, refresh_tokens, contests, problems, test_cases, user_custom_test_cases, contest_team_moderations, contest_moderation_audit_logs, clarifications, submissions, submission_judge_results, scoreboard_reveal_states, scoreboard_reveal_cells, reference_solutions, input_generators, input_validators, generated_test_batches, generated_test_cases, and counterexamples. Show primary keys, foreign keys, enum string fields including problems.compare_policy and problems.validation_mode, contest_team_moderations.status, contest_moderation_audit_logs.action_type, structured statement columns, float epsilon columns, validator configuration columns, generated case status including DUPLICATE, useful indexes, NOT NULL required fields, and unique constraints such as users.username, contest_team_moderations contest_id plus team_id, submission_judge_results submission_id plus judge_run_id plus test_case_number, scoreboard_reveal_states contest_id, and scoreboard_reveal_cells reveal_state_id plus team_id plus problem_id. Show user_custom_test_cases owner_user_id plus contest_id plus problem_id for private Run tests. Keep the diagram compact and readable.
 - PlantUML:
 
 ```plantuml
@@ -1029,6 +1057,30 @@ entity user_custom_test_cases {
   expected_output : text <<nullable>>
   created_at : timestamp
   updated_at : timestamp
+}
+entity contest_team_moderations {
+  * id : bigint
+  contest_id : bigint <<FK>>
+  team_id : bigint <<FK>>
+  status : varchar <<ACTIVE/DISQUALIFIED>>
+  hidden_from_scoreboard : boolean
+  submit_enabled : boolean
+  run_enabled : boolean
+  reason : text
+  updated_by_admin_id : bigint <<FK nullable>>
+  created_at : timestamp
+  updated_at : timestamp
+}
+entity contest_moderation_audit_logs {
+  * id : bigint
+  contest_id : bigint <<FK>>
+  team_id : bigint <<FK>>
+  admin_id : bigint <<FK nullable>>
+  action_type : varchar
+  reason : text
+  old_value_json : text
+  new_value_json : text
+  created_at : timestamp
 }
 entity clarifications {
   * id : bigint
@@ -1124,6 +1176,12 @@ problems ||--o{ test_cases
 users ||--o{ user_custom_test_cases : owner_user_id
 contests ||--o{ user_custom_test_cases
 problems ||--o{ user_custom_test_cases
+contests ||--o{ contest_team_moderations
+users ||--o{ contest_team_moderations : team_id
+users ||--o{ contest_team_moderations : updated_by_admin_id
+contests ||--o{ contest_moderation_audit_logs
+users ||--o{ contest_moderation_audit_logs : team_id
+users ||--o{ contest_moderation_audit_logs : admin_id
 users ||--o{ submissions
 contests ||--o{ submissions
 problems ||--o{ submissions
@@ -1162,6 +1220,10 @@ end note
 note right of user_custom_test_cases
 Owner-scoped non-scoring Run tests.
 Index: owner_user_id + contest_id + problem_id.
+end note
+note right of contest_team_moderations
+Unique: contest_id + team_id.
+Contest-scoped moderation only.
 end note
 @enduml
 ```
@@ -1225,5 +1287,62 @@ Generated tests improve bug discovery but do not
 prove correctness. ML is not used as a verdict source.
 Untrusted source runs through Judge0, not the backend host.
 end note
+@enduml
+```
+
+## Figure 19 - Contest Team Moderation Workflow
+
+- Report section: 5.3 Activity Diagrams for Complicated Behaviors / 7.3 Admin UI Structure
+- Diagram type: Activity diagram with swimlanes
+- Purpose: Show contest-scoped moderation actions and their enforcement points.
+- Description: Shows administrators selecting a contest in the Teams page, applying a moderation action with a reason, persisted contest-scoped state, audit logging, scoreboard filtering, Submit/Run guards, and the disqualified team workspace.
+- Code alignment: `TeamsView`, `AdminTeamModerationController`, `ContestTeamModerationService`, `ContestTeamModeration`, `ContestModerationAuditLog`, `ContestModerationCsvExporter`, `TeamContestAccessController`, `SubmissionService`, `TeamRunService`, `ScoreboardService`, `TeamContestGate`, and `V10__contest_team_moderation.sql`.
+- Current status: Implemented backend/admin/team UI.
+- Actors/components/swimlanes/entities: Administrator, Admin React Teams page, AdminTeamModerationController, ContestTeamModerationService, PostgreSQL moderation/audit tables, ScoreboardService, SubmissionService, TeamRunService, Team React workspace.
+- What the diagram should show: Accounts tab remains global account management; Contest Moderation tab requires a selected contest; sensitive actions require a reason; the service updates contest-scoped moderation state and writes an audit log with old/new values; scoreboard excludes hidden/disqualified teams; Submit rejects disqualified or submit-disabled teams; Run rejects disqualified or run-disabled teams; disqualified teams see a blocked contest page; existing submissions remain stored.
+- What the diagram must NOT include: Deleting team accounts, deleting submissions, exposing hidden tests, exposing hidden expected outputs, or using frontend-only enforcement.
+- AI image-generation prompt: Create a clean activity diagram for AuraC2 contest team moderation. Show Administrator using the Teams page with three tabs: Accounts, Contest Moderation, Moderation Logs. In Contest Moderation, admin selects a contest and team, chooses Hide from Scoreboard, Disqualify, Disable Submit, or Disable Run, enters a reason for sensitive actions, and sends the request to AdminTeamModerationController. Show ContestTeamModerationService updating contest_team_moderations and writing contest_moderation_audit_logs with old/new JSON. Show ScoreboardService excluding hidden or disqualified teams without deleting submissions. Show SubmissionService and TeamRunService checking moderation state server-side. Show TeamContestGate rendering a blocked page for disqualified teams. Add note: moderation is contest-scoped; team accounts and stored submissions remain intact; hidden tests are never exposed.
+- PlantUML:
+
+```plantuml
+@startuml
+|Administrator|
+start
+:Open Teams page;
+:Use Accounts tab for\nglobal account management;
+:Open Contest Moderation tab;
+:Select contest and team;
+:Choose moderation action;
+if (Sensitive action?) then (yes)
+  :Enter required reason;
+else (no)
+  :Optional note;
+endif
+|Admin React UI|
+:POST moderation action;
+|AdminTeamModerationController|
+:Require ADMIN;
+:Call ContestTeamModerationService;
+|ContestTeamModerationService|
+:Load old contest-scoped state;
+:Apply action to status,\nscoreboard visibility,\nSubmit, Run;
+:Persist ContestTeamModeration;
+:Write ContestModerationAuditLog\nwith old/new JSON;
+|ScoreboardService|
+:Filter hidden/disqualified teams\nfrom snapshots;
+|SubmissionService|
+:Reject official Submit if\ndisqualified or submit disabled;
+|TeamRunService|
+:Reject non-scoring Run if\ndisqualified or run disabled;
+|Team React Workspace|
+if (Disqualified?) then (yes)
+  :Show blocked contest page;
+else (no)
+  :Show normal workspace\nwith allowed controls;
+endif
+|Administrator|
+:Review Moderation Logs tab;
+:Export filtered CSV;
+stop
 @enduml
 ```

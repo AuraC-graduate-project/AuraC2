@@ -5,6 +5,7 @@ import {
     ProblemResponse,
     ScoreboardSnapshot,
     SubmissionResponse,
+    TeamContestAccessResponse,
     TestCaseResponse,
 } from "../../admin/types/api";
 
@@ -260,4 +261,8 @@ export function getMyClarifications(
 
 export function getPublicScoreboard(contestId: number): Promise<ScoreboardSnapshot> {
     return apiFetch(`/api/scoreboard/contests/${contestId}`);
+}
+
+export function getMyContestAccess(contestId: number): Promise<TeamContestAccessResponse> {
+    return apiFetch(`/api/team/contests/${contestId}/access`);
 }

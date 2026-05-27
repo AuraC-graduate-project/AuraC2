@@ -5,10 +5,12 @@ import com.server.contestControl.contestServer.dto.testcase.TestCaseResponse;
 import com.server.contestControl.contestServer.dto.testcase.TestCaseUpdateRequest;
 import com.server.contestControl.contestServer.dto.testcase.PublicTestCaseResponse;
 import jakarta.validation.Valid;
+import com.server.contestControl.contestServer.moderation.service.ContestTeamModerationService;
 import com.server.contestControl.contestServer.service.TestCaseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +21,7 @@ import java.util.List;
 public class TestCaseController {
 
     private final TestCaseService testCaseService;
+    private final ContestTeamModerationService moderationService;
 
     @PostMapping("/{problemId}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -56,8 +59,13 @@ public class TestCaseController {
     @GetMapping("/public/problem/{problemId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEAM')")
     public ResponseEntity<List<PublicTestCaseResponse>> getPublicTestCases(
-            @PathVariable Long problemId
+            @PathVariable Long problemId,
+            Authentication authentication
     ) {
+        if (authentication != null && authentication.getAuthorities().stream()
+                .noneMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()))) {
+            moderationService.assertProblemWorkspaceVisible(problemId, authentication.getName());
+        }
         return ResponseEntity.ok(testCaseService.getPublicTestCases(problemId));
     }
 }

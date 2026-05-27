@@ -26,7 +26,11 @@ class Judge0ServiceTest {
     @Test
     void callbackUrlIncludesSignatureBoundToSubmissionRunAndTestCase() {
         Judge0CallbackSignatureService signatureService = mock(Judge0CallbackSignatureService.class);
-        Judge0Service judge0Service = new Judge0Service(signatureService, mock(RestTemplate.class));
+        Judge0Service judge0Service = new Judge0Service(
+                signatureService,
+                mock(RestTemplate.class),
+                new Judge0ExpectedOutputPolicy()
+        );
         ReflectionTestUtils.setField(
                 judge0Service,
                 "callbackUrl",
@@ -50,7 +54,11 @@ class Judge0ServiceTest {
     void judge0RequestIncludesProblemTimeAndMemoryLimits() {
         Judge0CallbackSignatureService signatureService = mock(Judge0CallbackSignatureService.class);
         RestTemplate restTemplate = mock(RestTemplate.class);
-        Judge0Service judge0Service = new Judge0Service(signatureService, restTemplate);
+        Judge0Service judge0Service = new Judge0Service(
+                signatureService,
+                restTemplate,
+                new Judge0ExpectedOutputPolicy()
+        );
         ReflectionTestUtils.setField(judge0Service, "judge0Url", "http://judge0/submissions?wait=false");
         ReflectionTestUtils.setField(judge0Service, "callbackUrl", "http://localhost:8080/api/callback/judge0");
 
@@ -92,7 +100,11 @@ class Judge0ServiceTest {
     void nonExactComparePolicyOmitsExpectedOutputForBackendComparison() {
         Judge0CallbackSignatureService signatureService = mock(Judge0CallbackSignatureService.class);
         RestTemplate restTemplate = mock(RestTemplate.class);
-        Judge0Service judge0Service = new Judge0Service(signatureService, restTemplate);
+        Judge0Service judge0Service = new Judge0Service(
+                signatureService,
+                restTemplate,
+                new Judge0ExpectedOutputPolicy()
+        );
         ReflectionTestUtils.setField(judge0Service, "judge0Url", "http://judge0/submissions?wait=false");
         ReflectionTestUtils.setField(judge0Service, "callbackUrl", "http://localhost:8080/api/callback/judge0");
 
@@ -130,7 +142,11 @@ class Judge0ServiceTest {
     void activeCustomValidatorOmitsExpectedOutputEvenWhenComparePolicyIsExact() {
         Judge0CallbackSignatureService signatureService = mock(Judge0CallbackSignatureService.class);
         RestTemplate restTemplate = mock(RestTemplate.class);
-        Judge0Service judge0Service = new Judge0Service(signatureService, restTemplate);
+        Judge0Service judge0Service = new Judge0Service(
+                signatureService,
+                restTemplate,
+                new Judge0ExpectedOutputPolicy()
+        );
         ReflectionTestUtils.setField(judge0Service, "judge0Url", "http://judge0/submissions?wait=false");
         ReflectionTestUtils.setField(judge0Service, "callbackUrl", "http://localhost:8080/api/callback/judge0");
 
@@ -172,7 +188,11 @@ class Judge0ServiceTest {
     void nullOrNonPositiveProblemLimitsAreOmittedFromJudge0Request() {
         Judge0CallbackSignatureService signatureService = mock(Judge0CallbackSignatureService.class);
         RestTemplate restTemplate = mock(RestTemplate.class);
-        Judge0Service judge0Service = new Judge0Service(signatureService, restTemplate);
+        Judge0Service judge0Service = new Judge0Service(
+                signatureService,
+                restTemplate,
+                new Judge0ExpectedOutputPolicy()
+        );
         ReflectionTestUtils.setField(judge0Service, "judge0Url", "http://judge0/submissions?wait=false");
         ReflectionTestUtils.setField(judge0Service, "callbackUrl", "http://localhost:8080/api/callback/judge0");
 

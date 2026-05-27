@@ -52,6 +52,30 @@ class OracleJudge0ExecutionServiceTest {
     }
 
     @Test
+    void oracleExecutionCanSendExpectedOutputForSynchronousExactComparison() {
+        RestTemplate restTemplate = mock(RestTemplate.class);
+        OracleJudge0ExecutionService service = service(restTemplate);
+        when(restTemplate.postForObject(
+                eq("http://judge0/submissions?wait=true&base64_encoded=true"),
+                org.mockito.ArgumentMatchers.any(Judge0SubmissionDTO.class),
+                eq(Judge0Response.class)
+        )).thenReturn(response(3, "Accepted", Base64.getEncoder().encodeToString("4\n".getBytes())));
+
+        OracleJudge0ExecutionService.SandboxExecutionResult result =
+                service.run("source", 54, "3 1", "4", 1.5, 65536);
+
+        assertThat(result.verdict()).isEqualTo(Verdict.ACCEPTED);
+
+        ArgumentCaptor<Judge0SubmissionDTO> dtoCaptor = ArgumentCaptor.forClass(Judge0SubmissionDTO.class);
+        verify(restTemplate).postForObject(
+                eq("http://judge0/submissions?wait=true&base64_encoded=true"),
+                dtoCaptor.capture(),
+                eq(Judge0Response.class)
+        );
+        assertThat(decoded(dtoCaptor.getValue().getExpectedOutput())).isEqualTo("4");
+    }
+
+    @Test
     void oracleDispatchFailureMapsToInternalError() {
         RestTemplate restTemplate = mock(RestTemplate.class);
         OracleJudge0ExecutionService service = service(restTemplate);

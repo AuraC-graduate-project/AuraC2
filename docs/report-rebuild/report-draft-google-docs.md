@@ -45,7 +45,7 @@ Figure 18. Hybrid Deterministic Oracle and Generated Tests Diagram
 
 AuraC2, also referred to as Aura Contest Control, is a web-based programming contest management system designed for university competitive programming environments. The system supports two main roles: administrators who prepare and control contests, and team users who participate in active contests by reading problems, writing code, submitting solutions, and reviewing submission history.
 
-The current implementation is a real web application composed of a Spring Boot backend, a React frontend, PostgreSQL persistence, RabbitMQ asynchronous messaging, and Judge0 integration for code execution. The system is not only a static design proposal; it includes implemented authentication, contest lifecycle control, structured problem and test-case management, contestant-safe statement PDF exports, a non-scoring contestant Run workflow, deterministic prompt export text for external administrator use, Judge0-sandboxed custom output validators, an admin reference-solution oracle UI for generated tests and counterexample promotion, duplicate-safe generated-test promotion, per-test-case result tracking, backend/frontend clarification handling, real-time contest/submission/scoreboard updates using server-sent events, and backend/admin rejudge functionality.
+The current implementation is a real web application composed of a Spring Boot backend, a React frontend, PostgreSQL persistence, RabbitMQ asynchronous messaging, and Judge0 integration for code execution. The system is not only a static design proposal; it includes implemented authentication, contest lifecycle control, structured problem and test-case management, contestant-safe statement PDF exports, a non-scoring contestant Run workflow, contest-scoped team moderation with audit export, deterministic prompt export text for external administrator use, Judge0-sandboxed custom output validators, an admin reference-solution oracle UI for generated tests and counterexample promotion, duplicate-safe generated-test promotion, per-test-case result tracking, backend/frontend clarification handling, real-time contest/submission/scoreboard updates using server-sent events, and backend/admin rejudge functionality.
 
 This report rebuilds the previous system analysis and design documentation so that it reflects the current local codebase. The codebase is treated as the source of truth. Features that exist only as placeholder UI or unused scaffolding are not described as complete. Features that were previously planned but now have backend implementation are reclassified accordingly. Features that exist only as unused scaffolding or old exception remnants are identified as partial, future work, or deprecated.
 
@@ -97,6 +97,7 @@ Current Status: Implemented as a modular monolith with external Judge0 dependenc
 | Test-Case Management | Implemented | Supports admin-only private test-case management plus a separate TEAM-safe public/sample test-case endpoint. |
 | Submission and Judging | Implemented with noted judging limitations | Supports submission persistence, after-commit RabbitMQ queueing, Judge0 dispatch, signed callbacks, exact/normalized/token/float-tolerance fixed-output policies, per-case results, and final verdict calculation. |
 | Contestant Run | Implemented | Allows TEAM users to run current code against public samples and owner-scoped custom tests without creating an official submission or affecting scoreboard penalties. Results are shown on Test Cases tab cards, while official submissions remain separate. |
+| Contest Team Moderation | Implemented | Keeps team accounts global while storing contest-scoped moderation state. Admins can hide teams from the scoreboard, disqualify/restore teams, disable/enable Submit or Run, view audit logs, and export filtered spreadsheet-safe CSV. |
 | Rejudge Backend and UI | Implemented | Admin-only backend endpoints and admin UI requeue selected/problem/contest submissions for rejudging. |
 | Clarifications | Implemented | Backend and admin/team frontend support team questions, admin public/private replies, public answered clarifications, and clarification SSE updates. |
 | Scoreboard Ranking | Implemented | Public/admin snapshots, SSE streams, ICPC-style ranking, freeze behavior, and admin reveal controls are implemented. |
@@ -123,7 +124,7 @@ The target audience includes contest administrators, programming teams, instruct
 
 | Category | Features |
 |---|---|
-| Implemented | Login, administrator-protected team registration, team credential XLSX/spreadsheet-safe CSV download at reveal time, refresh-token rotation, logout refresh-token revocation, production-aware refresh-cookie flags, admin bootstrap, role-based authorization, user management, contest creation, manual lifecycle controls, automatic lifecycle synchronization, SSE contest updates, structured problem creation/listing/editing, statement PDF/booklet exports with direct no-cover booklet concatenation, contestant non-scoring Run, deterministic prompt exports with no AI runtime dependency, deterministic compare policies, Judge0-sandboxed custom output validators, admin reference-solution oracle UI and generated counterexamples, duplicate-safe generated-test promotion, admin source reveal controls, test-case creation/listing, submission persistence, after-commit RabbitMQ judging, Judge0 time/memory limits, signed Judge0 callbacks, per-test-case results, stale callback protection, live submission SSE, backend/admin rejudge, backend/frontend clarifications, scoreboard ranking, freeze, and reveal. |
+| Implemented | Login, administrator-protected team registration, team credential XLSX/spreadsheet-safe CSV download at reveal time, contest-scoped team moderation and audit-log CSV export, refresh-token rotation, logout refresh-token revocation, production-aware refresh-cookie flags, admin bootstrap, role-based authorization, user management, contest creation, manual lifecycle controls, automatic lifecycle synchronization, SSE contest updates, structured problem creation/listing/editing, statement PDF/booklet exports with direct no-cover booklet concatenation, contestant non-scoring Run, deterministic prompt exports with no AI runtime dependency, deterministic compare policies, Judge0-sandboxed custom output validators, admin reference-solution oracle UI and generated counterexamples, duplicate-safe generated-test promotion, admin source reveal controls, test-case creation/listing, submission persistence, after-commit RabbitMQ judging, Judge0 time/memory limits, signed Judge0 callbacks, per-test-case results, stale callback protection, live submission SSE, backend/admin rejudge, backend/frontend clarifications, scoreboard ranking, freeze, and reveal. |
 | Partially Implemented | Result queue scaffold, local/offline deployment. |
 | Planned / Future Work | Announcements, full security monitoring, statistics endpoints, explicit contest participation/join workflow, full LAN-first Judge0 deployment. |
 | Deprecated / Removed | Email verification workflow. Only exception classes and security allow-list remnants remain. |
@@ -181,7 +182,8 @@ The main difference is scope. AuraC2 does not currently implement online communi
 | FR-IMP-23 | Export deterministic system-aware prompt text without calling AI services. | Administrator | `PromptExportController`, `PromptExportService`, `PromptVisibilityPolicy`, `PromptTemplateRenderer`, `OraclePanel` | Implemented |
 | FR-IMP-24 | Reveal, copy, hide, and download admin-only problem-engineering source artifacts. | Administrator | `OracleAdminController` source endpoints, `OracleProgramSourceResponse`, `OraclePanel` | Implemented |
 | FR-IMP-25 | Download newly generated team credentials while plaintext passwords are visible. | Administrator | `TeamsView`, `teamCredentialExport`, `UserService.generateTeamAccounts` | Implemented with XLSX and spreadsheet-safe CSV |
-| FR-IMP-26 | Provide reusable help/info hints for complex admin workflows. | Administrator | `AdminHelpTooltip`, admin components | Implemented frontend |
+| FR-IMP-26 | Moderate teams within a specific contest without changing their global accounts. | Administrator, Team | `ContestTeamModeration`, `ContestModerationAuditLog`, `ContestTeamModerationService`, `AdminTeamModerationController`, `TeamContestAccessController`, `TeamsView`, `SubmissionService`, `TeamRunService`, `ScoreboardService` | Implemented |
+| FR-IMP-27 | Provide reusable help/info hints for complex admin workflows. | Administrator | `AdminHelpTooltip`, admin components | Implemented frontend |
 
 ### Partially Implemented Requirements
 
@@ -419,7 +421,7 @@ Current route authorization map:
 | All-test-case reads | `ADMIN` only through `/api/testcases/problem/{problemId}`. |
 | Problem and test-case create/update/delete | `ADMIN`. |
 | `/api/submissions/**` | `TEAM` or `ADMIN`; team detail access is owner-checked. |
-| `/api/admin/**` | `ADMIN`, including users, rejudge, and admin scoreboard/reveal controls. |
+| `/api/admin/**` | `ADMIN`, including users, rejudge, admin scoreboard/reveal controls, and contest team moderation/log export. |
 | `/api/scoreboard/**` | Public scoreboard snapshot and stream. |
 | Clarifications | Public answered route, TEAM submit/my routes, ADMIN admin/reply routes. |
 | `/api/callback/judge0/**` | Externally reachable but HMAC-signature protected before state mutation. |
@@ -431,6 +433,8 @@ Test-case visibility is enforced by backend routes and service methods, not by f
 The contest lifecycle design distinguishes persisted state from effective state. Persisted state is the database status. Effective state is the state the contest should have at the current time. Schedulers exist to reduce the delay between these two concepts. Exact-time scheduling attempts to transition at the precise start/end time, while the fallback scheduler periodically synchronizes eligible contests.
 
 The judging design persists a submission before sending it for execution. This is important because it creates a durable record of the request before any external judge interaction. RabbitMQ publication for new submissions occurs after commit, so workers do not consume uncommitted submission IDs. Exact-output problems retain Judge0 `expected_output`; normalized, token, and float-tolerance policies compare Judge0 `stdout` against hidden expected output in the backend. Custom output validators run as separate Judge0 submissions after successful team execution and return a deterministic accept/reject decision. Judge0 callbacks are signed and update the submission through a per-test-case ledger only after verification.
+
+Contest team moderation is contest-scoped. Hiding a team from the scoreboard, disqualifying it, or disabling Submit/Run does not delete the global team account and does not delete stored submissions. Submit and Run endpoints check moderation state server-side before accepting work; disqualified teams receive a blocked contest workspace. Scoreboard snapshots filter hidden or disqualified teams while preserving admin access to submissions and audit history.
 
 [Insert Figure 13 here: Contest Lifecycle Architecture Diagram]
 
@@ -571,7 +575,7 @@ The admin interface contains:
 | Screen | Status | Description |
 |---|---|---|
 | Contest Overview | Implemented | Contest buckets, lifecycle controls, SSE status, creation modal, freeze badge. |
-| Teams | Implemented | User list, team registration, username/password update, delete non-admin. |
+| Teams | Implemented | Tabbed Accounts, Contest Moderation, and Moderation Logs workspace. Accounts preserve global team registration, bulk generation, username/password update, and non-admin deletion. Contest Moderation applies contest-scoped hide/disqualify/Submit/Run controls, and Moderation Logs support filtering plus CSV export. |
 | Problems | Implemented | Problem list, details, creation/update/delete actions, and test-case panel. |
 | Submissions | Implemented | Submission table, search/filter, code viewing. |
 | Rejudge | Implemented | Admin rejudge workflows for problem and contest scopes. |

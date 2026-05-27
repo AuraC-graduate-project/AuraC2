@@ -8,6 +8,7 @@ import com.server.contestControl.authServer.service.jwt.core.JwtService;
 import com.server.contestControl.authServer.util.TokenExtractor;
 import com.server.contestControl.contestServer.entity.Contest;
 import com.server.contestControl.contestServer.entity.Problem;
+import com.server.contestControl.contestServer.moderation.service.ContestTeamModerationService;
 import com.server.contestControl.contestServer.service.ContestService;
 import com.server.contestControl.contestServer.service.ProblemService;
 import com.server.contestControl.submissionServer.dto.SubmissionRequest;
@@ -49,6 +50,7 @@ public class SubmissionService {
     private final UserRepository userRepository;
     private final SubmissionSsePublisher submissionSsePublisher;
     private final SubmissionJudgeResultRepository judgeResultRepository;
+    private final ContestTeamModerationService moderationService;
 
     @Transactional
     public SubmissionResponse submitCode(SubmissionRequest request) {
@@ -76,6 +78,8 @@ public class SubmissionService {
                     ", active contest id=" + contest.getId()
             );
         }
+
+        moderationService.assertSubmitAllowed(contest, user);
 
         Submission submission = Submission.builder()
                 .contest(contest)

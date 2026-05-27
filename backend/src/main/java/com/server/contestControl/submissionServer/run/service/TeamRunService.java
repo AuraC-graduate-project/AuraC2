@@ -8,6 +8,7 @@ import com.server.contestControl.contestServer.entity.Problem;
 import com.server.contestControl.contestServer.entity.TestCase;
 import com.server.contestControl.contestServer.exceptions.ProblemDoesNotBelongToContestException;
 import com.server.contestControl.contestServer.exceptions.ProblemNotFoundException;
+import com.server.contestControl.contestServer.moderation.service.ContestTeamModerationService;
 import com.server.contestControl.contestServer.oracle.entity.InputValidator;
 import com.server.contestControl.contestServer.oracle.repository.InputValidatorRepository;
 import com.server.contestControl.contestServer.oracle.service.OracleJudge0ExecutionService;
@@ -28,6 +29,7 @@ import com.server.contestControl.submissionServer.run.exception.RunRateLimitExce
 import com.server.contestControl.submissionServer.run.exception.RunRequestException;
 import com.server.contestControl.submissionServer.run.repository.UserCustomTestCaseRepository;
 import com.server.contestControl.submissionServer.service.compare.OutputComparator;
+import com.server.contestControl.submissionServer.service.judge.Judge0ExpectedOutputPolicy;
 import com.server.contestControl.submissionServer.service.validator.CustomValidatorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -70,7 +72,9 @@ public class TeamRunService {
     private final InputValidatorRepository inputValidatorRepository;
     private final OracleJudge0ExecutionService judge0ExecutionService;
     private final OutputComparator outputComparator;
+    private final Judge0ExpectedOutputPolicy expectedOutputPolicy;
     private final CustomValidatorService customValidatorService;
+    private final ContestTeamModerationService moderationService;
     private final ConcurrentMap<Long, Deque<Instant>> userRunHistory = new ConcurrentHashMap<>();
 
     @Transactional(readOnly = true)
@@ -160,6 +164,7 @@ public class TeamRunService {
 
     public RunResponse run(Long problemId, RunRequest request, String username) {
         RunContext context = context(problemId, username);
+        moderationService.assertRunAllowed(context.contest(), context.user());
         checkRunRateLimit(context.user().getId());
 
         String sourceCode = sourceCode(request);
@@ -192,6 +197,7 @@ public class TeamRunService {
                     sourceCode,
                     languageId,
                     runCase.input(),
+                    expectedOutputPolicy.expectedOutputForJudge0(context.problem(), runCase.expectedOutput()),
                     toJudge0CpuTimeLimitSeconds(context.problem().getTimeLimit()),
                     toJudge0MemoryLimitKilobytes(context.problem().getMemoryLimit())
             );
@@ -229,6 +235,7 @@ public class TeamRunService {
         if (problem.getContest() == null || !problem.getContest().getId().equals(contest.getId())) {
             throw new ProblemDoesNotBelongToContestException(problemId, contest.getId());
         }
+        moderationService.assertWorkspaceVisible(contest.getId(), username);
 
         return new RunContext(user, contest, problem);
     }
@@ -327,6 +334,9 @@ public class TeamRunService {
             if (!hasText(runCase.expectedOutput())) {
                 status = "RUN_COMPLETED";
                 diagnostic = "No expected output was provided for this custom test.";
+            } else if (expectedOutputPolicy.usesJudge0ExpectedOutput(problem)) {
+                status = "PASSED";
+                diagnostic = null;
             } else if (problem.hasActiveCustomValidator()) {
                 CustomValidatorService.ValidatorResult validation = customValidatorService.validate(
                         problem,
@@ -352,6 +362,11 @@ public class TeamRunService {
                 status = comparison.matches() ? "PASSED" : "WRONG_ANSWER";
                 diagnostic = comparison.diagnostic();
             }
+        } else if (execution.verdict() == Verdict.WRONG_ANSWER
+                && hasText(runCase.expectedOutput())
+                && expectedOutputPolicy.usesJudge0ExpectedOutput(problem)
+                && !hasText(diagnostic)) {
+            diagnostic = "Output mismatch under EXACT compare policy";
         }
 
         return new RunCaseResult(

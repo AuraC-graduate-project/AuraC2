@@ -243,6 +243,104 @@ export interface GeneratedTeamCredentialResponse {
   role: string;
 }
 
+// -----------------------------
+// Team moderation
+// -----------------------------
+
+export type TeamModerationStatus = 'ACTIVE' | 'DISQUALIFIED';
+
+export type ModerationActionType =
+  | 'HIDE_FROM_SCOREBOARD'
+  | 'SHOW_ON_SCOREBOARD'
+  | 'DISQUALIFY_TEAM'
+  | 'RESTORE_TEAM'
+  | 'DISABLE_SUBMIT'
+  | 'ENABLE_SUBMIT'
+  | 'DISABLE_RUN'
+  | 'ENABLE_RUN'
+  | 'ADMIN_RUN_LAB_EXECUTION';
+
+export interface ContestTeamModerationResponse {
+  id: number | null;
+  contestId: number;
+  contestTitle: string;
+  teamId: number | null;
+  teamUsername: string | null;
+  status: TeamModerationStatus;
+  hiddenFromScoreboard: boolean;
+  submitEnabled: boolean;
+  runEnabled: boolean;
+  reason: string | null;
+  updatedByAdminId: number | null;
+  updatedByAdminUsername: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
+export interface TeamContestAccessResponse {
+  contestId: number;
+  status: TeamModerationStatus;
+  hiddenFromScoreboard: boolean;
+  submitEnabled: boolean;
+  runEnabled: boolean;
+  workspaceVisible: boolean;
+  message: string | null;
+}
+
+export interface ModerationActionRequest {
+  actionType: ModerationActionType;
+  reason?: string | null;
+}
+
+export interface ModerationAuditLogResponse {
+  id: number;
+  contestId: number;
+  contestTitle: string;
+  teamId: number;
+  teamUsername: string;
+  adminId: number;
+  adminUsername: string;
+  problemId: number | null;
+  problemTitle: string | null;
+  languageId: number | null;
+  sourceHash: string | null;
+  executionMode: string | null;
+  actionType: ModerationActionType;
+  reason: string | null;
+  oldValueJson: string;
+  newValueJson: string;
+  createdAt: string;
+}
+
+export interface ModerationLogFilters {
+  contestId?: number | null;
+  teamId?: number | null;
+  adminId?: number | null;
+  actionType?: ModerationActionType | null;
+  from?: string | null;
+  to?: string | null;
+}
+
+export interface AdminRunLabRequest {
+  contestId: number;
+  problemId: number;
+  languageId: number;
+  sourceCode: string;
+  customInput: string;
+}
+
+export interface AdminRunLabResponse {
+  scoring: boolean;
+  verdict: string;
+  statusId: number | null;
+  statusDescription: string | null;
+  stdout: string | null;
+  stderr: string | null;
+  compileOutput: string | null;
+  runtimeMillis: number | null;
+  memoryKb: number | null;
+}
+
 export interface UpdateUserNameRequest {
   // Backend DTO name is unknown; we send multiple keys to be resilient.
   newUsername?: string;

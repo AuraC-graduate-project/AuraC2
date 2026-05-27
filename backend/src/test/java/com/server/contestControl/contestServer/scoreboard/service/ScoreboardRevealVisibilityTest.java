@@ -6,6 +6,7 @@ import com.server.contestControl.authServer.repository.UserRepository;
 import com.server.contestControl.contestServer.entity.Contest;
 import com.server.contestControl.contestServer.entity.Problem;
 import com.server.contestControl.contestServer.enums.ContestStatus;
+import com.server.contestControl.contestServer.moderation.service.ContestTeamModerationService;
 import com.server.contestControl.contestServer.repository.ContestRepository;
 import com.server.contestControl.contestServer.repository.ProblemRepository;
 import com.server.contestControl.contestServer.scoreboard.dto.ScoreboardProblemCell;
@@ -32,10 +33,12 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -69,6 +72,9 @@ class ScoreboardRevealVisibilityTest {
     @Mock
     private ScoreboardVersionService versionService;
 
+    @Mock
+    private ContestTeamModerationService moderationService;
+
     private ScoreboardService service;
     private Contest contest;
     private Problem problemA;
@@ -90,7 +96,8 @@ class ScoreboardRevealVisibilityTest {
                 contestLifecycleService,
                 freezePolicy,
                 calculator,
-                versionService
+                versionService,
+                moderationService
         );
 
         contest = Contest.builder()
@@ -274,11 +281,28 @@ class ScoreboardRevealVisibilityTest {
         assertThat(row(adminLive, beta).totalPenalty()).isEqualTo(80);
     }
 
+    @Test
+    void hiddenTeamIsExcludedFromScoreboardWithoutDeletingSubmissions() {
+        Submission betaAccepted = submission(1L, beta, problemA, Verdict.ACCEPTED, 10);
+        Submission alphaAccepted = submission(2L, alpha, problemA, Verdict.ACCEPTED, 20);
+        givenScoreboard(List.of(betaAccepted, alphaAccepted));
+        when(moderationService.scoreboardSuppressedTeamIds(CONTEST_ID)).thenReturn(Set.of(beta.getId()));
+        noRevealStarted();
+
+        ScoreboardSnapshot snapshot = adminSnapshot();
+
+        assertThat(snapshot.rows()).extracting(ScoreboardRow::teamId).containsExactly(alpha.getId());
+        assertThat(row(snapshot, alpha).solvedCount()).isEqualTo(1);
+        assertThat(cell(row(snapshot, alpha), problemA).firstToSolve()).isTrue();
+        assertThat(betaAccepted.getVerdict()).isEqualTo(Verdict.ACCEPTED);
+    }
+
     private void givenScoreboard(List<Submission> submissions) {
         when(contestRepository.findById(CONTEST_ID)).thenReturn(Optional.of(contest));
         when(problemRepository.findByContest_IdOrderByIdAsc(CONTEST_ID)).thenReturn(List.of(problemA, problemB));
         when(userRepository.findAllByRoleOrderByUsernameAscIdAsc(Role.TEAM)).thenReturn(List.of(alpha, beta));
         when(submissionRepository.findAllByContestIdForScoreboard(CONTEST_ID)).thenReturn(submissions);
+        lenient().when(moderationService.scoreboardSuppressedTeamIds(CONTEST_ID)).thenReturn(Set.of());
         when(contestLifecycleService.resolveEffectiveScoreboardFreezeTime(eq(contest), any())).thenReturn(FREEZE);
         when(contestLifecycleService.resolveEffectiveState(eq(contest), any())).thenReturn(ContestStatus.ENDED);
     }

@@ -95,10 +95,13 @@ type Props = {
   contestId?: number | null;
   problem: { id: number; title: string } | null;
   customTestCaseIds?: number[];
+  submitEnabled?: boolean;
+  runEnabled?: boolean;
   onSubmitted?: () => void;
   onRunStarted?: () => void;
   onRunCompleted?: (response: RunResponse) => void;
   onRunFailed?: (message: string) => void;
+  onRunInvalidated?: () => void;
 };
 
 type EditorMessage = {
@@ -261,10 +264,13 @@ export function CodeEditor({
   contestId,
   problem,
   customTestCaseIds = [],
+  submitEnabled = true,
+  runEnabled = true,
   onSubmitted,
   onRunStarted,
   onRunCompleted,
   onRunFailed,
+  onRunInvalidated,
 }: Props) {
   const userId = useMemo(getUserId, []);
   const contestKey = contestId ? String(contestId) : "0";
@@ -278,6 +284,7 @@ export function CodeEditor({
   const highlightRef = useRef<HTMLPreElement | null>(null);
   const lineNumbersRef = useRef<HTMLPreElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const draftVersionRef = useRef(0);
 
   useEffect(() => {
     setLanguage(loadStoredLanguage(userId, contestKey, problemKey));
@@ -306,13 +313,26 @@ export function CodeEditor({
   );
 
   const handleLanguageChange = useCallback((newLanguage: string) => {
+    draftVersionRef.current += 1;
     setLanguage(newLanguage);
     setMessage(null);
-  }, []);
+    onRunInvalidated?.();
+  }, [onRunInvalidated]);
+
+  const handleCodeChange = useCallback((nextCode: string) => {
+    draftVersionRef.current += 1;
+    setCode(nextCode);
+    setMessage(null);
+    onRunInvalidated?.();
+  }, [onRunInvalidated, setCode]);
 
   const handleSubmit = async () => {
     if (!contestId || !problem) {
       setMessage({ tone: "error", text: "A running contest and selected problem are required." });
+      return;
+    }
+    if (!submitEnabled) {
+      setMessage({ tone: "error", text: "Submissions are disabled for your team in this contest." });
       return;
     }
 
@@ -346,6 +366,10 @@ export function CodeEditor({
       setMessage({ tone: "error", text: "Select a problem before running code." });
       return;
     }
+    if (!runEnabled) {
+      setMessage({ tone: "error", text: "Run is disabled for your team in this contest." });
+      return;
+    }
     if (!code.trim()) {
       setMessage({ tone: "error", text: "Source code cannot be empty." });
       return;
@@ -359,6 +383,7 @@ export function CodeEditor({
 
     setRunning(true);
     setMessage(null);
+    const runDraftVersion = draftVersionRef.current;
     onRunStarted?.();
     try {
       const response = await runCode(problem.id, {
@@ -368,6 +393,11 @@ export function CodeEditor({
         includePublicSamples: true,
         customTestCaseIds,
       });
+      if (runDraftVersion !== draftVersionRef.current) {
+        onRunInvalidated?.();
+        setMessage({ tone: "error", text: "Run finished for an older draft. Run again to test the current code." });
+        return;
+      }
       onRunCompleted?.(response);
       setMessage({ tone: "success", text: "Run completed in Test Cases. No official submission was created." });
     } catch (error) {
@@ -409,7 +439,7 @@ export function CodeEditor({
       ? unindentSelection(code, selectionStart, selectionEnd)
       : indentSelection(code, selectionStart, selectionEnd);
 
-    setCode(edit.nextCode);
+    handleCodeChange(edit.nextCode);
     requestAnimationFrame(() => {
       textareaRef.current?.setSelectionRange(edit.nextStart, edit.nextEnd);
     });
@@ -451,8 +481,9 @@ export function CodeEditor({
               type="button"
               variant="outline"
               onClick={handleRun}
-              disabled={running || submitting || !contestId}
+              disabled={running || submitting || !contestId || !runEnabled}
               className="h-9 gap-2 bg-white"
+              title={!runEnabled ? "Run is disabled for your team in this contest." : undefined}
             >
               <Play className="h-4 w-4" />
               {running ? "Running..." : "Run"}
@@ -460,8 +491,9 @@ export function CodeEditor({
 
             <Button
               onClick={handleSubmit}
-              disabled={submitting || running || !contestId}
+              disabled={submitting || running || !contestId || !submitEnabled}
               className="h-9 gap-2 bg-blue-700 hover:bg-blue-800"
+              title={!submitEnabled ? "Submissions are disabled for your team in this contest." : undefined}
             >
               <Send className="h-4 w-4" />
               {submitting ? "Submitting..." : "Submit"}
@@ -500,7 +532,7 @@ export function CodeEditor({
           <textarea
             ref={textareaRef}
             value={code}
-            onChange={(e) => setCode(e.target.value)}
+            onChange={(e) => handleCodeChange(e.target.value)}
             onKeyDown={handleEditorKeyDown}
             onScroll={handleEditorScroll}
             className="aura-code-input relative z-10 h-full min-h-0 w-full resize-none border-0 bg-transparent px-4 py-4 font-mono text-sm leading-6 shadow-none outline-none"

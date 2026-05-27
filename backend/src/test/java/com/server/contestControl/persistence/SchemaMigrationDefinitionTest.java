@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -75,7 +76,7 @@ class SchemaMigrationDefinitionTest {
         try (var stream = Files.list(migrationDir)) {
             migrationNames = stream
                     .map(path -> path.getFileName().toString())
-                    .sorted()
+                    .sorted(Comparator.comparingInt(SchemaMigrationDefinitionTest::migrationVersion))
                     .toList();
         }
 
@@ -88,7 +89,9 @@ class SchemaMigrationDefinitionTest {
                 "V6__structured_problem_statements.sql",
                 "V7__ensure_clarifications_table.sql",
                 "V8__generated_test_duplicate_status.sql",
-                "V9__team_custom_run_tests.sql"
+                "V9__team_custom_run_tests.sql",
+                "V10__contest_team_moderation.sql",
+                "V11__admin_run_lab_audit_fields.sql"
         );
         assertThat(migrationNames).noneMatch(name -> name.startsWith("V1_1"));
     }
@@ -174,6 +177,34 @@ class SchemaMigrationDefinitionTest {
     }
 
     @Test
+    void contestTeamModerationMigrationAddsContestScopedStateAndAuditLogs() throws IOException {
+        String migration = readProjectFile("src/main/resources/db/migration/V10__contest_team_moderation.sql");
+
+        assertThat(migration).contains("CREATE TABLE contest_team_moderations");
+        assertThat(migration).contains("UNIQUE (contest_id, team_id)");
+        assertThat(migration).contains("hidden_from_scoreboard BOOLEAN NOT NULL DEFAULT FALSE");
+        assertThat(migration).contains("submit_enabled BOOLEAN NOT NULL DEFAULT TRUE");
+        assertThat(migration).contains("run_enabled BOOLEAN NOT NULL DEFAULT TRUE");
+        assertThat(migration).contains("CREATE TABLE contest_moderation_audit_logs");
+        assertThat(migration).contains("old_value_json TEXT NOT NULL");
+        assertThat(migration).contains("new_value_json TEXT NOT NULL");
+        assertThat(migration).contains("idx_moderation_audit_contest_created");
+    }
+
+    @Test
+    void adminRunLabAuditMigrationAddsProblemContextWithoutSourceCode() throws IOException {
+        String migration = readProjectFile("src/main/resources/db/migration/V11__admin_run_lab_audit_fields.sql");
+
+        assertThat(migration).contains("ALTER COLUMN team_id DROP NOT NULL");
+        assertThat(migration).contains("ADD COLUMN problem_id BIGINT");
+        assertThat(migration).contains("ADD COLUMN language_id INTEGER");
+        assertThat(migration).contains("ADD COLUMN source_hash VARCHAR(64)");
+        assertThat(migration).contains("ADD COLUMN execution_mode VARCHAR(64)");
+        assertThat(migration).contains("'ADMIN_RUN_LAB_EXECUTION'");
+        assertThat(migration).contains("idx_moderation_audit_problem_created");
+    }
+
+    @Test
     void manualBaselineRepairScriptIsOutsideFlywayManagedMigrationPath() throws IOException {
         String script = readProjectFile("src/main/resources/db/manual/repair_baseline_schema_for_dev.sql");
 
@@ -199,5 +230,10 @@ class SchemaMigrationDefinitionTest {
         }
 
         throw new IOException("Cannot find " + relativePath + " from " + cwd);
+    }
+
+    private static int migrationVersion(String migrationName) {
+        int delimiter = migrationName.indexOf("__");
+        return Integer.parseInt(migrationName.substring(1, delimiter));
     }
 }

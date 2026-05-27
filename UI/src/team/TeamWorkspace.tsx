@@ -21,7 +21,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "./components/ui/resizable";
-import { ContestResponse, ProblemResponse, SubmissionResponse, TestCaseResponse } from "../admin/types/api";
+import { ContestResponse, ProblemResponse, SubmissionResponse, TeamContestAccessResponse, TestCaseResponse } from "../admin/types/api";
 import { normalizeVerdict } from "../components/StatusBadge";
 import {
   createCustomTest,
@@ -117,10 +117,11 @@ function syncWorkspacePageToUrl(page: WorkspacePage, replace = false) {
 type Props = {
   contest: ContestResponse;
   teamName: string;
+  teamAccess: TeamContestAccessResponse;
   onLogout: () => void;
 };
 
-export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
+export default function TeamWorkspace({ contest, teamName, teamAccess, onLogout }: Props) {
   const panelGroupRef = useRef<ImperativePanelGroupHandle | null>(null);
   const [workspacePage, setWorkspacePage] = useState<WorkspacePage>(() => workspacePageFromUrl());
   const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>("balanced");
@@ -401,6 +402,12 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
     setMobileTab("problem");
   }, []);
 
+  const handleRunInvalidated = useCallback(() => {
+    setRunResponse(null);
+    setRunError(null);
+    setRunInFlight(false);
+  }, []);
+
   const handleWorkspaceModeChange = useCallback((mode: WorkspaceMode) => {
     setWorkspaceMode(mode);
     const nextSizes = panelSizes[mode];
@@ -550,10 +557,13 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
                       contestId={contest.id}
                       problem={selectedProblem}
                       customTestCaseIds={customTestIds}
+                      submitEnabled={teamAccess.submitEnabled}
+                      runEnabled={teamAccess.runEnabled}
                       onSubmitted={handleSubmitted}
                       onRunStarted={handleRunStarted}
                       onRunCompleted={handleRunCompleted}
                       onRunFailed={handleRunFailed}
+                      onRunInvalidated={handleRunInvalidated}
                     />
 
                     <section className="aura-submissions-panel shrink-0 border-t border-slate-200 bg-white">
@@ -635,10 +645,13 @@ export default function TeamWorkspace({ contest, teamName, onLogout }: Props) {
                     contestId={contest.id}
                     problem={selectedProblem}
                     customTestCaseIds={customTestIds}
+                    submitEnabled={teamAccess.submitEnabled}
+                    runEnabled={teamAccess.runEnabled}
                     onSubmitted={handleSubmitted}
                     onRunStarted={handleRunStarted}
                     onRunCompleted={handleRunCompleted}
                     onRunFailed={handleRunFailed}
+                    onRunInvalidated={handleRunInvalidated}
                   />
                 </TabsContent>
 

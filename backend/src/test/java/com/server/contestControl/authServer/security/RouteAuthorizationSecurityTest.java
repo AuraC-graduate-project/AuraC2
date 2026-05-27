@@ -20,12 +20,18 @@ import com.server.contestControl.contestServer.dto.testcase.PublicTestCaseRespon
 import com.server.contestControl.contestServer.dto.testcase.TestCaseResponse;
 import com.server.contestControl.contestServer.enums.ClarificationStatus;
 import com.server.contestControl.contestServer.exceptions.ProblemDeletionConflictException;
+import com.server.contestControl.contestServer.moderation.service.ContestTeamModerationService;
+import com.server.contestControl.contestServer.moderation.controller.AdminTeamModerationController;
+import com.server.contestControl.contestServer.moderation.service.ContestModerationCsvExporter;
 import com.server.contestControl.contestServer.oracle.controller.OracleAdminController;
 import com.server.contestControl.contestServer.oracle.dto.CounterexampleResponse;
 import com.server.contestControl.contestServer.oracle.dto.GeneratedTestBatchResponse;
 import com.server.contestControl.contestServer.oracle.dto.GeneratedTestPromotionResponse;
 import com.server.contestControl.contestServer.oracle.dto.OracleProgramResponse;
 import com.server.contestControl.contestServer.oracle.service.OracleService;
+import com.server.contestControl.contestServer.runlab.controller.AdminRunLabController;
+import com.server.contestControl.contestServer.runlab.dto.AdminRunLabResponse;
+import com.server.contestControl.contestServer.runlab.service.AdminRunLabService;
 import com.server.contestControl.contestServer.scoreboard.controller.AdminScoreboardController;
 import com.server.contestControl.contestServer.scoreboard.controller.ScoreboardController;
 import com.server.contestControl.contestServer.scoreboard.dto.ScoreboardRevealResponse;
@@ -42,6 +48,7 @@ import com.server.contestControl.submissionServer.controller.RejudgeController;
 import com.server.contestControl.submissionServer.controller.SubmissionController;
 import com.server.contestControl.submissionServer.dto.RejudgeResponse;
 import com.server.contestControl.submissionServer.dto.SubmissionResponse;
+import com.server.contestControl.submissionServer.enums.Verdict;
 import com.server.contestControl.submissionServer.service.rejudge.RejudgeService;
 import com.server.contestControl.submissionServer.service.submission.SubmissionService;
 import org.junit.jupiter.api.BeforeEach;
@@ -83,7 +90,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         ScoreboardController.class,
         AdminScoreboardController.class,
         ClarificationController.class,
-        OracleAdminController.class
+        OracleAdminController.class,
+        AdminTeamModerationController.class,
+        AdminRunLabController.class
 })
 @Import({SecurityConfiguration.class, JwtAuthFilter.class})
 class RouteAuthorizationSecurityTest {
@@ -98,6 +107,8 @@ class RouteAuthorizationSecurityTest {
     @MockBean private ContestService contestService;
     @MockBean private ProblemService problemService;
     @MockBean private TestCaseService testCaseService;
+    @MockBean private ContestTeamModerationService moderationService;
+    @MockBean private ContestModerationCsvExporter moderationCsvExporter;
     @MockBean private SubmissionService submissionService;
     @MockBean private RejudgeService rejudgeService;
     @MockBean private ScoreboardService scoreboardService;
@@ -105,6 +116,7 @@ class RouteAuthorizationSecurityTest {
     @MockBean private ScoreboardSseAdapter scoreboardSseAdapter;
     @MockBean private ClarificationService clarificationService;
     @MockBean private OracleService oracleService;
+    @MockBean private AdminRunLabService adminRunLabService;
 
     @BeforeEach
     void setUp() {
@@ -136,6 +148,10 @@ class RouteAuthorizationSecurityTest {
         when(oracleService.promoteGeneratedTestCases(any())).thenReturn(generatedPromotionResponse());
         when(oracleService.promoteAllValidGeneratedTestCases(1L)).thenReturn(generatedPromotionResponse());
         when(oracleService.promoteCounterexample(1L)).thenReturn(testCaseResponse());
+        when(moderationService.listForContest(1L)).thenReturn(List.of());
+        when(moderationService.auditLogs(any(), any(), any(), any(), any(), any())).thenReturn(List.of());
+        when(moderationCsvExporter.export(any())).thenReturn("timestamp,contest,team\n".getBytes());
+        when(adminRunLabService.run(any(), eq("admin"))).thenReturn(adminRunLabResponse());
     }
 
     @Test
@@ -478,6 +494,60 @@ class RouteAuthorizationSecurityTest {
     }
 
     @Test
+    void teamModerationRoutesAreAdminOnly() throws Exception {
+        mockMvc.perform(get("/api/admin/team-moderation/contests/1/teams"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/admin/team-moderation/logs"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/admin/team-moderation/logs.csv"))
+                .andExpect(status().isUnauthorized());
+
+        mockBearerUser("team-token", "team", Role.TEAM);
+        mockMvc.perform(get("/api/admin/team-moderation/contests/1/teams")
+                        .header("Authorization", "Bearer team-token"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/admin/team-moderation/logs")
+                        .header("Authorization", "Bearer team-token"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/admin/team-moderation/logs.csv")
+                        .header("Authorization", "Bearer team-token"))
+                .andExpect(status().isForbidden());
+
+        mockBearerUser("admin-token", "admin", Role.ADMIN);
+        mockMvc.perform(get("/api/admin/team-moderation/contests/1/teams")
+                        .header("Authorization", "Bearer admin-token"))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/admin/team-moderation/logs")
+                        .header("Authorization", "Bearer admin-token"))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/admin/team-moderation/logs.csv")
+                        .header("Authorization", "Bearer admin-token"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void runLabRouteIsAdminOnly() throws Exception {
+        mockMvc.perform(post("/api/admin/run-lab/run")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(runLabRequestJson()))
+                .andExpect(status().isUnauthorized());
+
+        mockBearerUser("team-token", "team", Role.TEAM);
+        mockMvc.perform(post("/api/admin/run-lab/run")
+                        .header("Authorization", "Bearer team-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(runLabRequestJson()))
+                .andExpect(status().isForbidden());
+
+        mockBearerUser("admin-token", "admin", Role.ADMIN);
+        mockMvc.perform(post("/api/admin/run-lab/run")
+                        .header("Authorization", "Bearer admin-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(runLabRequestJson()))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void scoreboardPublicAndAdminRoutesKeepSeparateAuthorization() throws Exception {
         mockMvc.perform(get("/api/scoreboard/contests/1"))
                 .andExpect(status().isOk());
@@ -650,6 +720,10 @@ class RouteAuthorizationSecurityTest {
         );
     }
 
+    private AdminRunLabResponse adminRunLabResponse() {
+        return new AdminRunLabResponse(false, Verdict.ACCEPTED, 3, "Accepted", "4\n", null, null, 12, 1024);
+    }
+
     private String contestRequestJson() {
         return """
                 {
@@ -709,6 +783,18 @@ class RouteAuthorizationSecurityTest {
                   "problemId": 1,
                   "language": "java",
                   "code": "class Main {}"
+                }
+                """;
+    }
+
+    private String runLabRequestJson() {
+        return """
+                {
+                  "contestId": 1,
+                  "problemId": 1,
+                  "languageId": 54,
+                  "sourceCode": "print(4)",
+                  "customInput": "3 1"
                 }
                 """;
     }

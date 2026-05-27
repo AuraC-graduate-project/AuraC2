@@ -10,6 +10,7 @@ export function TopNav({
   activeView: string;
   onLogout: () => void;
 }) {
+  const displayView = activeView === "RunLab" ? "Run Lab" : activeView;
   const handleLogout = async () => {
     await onLogout();
     toast.success("Logged out");
@@ -19,7 +20,7 @@ export function TopNav({
     <header className="aura-topbar flex items-center justify-between border-b border-slate-200 bg-white px-8 py-4">
       <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Aura Contest Control</p>
-        <h1 className="text-xl font-semibold text-slate-950">{activeView}</h1>
+        <h1 className="text-xl font-semibold text-slate-950">{displayView}</h1>
       </div>
 
       <div className="flex items-center gap-4">

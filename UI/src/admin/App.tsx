@@ -9,6 +9,7 @@ import { SubmissionsView } from "./components/SubmissionsView";
 import { ClarificationsView } from "./components/ClarificationsView";
 import { ScoreboardView } from "./components/ScoreboardView";
 import { ScoreboardRevealDisplay } from "./components/ScoreboardRevealDisplay";
+import { RunLabView } from "./components/RunLabView";
 import {
   getActiveContest,
   getEndedContests,
@@ -29,6 +30,7 @@ const ADMIN_VIEW_ROUTES: Record<string, string> = {
   Clarifications: "/admin/clarifications",
   Scoreboard: "/admin/scoreboard",
   Rejudge: "/admin/rejudge",
+  RunLab: "/admin/run-lab",
   RevealDisplay: "/admin/scoreboard/reveal-display",
 };
 
@@ -155,6 +157,9 @@ export default function AdminApp({ onLogout }: { onLogout: () => void }) {
 
       case "Rejudge":
         return <RejudgeView initialContestId={currentContest?.id ?? null} />;
+
+      case "RunLab":
+        return <RunLabView initialContestId={currentContest?.id ?? null} />;
 
       default:
         return null;

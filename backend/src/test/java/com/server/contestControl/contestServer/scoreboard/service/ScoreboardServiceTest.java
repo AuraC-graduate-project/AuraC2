@@ -26,6 +26,7 @@ class ScoreboardServiceTest {
             null,
             null,
             null,
+            null,
             null
     );
 

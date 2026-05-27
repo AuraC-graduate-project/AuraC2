@@ -188,6 +188,10 @@ Prompt previews include one-click copy plus `.txt` and `.md` download actions. T
 - The admin Problems area is organized around statement, test cases, prompt exports, engineering, generated tests, counterexamples, and settings workflows.
 - Help/info tooltips are reused across admin screens for sensitive or non-obvious controls.
 - Newly generated team credentials can be copied or downloaded as XLSX or spreadsheet-safe CSV while they are visible. XLSX is recommended for Excel because password cells are stored as text; passwords are still one-time plaintext material and are stored only as hashes afterward.
+- The admin Teams page separates global account management from contest-scoped moderation. Accounts remain global, while moderation actions apply only to the selected contest.
+- Contest moderation supports hiding/showing a team on the scoreboard, disqualifying/restoring a team, and disabling/enabling Submit or Run. Sensitive actions require an admin reason.
+- Moderation is enforced server-side: hidden or disqualified teams are excluded from public/admin scoreboard rows, disqualified teams see a blocked contest page, and disabled Submit/Run actions are rejected before creating submissions or executing non-scoring runs.
+- Moderation audit logs record the contest, team, admin, action, reason, old state, new state, and timestamp. Admins can filter logs and export spreadsheet-safe CSV without logging passwords or secret material.
 
 ### Rejudge
 
@@ -286,10 +290,11 @@ Flyway migrations are under `backend/src/main/resources/db/migration`:
 - `V7__ensure_clarifications_table.sql`
 - `V8__generated_test_duplicate_status.sql`
 - `V9__team_custom_run_tests.sql`
+- `V10__contest_team_moderation.sql`
 
 Manual repair scripts, if any, belong outside `db/migration` and are not part of the official forward-only migration history.
 
-To reset a local development database intentionally, stop the application, reset the PostgreSQL volume or schema, then restart so Flyway can apply V1-V9 from a clean state. This is a local reset operation, not the normal startup workflow.
+To reset a local development database intentionally, stop the application, reset the PostgreSQL volume or schema, then restart so Flyway can apply V1-V10 from a clean state. This is a local reset operation, not the normal startup workflow.
 
 ## Verification Commands
 

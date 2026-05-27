@@ -1,11 +1,13 @@
 package com.server.contestControl.submissionServer.service.submission;
 
 import com.server.contestControl.authServer.entity.User;
+import com.server.contestControl.authServer.enums.Role;
 import com.server.contestControl.authServer.repository.UserRepository;
 import com.server.contestControl.authServer.service.jwt.core.JwtService;
 import com.server.contestControl.contestServer.entity.Contest;
 import com.server.contestControl.contestServer.entity.Problem;
 import com.server.contestControl.contestServer.exception.ContestNotFoundException;
+import com.server.contestControl.contestServer.moderation.service.ContestTeamModerationService;
 import com.server.contestControl.contestServer.service.ContestService;
 import com.server.contestControl.contestServer.service.ProblemService;
 import com.server.contestControl.submissionServer.dto.SubmissionRequest;
@@ -53,6 +55,7 @@ class SubmissionServiceValidationTest {
     @Mock private UserRepository userRepository;
     @Mock private SubmissionSsePublisher submissionSsePublisher;
     @Mock private SubmissionJudgeResultRepository judgeResultRepository;
+    @Mock private ContestTeamModerationService moderationService;
 
     @InjectMocks
     private SubmissionService submissionService;
@@ -189,6 +192,28 @@ class SubmissionServiceValidationTest {
 
         assertThat(response).isNotNull();
         verify(submissionProducer).sendSubmission(any());
+    }
+
+    @Test
+    void submitDisabledTeamCannotCreateOfficialSubmission() {
+        Contest activeContest = contest(ACTIVE_CONTEST_ID);
+        Problem problem = problem(PROBLEM_ID, activeContest);
+        User user = user("team1");
+
+        when(contestService.getContestEntity()).thenReturn(activeContest);
+        when(problemService.getProblemEntity(PROBLEM_ID)).thenReturn(problem);
+        when(userRepository.findByUsername("team1")).thenReturn(Optional.of(user));
+        doThrow(new InvalidSubmissionRequestException("Submissions are disabled for your team."))
+                .when(moderationService).assertSubmitAllowed(activeContest, user);
+
+        SubmissionRequest request = new SubmissionRequest(ACTIVE_CONTEST_ID, PROBLEM_ID, "java", "code");
+
+        assertThatThrownBy(() -> submissionService.submitCode(request))
+                .isInstanceOf(InvalidSubmissionRequestException.class)
+                .hasMessageContaining("Submissions are disabled");
+
+        verify(submissionRepository, never()).save(any());
+        verify(submissionProducer, never()).sendSubmission(any());
     }
 
     // ─── 5. RabbitMQ is published only for valid submissions ───────────────────
@@ -345,6 +370,7 @@ class SubmissionServiceValidationTest {
         return User.builder()
                 .id(1L)
                 .username(username)
+                .role(Role.TEAM)
                 .build();
     }
 
