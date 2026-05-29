@@ -120,6 +120,13 @@ function verdictMeta(status?: string | null): VerdictMeta {
         icon: AlertTriangle,
         className: "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200",
       };
+    case "INTERNAL_ERROR":
+      return {
+        badge: "ERROR",
+        label: "Internal Error",
+        icon: AlertTriangle,
+        className: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-200",
+      };
     case "RUNNING":
       return {
         badge: "RUNNING",

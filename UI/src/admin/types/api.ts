@@ -264,8 +264,8 @@ export interface ContestTeamModerationResponse {
   id: number | null;
   contestId: number;
   contestTitle: string;
-  teamId: number | null;
-  teamUsername: string | null;
+  teamId: number;
+  teamUsername: string;
   status: TeamModerationStatus;
   hiddenFromScoreboard: boolean;
   submitEnabled: boolean;
@@ -296,8 +296,8 @@ export interface ModerationAuditLogResponse {
   id: number;
   contestId: number;
   contestTitle: string;
-  teamId: number;
-  teamUsername: string;
+  teamId: number | null;
+  teamUsername: string | null;
   adminId: number;
   adminUsername: string;
   problemId: number | null;

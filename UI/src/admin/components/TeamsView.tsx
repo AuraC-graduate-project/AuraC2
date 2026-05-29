@@ -28,7 +28,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogTrigger,
 } from './ui/dialog';
 import {
   AlertDialog,
@@ -105,6 +104,8 @@ const ACTION_LABELS: Record<ModerationActionType, string> = {
   ADMIN_RUN_LAB_EXECUTION: 'Admin Run Lab Execution',
 };
 
+type TeamModerationActionType = Exclude<ModerationActionType, 'ADMIN_RUN_LAB_EXECUTION'>;
+
 const REASON_REQUIRED = new Set<ModerationActionType>([
   'HIDE_FROM_SCOREBOARD',
   'DISQUALIFY_TEAM',
@@ -118,7 +119,7 @@ const DESTRUCTIVE_ACTIONS = new Set<ModerationActionType>([
   'DISABLE_RUN',
 ]);
 
-const ACTION_OPTIONS: ModerationActionType[] = [
+const LOG_ACTION_OPTIONS: ModerationActionType[] = [
   'HIDE_FROM_SCOREBOARD',
   'SHOW_ON_SCOREBOARD',
   'DISQUALIFY_TEAM',
@@ -171,12 +172,15 @@ export function TeamsView() {
   const [selectedContestId, setSelectedContestId] = useState<string>('');
   const [moderationRows, setModerationRows] = useState<ContestTeamModerationResponse[]>([]);
   const [moderationLoading, setModerationLoading] = useState(false);
+  const [moderationError, setModerationError] = useState<string | null>(null);
+  const [actionPickerRow, setActionPickerRow] = useState<ContestTeamModerationResponse | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingModerationAction | null>(null);
   const [moderationReason, setModerationReason] = useState('');
   const [moderationSaving, setModerationSaving] = useState(false);
 
   const [logs, setLogs] = useState<ModerationAuditLogResponse[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
+  const [logsError, setLogsError] = useState<string | null>(null);
   const [logContestId, setLogContestId] = useState('all');
   const [logTeamId, setLogTeamId] = useState('all');
   const [logAdminId, setLogAdminId] = useState('all');
@@ -236,13 +240,17 @@ export function TeamsView() {
   const loadModerationRows = useCallback(async () => {
     if (selectedContestNumber == null) {
       setModerationRows([]);
+      setModerationError(null);
       return;
     }
     setModerationLoading(true);
+    setModerationError(null);
     try {
       setModerationRows(await getContestTeamModerations(selectedContestNumber));
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to load team moderation');
+    } catch {
+      const message = 'Failed to load contest moderation.';
+      toast.error(message);
+      setModerationError(message);
       setModerationRows([]);
     } finally {
       setModerationLoading(false);
@@ -260,10 +268,13 @@ export function TeamsView() {
 
   const loadLogs = useCallback(async () => {
     setLogsLoading(true);
+    setLogsError(null);
     try {
       setLogs(await getModerationLogs(currentLogFilters()));
     } catch {
-      toast.error('Failed to load moderation logs.');
+      const message = 'Failed to load moderation logs.';
+      toast.error(message);
+      setLogsError(message);
       setLogs([]);
     } finally {
       setLogsLoading(false);
@@ -433,6 +444,7 @@ export function TeamsView() {
   };
 
   const openModerationAction = (row: ContestTeamModerationResponse, actionType: ModerationActionType) => {
+    setActionPickerRow(null);
     setPendingAction({ row, actionType });
     setModerationReason('');
   };
@@ -453,6 +465,8 @@ export function TeamsView() {
       );
       setModerationRows((current) => current.map((row) => row.teamId === updated.teamId ? updated : row));
       setPendingAction(null);
+      setActionPickerRow(null);
+      setModerationReason('');
       toast.success(`${ACTION_LABELS[pendingAction.actionType]} applied`);
       if (activeTab === 'logs') await loadLogs();
     } catch (error) {
@@ -542,8 +556,9 @@ export function TeamsView() {
                   selectedContest={selectedContest}
                   rows={moderationRows}
                   loading={moderationLoading}
+                  error={moderationError}
                   onRefresh={loadModerationRows}
-                  onOpenAction={openModerationAction}
+                  onOpenActionPicker={setActionPickerRow}
               />
             </TabsContent>
 
@@ -554,6 +569,7 @@ export function TeamsView() {
                   adminUsers={adminUsers}
                   logs={logs}
                   loading={logsLoading}
+                  error={logsError}
                   logContestId={logContestId}
                   setLogContestId={setLogContestId}
                   logTeamId={logTeamId}
@@ -579,6 +595,15 @@ export function TeamsView() {
               setRegisterModalOpen(v);
               if (!v) loadUsers();
             }}
+        />
+
+        <ModerationActionPickerDialog
+            row={actionPickerRow}
+            open={actionPickerRow !== null}
+            onOpenChange={(open) => {
+              if (!open) setActionPickerRow(null);
+            }}
+            onSelect={(row, actionType) => openModerationAction(row, actionType)}
         />
 
         <Dialog open={editNameOpen} onOpenChange={setEditNameOpen}>
@@ -632,7 +657,15 @@ export function TeamsView() {
           </AlertDialogContent>
         </AlertDialog>
 
-        <Dialog open={pendingAction !== null} onOpenChange={(open) => !open && setPendingAction(null)}>
+        <Dialog
+            open={pendingAction !== null}
+            onOpenChange={(open) => {
+              if (!open) {
+                setPendingAction(null);
+                setModerationReason('');
+              }
+            }}
+        >
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{pendingAction ? ACTION_LABELS[pendingAction.actionType] : 'Moderation Action'}</DialogTitle>
@@ -657,7 +690,15 @@ export function TeamsView() {
                 </div>
             )}
             <DialogFooter>
-              <Button variant="outline" onClick={() => setPendingAction(null)}>Cancel</Button>
+              <Button
+                  variant="outline"
+                  onClick={() => {
+                    setPendingAction(null);
+                    setModerationReason('');
+                  }}
+              >
+                Cancel
+              </Button>
               <Button
                   onClick={handleConfirmModeration}
                   disabled={moderationSaving || (pendingAction ? REASON_REQUIRED.has(pendingAction.actionType) && !moderationReason.trim() : false)}
@@ -896,8 +937,9 @@ function ContestModerationTab({
                                 selectedContest,
                                 rows,
                                 loading,
+                                error,
                                 onRefresh,
-                                onOpenAction,
+                                onOpenActionPicker,
                               }: {
   contestOptions: ContestOption[];
   selectedContestId: string;
@@ -905,8 +947,9 @@ function ContestModerationTab({
   selectedContest: ContestOption | null;
   rows: ContestTeamModerationResponse[];
   loading: boolean;
+  error: string | null;
   onRefresh: () => void;
-  onOpenAction: (row: ContestTeamModerationResponse, actionType: ModerationActionType) => void;
+  onOpenActionPicker: (row: ContestTeamModerationResponse) => void;
 }) {
   return (
       <Card className="border border-gray-200 shadow-sm">
@@ -939,6 +982,8 @@ function ContestModerationTab({
         <CardContent className="p-5">
           {!selectedContest ? (
               <EmptyState>No contest selected.</EmptyState>
+          ) : error ? (
+              <ErrorState>{error}</ErrorState>
           ) : loading ? (
               <EmptyState>Loading moderation state...</EmptyState>
           ) : rows.length === 0 ? (
@@ -985,7 +1030,15 @@ function ContestModerationTab({
                             <div className="text-xs text-slate-500">{row.updatedByAdminUsername ?? 'Default state'}</div>
                           </TableCell>
                           <TableCell className="text-right">
-                            <ModerationMenu row={row} onOpenAction={onOpenAction} />
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="gap-2 bg-white dark:border-[#384352] dark:bg-[#111827] dark:text-slate-100"
+                                onClick={() => onOpenActionPicker(row)}
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                              Actions
+                            </Button>
                           </TableCell>
                         </TableRow>
                     ))}
@@ -998,62 +1051,95 @@ function ContestModerationTab({
   );
 }
 
-function ModerationMenu({
-                          row,
-                          onOpenAction,
-                        }: {
-  row: ContestTeamModerationResponse;
-  onOpenAction: (row: ContestTeamModerationResponse, actionType: ModerationActionType) => void;
+function ModerationActionPickerDialog({
+                                        row,
+                                        open,
+                                        onOpenChange,
+                                        onSelect,
+                                      }: {
+  row: ContestTeamModerationResponse | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSelect: (row: ContestTeamModerationResponse, actionType: TeamModerationActionType) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const actions: ModerationActionType[] = [
+  const actions: TeamModerationActionType[] = row ? [
     row.hiddenFromScoreboard ? 'SHOW_ON_SCOREBOARD' : 'HIDE_FROM_SCOREBOARD',
     row.status === 'DISQUALIFIED' ? 'RESTORE_TEAM' : 'DISQUALIFY_TEAM',
     row.submitEnabled ? 'DISABLE_SUBMIT' : 'ENABLE_SUBMIT',
     row.runEnabled ? 'DISABLE_RUN' : 'ENABLE_RUN',
-  ];
+  ] : [];
 
   return (
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button
-              size="sm"
-              variant="outline"
-              className="relative gap-2 bg-white dark:border-[#384352] dark:bg-[#111827] dark:text-slate-100"
-          >
-            <MoreHorizontal className="h-4 w-4" />
-            Actions
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-sm">
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Moderation Actions</DialogTitle>
+            <DialogTitle>Moderation Actions{row ? ` - ${row.teamUsername}` : ''}</DialogTitle>
             <DialogDescription>
-              Select an action for team <strong>{row.teamUsername}</strong>
+              Select one contest-scoped action. Account management remains separate from moderation.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-2 pt-2 pb-4">
-            {actions.map((action) => (
-                <Button
-                    key={action}
-                    variant={DESTRUCTIVE_ACTIONS.has(action) ? 'destructive' : 'outline'}
-                    className="justify-start w-full gap-2"
-                    onClick={() => {
-                      setOpen(false);
-                      onOpenAction(row, action);
-                    }}
-                >
-                  {action === 'HIDE_FROM_SCOREBOARD' ? <EyeOff className="h-4 w-4" /> : null}
-                  {action === 'SHOW_ON_SCOREBOARD' ? <Eye className="h-4 w-4" /> : null}
-                  {action === 'DISQUALIFY_TEAM' ? <ShieldAlert className="h-4 w-4" /> : null}
-                  {action === 'RESTORE_TEAM' ? <ShieldCheck className="h-4 w-4" /> : null}
-                  {ACTION_LABELS[action]}
-                </Button>
-            ))}
-          </div>
+          {row ? (
+              <div className="space-y-3">
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 dark:border-[#384352] dark:bg-[#111827] dark:text-slate-200">
+                  <div className="font-semibold text-slate-950 dark:text-slate-50">{row.teamUsername}</div>
+                  <div>Contest: {row.contestTitle}</div>
+                </div>
+                <div className="grid gap-2">
+                  {actions.map((action) => (
+                      <Button
+                          key={action}
+                          type="button"
+                          variant={DESTRUCTIVE_ACTIONS.has(action) ? 'destructive' : 'outline'}
+                          className="h-auto justify-start gap-3 px-3 py-2 text-left"
+                          onClick={() => onSelect(row, action)}
+                      >
+                        <ModerationActionIcon action={action} />
+                        <span className="flex-1">
+                          <span className="block font-semibold">{ACTION_LABELS[action]}</span>
+                          <span className="block text-xs font-normal opacity-80">
+                            {moderationActionDescription(action)}
+                          </span>
+                        </span>
+                      </Button>
+                  ))}
+                </div>
+              </div>
+          ) : (
+              <EmptyState>No team selected.</EmptyState>
+          )}
         </DialogContent>
       </Dialog>
   );
+}
+
+function ModerationActionIcon({ action }: { action: TeamModerationActionType }) {
+  if (action === 'HIDE_FROM_SCOREBOARD') return <EyeOff className="h-4 w-4" />;
+  if (action === 'SHOW_ON_SCOREBOARD') return <Eye className="h-4 w-4" />;
+  if (action === 'DISQUALIFY_TEAM') return <ShieldAlert className="h-4 w-4" />;
+  if (action === 'RESTORE_TEAM') return <ShieldCheck className="h-4 w-4" />;
+  if (action === 'DISABLE_SUBMIT' || action === 'DISABLE_RUN') return <ShieldAlert className="h-4 w-4" />;
+  return <ShieldCheck className="h-4 w-4" />;
+}
+
+function moderationActionDescription(action: TeamModerationActionType): string {
+  switch (action) {
+    case 'HIDE_FROM_SCOREBOARD':
+      return 'Remove this team from the selected contest scoreboard.';
+    case 'SHOW_ON_SCOREBOARD':
+      return 'Allow this team to appear on the selected contest scoreboard.';
+    case 'DISQUALIFY_TEAM':
+      return 'Block solving access and disable submit/run for this contest.';
+    case 'RESTORE_TEAM':
+      return 'Return the team to active status for this contest.';
+    case 'DISABLE_SUBMIT':
+      return 'Prevent official submissions without hiding the workspace.';
+    case 'ENABLE_SUBMIT':
+      return 'Allow official submissions again unless the team is disqualified.';
+    case 'DISABLE_RUN':
+      return 'Prevent non-scoring runs without hiding the workspace.';
+    case 'ENABLE_RUN':
+      return 'Allow non-scoring runs again unless the team is disqualified.';
+  }
 }
 
 function ModerationLogsTab({
@@ -1062,6 +1148,7 @@ function ModerationLogsTab({
                              adminUsers,
                              logs,
                              loading,
+                             error,
                              logContestId,
                              setLogContestId,
                              logTeamId,
@@ -1082,6 +1169,7 @@ function ModerationLogsTab({
   adminUsers: UserResponse[];
   logs: ModerationAuditLogResponse[];
   loading: boolean;
+  error: string | null;
   logContestId: string;
   setLogContestId: (value: string) => void;
   logTeamId: string;
@@ -1144,7 +1232,7 @@ function ModerationLogsTab({
               <SelectTrigger className="h-10 bg-white"><SelectValue placeholder="Action" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All actions</SelectItem>
-                {ACTION_OPTIONS.map((action) => (
+                {LOG_ACTION_OPTIONS.map((action) => (
                     <SelectItem key={action} value={action}>{ACTION_LABELS[action]}</SelectItem>
                 ))}
               </SelectContent>
@@ -1160,6 +1248,8 @@ function ModerationLogsTab({
 
           {loading ? (
               <EmptyState>Loading moderation logs...</EmptyState>
+          ) : error ? (
+              <ErrorState>{error}</ErrorState>
           ) : logs.length === 0 ? (
               <EmptyState>No moderation logs match the current filters.</EmptyState>
           ) : (
@@ -1221,6 +1311,14 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 function EmptyState({ children }: { children: ReactNode }) {
   return (
       <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-center text-sm text-slate-500">
+        {children}
+      </div>
+  );
+}
+
+function ErrorState({ children }: { children: ReactNode }) {
+  return (
+      <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-5 text-center text-sm font-medium text-rose-700 dark:border-[#57363b] dark:bg-[#2b1d20] dark:text-[#d4b0b5]">
         {children}
       </div>
   );

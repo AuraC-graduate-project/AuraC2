@@ -32,6 +32,7 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -113,6 +114,59 @@ class TeamRunServiceTest {
                     assertThat(result.caseType()).isEqualTo("CUSTOM");
                     assertThat(result.status()).isEqualTo("PASSED");
                     assertThat(result.expectedOutput()).isEqualTo("9\n");
+                });
+    }
+
+    @Test
+    void validCustomInputDecisionRunsTeamCode() {
+        Problem problem = problem();
+        InputValidator validator = inputValidator(problem);
+        UserCustomTestCase customTest = customTest(problem, "2\n", "NO\n");
+        stubContext(problem);
+        when(inputValidatorRepository.findFirstByProblem_IdAndActiveTrueOrderByUpdatedAtDescIdDesc(5L))
+                .thenReturn(Optional.of(validator));
+        when(customTestCaseRepository.findByIdInAndContest_IdAndProblem_IdAndOwner_IdOrderByCreatedAtAscIdAsc(
+                argThat(ids -> ids.size() == 1 && ids.contains(20L)), eq(7L), eq(5L), eq(1L)
+        )).thenReturn(List.of(customTest));
+        when(judge0ExecutionService.run("validator", 54, "2\n"))
+                .thenReturn(execution(Verdict.ACCEPTED, "VALID\n"));
+        when(judge0ExecutionService.run(eq("source"), eq(54), eq("2\n"), eq("NO\n"), eq(1.0), eq(131072)))
+                .thenReturn(execution(Verdict.ACCEPTED, "NO\n"));
+
+        RunResponse response = teamRunService.run(5L, runRequest(false, List.of(20L), "source"), "team1");
+
+        assertThat(response.scoring()).isFalse();
+        assertThat(response.results()).singleElement()
+                .satisfies(result -> {
+                    assertThat(result.status()).isEqualTo("PASSED");
+                    assertThat(result.actualOutput()).isEqualTo("NO\n");
+                });
+        verify(judge0ExecutionService).run(eq("source"), eq(54), eq("2\n"), eq("NO\n"), eq(1.0), eq(131072));
+    }
+
+    @Test
+    void validCustomInputWithDifferentExpectedOutputFailsWrongAnswer() {
+        Problem problem = problem();
+        InputValidator validator = inputValidator(problem);
+        UserCustomTestCase customTest = customTest(problem, "2\n", "YES\n");
+        stubContext(problem);
+        when(inputValidatorRepository.findFirstByProblem_IdAndActiveTrueOrderByUpdatedAtDescIdDesc(5L))
+                .thenReturn(Optional.of(validator));
+        when(customTestCaseRepository.findByIdInAndContest_IdAndProblem_IdAndOwner_IdOrderByCreatedAtAscIdAsc(
+                argThat(ids -> ids.size() == 1 && ids.contains(20L)), eq(7L), eq(5L), eq(1L)
+        )).thenReturn(List.of(customTest));
+        when(judge0ExecutionService.run("validator", 54, "2\n"))
+                .thenReturn(execution(Verdict.ACCEPTED, "VALID\n"));
+        when(judge0ExecutionService.run(eq("source"), eq(54), eq("2\n"), eq("YES\n"), eq(1.0), eq(131072)))
+                .thenReturn(execution(Verdict.WRONG_ANSWER, "NO\n"));
+
+        RunResponse response = teamRunService.run(5L, runRequest(false, List.of(20L), "source"), "team1");
+
+        assertThat(response.results()).singleElement()
+                .satisfies(result -> {
+                    assertThat(result.status()).isEqualTo("WRONG_ANSWER");
+                    assertThat(result.actualOutput()).isEqualTo("NO\n");
+                    assertThat(result.diagnostic()).isEqualTo("Output mismatch under EXACT compare policy");
                 });
     }
 
@@ -289,13 +343,7 @@ class TeamRunServiceTest {
     @Test
     void invalidCustomInputIsRejectedBeforeUserCodeRuns() {
         Problem problem = problem();
-        InputValidator validator = InputValidator.builder()
-                .id(30L)
-                .problem(problem)
-                .languageId(54)
-                .source("validator")
-                .active(true)
-                .build();
+        InputValidator validator = inputValidator(problem);
         UserCustomTestCase customTest = customTest(problem, "bad\n", "ok\n");
         stubContext(problem);
         when(inputValidatorRepository.findFirstByProblem_IdAndActiveTrueOrderByUpdatedAtDescIdDesc(5L))
@@ -304,7 +352,7 @@ class TeamRunServiceTest {
                 argThat(ids -> ids.size() == 1 && ids.contains(20L)), eq(7L), eq(5L), eq(1L)
         )).thenReturn(List.of(customTest));
         when(judge0ExecutionService.run("validator", 54, "bad\n"))
-                .thenReturn(execution(Verdict.ACCEPTED, "REJECT\n"));
+                .thenReturn(execution(Verdict.ACCEPTED, "INVALID\n"));
 
         RunResponse response = teamRunService.run(5L, runRequest(false, List.of(20L), "source"), "team1");
 
@@ -312,8 +360,73 @@ class TeamRunServiceTest {
                 .satisfies(result -> {
                     assertThat(result.status()).isEqualTo("VALIDATION_ERROR");
                     assertThat(result.actualOutput()).isNull();
+                    assertThat(result.diagnostic()).isEqualTo("Custom input was rejected by the problem input validator.");
                 });
         verify(judge0ExecutionService, never()).run(eq("source"), eq(54), eq("bad\n"), any(), any(), any());
+    }
+
+    @Test
+    void malformedValidatorDecisionReturnsInternalErrorBeforeUserCodeRuns() {
+        Problem problem = problem();
+        InputValidator validator = inputValidator(problem);
+        UserCustomTestCase customTest = customTest(problem, "2\n", "NO\n");
+        stubContext(problem);
+        when(inputValidatorRepository.findFirstByProblem_IdAndActiveTrueOrderByUpdatedAtDescIdDesc(5L))
+                .thenReturn(Optional.of(validator));
+        when(customTestCaseRepository.findByIdInAndContest_IdAndProblem_IdAndOwner_IdOrderByCreatedAtAscIdAsc(
+                argThat(ids -> ids.size() == 1 && ids.contains(20L)), eq(7L), eq(5L), eq(1L)
+        )).thenReturn(List.of(customTest));
+        when(judge0ExecutionService.run("validator", 54, "2\n"))
+                .thenReturn(execution(Verdict.ACCEPTED, "YES\n"));
+
+        RunResponse response = teamRunService.run(5L, runRequest(false, List.of(20L), "source"), "team1");
+
+        assertThat(response.results()).singleElement()
+                .satisfies(result -> {
+                    assertThat(result.status()).isEqualTo("INTERNAL_ERROR");
+                    assertThat(result.diagnostic()).isEqualTo(
+                            "Input validator produced an unsupported decision; expected VALID or INVALID."
+                    );
+                });
+        verify(judge0ExecutionService, never()).run(eq("source"), eq(54), eq("2\n"), any(), any(), any());
+    }
+
+    @Test
+    void crashingValidatorReturnsInternalErrorBeforeUserCodeRuns() {
+        Problem problem = problem();
+        InputValidator validator = inputValidator(problem);
+        UserCustomTestCase customTest = customTest(problem, "2\n", "NO\n");
+        stubContext(problem);
+        when(inputValidatorRepository.findFirstByProblem_IdAndActiveTrueOrderByUpdatedAtDescIdDesc(5L))
+                .thenReturn(Optional.of(validator));
+        when(customTestCaseRepository.findByIdInAndContest_IdAndProblem_IdAndOwner_IdOrderByCreatedAtAscIdAsc(
+                argThat(ids -> ids.size() == 1 && ids.contains(20L)), eq(7L), eq(5L), eq(1L)
+        )).thenReturn(List.of(customTest));
+        when(judge0ExecutionService.run("validator", 54, "2\n"))
+                .thenReturn(execution(Verdict.RUNTIME_ERROR, "", "validator stacktrace"));
+
+        RunResponse response = teamRunService.run(5L, runRequest(false, List.of(20L), "source"), "team1");
+
+        assertThat(response.results()).singleElement()
+                .satisfies(result -> {
+                    assertThat(result.status()).isEqualTo("INTERNAL_ERROR");
+                    assertThat(result.diagnostic()).isEqualTo(
+                            "Input validator execution failed; check the problem input validator configuration."
+                    );
+                });
+        verify(judge0ExecutionService, never()).run(eq("source"), eq(54), eq("2\n"), any(), any(), any());
+    }
+
+    @Test
+    void runWorkflowHasNoOfficialSubmissionOrScoreboardDependencies() {
+        List<String> dependencyTypeNames = Arrays.stream(TeamRunService.class.getDeclaredFields())
+                .map(field -> field.getType().getName())
+                .toList();
+
+        assertThat(dependencyTypeNames)
+                .noneMatch(name -> name.contains("SubmissionRepository"))
+                .noneMatch(name -> name.contains("SubmissionService"))
+                .noneMatch(name -> name.toLowerCase().contains("scoreboard"));
     }
 
     @Test
@@ -411,6 +524,16 @@ class TeamRunServiceTest {
                 .owner(User.builder().id(1L).username("team1").role(Role.TEAM).build())
                 .inputData(input)
                 .expectedOutput(expected)
+                .build();
+    }
+
+    private InputValidator inputValidator(Problem problem) {
+        return InputValidator.builder()
+                .id(30L)
+                .problem(problem)
+                .languageId(54)
+                .source("validator")
+                .active(true)
                 .build();
     }
 

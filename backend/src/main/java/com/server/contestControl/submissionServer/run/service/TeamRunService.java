@@ -45,6 +45,7 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -187,7 +188,7 @@ public class TeamRunService {
             if (runCase.custom() && inputValidator.isPresent()) {
                 InputValidation validation = validateCustomInput(inputValidator.get(), runCase.input());
                 if (!validation.valid()) {
-                    results.add(validationResult(caseNumber, runCase, validation.message()));
+                    results.add(validationResult(caseNumber, runCase, validation.status(), validation.message()));
                     caseNumber++;
                     continue;
                 }
@@ -405,23 +406,29 @@ public class TeamRunService {
                 input
         );
         if (result.verdict() != Verdict.ACCEPTED) {
-            return InputValidation.invalid("Input validator could not validate this custom input.");
+            return InputValidation.validatorError(
+                    "Input validator execution failed; check the problem input validator configuration."
+            );
         }
 
         String decision = firstDecisionLine(result.stdout());
         if (decision == null) {
-            return InputValidation.invalid("Input validator produced no decision for this custom input.");
+            return InputValidation.validatorError(
+                    "Input validator produced no decision; expected VALID or INVALID."
+            );
         }
 
         return switch (decision) {
-            case "ACCEPT", "ACCEPTED", "OK" -> InputValidation.accepted();
+            case "VALID", "ACCEPT", "ACCEPTED", "OK" -> InputValidation.accepted();
             case "REJECT", "REJECTED", "INVALID" ->
-                    InputValidation.invalid("Custom input was rejected by the problem input validator.");
-            default -> InputValidation.invalid("Input validator produced an invalid decision for this custom input.");
+                    InputValidation.invalidInput("Custom input was rejected by the problem input validator.");
+            default -> InputValidation.validatorError(
+                    "Input validator produced an unsupported decision; expected VALID or INVALID."
+            );
         };
     }
 
-    private RunCaseResult validationResult(int caseNumber, RunCase runCase, String diagnostic) {
+    private RunCaseResult validationResult(int caseNumber, RunCase runCase, String status, String diagnostic) {
         return new RunCaseResult(
                 caseNumber,
                 runCase.caseType(),
@@ -431,7 +438,7 @@ public class TeamRunService {
                 runCase.expectedOutput(),
                 null,
                 null,
-                "VALIDATION_ERROR",
+                status,
                 diagnostic,
                 0,
                 0
@@ -556,7 +563,7 @@ public class TeamRunService {
         }
         for (String line : stdout.replace("\r\n", "\n").replace('\r', '\n').split("\n")) {
             if (!line.isBlank()) {
-                return line.trim().toUpperCase();
+                return line.trim().toUpperCase(Locale.ROOT);
             }
         }
         return null;
@@ -615,13 +622,17 @@ public class TeamRunService {
     ) {
     }
 
-    private record InputValidation(boolean valid, String message) {
+    private record InputValidation(boolean valid, String status, String message) {
         static InputValidation accepted() {
-            return new InputValidation(true, null);
+            return new InputValidation(true, null, null);
         }
 
-        static InputValidation invalid(String message) {
-            return new InputValidation(false, message);
+        static InputValidation invalidInput(String message) {
+            return new InputValidation(false, "VALIDATION_ERROR", message);
+        }
+
+        static InputValidation validatorError(String message) {
+            return new InputValidation(false, "INTERNAL_ERROR", message);
         }
     }
 }
