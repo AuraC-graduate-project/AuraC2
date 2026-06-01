@@ -1,4 +1,4 @@
-package com.server.contestControl.contestServer.statement;
+package com.server.contestControl.contestServer.pdfGenerator.dto;
 
 import java.util.List;
 

@@ -36,6 +36,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -111,17 +112,12 @@ public class ProblemService {
         problem.setTimeLimit(request.getTimeLimit());
         problem.setMemoryLimit(request.getMemoryLimit());
         problem.setDifficulty(parseDifficulty(request.getDifficulty()));
+
         ComparePolicy comparePolicy = parseComparePolicyOrExisting(request.getComparePolicy(), problem.getComparePolicy());
         Double floatAbsoluteEpsilon = request.getFloatAbsoluteEpsilon();
         Double floatRelativeEpsilon = request.getFloatRelativeEpsilon();
-        if (comparePolicy == ComparePolicy.FLOAT_TOLERANCE) {
-            floatAbsoluteEpsilon = floatAbsoluteEpsilon == null
-                    ? problem.getFloatAbsoluteEpsilon()
-                    : floatAbsoluteEpsilon;
-            floatRelativeEpsilon = floatRelativeEpsilon == null
-                    ? problem.getFloatRelativeEpsilon()
-                    : floatRelativeEpsilon;
-        }
+
+
         applyCompareSettings(problem, comparePolicy, floatAbsoluteEpsilon, floatRelativeEpsilon);
         applyValidatorSettings(
                 problem,
@@ -139,9 +135,6 @@ public class ProblemService {
         return ProblemResponse.from(problem, problemIndex(problem), true);
     }
 
-    public ProblemResponse getProblem(Long id) {
-        return getProblem(id, false);
-    }
 
     public ProblemResponse getProblem(Long id, boolean includeAdminFields) {
         Problem problem = problemRepository.findById(id)
@@ -158,13 +151,9 @@ public class ProblemService {
         return problem;
     }
 
-    public List<ProblemResponse> getAllProblems(Long contestId) {
-        return getAllProblems(contestId, false);
-    }
-
     public List<ProblemResponse> getAllProblems(Long contestId, boolean includeAdminFields) {
         List<Problem> problems = problemRepository.findByContest_IdOrderByIdAsc(contestId);
-        return java.util.stream.IntStream.range(0, problems.size())
+        return IntStream.range(0, problems.size())
                 .mapToObj(index -> ProblemResponse.from(problems.get(index), index, includeAdminFields))
                 .toList();
     }
@@ -257,30 +246,31 @@ public class ProblemService {
             Double floatAbsoluteEpsilon,
             Double floatRelativeEpsilon
     ) {
+        if (comparePolicy != ComparePolicy.FLOAT_TOLERANCE) {
+            if (floatAbsoluteEpsilon != null || floatRelativeEpsilon != null) {
+                throw new InvalidComparePolicyException(
+                        "Floating-point epsilon values are only valid for FLOAT_TOLERANCE compare policy"
+                );
+            }
+
+            problem.setComparePolicy(comparePolicy);
+            problem.setFloatAbsoluteEpsilon(null);
+            problem.setFloatRelativeEpsilon(null);
+            return;
+        }
+
         validateEpsilon("floatAbsoluteEpsilon", floatAbsoluteEpsilon);
         validateEpsilon("floatRelativeEpsilon", floatRelativeEpsilon);
 
-        if (comparePolicy != ComparePolicy.FLOAT_TOLERANCE
-                && (floatAbsoluteEpsilon != null || floatRelativeEpsilon != null)) {
-            throw new InvalidComparePolicyException(
-                    "Floating-point epsilon values are only valid for FLOAT_TOLERANCE compare policy"
-            );
-        }
-
-        if (comparePolicy == ComparePolicy.FLOAT_TOLERANCE
-                && !hasPositiveEpsilon(floatAbsoluteEpsilon, floatRelativeEpsilon)) {
+        if (!hasPositiveEpsilon(floatAbsoluteEpsilon, floatRelativeEpsilon)) {
             throw new InvalidComparePolicyException(
                     "FLOAT_TOLERANCE requires a positive absolute or relative epsilon"
             );
         }
 
         problem.setComparePolicy(comparePolicy);
-        problem.setFloatAbsoluteEpsilon(
-                comparePolicy == ComparePolicy.FLOAT_TOLERANCE ? floatAbsoluteEpsilon : null
-        );
-        problem.setFloatRelativeEpsilon(
-                comparePolicy == ComparePolicy.FLOAT_TOLERANCE ? floatRelativeEpsilon : null
-        );
+        problem.setFloatAbsoluteEpsilon(floatAbsoluteEpsilon);
+        problem.setFloatRelativeEpsilon(floatRelativeEpsilon);
     }
 
     private void validateEpsilon(String field, Double value) {
@@ -311,39 +301,20 @@ public class ProblemService {
             boolean update
     ) {
         if (validationMode == ValidationMode.BUILTIN_COMPARE_POLICY) {
-            if (!update && hasAnyValidatorField(validatorEnabled, validatorLanguageId, validatorSource)) {
-                throw new InvalidValidatorConfigurationException(
-                        "Validator fields require CUSTOM_VALIDATOR validation mode"
-                );
-            }
-
             clearValidatorSettings(problem);
             return;
         }
 
-        boolean enabled = validatorEnabled != null
-                ? validatorEnabled
-                : (update && problem.getValidationMode() == ValidationMode.CUSTOM_VALIDATOR
-                        ? Boolean.TRUE.equals(problem.getValidatorEnabled())
-                        : true);
-        Integer languageId = validatorLanguageId != null ? validatorLanguageId : problem.getValidatorLanguageId();
-        String source = hasText(validatorSource) ? validatorSource : problem.getValidatorSource();
+        boolean enabled = resolveValidatorEnabled(problem, validatorEnabled, update);
+        Integer languageId = resolveValidatorLanguageId(problem, validatorLanguageId, update);
+        String source = resolveValidatorSource(problem, validatorSource, update);
 
-        validateValidatorLanguageId(languageId);
-        if (enabled && !hasText(source)) {
-            throw new InvalidValidatorConfigurationException(
-                    "Enabled custom validators require validatorSource"
-            );
-        }
-        if (enabled && languageId == null) {
-            throw new InvalidValidatorConfigurationException(
-                    "Enabled custom validators require validatorLanguageId"
-            );
-        }
+        validateCustomValidatorSettings(enabled, languageId, source);
 
         problem.setValidationMode(ValidationMode.CUSTOM_VALIDATOR);
         problem.setValidatorEnabled(enabled);
         problem.setValidatorLanguageId(languageId);
+
         if (hasText(source)) {
             updateValidatorSource(problem, source);
         }
@@ -377,10 +348,6 @@ public class ProblemService {
         problem.setValidatorSourceHash(hash);
     }
 
-    private boolean hasAnyValidatorField(Boolean validatorEnabled, Integer validatorLanguageId, String validatorSource) {
-        return validatorEnabled != null || validatorLanguageId != null || hasText(validatorSource);
-    }
-
     private boolean hasText(String value) {
         return value != null && !value.isBlank();
     }
@@ -407,4 +374,49 @@ public class ProblemService {
         }
         return -1;
     }
+
+    private boolean resolveValidatorEnabled(Problem problem, Boolean validatorEnabled, boolean update) {
+        if (validatorEnabled != null) {
+            return validatorEnabled;
+        }
+
+        if (update && problem.getValidationMode() == ValidationMode.CUSTOM_VALIDATOR) {
+            return Boolean.TRUE.equals(problem.getValidatorEnabled());
+        }
+
+        return true;
+    }
+
+    private Integer resolveValidatorLanguageId(Problem problem, Integer validatorLanguageId, boolean update) {
+        if (validatorLanguageId != null) {
+            return validatorLanguageId;
+        }
+
+        return update ? problem.getValidatorLanguageId() : null;
+    }
+
+    private String resolveValidatorSource(Problem problem, String validatorSource, boolean update) {
+        if (hasText(validatorSource)) {
+            return validatorSource;
+        }
+
+        return update ? problem.getValidatorSource() : null;
+    }
+
+    private void validateCustomValidatorSettings(boolean enabled, Integer languageId, String source) {
+        validateValidatorLanguageId(languageId);
+
+        if (enabled && !hasText(source)) {
+            throw new InvalidValidatorConfigurationException(
+                    "Enabled custom validators require validatorSource"
+            );
+        }
+
+        if (enabled && languageId == null) {
+            throw new InvalidValidatorConfigurationException(
+                    "Enabled custom validators require validatorLanguageId"
+            );
+        }
+    }
+
 }

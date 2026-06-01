@@ -1,7 +1,10 @@
-package com.server.contestControl.contestServer.prompt;
+package com.server.contestControl.contestServer.prompt.service;
 
 import com.server.contestControl.contestServer.oracle.exception.OracleConfigurationException;
 import com.server.contestControl.contestServer.prompt.dto.PromptExportRequest;
+import com.server.contestControl.contestServer.prompt.enums.PromptMode;
+import com.server.contestControl.contestServer.prompt.enums.PromptType;
+import com.server.contestControl.contestServer.prompt.enums.PromptVisibilityMode;
 import com.server.contestControl.submissionServer.language.SupportedLanguage;
 import org.springframework.stereotype.Component;
 

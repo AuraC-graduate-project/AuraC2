@@ -1,7 +1,11 @@
-package com.server.contestControl.contestServer.prompt;
+package com.server.contestControl.contestServer.prompt.service;
 
+import com.server.contestControl.contestServer.prompt.dto.PromptContext;
 import com.server.contestControl.contestServer.prompt.dto.PromptExportRequest;
 import com.server.contestControl.contestServer.prompt.dto.PromptExportResponse;
+import com.server.contestControl.contestServer.prompt.enums.PromptMode;
+import com.server.contestControl.contestServer.prompt.enums.PromptType;
+import com.server.contestControl.contestServer.prompt.enums.PromptVisibilityMode;
 import com.server.contestControl.submissionServer.language.SupportedLanguage;
 import com.server.contestControl.submissionServer.language.SupportedLanguageResponse;
 import com.server.contestControl.submissionServer.language.SupportedLanguageService;

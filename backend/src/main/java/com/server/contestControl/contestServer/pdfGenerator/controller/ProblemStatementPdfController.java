@@ -1,5 +1,6 @@
-package com.server.contestControl.contestServer.statement;
+package com.server.contestControl.contestServer.pdfGenerator.controller;
 
+import com.server.contestControl.contestServer.pdfGenerator.service.ProblemStatementPdfService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;

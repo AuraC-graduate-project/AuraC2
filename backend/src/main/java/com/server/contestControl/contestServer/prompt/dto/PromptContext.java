@@ -1,4 +1,4 @@
-package com.server.contestControl.contestServer.prompt;
+package com.server.contestControl.contestServer.prompt.dto;
 
 import com.server.contestControl.contestServer.entity.Problem;
 import com.server.contestControl.contestServer.entity.TestCase;

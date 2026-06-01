@@ -62,11 +62,7 @@ public final class ProblemBalloonColors {
         if (!HEX_COLOR.matcher(normalized).matches()) {
             return fallbackForIndex(problemIndex);
         }
-
-        String normalizedUpper = normalized.toUpperCase(Locale.ROOT);
-        return DEFAULT.equals(normalizedUpper)
-                ? fallbackForIndex(problemIndex)
-                : normalizedUpper;
+        return normalized.toUpperCase(Locale.ROOT);
     }
 
     public static String fallbackForIndex(int problemIndex) {

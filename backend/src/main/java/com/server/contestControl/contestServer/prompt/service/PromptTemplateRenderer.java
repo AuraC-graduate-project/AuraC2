@@ -1,4 +1,4 @@
-package com.server.contestControl.contestServer.prompt;
+package com.server.contestControl.contestServer.prompt.service;
 
 import com.server.contestControl.contestServer.entity.Problem;
 import com.server.contestControl.contestServer.entity.TestCase;
@@ -7,7 +7,11 @@ import com.server.contestControl.contestServer.enums.ValidationMode;
 import com.server.contestControl.contestServer.oracle.entity.InputGenerator;
 import com.server.contestControl.contestServer.oracle.entity.InputValidator;
 import com.server.contestControl.contestServer.oracle.entity.ReferenceSolution;
+import com.server.contestControl.contestServer.prompt.dto.PromptContext;
 import com.server.contestControl.contestServer.prompt.dto.PromptExportRequest;
+import com.server.contestControl.contestServer.prompt.enums.PromptMode;
+import com.server.contestControl.contestServer.prompt.enums.PromptType;
+import com.server.contestControl.contestServer.prompt.enums.PromptVisibilityMode;
 import com.server.contestControl.submissionServer.language.SupportedLanguage;
 import com.server.contestControl.submissionServer.language.SupportedLanguageCatalog;
 import org.springframework.stereotype.Component;

@@ -1,10 +1,11 @@
-package com.server.contestControl.contestServer.prompt;
+package com.server.contestControl.contestServer.prompt.service;
 
 import com.server.contestControl.contestServer.entity.Problem;
 import com.server.contestControl.contestServer.exceptions.ProblemNotFoundException;
 import com.server.contestControl.contestServer.oracle.repository.InputGeneratorRepository;
 import com.server.contestControl.contestServer.oracle.repository.InputValidatorRepository;
 import com.server.contestControl.contestServer.oracle.repository.ReferenceSolutionRepository;
+import com.server.contestControl.contestServer.prompt.dto.PromptContext;
 import com.server.contestControl.contestServer.prompt.dto.PromptExportRequest;
 import com.server.contestControl.contestServer.repository.ProblemRepository;
 import com.server.contestControl.contestServer.repository.TestCaseRepository;

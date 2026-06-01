@@ -7,6 +7,8 @@ import com.server.contestControl.contestServer.enums.Difficulty;
 import com.server.contestControl.contestServer.repository.ContestRepository;
 import com.server.contestControl.contestServer.repository.ProblemRepository;
 import com.server.contestControl.contestServer.repository.TestCaseRepository;
+import com.server.contestControl.contestServer.pdfGenerator.service.ProblemStatementPdfService;
+import com.server.contestControl.contestServer.pdfGenerator.service.StatementPdfRenderer;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;

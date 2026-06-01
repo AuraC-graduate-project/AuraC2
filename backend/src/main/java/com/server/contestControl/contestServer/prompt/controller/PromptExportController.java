@@ -1,5 +1,6 @@
-package com.server.contestControl.contestServer.prompt;
+package com.server.contestControl.contestServer.prompt.controller;
 
+import com.server.contestControl.contestServer.prompt.service.PromptExportService;
 import com.server.contestControl.contestServer.prompt.dto.PromptExportRequest;
 import com.server.contestControl.contestServer.prompt.dto.PromptExportResponse;
 import jakarta.validation.Valid;

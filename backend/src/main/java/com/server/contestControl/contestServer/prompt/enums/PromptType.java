@@ -1,4 +1,4 @@
-package com.server.contestControl.contestServer.prompt;
+package com.server.contestControl.contestServer.prompt.enums;
 
 public enum PromptType {
     REFERENCE_SOLUTION,

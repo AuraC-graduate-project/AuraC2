@@ -1,4 +1,4 @@
-package com.server.contestControl.contestServer.statement;
+package com.server.contestControl.contestServer.pdfGenerator.service;
 
 import com.server.contestControl.contestServer.entity.Contest;
 import com.server.contestControl.contestServer.entity.Problem;
@@ -8,6 +8,7 @@ import com.server.contestControl.contestServer.exceptions.ProblemNotFoundExcepti
 import com.server.contestControl.contestServer.repository.ContestRepository;
 import com.server.contestControl.contestServer.repository.ProblemRepository;
 import com.server.contestControl.contestServer.repository.TestCaseRepository;
+import com.server.contestControl.contestServer.pdfGenerator.dto.ContestantSafeStatementModel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,5 +1,6 @@
-package com.server.contestControl.contestServer.statement;
+package com.server.contestControl.contestServer.pdfGenerator.service;
 
+import com.server.contestControl.contestServer.pdfGenerator.dto.ContestantSafeStatementModel;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayOutputStream;

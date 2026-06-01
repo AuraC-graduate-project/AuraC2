@@ -1,8 +1,8 @@
 package com.server.contestControl.contestServer.prompt.dto;
 
-import com.server.contestControl.contestServer.prompt.PromptType;
-import com.server.contestControl.contestServer.prompt.PromptMode;
-import com.server.contestControl.contestServer.prompt.PromptVisibilityMode;
+import com.server.contestControl.contestServer.prompt.enums.PromptType;
+import com.server.contestControl.contestServer.prompt.enums.PromptMode;
+import com.server.contestControl.contestServer.prompt.enums.PromptVisibilityMode;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
